@@ -1,0 +1,134 @@
+#include "downloadfilejob.h"
+#include "downloadmanager.h"
+
+
+DownloadFileJob::DownloadFileJob(QObject *parent, QNetworkAccessManager *nm, const QString &url, const QString &path)
+    : QObject(parent)
+    , url(url)
+    , isCompleted(false)
+    , networkManager(nm)
+    , errorString("")
+{
+    file.setFileName(path);
+
+    QFileInfo completed_file(path + ".completed");
+
+    if (completed_file.exists())
+    {
+        isCompleted = true;
+    }
+    else
+    {
+        if (file.open(QIODevice::WriteOnly | QIODevice::Truncate ))
+        {
+
+            QNetworkRequest request(url);
+            reply = networkManager->get(request);
+
+//            qDebug() << path;
+
+            QObject::connect(reply, SIGNAL(readyRead()), this, SLOT(downloadFileReadyRead()));
+            QObject::connect(reply, SIGNAL(finished()), this, SLOT(downloadFileFinished()));
+            QObject::connect(reply, SIGNAL(finished()), qobject_cast<DownloadManager *>(parent), SLOT(onActivity()));
+            QObject::connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(onError(QNetworkReply::NetworkError)));
+            QObject::connect(reply, SIGNAL(sslErrors(const QList<QSslError> &)), this, SLOT(onSslErrors(const QList<QSslError> &)));
+        }
+        else
+        {
+            errorString = "Can't create file.";
+            emit downloadError();
+        }
+    }
+}
+
+
+void DownloadFileJob::downloadFileReadyRead()
+{
+    file.write(reply->readAll());
+}
+
+void DownloadFileJob::downloadFileFinished()
+{
+    file.flush();
+    reply->deleteLater();
+    file.close();
+    if ( QNetworkReply::NoError != reply->error() )
+    {
+        file.remove();
+        onError(QNetworkReply::NetworkError());
+    }
+    else
+    {
+        isCompleted = true;
+
+        QFile completedFile(file.fileName() + ".completed");
+        completedFile.open(QIODevice::WriteOnly);
+        completedFile.close();
+
+
+        emit completed();
+    }
+}
+
+void DownloadFileJob::onSslErrors(const QList<QSslError> &)
+{
+    QNetworkReply *reply = static_cast<QNetworkReply *>(sender());
+    reply->ignoreSslErrors();
+    return;
+
+//    if (file.isOpen())
+//        file.close();
+
+//    file.remove();
+
+//    foreach (QSslError& ssle, errors)
+//    {
+//        errorString += ssle.errorString();
+//    }
+//    errorString = reply->errorString();
+
+//    emit downloadError();
+}
+
+void DownloadFileJob::onError(QNetworkReply::NetworkError)
+{
+    if (file.isOpen())
+        file.close();
+
+    file.remove();
+
+    errorString = reply->errorString();
+
+    //qDebug() << errorString;
+
+    reply->deleteLater();
+
+    emit downloadError();
+}
+
+
+bool DownloadFileJob::await(int timeout)
+{
+    if (isCompleted)
+        return true;
+
+    QEventLoop loop;
+    connect(this, SIGNAL(completed()), &loop, SLOT(quit()));
+    connect(this, SIGNAL(downloadError()), &loop, SLOT(quit()));
+
+    QTimer timer;
+    connect(&timer, SIGNAL(timeout()), &loop, SLOT(quit()));
+    timer.start(timeout);
+
+    if (errorString != "")
+        return false;
+
+    if (isCompleted)
+        return true;
+
+    loop.exec();
+
+    return isCompleted;
+}
+
+

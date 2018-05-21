@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/resources">
+        <file>images/icons/mangadex.png</file>
+        <file>images/icons/mangafox.png</file>
+        <file>images/icons/mangapanda.png</file>
+        <file>images/icons/mangareader.png</file>
+        <file>images/icons/mangarock.png</file>
+        <file>images/icons/mangatown.png</file>
+    </qresource>
+    <qresource prefix="/"/>
+</RCC>
