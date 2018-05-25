@@ -60,12 +60,23 @@ void PreloadQueue::processNext()
         QObject::connect(job, SIGNAL(completed()), this, SLOT(processNext()));
     }
     else
+    {
+        sendComletedSignal();
         processNext();
+    }
 }
 
 void PreloadQueue::sendComletedSignal()
 {
-    qDebug() << "preload completed";
-    DownloadScaledImageJob *job = static_cast<DownloadScaledImageJob *>(sender());
-    emit completedDownload(job->file.fileName());
+//    qDebug() << "preload completed";
+    QObject *send = sender();
+    if (send == nullptr)
+    {
+        emit completedDownload(job->file.fileName());
+    }
+    else
+    {
+        DownloadScaledImageJob *job = static_cast<DownloadScaledImageJob *>(sender());
+        emit completedDownload(job->file.fileName());
+    }
 }

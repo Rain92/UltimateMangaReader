@@ -23,19 +23,24 @@ public:
     QString baseurl;
 
     MangaList mangalist;
-    qint32 nummangas;
+    int nummangas;
 
     AbstractMangaSource(QObject *parent);
 
 
     virtual bool updateMangaList() = 0;
+
+//    virtual int *getNumChapters(QString mangalink) = 0;
+
     virtual MangaInfo *getMangaInfo(QString mangalink) = 0;
-    virtual QStringList *getPageList(QString chapterlink) = 0;
-    virtual QString getImageLink(QString pagelink) = 0;
+//    virtual MangaInfo *getMangaInfoFrom(QString mangalink) = 0;
+
+    virtual QStringList *getPageList(const QString &chapterlink) = 0;
+    virtual QString getImageLink(const QString &pagelink) = 0;
 
 
-    bool serialize();
-    bool deserialize();
+    bool serializeMangaList();
+    bool deserializeMangaList();
 
     DownloadFileJob *downloadImage(const QString &imagelink, const QString &mangatitle,
                                    const int &chapternum, const int &pagenum);

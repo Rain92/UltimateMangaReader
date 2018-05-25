@@ -31,7 +31,7 @@ void  MangaInfoWidget::adjustSizes()
 
     ui->listViewChapters->setVerticalScrollBar(new CScrollBar(Qt::Vertical, ui->listViewChapters));
     ui->listViewChapters->setHorizontalScrollBar(new CScrollBar(Qt::Horizontal, ui->listViewChapters));
-    ui->scrollAreaMangaInfoSummary->setVerticalScrollBar(new CScrollBar(Qt::Vertical, ui->scrollAreaMangaInfoSummary, summaryscrollbarwidth, false));
+    ui->scrollAreaMangaInfoSummary->setVerticalScrollBar(new CScrollBar(Qt::Vertical, ui->scrollAreaMangaInfoSummary, summaryscrollbarwidth));
 
 //    ui->labelMangaInfoCover->setMinimumHeight(coversize);
 //    ui->labelMangaInfoCover->setMaximumWidth(coversize);

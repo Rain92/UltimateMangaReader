@@ -102,9 +102,9 @@
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_7">
            <item>
-            <widget class="QLabel" name="labelReaderPage">
+            <widget class="QLabel" name="labelReaderChapter">
              <property name="text">
-              <string>TextLabel</string>
+              <string>Chapter</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>
@@ -112,9 +112,9 @@
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="labelReaderChapter">
+            <widget class="QLabel" name="labelReaderPage">
              <property name="text">
-              <string>TextLabel</string>
+              <string>Page</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>

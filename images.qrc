@@ -6,6 +6,7 @@
         <file>images/icons/mangareader.png</file>
         <file>images/icons/mangarock.png</file>
         <file>images/icons/mangatown.png</file>
+        <file>eink.qss</file>
     </qresource>
     <qresource prefix="/"/>
 </RCC>

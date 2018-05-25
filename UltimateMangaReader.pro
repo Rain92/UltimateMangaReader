@@ -64,6 +64,8 @@ FORMS += \
 HEADERS += \
     mangasources/abstractmangasource.h \
     mangasources/mangapanda.h \
+#    mangasources/mangadex.h \
+#    mangasources/mangatown.h \
     widgets/favoriteswidget.h \
     widgets/mainwidget.h \
     widgets/mangaimagecontainer.h \
@@ -81,13 +83,13 @@ HEADERS += \
     widgets/homewidget.h \
     widgets/mangainfowidget.h \
     widgets/mangareaderwidget.h \
-    widgets/cscrollbar.h \
-    mangasources/mangadex.h \
-    mangasources/mangatown.h
+    widgets/cscrollbar.h
 
 SOURCES += \
     mangasources/abstractmangasource.cpp \
     mangasources/mangapanda.cpp \
+#    mangasources/mangadex.cpp \
+#    mangasources/mangatown.cpp \
     widgets/favoriteswidget.cpp \
     widgets/mainwidget.cpp \
     widgets/mangaimagecontainer.cpp \
@@ -106,9 +108,7 @@ SOURCES += \
     widgets/homewidget.cpp \
     widgets/mangainfowidget.cpp \
     widgets/mangareaderwidget.cpp \
-    widgets/cscrollbar.cpp \
-    mangasources/mangadex.cpp \
-    mangasources/mangatown.cpp
+    widgets/cscrollbar.cpp
 
 
 

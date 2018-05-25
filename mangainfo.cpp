@@ -119,8 +119,9 @@ void MangaInfo::PreloadNeighbours(int distance)
     for (int i = 1; i < distance; i++)
     {
         ind = ind.nextPageIndex(&chapters);
-        if (!ind.illegal)
-            PreloadImage(ind);
+        if (ind.illegal)
+            break;
+        PreloadImage(ind);
     }
 }
 
@@ -129,9 +130,9 @@ void MangaInfo::CancelAllPreloads()
     preloadqueue.clearQuene();
 }
 
-void MangaInfo::completedImagePreload(QString path)
+void MangaInfo::completedImagePreload(const QString &path)
 {
-    qDebug() << path;
+//    qDebug() << path;
     emit completedImagePreloadSignal(path);
 }
 

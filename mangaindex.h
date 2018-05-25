@@ -11,6 +11,8 @@ public:
     bool illegal;
 
     MangaIndex(int chapter, int page);
+    MangaIndex(int chapter, int page, bool illegal);
+
 
 
     MangaIndex nextPageIndex(QList<MangaChapter> *chapters);

@@ -39,8 +39,8 @@ void  HomeWidget::adjustSizes()
     ui->pushButtonFilterClear->setMinimumHeight(buttonsize);
     ui->lineEditFilter->setMinimumHeight(buttonsize);
 
-    ui->listViewSources->setMinimumHeight(listsourcessize);
-
+    ui->listViewSources->setMinimumHeight(listsourcesheight);
+    ui->listViewSources->setMinimumWidth(listsourceswidth);
 
     ui->listViewSources->setVerticalScrollBar(new CScrollBar(Qt::Vertical, ui->listViewSources));
     ui->listViewMangas->setVerticalScrollBar(new CScrollBar(Qt::Vertical, ui->listViewMangas));
@@ -56,6 +56,9 @@ void  HomeWidget::setupSourcesList()
         model->appendRow(*listViewItemfromMangaSource(ms));
 
     ui->listViewSources->setIconSize(QSize(mangasourceiconsize, mangasourceiconsize));
+//    ui->listViewSources->setSpacing(mangacourceiconspacing);
+
+
     ui->listViewSources->setModel(model);
 
     ui->progressBar->setMaximum(mangasources->count() * 100);
@@ -83,6 +86,8 @@ QList<QStandardItem *> *HomeWidget::listViewItemfromMangaSource(AbstractMangaSou
     QStandardItem *item = new QStandardItem(source->name);
     item->setIcon(QIcon(QPixmap(":/resources/images/icons/" + source->name.toLower() + ".png")));
     items->append(item);
+    item->setSizeHint(QSize(mangasourceitemwidth, mangasourceitemheight));
+//    item->set
     return items;
 }
 
@@ -96,7 +101,7 @@ void HomeWidget::on_pushButtonUpdate_clicked()
     foreach (AbstractMangaSource *ms, *mangasources)
     {
         ms->updateMangaList();
-        ms->serialize();
+        ms->serializeMangaList();
     }
 
     ui->progressBar->hide();
@@ -106,7 +111,7 @@ void HomeWidget::on_pushButtonUpdate_clicked()
 
 void HomeWidget::on_pushButtonClearCache_clicked()
 {
-    QDir dir(downloaddirimages);
+    QDir dir(mangalistdir);
     dir.setNameFilters(QStringList() << "*.*");
     dir.setFilter(QDir::Files);
     foreach (QString dirFile, dir.entryList())

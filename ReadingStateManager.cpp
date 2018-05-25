@@ -8,12 +8,12 @@ ReadingStateManager::ReadingStateManager():
 
 void ReadingStateManager::deserialize()
 {
-    QDir directory(readingstatesdir);
+    QDir directory(cachedir);
     QStringList files = directory.entryList(QStringList() << "*.dat", QDir::Files);
     foreach (const QString &filename, files)
     {
 //        qDebug() << readingstatesdir + "/" + filename;
-        QFile file(readingstatesdir + "/" + filename);
+        QFile file(cachedir + filename);
         if (!file.open(QIODevice::ReadOnly))
             continue;
 

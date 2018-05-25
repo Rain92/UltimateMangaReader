@@ -39,7 +39,7 @@ bool MangaTown::updateMangaList()
 
 //    pages = 1;
 
-    qDebug() << pages;
+//    qDebug() << pages;
 
     QVector<DownloadStringJob *> jobs = QVector<DownloadStringJob *>(pages);
     jobs[0] = job;
@@ -135,11 +135,11 @@ MangaInfo *MangaTown::getMangaInfo(QString mangalink)
     if (coverrx.indexIn(job->buffer, spos) != -1)
         coverlink = coverrx.cap(1);
 
-    QString filetype = coverlink.mid(coverlink.indexOf('?') - 4, 4);
-
-    info->coverpath = downloaddircovers + "/" +
-                      makePathLegal(AbstractMangaSource::name + "_" + info->title) +
-                      filetype;
+    int ind = coverlink.indexOf('?');
+    if (ind == -1)
+        ind = coverlink.length();
+    QString filetype = coverlink.mid(ind - 4, 4);
+    info->coverpath = mangainfodir(name, info->title) + "cover" + filetype;
 
 //    qDebug() << coverlink << filetype;
 //    qDebug() << info->coverpath;
@@ -156,7 +156,7 @@ MangaInfo *MangaTown::getMangaInfo(QString mangalink)
     spos = job->buffer.indexOf("<ul class=\"chapter_list\">");
     int epos = job->buffer.indexOf("<div class=\"comment_content\">");
 
-    info->numchapters++;
+    info->numchapters = 0;
     for (int pos = spos; (pos = rx.indexIn(job->buffer, pos)) != -1 && pos < epos; pos += rx.matchedLength())
     {
 
@@ -182,7 +182,7 @@ MangaInfo *MangaTown::getMangaInfo(QString mangalink)
     return info;
 }
 
-QStringList *MangaTown::getPageList(QString chapterlink)
+QStringList *MangaTown::getPageList(const QString &chapterlink)
 {
     DownloadStringJob *job = AbstractMangaSource::downloadmanager->downloadAsString(chapterlink);
     QStringList *pageLinks = new QStringList();
@@ -211,7 +211,7 @@ QStringList *MangaTown::getPageList(QString chapterlink)
 }
 
 
-QString MangaTown::getImageLink(QString pagelink)
+QString MangaTown::getImageLink(const QString &pagelink)
 {
     DownloadStringJob *job = AbstractMangaSource::downloadmanager->downloadAsString(pagelink);
 

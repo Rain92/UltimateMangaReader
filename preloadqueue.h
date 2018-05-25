@@ -34,7 +34,7 @@ public:
     DownloadScaledImageJob *currentJob();
 
 signals:
-    void completedDownload(QString path);
+    void completedDownload(const QString &path);
 
 public slots:
     void processNext();

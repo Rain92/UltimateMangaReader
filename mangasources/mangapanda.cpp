@@ -91,14 +91,16 @@ MangaInfo *MangaPanda::getMangaInfo(QString mangalink)
         coverlink = coverrx.cap(1);
 
 
+    int ind = coverlink.indexOf('?');
+    if (ind == -1)
+        ind = coverlink.length();
+    QString filetype = coverlink.mid(ind - 4, 4);
     coverlink = coverlink.replace("http:", "https:");
-    info->coverpath = downloaddircovers + "/" +
-                      makePathLegal(AbstractMangaSource::name + "_" + info->title) +
-                      "." + coverlink.right(3);
-
+    info->coverpath = mangainfodir(name, info->title) + "cover" + filetype;
 
 
     DownloadFileJob *coverjob = AbstractMangaSource::downloadmanager->downloadAsFile(coverlink, info->coverpath);
+
 
     QRegExp rxstart("<div id=\"chapterlist\">");
     QRegExp rxend("<div id=\"adfooter\">");
@@ -132,7 +134,7 @@ MangaInfo *MangaPanda::getMangaInfo(QString mangalink)
     return info;
 }
 
-QStringList *MangaPanda::getPageList(QString chapterlink)
+QStringList *MangaPanda::getPageList(const QString &chapterlink)
 {
 //    qDebug() << "getting pages";
     DownloadStringJob *job = AbstractMangaSource::downloadmanager->downloadAsString(chapterlink);
@@ -161,7 +163,7 @@ QStringList *MangaPanda::getPageList(QString chapterlink)
 }
 
 
-QString MangaPanda::getImageLink(QString pagelink)
+QString MangaPanda::getImageLink(const QString &pagelink)
 {
     DownloadStringJob *job = AbstractMangaSource::downloadmanager->downloadAsString(pagelink);
     QString imageLink;

@@ -55,10 +55,10 @@ public:
     AbstractMangaSource *mangasource;
 
 signals:
-    void completedImagePreloadSignal(QString path);
+    void completedImagePreloadSignal(const QString &path);
 
 private slots:
-    void completedImagePreload(QString path);
+    void completedImagePreload(const QString &path);
 
 private:
     PreloadQueue preloadqueue;

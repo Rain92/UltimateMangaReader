@@ -23,7 +23,7 @@ public:
 
 signals:
     void mangaSourceClicked(AbstractMangaSource *source);
-    void mangaClicked(QString mangalink);
+    void mangaClicked(const QString &mangalink);
 
 private slots:
 

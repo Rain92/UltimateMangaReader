@@ -19,14 +19,14 @@ ReadingState::ReadingState(QString hostname, QString title, qint32 oldnumchapter
     maxindex(maxindex),
     coverpath(coverpath),
     mangalink(mangalink),
-  isfavorite(false),
-  updated(false)
+    isfavorite(false),
+    updated(false)
 {}
 
 
 QString ReadingState::getSerializationFilename() const
 {
-    return readingstatesdir + "/" + makePathLegal(hostname + "_" + title) + ".dat";
+    return cachedir + makePathLegal(hostname + "_" + title) + ".dat";
 }
 
 
@@ -38,17 +38,15 @@ QString ReadingState::getKey()
 
 QDataStream &operator<<(QDataStream &str, const ReadingState &m)
 {
-    str << m.title << m.hostname << (qint32)m.oldnumchapters << m.currentindex << m.maxindex << m.isfavorite;
-    if (m.isfavorite)
-        str << m.coverpath << m.mangalink;
+    str << m.title << m.hostname << (qint32)m.oldnumchapters << m.currentindex << m.maxindex << m.isfavorite << m.coverpath << m.mangalink;
+
     return str;
 }
 
 QDataStream &operator>>(QDataStream &str, ReadingState &m)
 {
-    str >> m.title >> m.hostname >> m.oldnumchapters >> m.currentindex >> m.maxindex >> m.isfavorite;
-    if (m.isfavorite)
-        str >> m.coverpath >> m.mangalink;
+    str >> m.title >> m.hostname >> m.oldnumchapters >> m.currentindex >> m.maxindex >> m.isfavorite >> m.coverpath >> m.mangalink;
+
     return str;
 }
 

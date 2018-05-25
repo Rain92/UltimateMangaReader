@@ -6,10 +6,18 @@ MangaIndex::MangaIndex(int chapter, int page):
     illegal(false)
 {}
 
+MangaIndex::MangaIndex(int chapter, int page, bool illegal):
+    chapter(chapter),
+    page(page),
+    illegal(illegal)
+{}
 
 
 MangaIndex MangaIndex::nextPageIndex(QList<MangaChapter> *chapters)
 {
+    if (illegal)
+        return MangaIndex(-1, -1, true);
+
     if (page < chapters->at(chapter).numpages - 1)
     {
         return MangaIndex(chapter, page + 1);
@@ -20,13 +28,14 @@ MangaIndex MangaIndex::nextPageIndex(QList<MangaChapter> *chapters)
     }
     else
     {
-        MangaIndex m(-1, -1);
-        m.illegal = true;
-        return m;
+        return MangaIndex(-1, -1, true);
     }
 }
 MangaIndex MangaIndex::prevPageIndex(QList<MangaChapter> *chapters)
 {
+    if (illegal)
+        return MangaIndex(-1, -1, true);
+
     if (page > 0)
     {
         return MangaIndex(chapter, page - 1);
@@ -40,9 +49,7 @@ MangaIndex MangaIndex::prevPageIndex(QList<MangaChapter> *chapters)
     }
     else
     {
-        MangaIndex m(-1, -1);
-        m.illegal = true;
-        return m;
+        return MangaIndex(-1, -1, true);
     }
 }
 

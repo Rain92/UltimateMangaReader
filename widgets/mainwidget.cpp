@@ -14,6 +14,7 @@
 #include "WidgetCommon.h"
 #include "VirtualKeyboard.h"
 #include "VirtualKeyboardContainer.h"
+#include "platform/KoboPlatform.h"
 
 #endif
 
@@ -37,8 +38,8 @@ MainWidget::MainWidget(QWidget *parent) :
 
 
     mangasources.append(new MangaPanda(this, downloadmanager));
-    mangasources.append(new MangaDex(this, downloadmanager));
-    mangasources.append(new MangaTown(this, downloadmanager));
+//    mangasources.append(new MangaDex(this, downloadmanager));
+//    mangasources.append(new MangaTown(this, downloadmanager));
 
 
     currentsource = mangasources[0];
@@ -48,10 +49,11 @@ MainWidget::MainWidget(QWidget *parent) :
     downloadmanager->connect();
 
     foreach (AbstractMangaSource *ms, mangasources)
-        ms->deserialize();
+        ms->deserializeMangaList();
 
 
     setupUI();
+    setFrontLight();
 
     QObject::connect(ui->homeWidget, SIGNAL(mangaSourceClicked(AbstractMangaSource *)), this, SLOT(setCurrentSource(AbstractMangaSource *)));
     QObject::connect(ui->homeWidget, SIGNAL(mangaClicked(QString)), this, SLOT(viewMangaInfo(QString)));
@@ -65,8 +67,6 @@ MainWidget::MainWidget(QWidget *parent) :
     QObject::connect(ui->mangaReaderWidget, SIGNAL(advancPageClicked(bool)), this, SLOT(advanceMangaPage(bool)));
     QObject::connect(ui->mangaReaderWidget, SIGNAL(closeApp()), this, SLOT(on_pushButtonClose_clicked()));
     QObject::connect(ui->mangaReaderWidget, SIGNAL(back()), this, SLOT(readerGoBack()));
-
-//    QObject::connect(currentmanga, SIGNAL(completedImagePreloadSignal(QString)), ui->mangaReaderWidget, SLOT(addImageToCache(QString)));
 }
 
 MainWidget::~MainWidget()
@@ -99,23 +99,23 @@ void  MainWidget::adjustSizes()
 
 void MainWidget::setupDirs()
 {
-    if (!QDir(downloaddir).exists())
-        QDir().mkdir(downloaddir);
-
     if (!QDir(cachedir).exists())
-        QDir().mkdir(cachedir);
+        QDir().mkpath(cachedir);
 
-    if (!QDir(downloaddirimages).exists())
-        QDir().mkdir(downloaddirimages);
+    if (!QDir(mangalistdir).exists())
+        QDir().mkpath(mangalistdir);
+}
 
-    if (!QDir(downloaddircovers).exists())
-        QDir().mkdir(downloaddircovers);
 
-    if (!QDir(manglistcachdir).exists())
-        QDir().mkdir(manglistcachdir);
 
-    if (!QDir(readingstatesdir).exists())
-        QDir().mkdir(readingstatesdir);
+void MainWidget::setFrontLight()
+{
+#ifndef WINDOWS
+    Platform::get()->frontlightSetOn(true);
+    Platform::get()->frontlightSetLevel(30, 6400);
+
+//    static_cast<KoboPlatform*>(KoboPlatform::get())->toRgb(0x0000ff00);
+#endif
 }
 
 
@@ -150,7 +150,6 @@ void MainWidget::setWidgetTab(int page)
     getVirtualKeyboard()->hide();
 #endif
 
-
     if (page == ui->stackedWidget->currentIndex())
         return;
 
@@ -184,18 +183,30 @@ void MainWidget::setWidgetTab(int page)
 
 void MainWidget::viewFavorite(ReadingState fav, bool current)
 {
+    if (fav.mangalink == "")
+    {
+        qDebug() << "Mangalink is empty";
+        return;
+    }
+
+
     foreach (AbstractMangaSource *source, mangasources)
         if (fav.hostname == source->name)
             currentsource = source;
 
-
-    qDebug() << currentsource->name;
-    qDebug() << fav.coverpath;
-    qDebug() << fav.mangalink;
-
     if (current)
     {
+        if (currentmanga != nullptr)
+            delete currentmanga;
         currentmanga = currentsource->getMangaInfo(fav.mangalink);
+        QObject::connect(currentmanga, SIGNAL(completedImagePreloadSignal(QString)), ui->mangaReaderWidget, SLOT(addImageToCache(QString)));
+
+
+        ReadingState *rs = readingstatemanager.findOrInsert(*currentmanga);
+        currentmanga->currentindex = rs->currentindex;
+        ui->mangaInfoWidget->setManga(currentmanga);
+        ui->mangaInfoWidget->setFavoriteButtonState(!rs->isfavorite);
+
         viewMangaImage(fav.currentindex);
     }
     else
@@ -211,6 +222,8 @@ void MainWidget::setCurrentSource(AbstractMangaSource *source)
 
 void MainWidget::viewMangaInfo(QString mangalink)
 {
+    if (currentmanga != nullptr)
+        delete currentmanga;
     currentmanga = currentsource->getMangaInfo(mangalink);
     QObject::connect(currentmanga, SIGNAL(completedImagePreloadSignal(QString)), ui->mangaReaderWidget, SLOT(addImageToCache(QString)));
 
@@ -222,7 +235,7 @@ void MainWidget::viewMangaInfo(QString mangalink)
 
     setWidgetTab(1);
 
-//    currentmanga->PreloadPopular();
+    currentmanga->PreloadPopular();
 }
 
 void MainWidget::toggleFavorite(MangaInfo *manga)
@@ -250,6 +263,9 @@ void MainWidget::readerGoBack()
 
 void MainWidget::viewMangaImage(const MangaIndex &index)
 {
+    if (index.illegal)
+        return readerGoBack();
+
     ui->mangaReaderWidget->showImage(currentmanga->goChapterPage(index));
     ui->mangaReaderWidget->updateReaderLabels(currentmanga);
 

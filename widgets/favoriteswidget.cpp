@@ -24,26 +24,18 @@ FavoritesWidget::~FavoritesWidget()
 void FavoritesWidget::adjustSizes()
 {
     ui->tableWidget->setHorizontalHeaderLabels(QStringList() << "Manga" << "Host" << "Chapters" << "Progress");
-//    ui->tableWidget->setIconSize(QSize(100, 80));
-
 
     QHeaderView *verticalHeader = ui->tableWidget->verticalHeader();
     verticalHeader->setResizeMode(QHeaderView::Fixed);
     verticalHeader->setDefaultSectionSize(favoritesectonheight);
 
     QHeaderView *horizontalHeader = ui->tableWidget->horizontalHeader();
-//    horizontalHeader->setResizeMode(QHeaderView::Fixed);
     horizontalHeader->setClickable(false);
+
     for (int i = 0; i < 4; i++)
         horizontalHeader->setResizeMode(i, QHeaderView::Stretch);
-//    horizontalHeader->setResizeMode(1, QHeaderView::Fixed);
-//    horizontalHeader->setMinimumSectionSize(favoritesectionwidth);
-//    for (int i = 1; i < 4; i++)
-//        ui->tableWidget->setColumnWidth(i, this->width() / 6);
 
     ui->tableWidget->setVerticalScrollBar(new CScrollBar(Qt::Vertical, ui->tableWidget));
-//    resizeEvent(nullptr);
-
 }
 
 
@@ -52,10 +44,12 @@ void FavoritesWidget::updateList(const QList<ReadingState> &favs)
     readingstates = favs;
 
     ui->tableWidget->clearContents();
+    while (ui->tableWidget->model()->rowCount() > 0)
+        ui->tableWidget->removeRow(0);
     int r =  0;
     foreach (const ReadingState &fav, favs)
     {
-        QString coverpath = downloaddircovers + "/" + makePathLegal(fav.hostname + "_" + fav.title);
+        QString coverpath = mangainfodir(fav.hostname, fav.title) + "cover";
 
         if (QFileInfo(coverpath + ".jpg").exists())
             coverpath += ".jpg";
@@ -85,19 +79,20 @@ QWidget *FavoritesWidget::makeIconTextWidget(const QString &path, const QString 
 {
     QWidget *widget = new QWidget();
 
-    QLabel *textlabel = new QLabel(text);
-    textlabel->setAlignment(Qt::AlignCenter);
+    QLabel *textlabel = new QLabel(text, widget);
 
-    QLabel *iconlabel = new QLabel();
-    iconlabel->setAlignment(Qt::AlignCenter);
+    QLabel *iconlabel = new QLabel(widget);
     iconlabel->setMaximumSize(iconsize);
     iconlabel->setScaledContents(true);
     iconlabel->setPixmap(QPixmap(path));
 
     QVBoxLayout *vlayout = new QVBoxLayout(widget);
-    vlayout->addWidget(iconlabel);
-    vlayout->addWidget(textlabel);
     vlayout->setAlignment(Qt::AlignCenter);
+    QHBoxLayout *hlayout = new QHBoxLayout();
+    hlayout->addWidget(iconlabel);
+
+    vlayout->addLayout(hlayout);
+    vlayout->addWidget(textlabel);
     vlayout->setContentsMargins(0, 0, 0, 0);
     vlayout->setSpacing(2);
     vlayout->setMargin(0);
@@ -108,5 +103,5 @@ QWidget *FavoritesWidget::makeIconTextWidget(const QString &path, const QString 
 
 void FavoritesWidget::on_tableWidget_cellClicked(int row, int column)
 {
-    emit favoriteClicked(readingstates[row], column != 0);
+    emit favoriteClicked(readingstates[row], column >= 2);
 }

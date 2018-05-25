@@ -13,8 +13,8 @@ public:
 
     bool updateMangaList();
     MangaInfo *getMangaInfo(QString mangalink);
-    QStringList *getPageList(QString chapterlink);
-    QString getImageLink(QString pagelink);
+    QStringList *getPageList(const QString &chapterlink);
+    QString getImageLink(const QString &pagelink);
 
 };
 #endif // MANGATOWN_H

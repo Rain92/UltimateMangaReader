@@ -17,7 +17,7 @@ void MangaImageContainer::mousePressEvent(QMouseEvent *event)
 }
 
 
-void MangaImageContainer::setImage(QString path)
+void MangaImageContainer::setImage(const QString &path)
 {
     QFileInfo fi(path);
     if (fi.exists())

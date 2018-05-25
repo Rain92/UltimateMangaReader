@@ -1,0 +1,242 @@
+QWidget {
+    background-color: white;
+    selection-color: white;
+    selection-background-color: black;
+}
+
+QMenu 
+{
+  border: 2px solid black;
+  background-color:white;
+}
+QMenu::item::selected 
+{
+  border-bottom: 5px solid black;
+}
+QMenu::item 
+{
+  padding: 0px 25px 0px 20px;
+  border-bottom: 5px solid transparent;
+}
+QMenu::indicator 
+{
+    width: 20px;
+    height: 20px;
+}
+QMenu::indicator:exclusive:checked 
+{
+    image: url(:/checked.png);
+}
+
+QCheckBox 
+{
+  padding: 3px;
+}
+QCheckBox:focus
+{
+  padding: 1px;
+  outline: none;
+}
+QCheckBox::indicator 
+{
+  width: 24px;
+  height: 24px;
+  border: 1px solid black;
+  margin: 3px;
+  border-radius:5px;
+}
+QCheckBox::indicator:checked 
+{
+  image: url(:/checked.png);
+}
+QCheckBox::indicator:unchecked 
+{
+}
+QCheckBox::indicator:focus
+{
+  border: 3px solid black;
+  margin: 2px;
+}
+
+QLineEdit, QSpinBox, QDoubleSpinBox
+{
+  background-color:white;
+  border:1px solid black;
+  border-radius:5px;
+  padding: 2px;
+}
+QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus
+{
+  border: 2px solid black;
+  padding: 1px;
+}
+QLineEdit:edit-focus, QSpinBox:edit-focus, QDoubleSpinBox:edit-focus
+{
+  border: 3px solid black;
+  padding: 0px;
+}
+
+QTextEdit
+{
+  background-color:transparent;
+  border:1px solid black;
+  padding: 2px;
+}
+QTextEdit:focus
+{
+  border: 2px solid black;
+  padding: 1px;
+}
+QTextEdit:edit-focus
+{
+  border: 3px solid black;
+  padding: 0px;
+}
+
+QComboBox
+{
+  background-color:white;
+  border: 1px solid black;
+  border-radius:5px;
+  padding-top: 3px;
+  padding-right: 0px;
+  padding-bottom: 3px;
+  padding-left: 5px;
+}
+QComboBox:focus
+{
+  border: 3px solid black;
+  padding-top: 1px;
+  padding-right: 0px;
+  padding-bottom: 1px;
+  padding-left: 3px;
+}
+QComboBox::drop-down
+{
+  border-width:1px;
+}
+QComboBox::down-arrow {
+  image:url(:/down-arrow.png);
+  padding-top: 2px;
+  padding-right: 5px;
+  padding-bottom: 2px;
+  padding-left: 0px;  
+}
+QComboBox::down-arrow:focus
+{
+  padding-top: 0px;
+  padding-right: 0px;
+  padding-bottom: 0px;
+  padding-left: 0px;  
+}
+
+QTreeView, QListView, QTableView {
+    padding: 2px;
+    border: 1px solid black;
+    background: white;
+    outline: none;
+}
+QTreeView:focus, QListView:focus, QTableView:focus {
+    padding: 1px;
+    border: 2px solid black;
+}
+QTreeView:edit-focus, QListView:edit-focus, QTableView:edit-focus {
+    padding: 0px;
+    border: 3px solid black;
+}
+QTreeView::branch:has-children:!has-siblings:closed,
+QTreeView::branch:closed:has-children:has-siblings 
+{
+    border-image: none;
+    image: url(:/plus.png);
+}
+QTreeView::branch:open:has-children:!has-siblings,
+QTreeView::branch:open:has-children:has-siblings  
+{
+    border-image: none;
+    image: url(:/minus.png);
+}
+
+QPushButton
+{
+    background: white;
+    border: 1px solid black;
+    color: black;
+    padding: 9px;
+    outline: none;
+}
+QPushButton:focus {
+    border: 3px solid black;
+    padding: 7px;
+}
+QPushButton:pressed {
+    border: 4px solid black;
+    padding: 6px;
+}
+
+QToolButton
+{
+    background: transparent;
+    border: 1px transparent;
+    color: black;
+    padding: 4px;
+    outline: none;
+}
+QToolButton:checked
+{
+    border: 1px solid black;
+}
+RotationDlg QToolButton
+{
+    background: white;
+    border: 1px solid black;
+    border-radius: 1em;
+}
+QToolButton:focus {
+    border: 3px solid black;
+    padding: 2px;
+}
+QToolButton:pressed {
+    border: 4px solid black;
+    padding: 1px;
+}
+
+QSlider::groove:horizontal {
+     border: 1px solid black;
+     border-radius: 5px;
+     height: 8px;
+     background: transparent;
+     margin: 2px 0;
+}
+QSlider::handle:horizontal {
+     background: white;
+     border: 1px solid black;
+     border-radius: 5px;
+     width: 10px;
+     margin: -7px 0;
+     border-radius: 5px;
+}
+
+QSlider::handle:horizontal::focus {
+     background: black;
+}
+
+QScrollBar {
+    background: transparent;
+}
+QScrollBar::handle {
+    background: gray;
+    min-height: 50px;
+}
+QScrollBar::handle:vertical {
+  min-height: 47px;
+  height: 47px;
+  width:10px;
+}
+QScrollBar::add-line {
+    width: 0px;
+}
+QScrollBar::sub-line {
+    width: 0px;
+}
+

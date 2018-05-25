@@ -42,7 +42,7 @@ bool MangaDex::updateMangaList()
 
     int pages = (nummangas + 99) / 100;
 
-    qDebug() << pages;
+//    qDebug() << pages;
 
     QVector<DownloadStringJob *> jobs = QVector<DownloadStringJob *>(pages);
     jobs[0] = job;
@@ -81,7 +81,7 @@ bool MangaDex::updateMangaList()
 }
 
 
-MangaInfo *MangaDex::getMangaInfo(QString mangalink)
+MangaInfo *MangaDex::getMangaInfo( QString mangalink)
 {
     downloadmanager->addCookie("mangadex.org", "mangadex_filter_langs", "1");
 
@@ -133,11 +133,13 @@ MangaInfo *MangaDex::getMangaInfo(QString mangalink)
     if (coverrx.indexIn(job->buffer, spos) != -1)
         coverlink = AbstractMangaSource::baseurl + coverrx.cap(1);
 
-    coverlink = coverlink.left(coverlink.indexOf('?'));
 
-    info->coverpath = downloaddircovers + "/" +
-                      makePathLegal(AbstractMangaSource::name + "_" + info->title) +
-                      "." + coverlink.right(3);
+    int ind = coverlink.indexOf('?');
+    if (ind == -1)
+        ind = coverlink.length();
+    QString filetype = coverlink.mid(ind - 4, 4);
+    coverlink = coverlink.replace("http:", "https:");
+    info->coverpath = mangainfodir(name, info->title) + "cover" + filetype;
 
 
     DownloadFileJob *coverjob = AbstractMangaSource::downloadmanager->downloadAsFile(coverlink, info->coverpath);
@@ -198,7 +200,7 @@ MangaInfo *MangaDex::getMangaInfo(QString mangalink)
     return info;
 }
 
-QStringList *MangaDex::getPageList(QString chapterlink)
+QStringList *MangaDex::getPageList(const QString &chapterlink)
 {
     DownloadStringJob *job = AbstractMangaSource::downloadmanager->downloadAsString(chapterlink);
     QStringList *pageLinks = new QStringList();
@@ -241,7 +243,7 @@ QStringList *MangaDex::getPageList(QString chapterlink)
 }
 
 
-QString MangaDex::getImageLink(QString pagelink)
+QString MangaDex::getImageLink(const QString &pagelink)
 {
     return pagelink;
 }

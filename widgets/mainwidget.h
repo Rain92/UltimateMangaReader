@@ -6,8 +6,8 @@
 #include "ReadingStateManager.h"
 #include "downloadmanager.h"
 #include "mangapanda.h"
-#include "mangadex.h"
-#include "mangatown.h"
+//#include "mangadex.h"
+//#include "mangatown.h"
 #include "homewidget.h"
 #include "mangainfowidget.h"
 #include "favoriteswidget.h"
@@ -48,6 +48,8 @@ public slots:
     void readerGoBack();
 
     void setWidgetTab(int page);
+
+    void setFrontLight();
 
 private slots:
     void on_pushButtonHome_clicked();

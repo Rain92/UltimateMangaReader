@@ -12,27 +12,27 @@ AbstractMangaSource::AbstractMangaSource(QObject *parent) :
 }
 
 
-bool AbstractMangaSource::serialize()
+bool AbstractMangaSource::serializeMangaList()
 {
-    QFile file(manglistcachdir + "/" + name + "_cache.dat");
+    QFile file(mangalistdir + name + "_mangalist.dat");
     if (!file.open(QIODevice::WriteOnly))
         return false;
     QDataStream out(&file);
     out << mangalist.titles;
     out << mangalist.links;
-    out << nummangas;
+    out << (qint32)nummangas;
 
     file.close();
 
     return true;
 }
 
-bool AbstractMangaSource::deserialize()
+bool AbstractMangaSource::deserializeMangaList()
 {
     mangalist.links.clear();
     mangalist.titles.clear();
 
-    QFile file(manglistcachdir + "/" + name + "_cache.dat");
+    QFile file(mangalistdir + name + "_mangalist.dat");
     if (!file.open(QIODevice::ReadOnly))
         return false;
     QDataStream in(&file);
@@ -47,18 +47,13 @@ bool AbstractMangaSource::deserialize()
 
 DownloadFileJob *AbstractMangaSource::downloadImage(const QString &imagelink, const QString &mangatitle, const int &chapternum, const int &pagenum)
 {
-//    qDebug() << "downloadimage";
-//    qDebug() << imagelink;
-//    qDebug() << makeLegal(name + "_" + mangatitle);
-//    qDebug() <<  QString::number(chapternum);
-//    qDebug() << QString::number(pagenum);
-//    qDebug() << imagelink.right(3);
     int ind = imagelink.indexOf('?');
     if (ind == -1)
         ind = imagelink.length();
     QString filetype = imagelink.mid(ind - 4, 4);
-    QString path = downloaddirimages + "/" + makePathLegal(name + "_" + mangatitle) +
-                   + "_" + QString::number(chapternum) + "_" + QString::number(pagenum) + filetype;
+    QString path = mangaimagesdir(name, mangatitle) + QString::number(chapternum) + "_" + QString::number(pagenum) + filetype;
+
+
 
 
 
@@ -73,8 +68,7 @@ QString AbstractMangaSource::downloadAwaitImage(const QString &imagelink, const 
     if (ind == -1)
         ind = imagelink.length();
     QString filetype = imagelink.mid(ind - 4, 4);
-    QString path = downloaddirimages + "/" + makePathLegal(name + "_" + mangatitle) +
-                   + "_" + QString::number(chapternum) + "_" + QString::number(pagenum) + filetype;
+    QString path = mangaimagesdir(name, mangatitle) + QString::number(chapternum) + "_" + QString::number(pagenum) + filetype;
 
     QFileInfo completedfile (path + ".completed");
 

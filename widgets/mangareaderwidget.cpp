@@ -57,11 +57,6 @@ void MangaReaderWidget::showImage(const QString &path)
 
     if (path != "")
     {
-//        ui->mangaImageContainer->setImage(path);
-        QPixmap p;
-        p.load(path);
-        ui->mangaImageContainer->setImage(p);
-
         int i = imgcachepaths.indexOf(path);
 
         if (i != -1)
@@ -117,7 +112,6 @@ void MangaReaderWidget::on_mangaImageContainer_clicked(QPoint pos)
     }
     else
     {
-        QString path;
         if (pos.x() > this->width() * readerpreviouspagethreshold)
         {
             emit advancPageClicked(true);

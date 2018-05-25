@@ -11,7 +11,7 @@ class MangaImageContainer : public QFrame
 public:
     MangaImageContainer(QWidget *parent);
 
-    void setImage(QString path);
+    void setImage(const QString &path);
     void setImage(const QPixmap &img);
 
 protected:

@@ -9,7 +9,15 @@ DownloadFileJob::DownloadFileJob(QObject *parent, QNetworkAccessManager *nm, con
     , networkManager(nm)
     , errorString("")
 {
+    QFileInfo fi(path);
+    QString dirname = fi.path();
+//    qDebug() << path << dirname;
+
+    if (!QDir(dirname).exists())
+        QDir().mkpath(dirname);
+
     file.setFileName(path);
+
 
     QFileInfo completed_file(path + ".completed");
 

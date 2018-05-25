@@ -24,7 +24,7 @@ private slots:
     void rescaleImageFinised();
 
 private:
-    void rescaleImage(QByteArray array, QString filename);
+    void rescaleImage(QByteArray array, const QString &filename);
     QFutureWatcher<void> watcher;
     QByteArray array;
 };

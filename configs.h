@@ -7,18 +7,30 @@
 #include "QtUtils.h"
 #endif
 
+
+// dirstructure:
+//               /cache/      -> favorites.dat
+//               /cache/mangalists/ -> hostname_mangalist.dat
+//               /cache/hostname/manganame/ -> mangainfo.dat progress.dat
+//               /cache/hostname/manganame/images/ -> manganame_chapter_page.jpg/png
+
 #ifdef WINDOWS
-const QString downloaddir = "D:/VMwareVMs/share/projects/testdownload";
-const QString cachedir = "D:/VMwareVMs/share/projects/testdownload/cache";
+
+//#define cachedir QCoreApplication::applicationDirPath() + "/cache/"
+//#define mangalistdir QCoreApplication::applicationDirPath() + "/cache/mangalists/"
+
+
+#define cachedir "./cache/"
+#define mangalistdir "./cache/mangalists/"
+
 #else
-const QString downloaddir = "./ultimatemangareader";
-const QString cachedir = downloaddir + "/cache";
+#define cachedir "./UltimateMangaReader/cache/"
+#define mangalistdir "./UltimateMangaReader/cache/mangalists/"
 #endif
 
-const QString downloaddirimages = downloaddir + "/images";
-const QString downloaddircovers = downloaddirimages + "/covers";
-const QString manglistcachdir = cachedir + "/mangalists";
-const QString readingstatesdir = cachedir + "/progress";
+#define mangainfodir(hostname, manganame) (cachedir + hostname + "/" + makePathLegal(manganame) + "/")
+#define mangaimagesdir(hostname, manganame) (mangainfodir(hostname, manganame) + "images/")
+
 
 #ifdef WINDOWS
 
@@ -33,14 +45,23 @@ const QString readingstatesdir = cachedir + "/progress";
 
 #endif
 
-#define mangasourceiconsize mm_to_px(15)
+#define listsourceswidth mm_to_px(65)
+#define listsourcesheight mm_to_px(50)
+#define mangasourceiconsize mm_to_px(14)
+#define mangasourceitemwidth mm_to_px(30)
+#define mangasourceitemheight mm_to_px(20)
+#define mangacourceiconspacing mm_to_px(3)
+
 #define buttonsize mm_to_px(10)
 #define buttonsizeaddfavorite mm_to_px(6)
+
+#define scrollbarsliderminlength mm_to_px(8)
 #define scrollbarwidth mm_to_px(6)
-#define scrollbarheight mm_to_px(5)
+#define scrollbarheight mm_to_px(4)
 #define summaryscrollbarwidth mm_to_px(4)
-#define listsourcessize mm_to_px(45)
+
 #define coversize mm_to_px(50)
+
 #define favoritesectonheight mm_to_px(20)
 #define favoritesectionwidth mm_to_px(50)
 #define favoritecoverheight mm_to_px(16)
