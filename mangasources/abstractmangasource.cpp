@@ -96,11 +96,23 @@ MangaInfo *AbstractMangaSource::loadMangaInfo(const QString &mangalink, const QS
     QFileInfo infofile(mangainfodir(name, mangatitle) + "mangainfo.dat");
     if (infofile.exists())
     {
-        return MangaInfo::deserialize(this->parent(), this, infofile.filePath());
+        MangaInfo *mi = MangaInfo::deserialize(this->parent(), this, infofile.filePath());
+        mi->mangasource->updateMangaInfo(mi);
+        return mi;
     }
 
     return getMangaInfo(mangalink);
 }
+
+
+void AbstractMangaSource::updateMangaInfo(MangaInfo *info)
+{
+    DownloadStringJob *job = downloadmanager->downloadAsString(info->link);
+
+    QObject::connect(job, SIGNAL(completed()), new BindingClass(this, info, job), SLOT(updateFinishedLoading()));
+
+}
+
 
 //AbstractMangaSource *AbstractMangaSource::getSourceByName(const QString &name)
 //{

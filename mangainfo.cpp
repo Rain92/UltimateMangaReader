@@ -25,7 +25,7 @@ QString MangaInfo::getImageLink(MangaIndex index)
 
     if (chapters[index.chapter].imagelinks[index.page] == "")
         chapters[index.chapter].imagelinks[index.page] =
-            mangasource->getImageLink(chapters[index.chapter].pagelinks->at(index.page));
+            mangasource->getImageLink(chapters[index.chapter].pagelinks.at(index.page));
 
     return chapters[index.chapter].imagelinks[index.page];
 }
@@ -88,29 +88,29 @@ QString MangaInfo::goFirstChapter()
     return getCurrentImage();
 }
 
-void MangaInfo::PreloadImage(MangaIndex index)
+void MangaInfo::preloadImage(MangaIndex index)
 {
     preloadqueue.addJob(DownloadImageInfo(getImageLink(index), title, index.chapter, index.page));
 //    mangasource->downloadImage(getImageLink(index), title, index.chapter, index.page);
 }
 
-void MangaInfo::PreloadPopular()
+void MangaInfo::preloadPopular()
 {
-    PreloadImage(currentindex);
-    PreloadImage(MangaIndex(numchapters - 1, 0));
+    preloadImage(currentindex);
+    preloadImage(MangaIndex(numchapters - 1, 0));
 }
 
 
-void MangaInfo::PreloadNeighbours(int distance)
+void MangaInfo::preloadNeighbours(int distance)
 {
     MangaIndex ind = currentindex;
     ind = ind.nextPageIndex(&chapters);
     if (!ind.illegal)
-        PreloadImage(ind);
+        preloadImage(ind);
 
     ind = currentindex.prevPageIndex(&chapters);
     if (!ind.illegal)
-        PreloadImage(ind);
+        preloadImage(ind);
 
     ind = currentindex.nextPageIndex(&chapters);
     for (int i = 1; i < distance; i++)
@@ -118,11 +118,11 @@ void MangaInfo::PreloadNeighbours(int distance)
         ind = ind.nextPageIndex(&chapters);
         if (ind.illegal)
             break;
-        PreloadImage(ind);
+        preloadImage(ind);
     }
 }
 
-void MangaInfo::CancelAllPreloads()
+void MangaInfo::cancelAllPreloads()
 {
     preloadqueue.clearQuene();
 }
@@ -195,11 +195,16 @@ void MangaInfo::serializeProgress()
         return;
 
     QDataStream out(&file);
-    out << currentindex << numchapters;
+    out << currentindex << (qint32) numchapters;
 
     file.close();
 }
 
+
+void MangaInfo::sendUpdated()
+{
+    emit updated();
+}
 
 
 

@@ -16,7 +16,7 @@ public:
     explicit FavoritesWidget(QWidget *parent = 0);
     ~FavoritesWidget();
 
-    void updateList(const QList<Favorite> &favs);
+    void showFavoritesList(const QList<Favorite> &favs);
 
 signals:
     void favoriteClicked(Favorite fav, bool current);

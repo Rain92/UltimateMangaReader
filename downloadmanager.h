@@ -37,9 +37,9 @@ public:
 
     QMap<QString, DownloadFileJob *> *fileDownloads;
 
-    DownloadStringJob *downloadAsString(const QString &url);
-    DownloadFileJob *downloadAsFile(const QString &url, const QString &path);
-    DownloadFileJob *downloadAsScaledImage(const QString &url, const QString &path);
+    DownloadStringJob *downloadAsString(QString url);
+    DownloadFileJob *downloadAsFile(QString url, QString path);
+    DownloadFileJob *downloadAsScaledImage(QString url, QString path);
 
     bool awaitAllFileDownloads(int timeout);
 

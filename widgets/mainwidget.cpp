@@ -154,7 +154,7 @@ void MainWidget::setWidgetTab(int page)
         return;
 
     if (currentmanga != nullptr)
-        currentmanga->CancelAllPreloads();
+        currentmanga->cancelAllPreloads();
 
     if (page == 3)
     {
@@ -169,7 +169,7 @@ void MainWidget::setWidgetTab(int page)
         }
         if (page == 2)
         {
-            ui->favoritesWidget->updateList(favorites.getFavorites());
+            ui->favoritesWidget->showFavoritesList(favorites.getFavorites());
             lastTab = 2;
         }
 
@@ -219,15 +219,12 @@ void MainWidget::viewMangaInfo(const QString &mangalink, const QString &mangatit
     currentmanga = currentsource->loadMangaInfo(mangalink, mangatitle);
     QObject::connect(currentmanga, SIGNAL(completedImagePreloadSignal(QString)), ui->mangaReaderWidget, SLOT(addImageToCache(QString)));
 
-
-//    ReadingState *rs = readingstatemanager.findOrInsert(*currentmanga);
-//    currentmanga->currentindex = rs->currentindex;
-    //    ui->mangaInfoWidget->setFavoriteButtonState(!rs->isfavorite);
     ui->mangaInfoWidget->setManga(currentmanga);
+    ui->mangaInfoWidget->setFavoriteButtonState(!favorites.isFavorite(currentmanga));
 
     setWidgetTab(1);
 
-    currentmanga->PreloadPopular();
+    currentmanga->preloadPopular();
 }
 
 void MainWidget::toggleFavorite(MangaInfo *manga)
@@ -261,7 +258,7 @@ void MainWidget::viewMangaImage(const MangaIndex &index)
 
     setWidgetTab(3);
 
-    currentmanga->PreloadNeighbours();
+    currentmanga->preloadNeighbours();
     currentmanga->serializeProgress();
 }
 

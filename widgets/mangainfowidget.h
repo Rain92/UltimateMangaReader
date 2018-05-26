@@ -25,6 +25,9 @@ signals:
     void toggleFavoriteClicked(MangaInfo *manga);
     void readMangaClicked(MangaIndex index);
 
+public slots:
+
+    void updateManga();
 private slots:
     void on_pushButtonMangaInfoAddFavorites_clicked();
 

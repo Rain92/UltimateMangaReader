@@ -10,8 +10,9 @@ public:
 
     bool pagesloaded;
     int numpages;
-    QVector<QString> *pagelinks;
-    QVector<QString> imagelinks;
+
+    QStringList pagelinks;
+    QStringList imagelinks;
 
     MangaChapter(const QString &link, AbstractMangaSource *source);
     MangaChapter();

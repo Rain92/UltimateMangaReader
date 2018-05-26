@@ -59,7 +59,16 @@ void MangaInfoWidget::setManga(MangaInfo *manga)
     img.load(currentmanga->coverpath);
     ui->labelMangaInfoCover->setPixmap(img.scaled(coversize, coversize, Qt::KeepAspectRatio, Qt::SmoothTransformation));
 
+    QObject::connect(currentmanga, SIGNAL(updated()), this, SLOT(updateManga()));
 }
+
+void MangaInfoWidget::updateManga()
+{
+    qDebug() << "update";
+    ui->labelMangaInfoLabelStaus->setText(currentmanga->status);
+    static_cast<QStringListModel *>(ui->listViewChapters->model())->setStringList(currentmanga->chapertitlesreversed);
+}
+
 
 void MangaInfoWidget::setFavoriteButtonState(bool state)
 {

@@ -30,14 +30,17 @@ public:
 
     virtual bool updateMangaList() = 0;
 
-//    virtual int *getNumChapters(QString mangalink) = 0;
 
     virtual MangaInfo *getMangaInfo(QString mangalink) = 0;
+//    virtual bool updateMangaInfo(MangaInfo *mangainfo) = 0;
+    virtual void updateMangaInfoFinishedLoading(DownloadStringJob *job, MangaInfo *mangainfo) = 0;
 
-    virtual QVector<QString> *getPageList(const QString &chapterlink) = 0;
+    virtual QStringList getPageList(const QString &chapterlink) = 0;
     virtual QString getImageLink(const QString &pagelink) = 0;
 
     MangaInfo *loadMangaInfo(const QString &mangalink, const QString &mangatitle);
+
+    void updateMangaInfo(MangaInfo *mangainfo);
 
     bool serializeMangaList();
     bool deserializeMangaList();
@@ -59,6 +62,30 @@ protected:
 
 };
 
+class BindingClass : public QObject
+{
+    Q_OBJECT
+public:
+    BindingClass(
+        AbstractMangaSource *mangasource,
+        MangaInfo *mangainfo,
+        DownloadStringJob *job):
+        mangasource(mangasource),
+        mangainfo(mangainfo),
+        job(job) {};
+
+public slots:
+    void updateFinishedLoading()
+    {
+        mangasource->updateMangaInfoFinishedLoading(job, mangainfo);
+        this->deleteLater();
+    }
+
+private:
+    AbstractMangaSource *mangasource;
+    MangaInfo *mangainfo;
+    DownloadStringJob *job;
+};
 
 
 

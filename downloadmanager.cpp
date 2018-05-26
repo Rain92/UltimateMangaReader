@@ -48,7 +48,7 @@ void DownloadManager::onActivity()
 #endif
 }
 
-DownloadStringJob *DownloadManager::downloadAsString(const QString &url)
+DownloadStringJob *DownloadManager::downloadAsString(QString url)
 {
     DownloadStringJob *job = new DownloadStringJob(this, manager, url);
 
@@ -57,7 +57,7 @@ DownloadStringJob *DownloadManager::downloadAsString(const QString &url)
 }
 
 
-DownloadFileJob *DownloadManager::downloadAsFile(const QString &url, const QString &path)
+DownloadFileJob *DownloadManager::downloadAsFile(QString url, QString path)
 {
     if (fileDownloads->contains(url))
     {
@@ -73,7 +73,7 @@ DownloadFileJob *DownloadManager::downloadAsFile(const QString &url, const QStri
     }
 }
 
-DownloadFileJob *DownloadManager::downloadAsScaledImage(const QString &url, const QString &path)
+DownloadFileJob *DownloadManager::downloadAsScaledImage(QString url, QString path)
 {
     if (fileDownloads->contains(url))
     {

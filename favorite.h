@@ -13,6 +13,7 @@ struct Favorite
     MangaIndex currentindex;
     QString coverpath;
     QString mangalink;
+    QString status;
     bool updated;
 
 
@@ -23,7 +24,8 @@ struct Favorite
              int numchapters,
              MangaIndex currentindex,
              QString coverpath,
-             QString mangalink);
+             QString mangalink,
+             QString status);
 
     QString mangaInfoPath() const;
     QString mangaProgressPath() const;
@@ -31,7 +33,7 @@ struct Favorite
 
     static Favorite fromMangaInfo(MangaInfo *info)
     {
-        return Favorite(info->hostname, info->title, info->numchapters, info->currentindex, info->coverpath, info->link);
+        return Favorite(info->hostname, info->title, info->numchapters, info->currentindex, info->coverpath, info->link, info->status);
     }
 };
 

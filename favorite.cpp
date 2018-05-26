@@ -8,13 +8,14 @@ Favorite::Favorite():
     updated(false)
 {}
 
-Favorite::Favorite(QString hostname, QString title, int numchapters, MangaIndex currentindex, QString coverpath, QString mangalink) :
+Favorite::Favorite(QString hostname, QString title, int numchapters, MangaIndex currentindex, QString coverpath, QString mangalink, QString status) :
     hostname(hostname),
     title(title),
     numchapters(numchapters),
     currentindex(currentindex),
     coverpath(coverpath),
     mangalink(mangalink),
+    status(status),
     updated(false)
 {}
 
@@ -30,14 +31,14 @@ QString Favorite::mangaProgressPath() const
 
 QDataStream &operator<<(QDataStream &str, const Favorite &m)
 {
-    str << m.title << m.hostname << (qint32)m.numchapters << m.currentindex << m.coverpath << m.mangalink;
+    str << m.title << m.hostname << (qint32)m.numchapters << m.currentindex << m.coverpath << m.mangalink << m.status;
 
     return str;
 }
 
 QDataStream &operator>>(QDataStream &str, Favorite &m)
 {
-    str >> m.title >> m.hostname >> m.numchapters >> m.currentindex >> m.coverpath >> m.mangalink;
+    str >> m.title >> m.hostname >> m.numchapters >> m.currentindex >> m.coverpath >> m.mangalink >> m.status;
 
     return str;
 }

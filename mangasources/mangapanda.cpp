@@ -46,8 +46,6 @@ bool MangaPanda::updateMangaList()
     return true;
 }
 
-
-
 MangaInfo *MangaPanda::getMangaInfo(QString mangalink)
 {
 //    qDebug() << mangalink;
@@ -105,12 +103,10 @@ MangaInfo *MangaPanda::getMangaInfo(QString mangalink)
     DownloadFileJob *coverjob = downloadmanager->downloadAsFile(coverlink, info->coverpath);
 
 
-    QRegExp rxstart("<div id=\"chapterlist\">");
-    QRegExp rxend("<div id=\"adfooter\">");
     QRegExp rx("<a href=\"([^\"]*)\"[^>]*>([^<]*)</a>([^<]*)");
 
-    int spos = rxstart.indexIn(job->buffer, 0) + rx.matchedLength() + 1;
-    int epos = rxend.indexIn(job->buffer, spos);
+    int spos = job->buffer.indexOf("<div id=\"chapterlist\">");
+    int epos = job->buffer.indexOf("<div id=\"adfooter\">", spos);
 
     info->numchapters = 0;
     for (int pos = spos; (pos = rx.indexIn(job->buffer, pos)) != -1
@@ -124,6 +120,10 @@ MangaInfo *MangaPanda::getMangaInfo(QString mangalink)
         info->chapertitlesreversed.insert(0, ctitle);
         info->numchapters++;
     }
+
+    info->chapters.removeLast();
+    info->chapertitlesreversed.removeAt(0);
+    info->numchapters--;
 
     if (coverlink != "" && !coverjob->await(3000))
     {
@@ -139,30 +139,84 @@ MangaInfo *MangaPanda::getMangaInfo(QString mangalink)
     return info;
 }
 
-QVector<QString> *MangaPanda::getPageList(const QString &chapterlink)
+
+
+void MangaPanda::updateMangaInfoFinishedLoading(DownloadStringJob *job, MangaInfo *info)
 {
-//    qDebug() << "getting pages";
+    int spos = job->buffer.indexOf("LATEST CHAPTERS");
+    if (spos == -1)
+        return;
+
+    QRegExp chrx("(\\d+)\">");
+
+    int oldnumchapters = info->numchapters;
+    int numchapters = info->numchapters;
+
+    if (chrx.indexIn(job->buffer, 0) != -1)
+        numchapters = chrx.cap(1).toInt();
+
+    if (numchapters == 0 || numchapters == info->numchapters)
+        return;
+
+
+    QRegExp statusrx("Status:</td>[^>]*>([^<]*)");
+
+    if (statusrx.indexIn(job->buffer, 0) != -1)
+        info->status = statusrx.cap(1);
+
+
+    QRegExp rx("<a href=\"([^\"]*)\"[^>]*>([^<]*)</a>([^<]*)");
+
+    spos = job->buffer.indexOf("<div id=\"chapterlist\">");
+    int epos = job->buffer.indexOf("<div id=\"adfooter\">", spos);
+
+
+
+    for (int pos = spos, c = 0; (pos = rx.indexIn(job->buffer, pos)) != -1
+            && pos < epos; pos += rx.matchedLength(), c++)
+    {
+        if (c < info->numchapters)
+            continue;
+
+        info->chapters.append(MangaChapter(baseurl + rx.cap(1), this));
+
+        QString ctitle = rx.cap(2);
+        if (rx.cap(3) != " : ")
+            ctitle += rx.cap(3);
+        info->chapertitlesreversed.insert(0, ctitle);
+
+        info->numchapters++;
+    }
+
+    if (oldnumchapters == info->numchapters)
+        return;
+
+
+    info->serialize();
+
+    info->sendUpdated();
+}
+
+
+QStringList MangaPanda::getPageList(const QString &chapterlink)
+{
     DownloadStringJob *job = downloadmanager->downloadAsString(chapterlink);
-    QVector<QString> *pageLinks = new QVector<QString>();
-    pageLinks->reserve(20);
+    QStringList pageLinks;
 
     if (!job->await(3000))
         return pageLinks;
 
 
-    QRegExp rxstart("<select id=\"pageMenu\" name=\"pageMenu\">");
-    QRegExp rxend("</select>");
     QRegExp rx("<option value=\"([^\"]*)\"");
 
-    int spos = rxstart.indexIn(job->buffer, 0) + rx.matchedLength() + 1;
-    int epos = rxend.indexIn(job->buffer, spos);
+    int spos = job->buffer.indexOf("<select id=\"pageMenu\" name=\"pageMenu\">");
+    int epos = job->buffer.indexOf("</select>", spos);
 
     for (int pos = spos; (pos = rx.indexIn(job->buffer, pos)) != -1
             && pos < epos; pos += rx.matchedLength())
     {
-        pageLinks->append(baseurl + rx.cap(1));
+        pageLinks.append(baseurl + rx.cap(1));
     }
-//    qDebug() << chapterlink << "pages: " << pageLinks->count();
 
     delete job;
     return pageLinks;
@@ -174,16 +228,15 @@ QString MangaPanda::getImageLink(const QString &pagelink)
     DownloadStringJob *job = downloadmanager->downloadAsString(pagelink);
     QString imageLink;
 
-    QRegExp rxstart("<img id=\"img\"");
-    QRegExp rxend("/>");
+
     QRegExp rx("src=\"([^\"]*)\"");
 
     if (!job->await(3000))
         return imageLink;
 
 
-    int spos = rxstart.indexIn(job->buffer, 0) + rx.matchedLength() + 1;
-    int epos = rxend.indexIn(job->buffer, spos);
+    int spos = job->buffer.indexOf("<img id=\"img\"");
+    int epos = job->buffer.indexOf("/>", spos);
 
     for (int pos = spos; (pos = rx.indexIn(job->buffer, pos)) != -1
             && pos < epos; pos += rx.matchedLength())

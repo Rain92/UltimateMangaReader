@@ -18,8 +18,6 @@ MangaChapter::MangaChapter(const QString &link, AbstractMangaSource *source):
 
 MangaChapter::~MangaChapter()
 {
-    if (pagesloaded)
-        delete pagelinks;
 }
 
 void MangaChapter::loadPages()
@@ -28,8 +26,10 @@ void MangaChapter::loadPages()
         return;
 
     pagelinks = source->getPageList(chapterlink);
-    numpages = pagelinks->count();
-    imagelinks = QVector<QString>(numpages);
+    numpages = pagelinks.count();
+    imagelinks = QStringList();
+    for (int i = 0; i < pagelinks.count(); i++)
+        imagelinks.append("");
     pagesloaded = true;
 }
 
@@ -39,24 +39,20 @@ QDataStream &operator<<(QDataStream &str, const MangaChapter &m)
     str << m.chapterlink << m.pagesloaded;
 
     if (m.pagesloaded)
-        return str  << (qint32)m.numpages << *m.pagelinks << m.imagelinks;
+        return str  << (qint32)m.numpages << m.pagelinks << m.imagelinks;
 
     return  str;
 }
 
 QDataStream &operator>>(QDataStream &str, MangaChapter &m)
 {
-    if (m.pagesloaded)
-        delete m.pagelinks;
 
     str >> m.chapterlink >> m.pagesloaded;
 
     if (!m.pagesloaded)
         return str;
 
-    QVector<QString> tmppagelinks;
-    str >> m.numpages >> tmppagelinks >> m.imagelinks;
-    m.pagelinks = new QVector<QString>(tmppagelinks);
+    str >> m.numpages >> m.pagelinks >> m.imagelinks;
 
     return str;
 }

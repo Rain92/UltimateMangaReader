@@ -52,16 +52,19 @@ public:
     QString goLastChapter();
     QString goFirstChapter();
 
-    void PreloadNeighbours(int distance = 3);
-    void PreloadChapter();
-    void PreloadImage(MangaIndex index);
+    void preloadNeighbours(int distance = 3);
+    void preloadChapter();
+    void preloadImage(MangaIndex index);
 
-    void PreloadPopular();
-    void CancelAllPreloads();
+    void preloadPopular();
+    void cancelAllPreloads();
 
+
+    void sendUpdated();
 
 signals:
     void completedImagePreloadSignal(const QString &path);
+    void updated();
 
 private slots:
     void completedImagePreload(const QString &path);
