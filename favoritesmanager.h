@@ -3,7 +3,7 @@
 
 #include <QMap>
 
-#include "mangasources/abstractmangasource.h"
+#include "abstractmangasource.h"
 #include "configs.h"
 #include "favorite.h"
 

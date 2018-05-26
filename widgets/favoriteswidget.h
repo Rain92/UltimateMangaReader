@@ -18,17 +18,23 @@ public:
 
     void showFavoritesList(const QList<Favorite> &favs);
 
+
+    QList<AbstractMangaSource *> mangasources;
 signals:
     void favoriteClicked(Favorite fav, bool current);
 
 private slots:
     void on_tableWidget_cellClicked(int row, int column);
+    void mangaUpdated();
 
 private:
     Ui::FavoritesWidget *ui;
-    QList<Favorite> readingstates;
+    QList<Favorite> favorites;
 
+    void insertRow(const Favorite &fav, int row);
     void adjustSizes();
+
+    QList<MangaInfo *> infos;
 
     QWidget *makeIconTextWidget(const QString &path, const QString &text, const QSize &iconsize);
 

@@ -45,6 +45,7 @@ MainWidget::MainWidget(QWidget *parent) :
     currentsource = mangasources[0];
 
     ui->homeWidget->setMangaSources(&mangasources);
+    ui->favoritesWidget->mangasources = mangasources;
 
     downloadmanager->connect();
 
