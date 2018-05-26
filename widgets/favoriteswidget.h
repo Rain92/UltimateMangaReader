@@ -2,7 +2,7 @@
 #define FAVORITESWIDGET_H
 
 #include <QWidget>
-#include "ReadingStateManager.h"
+#include "favoritesmanager.h"
 
 namespace Ui {
 class FavoritesWidget;
@@ -16,17 +16,17 @@ public:
     explicit FavoritesWidget(QWidget *parent = 0);
     ~FavoritesWidget();
 
-    void updateList(const QList<ReadingState> &favs);
+    void updateList(const QList<Favorite> &favs);
 
 signals:
-    void favoriteClicked(ReadingState fav, bool current);
+    void favoriteClicked(Favorite fav, bool current);
 
 private slots:
     void on_tableWidget_cellClicked(int row, int column);
 
 private:
     Ui::FavoritesWidget *ui;
-    QList<ReadingState> readingstates;
+    QList<Favorite> readingstates;
 
     void adjustSizes();
 

@@ -78,12 +78,12 @@ HEADERS += \
     mangaindex.h \
     mangainfo.h \
     preloadqueue.h \
-    readingstate.h \
-    ReadingStateManager.h \
     widgets/homewidget.h \
     widgets/mangainfowidget.h \
     widgets/mangareaderwidget.h \
-    widgets/cscrollbar.h
+    widgets/cscrollbar.h \
+    favorite.h \
+    favoritesmanager.h
 
 SOURCES += \
     mangasources/abstractmangasource.cpp \
@@ -103,12 +103,12 @@ SOURCES += \
     mangaindex.cpp \
     mangainfo.cpp \
     preloadqueue.cpp \
-    readingstate.cpp \
-    ReadingStateManager.cpp \
     widgets/homewidget.cpp \
     widgets/mangainfowidget.cpp \
     widgets/mangareaderwidget.cpp \
-    widgets/cscrollbar.cpp
+    widgets/cscrollbar.cpp \
+    favorite.cpp \
+    favoritesmanager.cpp
 
 
 

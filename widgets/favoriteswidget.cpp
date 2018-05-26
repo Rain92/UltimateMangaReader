@@ -39,7 +39,7 @@ void FavoritesWidget::adjustSizes()
 }
 
 
-void FavoritesWidget::updateList(const QList<ReadingState> &favs)
+void FavoritesWidget::updateList(const QList<Favorite> &favs)
 {
     readingstates = favs;
 
@@ -47,7 +47,7 @@ void FavoritesWidget::updateList(const QList<ReadingState> &favs)
     while (ui->tableWidget->model()->rowCount() > 0)
         ui->tableWidget->removeRow(0);
     int r =  0;
-    foreach (const ReadingState &fav, favs)
+    foreach (const Favorite &fav, favs)
     {
         QString coverpath = mangainfodir(fav.hostname, fav.title) + "cover";
 
@@ -62,7 +62,7 @@ void FavoritesWidget::updateList(const QList<ReadingState> &favs)
         QWidget *hostwidget = makeIconTextWidget(hosticonpath, fav.hostname, QSize(favoritecoverheight, favoritecoverheight));
 
         ui->tableWidget->insertRow(r);
-        QTableWidgetItem *chapters = new QTableWidgetItem(QString::number(fav.oldnumchapters));
+        QTableWidgetItem *chapters = new QTableWidgetItem(QString::number(fav.numchapters));
         chapters->setTextAlignment(Qt::AlignCenter);
         QTableWidgetItem *progress = new QTableWidgetItem(QString::number(fav.currentindex.chapter));
         progress->setTextAlignment(Qt::AlignCenter);

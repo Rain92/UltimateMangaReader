@@ -33,11 +33,11 @@ public:
 //    virtual int *getNumChapters(QString mangalink) = 0;
 
     virtual MangaInfo *getMangaInfo(QString mangalink) = 0;
-//    virtual MangaInfo *getMangaInfoFrom(QString mangalink) = 0;
 
-    virtual QStringList *getPageList(const QString &chapterlink) = 0;
+    virtual QVector<QString> *getPageList(const QString &chapterlink) = 0;
     virtual QString getImageLink(const QString &pagelink) = 0;
 
+    MangaInfo *loadMangaInfo(const QString &mangalink, const QString &mangatitle);
 
     bool serializeMangaList();
     bool deserializeMangaList();
@@ -46,6 +46,10 @@ public:
                                    const int &chapternum, const int &pagenum);
     QString downloadAwaitImage(const QString &imagelink, const QString &mangatitle,
                                const int &chapternum, const int &pagenum);
+
+
+//    static QList<AbstractMangaSource *> sources;
+//    static AbstractMangaSource *getSourceByName(const QString &name);
 
 signals:
     void  progress(int);

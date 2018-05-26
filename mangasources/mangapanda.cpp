@@ -4,16 +4,16 @@
 MangaPanda::MangaPanda(QObject *parent, DownloadManager *dm):
     AbstractMangaSource(parent)
 {
-    AbstractMangaSource::nummangas = 0;
-    AbstractMangaSource::name = "MangaPanda";
-    AbstractMangaSource::baseurl = "https://www.mangapanda.com";
-    AbstractMangaSource::downloadmanager = dm;
+    nummangas = 0;
+    name = "MangaPanda";
+    baseurl = "https://www.mangapanda.com";
+    downloadmanager = dm;
 }
 
 bool MangaPanda::updateMangaList()
 {
-    DownloadStringJob *job = AbstractMangaSource::downloadmanager->downloadAsString(
-                                 AbstractMangaSource::baseurl + "/alphabetical");
+    DownloadStringJob *job = downloadmanager->downloadAsString(
+                                 baseurl + "/alphabetical");
 
     if (!job->await(8000))
         return false;
@@ -47,13 +47,16 @@ bool MangaPanda::updateMangaList()
 }
 
 
+
 MangaInfo *MangaPanda::getMangaInfo(QString mangalink)
 {
-    DownloadStringJob *job = AbstractMangaSource::downloadmanager->downloadAsString(mangalink);
+//    qDebug() << mangalink;
+
+    DownloadStringJob *job = downloadmanager->downloadAsString(mangalink);
 
     MangaInfo *info = new MangaInfo(this, this);
     info->mangasource = this;
-    info->hostname = AbstractMangaSource::name;
+    info->hostname = name;
 
     info->link = mangalink;
 
@@ -99,7 +102,7 @@ MangaInfo *MangaPanda::getMangaInfo(QString mangalink)
     info->coverpath = mangainfodir(name, info->title) + "cover" + filetype;
 
 
-    DownloadFileJob *coverjob = AbstractMangaSource::downloadmanager->downloadAsFile(coverlink, info->coverpath);
+    DownloadFileJob *coverjob = downloadmanager->downloadAsFile(coverlink, info->coverpath);
 
 
     QRegExp rxstart("<div id=\"chapterlist\">");
@@ -113,7 +116,7 @@ MangaInfo *MangaPanda::getMangaInfo(QString mangalink)
     for (int pos = spos; (pos = rx.indexIn(job->buffer, pos)) != -1
             && pos < epos; pos += rx.matchedLength())
     {
-        info->chapters.append(MangaChapter(AbstractMangaSource::baseurl + rx.cap(1), this));
+        info->chapters.append(MangaChapter(baseurl + rx.cap(1), this));
 
         QString ctitle = rx.cap(2);
         if (rx.cap(3) != " : ")
@@ -128,17 +131,20 @@ MangaInfo *MangaPanda::getMangaInfo(QString mangalink)
         info->coverpath = "";
     }
 
-
     downloadmanager->fileDownloads->remove(coverlink);
     delete job;
+
+    info->serialize();
+
     return info;
 }
 
-QStringList *MangaPanda::getPageList(const QString &chapterlink)
+QVector<QString> *MangaPanda::getPageList(const QString &chapterlink)
 {
 //    qDebug() << "getting pages";
-    DownloadStringJob *job = AbstractMangaSource::downloadmanager->downloadAsString(chapterlink);
-    QStringList *pageLinks = new QStringList();
+    DownloadStringJob *job = downloadmanager->downloadAsString(chapterlink);
+    QVector<QString> *pageLinks = new QVector<QString>();
+    pageLinks->reserve(20);
 
     if (!job->await(3000))
         return pageLinks;
@@ -154,7 +160,7 @@ QStringList *MangaPanda::getPageList(const QString &chapterlink)
     for (int pos = spos; (pos = rx.indexIn(job->buffer, pos)) != -1
             && pos < epos; pos += rx.matchedLength())
     {
-        pageLinks->append(AbstractMangaSource::baseurl + rx.cap(1));
+        pageLinks->append(baseurl + rx.cap(1));
     }
 //    qDebug() << chapterlink << "pages: " << pageLinks->count();
 
@@ -165,7 +171,7 @@ QStringList *MangaPanda::getPageList(const QString &chapterlink)
 
 QString MangaPanda::getImageLink(const QString &pagelink)
 {
-    DownloadStringJob *job = AbstractMangaSource::downloadmanager->downloadAsString(pagelink);
+    DownloadStringJob *job = downloadmanager->downloadAsString(pagelink);
     QString imageLink;
 
     QRegExp rxstart("<img id=\"img\"");

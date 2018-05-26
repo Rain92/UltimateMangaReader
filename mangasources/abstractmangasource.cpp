@@ -3,6 +3,7 @@
 #include <qstringlist.h>
 #include "abstractmangasource.h"
 #include "configs.h"
+#include "mangainfo.h"
 
 
 AbstractMangaSource::AbstractMangaSource(QObject *parent) :
@@ -75,7 +76,7 @@ QString AbstractMangaSource::downloadAwaitImage(const QString &imagelink, const 
     DownloadFileJob *job = downloadmanager->downloadAsScaledImage(imagelink, path);
 
 
-    if (completedfile.exists() || job->await(10000))
+    if (completedfile.exists() || job->await(5000))
     {
         downloadmanager->fileDownloads->remove(imagelink);
         delete job;
@@ -89,3 +90,23 @@ QString AbstractMangaSource::downloadAwaitImage(const QString &imagelink, const 
     }
 }
 
+
+MangaInfo *AbstractMangaSource::loadMangaInfo(const QString &mangalink, const QString &mangatitle)
+{
+    QFileInfo infofile(mangainfodir(name, mangatitle) + "mangainfo.dat");
+    if (infofile.exists())
+    {
+        return MangaInfo::deserialize(this->parent(), this, infofile.filePath());
+    }
+
+    return getMangaInfo(mangalink);
+}
+
+//AbstractMangaSource *AbstractMangaSource::getSourceByName(const QString &name)
+//{
+//    foreach (AbstractMangaSource *s, sources)
+//        if (s->name == name)
+//            return s;
+//    return nullptr;
+
+//}

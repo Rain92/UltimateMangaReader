@@ -189,13 +189,20 @@ void HomeWidget::refreshMangaListView()
 void HomeWidget::on_listViewMangas_clicked(const QModelIndex &index)
 {
     QString mangalink;
+    QString mangatitle;
 
     if (filteredmangalinks.count() == 0)
+    {
         mangalink = currentsource->baseurl + currentsource->mangalist.links[index.row()];
+        mangatitle = currentsource->mangalist.titles[index.row()];
+    }
     else
+    {
         mangalink = currentsource->baseurl + filteredmangalinks[index.row()];
+        mangatitle = filteredmangatitles[index.row()];
+    }
 
-    emit mangaClicked(mangalink);
+    emit mangaClicked(mangalink, mangatitle);
 //    currentmanga = currentsource->getMangaInfo(mangalink);
 }
 

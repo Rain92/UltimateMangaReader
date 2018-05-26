@@ -3,7 +3,7 @@
 
 #include <QWidget>
 #include <QStandardItemModel>
-#include "ReadingStateManager.h"
+#include "favoritesmanager.h"
 #include "downloadmanager.h"
 #include "mangapanda.h"
 //#include "mangadex.h"
@@ -37,10 +37,10 @@ public:
 
 public slots:
 
-    void viewFavorite(ReadingState fav, bool current);
+    void viewFavorite(Favorite fav, bool current);
 
     void setCurrentSource(AbstractMangaSource *source);
-    void viewMangaInfo(QString mangalink);
+    void viewMangaInfo(const QString &mangalink, const QString &mangatitle);
     void toggleFavorite(MangaInfo *manga);
 
     void viewMangaImage(const MangaIndex &index);
@@ -82,7 +82,8 @@ private:
 
     AbstractMangaSource *currentsource;
     MangaInfo *currentmanga;
-    ReadingStateManager readingstatemanager;
+
+    FavoritesManager favorites;
 
     int lastTab;
 };
