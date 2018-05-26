@@ -38,8 +38,8 @@ MainWidget::MainWidget(QWidget *parent) :
 
 
     mangasources.append(new MangaPanda(this, downloadmanager));
-//    mangasources.append(new MangaDex(this, downloadmanager));
-//    mangasources.append(new MangaTown(this, downloadmanager));
+    mangasources.append(new MangaDex(this, downloadmanager));
+    mangasources.append(new MangaTown(this, downloadmanager));
 
 
     currentsource = mangasources[0];

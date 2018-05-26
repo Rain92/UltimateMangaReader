@@ -11,11 +11,14 @@ public:
 
     MangaDex(QObject *parent, DownloadManager *dm);
 
+    void initialize();
+
     bool updateMangaList();
     MangaInfo *getMangaInfo(QString mangalink);
-    QStringList *getPageList(const QString &chapterlink);
+    QStringList getPageList(const QString &chapterlink);
     QString getImageLink(const QString &pagelink);
 
+    void updateMangaInfoFinishedLoading(DownloadStringJob *job, MangaInfo *info);
 };
 
 #endif // MANGADEX_H

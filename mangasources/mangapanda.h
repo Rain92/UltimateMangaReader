@@ -13,14 +13,10 @@ public:
 
     bool updateMangaList();
     MangaInfo *getMangaInfo(QString mangalink);
-//    void updateMangaInfo(MangaInfo *mangainfo);
     QStringList getPageList(const QString &chapterlink);
     QString getImageLink(const QString &pagelink);
 
     void updateMangaInfoFinishedLoading(DownloadStringJob *job, MangaInfo *info);
-public slots:
-protected:
-
 
 };
 

@@ -64,8 +64,8 @@ FORMS += \
 HEADERS += \
     mangasources/abstractmangasource.h \
     mangasources/mangapanda.h \
-#    mangasources/mangadex.h \
-#    mangasources/mangatown.h \
+    mangasources/mangadex.h \
+    mangasources/mangatown.h \
     widgets/favoriteswidget.h \
     widgets/mainwidget.h \
     widgets/mangaimagecontainer.h \
@@ -88,8 +88,8 @@ HEADERS += \
 SOURCES += \
     mangasources/abstractmangasource.cpp \
     mangasources/mangapanda.cpp \
-#    mangasources/mangadex.cpp \
-#    mangasources/mangatown.cpp \
+    mangasources/mangadex.cpp \
+    mangasources/mangatown.cpp \
     widgets/favoriteswidget.cpp \
     widgets/mainwidget.cpp \
     widgets/mangaimagecontainer.cpp \

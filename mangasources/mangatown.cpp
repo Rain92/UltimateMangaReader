@@ -153,8 +153,8 @@ MangaInfo *MangaTown::getMangaInfo(QString mangalink)
 //    QRegExp rx("<a href=\"([^\"]*)\">\\s*([^<]*)[^>]*>\\s*[^>]*>([^<]*)[^>]*>[^>]*>([^<]*)");
 //    QRegExp rx("<a href=\"([^\"]*)\">[\r\n]*([^<]*)[^>]*>[\r\n]*[^>]*>([^<]*)");
 
-    spos = job->buffer.indexOf("<ul class=\"chapter_list\">");
-    int epos = job->buffer.indexOf("<div class=\"comment_content\">");
+    spos = job->buffer.indexOf("<div class=\"chapter_content\">");
+    int epos = job->buffer.indexOf("</div>", spos);
 
     info->numchapters = 0;
     for (int pos = spos; (pos = rx.indexIn(job->buffer, pos)) != -1 && pos < epos; pos += rx.matchedLength())
@@ -172,20 +172,78 @@ MangaInfo *MangaTown::getMangaInfo(QString mangalink)
 //        qDebug() << rx.cap(2);
     }
 
-
     if (coverlink != "" && !coverjob->await(3000))
     {
 
         info->coverpath = "";
     }
+    delete job;
+
+    info->serialize();
 
     return info;
 }
 
-QStringList *MangaTown::getPageList(const QString &chapterlink)
+
+void MangaTown::updateMangaInfoFinishedLoading(DownloadStringJob *job, MangaInfo *info)
+{
+
+    int spos = job->buffer.indexOf("<div class=\"chapter_content\">");
+    int epos = job->buffer.indexOf("</div>", spos);
+    if (spos == -1)
+        return;
+
+    QString countstr = job->buffer.mid(spos, epos - spos);
+
+    QRegExp chrx("(\\d+)\">");
+
+    int oldnumchapters = info->numchapters;
+    int numchapters = countstr.count("<a href=\"//www.mangatown.com/manga/");
+
+    if (numchapters == 0 || numchapters == info->numchapters)
+        return;
+
+
+    QRegExp statusrx("Status\\(s\\):</b>([^<&]*)");
+
+    if (statusrx.indexIn(job->buffer, 0) != -1)
+        info->status = statusrx.cap(1);
+
+
+    QRegExp rx("<a href=\"([^\"]*)\">\\s+([^<]*)[^>]*>\\s*");
+    QRegExp rx2("(.*)<span class");
+    rx2.setMinimal(true);
+
+
+    int insi = 0;
+    int chapterstoadd = numchapters - oldnumchapters;
+    for (int pos = spos; (pos = rx.indexIn(job->buffer, pos)) != -1 && pos < epos && chapterstoadd > 0;
+            pos += rx.matchedLength(), chapterstoadd--)
+    {
+
+        info->chapters.insert(oldnumchapters, MangaChapter("https:" + rx.cap(1), this));
+
+        QString chname = "";
+        if (rx2.indexIn(job->buffer, pos + rx.matchedLength()) != -1)
+            chname = rx.cap(2) + rx2.cap(1).remove("<span>").remove("</span>");
+
+        info->chapertitlesreversed.insert(insi++, chname);
+        info->numchapters++;
+//        qDebug() << info->chapters[0].chapterlink;
+//        qDebug() << rx.cap(2);
+    }
+
+
+    info->serialize();
+
+    info->sendUpdated();
+}
+
+
+QStringList MangaTown::getPageList(const QString &chapterlink)
 {
     DownloadStringJob *job = AbstractMangaSource::downloadmanager->downloadAsString(chapterlink);
-    QStringList *pageLinks = new QStringList();
+    QStringList pageLinks;
 
     if (!job->await(3000))
         return pageLinks;
@@ -198,12 +256,12 @@ QStringList *MangaTown::getPageList(const QString &chapterlink)
 
     int numpages = rx.cap(1).toInt();
 
-    pageLinks->append(chapterlink);
+    pageLinks.append(chapterlink);
 
     for (int i = 2; i <= numpages; i++)
     {
 //        qDebug() << chapterlink + QString::number(i) + ".html";
-        pageLinks->append(chapterlink + QString::number(i) + ".html");
+        pageLinks.append(chapterlink + QString::number(i) + ".html");
     }
 
     delete job;

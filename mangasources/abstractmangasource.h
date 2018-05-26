@@ -27,6 +27,7 @@ public:
 
     AbstractMangaSource(QObject *parent);
 
+    virtual void initialize() {};
 
     virtual bool updateMangaList() = 0;
 

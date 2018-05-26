@@ -121,17 +121,27 @@ MangaInfo *MangaPanda::getMangaInfo(QString mangalink)
         info->numchapters++;
     }
 
-    info->chapters.removeLast();
-    info->chapertitlesreversed.removeAt(0);
-    info->numchapters--;
-
     if (coverlink != "" && !coverjob->await(3000))
     {
 
         info->coverpath = "";
     }
 
-    downloadmanager->fileDownloads->remove(coverlink);
+//    info->chapters.removeLast();
+//    info->chapertitlesreversed.removeAt(0);
+//    info->numchapters--;
+
+
+//    info->chapters.removeLast();
+//    info->chapertitlesreversed.removeAt(0);
+//    info->numchapters--;
+
+//    info->chapters.removeLast();
+//    info->chapertitlesreversed.removeAt(0);
+//    info->numchapters--;
+
+
+//    downloadmanager->fileDownloads->remove(coverlink);
     delete job;
 
     info->serialize();

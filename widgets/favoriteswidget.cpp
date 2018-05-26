@@ -100,7 +100,6 @@ void FavoritesWidget::mangaUpdated()
 {
     MangaInfo *mi = static_cast<MangaInfo *>(sender());
 
-
     int i = 0;
     while (favorites[i].title != mi->title && favorites[i].title != mi->title)
         i++;
