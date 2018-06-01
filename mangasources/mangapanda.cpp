@@ -34,7 +34,7 @@ bool MangaPanda::updateMangaList()
     for (int pos = spos; (pos = rx.indexIn(job->buffer, pos)) != -1 && pos < epos; pos += rx.matchedLength())
     {
         mangalist.links.append(rx.cap(1));
-        mangalist.titles.append(rx.cap(2));
+        mangalist.titles.append(htmlToPlainText(rx.cap(2)));
         nummangas++;
     }
 
@@ -71,18 +71,19 @@ MangaInfo *MangaPanda::getMangaInfo(QString mangalink)
     if (!job->await(3000))
         return info;
 
+
     if (titlerx.indexIn(job->buffer, 0) != -1)
-        info->title = titlerx.cap(1);
+        info->title = htmlToPlainText(titlerx.cap(1));
     if (yearrx.indexIn(job->buffer, 0) != -1)
         info->releaseyear = yearrx.cap(1);
     if (statusrx.indexIn(job->buffer, 0) != -1)
         info->status = statusrx.cap(1);
     if (artistrx.indexIn(job->buffer, 0) != -1)
-        info->artist = artistrx.cap(1);
+        info->artist = htmlToPlainText(artistrx.cap(1));
     if (authorrx.indexIn(job->buffer, 0) != -1)
-        info->author = authorrx.cap(1);
+        info->author = htmlToPlainText(authorrx.cap(1));
     if (summaryrx.indexIn(job->buffer, 0) != -1)
-        info->summary = summaryrx.cap(1);
+        info->summary = htmlToPlainText(summaryrx.cap(1));
 
 
     QRegExp coverrx("<div id=\"mangaimg\"><img src=\"([^\"]*)");
@@ -130,12 +131,9 @@ MangaInfo *MangaPanda::getMangaInfo(QString mangalink)
 //    info->chapters.removeLast();
 //    info->chapertitlesreversed.removeAt(0);
 //    info->numchapters--;
-
-
 //    info->chapters.removeLast();
 //    info->chapertitlesreversed.removeAt(0);
 //    info->numchapters--;
-
 //    info->chapters.removeLast();
 //    info->chapertitlesreversed.removeAt(0);
 //    info->numchapters--;

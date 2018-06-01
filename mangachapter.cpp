@@ -1,5 +1,5 @@
 #include "mangachapter.h"
-
+#include "configs.h"
 
 MangaChapter::MangaChapter():
     pagesloaded(false),
@@ -16,9 +16,6 @@ MangaChapter::MangaChapter(const QString &link, AbstractMangaSource *source):
 
 }
 
-MangaChapter::~MangaChapter()
-{
-}
 
 void MangaChapter::loadPages()
 {

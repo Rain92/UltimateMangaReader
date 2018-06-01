@@ -69,6 +69,10 @@ MangaIndex MangaIndex::deltaPageIndex(QList<MangaChapter> *chapters, int delta)
     }
 }
 
+bool MangaIndex::checkLegal(QList<MangaChapter> *chapters)
+{
+    return chapter > 0 && page > 0 && chapters->length() > chapter && chapters->at(chapter).numpages > page;
+}
 
 QDataStream &operator<<(QDataStream &str, const MangaIndex &m)
 {

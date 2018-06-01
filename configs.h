@@ -55,6 +55,8 @@
 #define buttonsize mm_to_px(10)
 #define buttonsizeaddfavorite mm_to_px(6)
 
+#define lighticonsize mm_to_px(6)
+
 #define scrollbarsliderminlength mm_to_px(8)
 #define scrollbarwidth mm_to_px(6)
 #define scrollbarheight mm_to_px(4)
@@ -68,10 +70,13 @@
 #define favoritecoverwidth mm_to_px(16)
 
 #define readerpreviouspagethreshold 0.3
-#define readerbottommenuethreshold 0.9
+#define readerbottommenuethreshold 0.1
+
+#define frontlightslidergrooveheight mm_to_px(5)
+#define frontlightsliderhandlewidth mm_to_px(7)
+#define frontlightsliderhandleheight mm_to_px(6)
 
 #define imagecachesize 6
-
 
 #define maxparalleldownloads 16
 

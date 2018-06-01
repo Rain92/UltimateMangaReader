@@ -11,7 +11,10 @@ MangaReaderWidget::MangaReaderWidget(QWidget *parent) :
     ui->setupUi(this);
     adjustSizes();
 
+    ui->readerFrontLightBar->setVisible(false);
     ui->readerNavigationBar->setVisible(false);
+
+    updateTime();
 }
 
 MangaReaderWidget::~MangaReaderWidget()
@@ -25,6 +28,77 @@ void  MangaReaderWidget::adjustSizes()
     ui->pushButtonReaderBack->setMinimumHeight(buttonsize);
     ui->pushButtonReaderClose->setMinimumHeight(buttonsize);
     ui->pushButtonReaderHome->setMinimumHeight(buttonsize);
+
+
+    ui->horizontalSliderLight->setMinimumHeight(lighticonsize);
+    ui->horizontalSliderComfLight->setMinimumHeight(lighticonsize);
+
+    ui->labelLessLight->setMinimumSize(QSize(lighticonsize, lighticonsize));
+    ui->labelLessLight->setMaximumSize(QSize(lighticonsize, lighticonsize));
+
+    QPixmap p(":/resources/images/icons/darker.png");
+    ui->labelLessLight->setPixmap(p.scaledToHeight(lighticonsize, Qt::SmoothTransformation));
+
+    ui->labelMoreLight->setMinimumSize(QSize(lighticonsize, lighticonsize));
+    ui->labelMoreLight->setMaximumSize(QSize(lighticonsize, lighticonsize));
+
+    QPixmap p2(":/resources/images/icons/lighter.png");
+    ui->labelMoreLight->setPixmap(p2.scaledToHeight(lighticonsize, Qt::SmoothTransformation));
+
+
+    ui->labelLessComfLight->setMinimumSize(QSize(lighticonsize, lighticonsize));
+    ui->labelLessComfLight->setMaximumSize(QSize(lighticonsize, lighticonsize));
+
+    QPixmap p3(":/resources/images/icons/moon.png");
+    ui->labelLessComfLight->setPixmap(p3.scaledToHeight(lighticonsize, Qt::SmoothTransformation));
+
+    ui->labelMoreComfLight->setMinimumSize(QSize(lighticonsize, lighticonsize));
+    ui->labelMoreComfLight->setMaximumSize(QSize(lighticonsize, lighticonsize));
+
+    QPixmap p4(":/resources/images/icons/sun.png");
+    ui->labelMoreComfLight->setPixmap(p4.scaledToHeight(lighticonsize, Qt::SmoothTransformation));
+
+
+
+    QString sliderstylesheet =
+        "QSlider::groove:horizontal {       "
+        "     border: 1px solid black;      "
+        "     border-radius: 5px;           "
+        "     height: %1px;                 "
+        "     background: white;            "
+        "     margin: 4px 0;                "
+        "}                                  "
+        "QSlider::handle:horizontal {       "
+        "     background: white;            "
+        "     border: 1px solid black;      "
+        "     width: %3px;                  "
+        "     height: %2px;                 "
+        "     margin: -7px 0;               "
+        "     border-radius: 9px;           "
+        "}                                  "
+        "                                   "
+        "QSlider::handle:horizontal::focus {"
+        "     background: black;            "
+        "}";
+
+    ui->horizontalSliderComfLight->setFixedHeight(frontlightsliderhandleheight + 10);
+    ui->horizontalSliderLight->setFixedHeight(frontlightsliderhandleheight + 10);
+
+    ui->horizontalSliderComfLight->setStyleSheet(sliderstylesheet.arg(frontlightslidergrooveheight).arg(frontlightsliderhandlewidth).arg(
+                                                     frontlightsliderhandleheight));
+
+    ui->horizontalSliderLight->setStyleSheet(sliderstylesheet.arg(frontlightslidergrooveheight).arg(frontlightsliderhandlewidth).arg(
+                                                 frontlightsliderhandleheight));
+
+}
+
+void MangaReaderWidget::updateTime()
+{
+    QTime now = QTime::currentTime();
+    ui->labelTime->setText(now.toString("hh:mm"));
+
+    int msecsleft = (60 - now.second()) * 1000 - now.msec();
+    QTimer::singleShot(msecsleft, this, SLOT(updateTime()));
 }
 
 void MangaReaderWidget::updateReaderLabels(MangaInfo *currentmanga)
@@ -53,6 +127,7 @@ void MangaReaderWidget::on_pushButtonReaderClose_clicked()
 
 void MangaReaderWidget::showImage(const QString &path)
 {
+    ui->readerFrontLightBar->setVisible(false);
     ui->readerNavigationBar->setVisible(false);
 
     if (path != "")
@@ -102,13 +177,16 @@ void MangaReaderWidget::on_mangaImageContainer_clicked(QPoint pos)
 {
     if (ui->readerNavigationBar->isVisible())
     {
-        ui->readerNavigationBar->setVisible(false);
-        return;
+        if(pos.y() > this->height() * readerbottommenuethreshold * 2)
+        {
+            ui->readerFrontLightBar->setVisible(false);
+            ui->readerNavigationBar->setVisible(false);
+        }
     }
-
-    if (pos.y() > this->height() * readerbottommenuethreshold)
+    else if (pos.y() < this->height() * readerbottommenuethreshold || pos.y() > this->height() * (1.0 - readerbottommenuethreshold))
     {
         ui->readerNavigationBar->setVisible(true);
+        ui->readerFrontLightBar->setVisible(true);
     }
     else
     {
@@ -121,4 +199,34 @@ void MangaReaderWidget::on_mangaImageContainer_clicked(QPoint pos)
             emit advancPageClicked(false);
         }
     }
+}
+
+void MangaReaderWidget::setFrontLightPanelState(int lightmin, int lightmax, int light, int comflightmin, int comflightmax, int comflight)
+{
+    ui->horizontalSliderLight->setMinimum(lightmin);
+    ui->horizontalSliderLight->setMaximum(lightmax);
+    ui->horizontalSliderLight->setValue(light);
+
+    if (comflightmin != comflightmax)
+    {
+        ui->horizontalSliderComfLight->setMinimum(comflightmin);
+        ui->horizontalSliderComfLight->setMaximum(comflightmax);
+        ui->horizontalSliderComfLight->setValue(comflight);
+    }
+    else
+    {
+        ui->horizontalSliderComfLight->hide();
+        ui->labelLessComfLight->hide();
+        ui->labelMoreComfLight->hide();
+    }
+}
+
+void MangaReaderWidget::on_horizontalSliderLight_valueChanged(int value)
+{
+    emit frontlightchanged(value, ui->horizontalSliderComfLight->value());
+}
+
+void MangaReaderWidget::on_horizontalSliderComfLight_valueChanged(int value)
+{
+    emit frontlightchanged(ui->horizontalSliderLight->value(), value);
 }

@@ -19,15 +19,19 @@ public:
     void showImage(const QString &path);
     void updateReaderLabels(MangaInfo *currentmanga);
 
+    void setFrontLightPanelState(int lightmin, int lightmax, int light, int comflightmin, int comflightmax, int comflight);
+
 
 public slots:
     void addImageToCache(const QString &path);
+    void updateTime();
 
 signals:
     void changeView(int page);
     void advancPageClicked(bool direction);
     void closeApp();
     void back();
+    void frontlightchanged(int light, int comflight);
 
 private slots:
     void on_pushButtonReaderHome_clicked();
@@ -35,6 +39,10 @@ private slots:
     void on_pushButtonReaderClose_clicked();
 
     void on_mangaImageContainer_clicked(QPoint pos);
+    void on_horizontalSliderLight_valueChanged(int value);
+
+    void on_horizontalSliderComfLight_valueChanged(int value);
+
 private:
     Ui::MangaReaderWidget *ui;
 

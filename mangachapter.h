@@ -16,7 +16,6 @@ public:
 
     MangaChapter(const QString &link, AbstractMangaSource *source);
     MangaChapter();
-    ~MangaChapter();
 
     void loadPages();
 

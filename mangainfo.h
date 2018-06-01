@@ -26,6 +26,7 @@ public:
     QString author;
     QString artist;
     QString releaseyear;
+    QString genres;
     QString status;
     QString summary;
     QString coverpath;

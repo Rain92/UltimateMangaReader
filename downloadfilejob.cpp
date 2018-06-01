@@ -81,6 +81,7 @@ void DownloadFileJob::downloadFileFinished()
 void DownloadFileJob::onSslErrors(const QList<QSslError> &)
 {
     QNetworkReply *reply = static_cast<QNetworkReply *>(sender());
+    qDebug() << "SSL Error";
     reply->ignoreSslErrors();
     return;
 
@@ -107,7 +108,7 @@ void DownloadFileJob::onError(QNetworkReply::NetworkError)
 
     errorString = reply->errorString();
 
-    //qDebug() << errorString;
+    qDebug() << errorString;
 
     reply->deleteLater();
 

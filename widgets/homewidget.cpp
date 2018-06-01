@@ -10,7 +10,9 @@
 HomeWidget::HomeWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::HomeWidget),
-    currentsource(nullptr)
+    currentsource(nullptr),
+    filteredmangatitles(),
+    filteredmangalinks()
 {
     ui->setupUi(this);
     adjustSizes();
@@ -29,6 +31,8 @@ void HomeWidget::setMangaSources(QList<AbstractMangaSource *> *sources)
     mangasources = sources;
 
     setupSourcesList();
+
+//    currentsource = sources->at(0);
 }
 
 void  HomeWidget::adjustSizes()
@@ -45,6 +49,7 @@ void  HomeWidget::adjustSizes()
     ui->listViewSources->setVerticalScrollBar(new CScrollBar(Qt::Vertical, ui->listViewSources));
     ui->listViewMangas->setVerticalScrollBar(new CScrollBar(Qt::Vertical, ui->listViewMangas));
     ui->listViewMangas->setHorizontalScrollBar(new CScrollBar(Qt::Horizontal, ui->listViewMangas));
+    ui->listViewMangas->setUniformItemSizes(true);
 }
 
 void  HomeWidget::setupSourcesList()
@@ -84,7 +89,7 @@ QList<QStandardItem *> *HomeWidget::listViewItemfromMangaSource(AbstractMangaSou
 {
     QList<QStandardItem *> *items = new QList<QStandardItem *> ();
     QStandardItem *item = new QStandardItem(source->name);
-    item->setIcon(QIcon(QPixmap(":/resources/images/icons/" + source->name.toLower() + ".png")));
+    item->setIcon(QIcon(QPixmap(":/resources/images/mangahostlogos/" + source->name.toLower() + ".png")));
     items->append(item);
     item->setSizeHint(QSize(mangasourceitemwidth, mangasourceitemheight));
 //    item->set
@@ -108,14 +113,43 @@ void HomeWidget::on_pushButtonUpdate_clicked()
 //    refreshMangaListView();
 }
 
+bool removeDir(const QString &dirName)
+{
+    bool result = true;
+    QDir dir(dirName);
+
+    qDebug() << dir.absoluteFilePath(dirName);
+    if (dir.exists())
+    {
+        qDebug() << dirName;
+        Q_FOREACH (QFileInfo info, dir.entryInfoList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden  | QDir::AllDirs | QDir::Files, QDir::DirsFirst))
+        {
+            if (info.isDir())
+            {
+                result = removeDir(info.absoluteFilePath());
+            }
+            else
+            {
+                result = QFile::remove(info.absoluteFilePath());
+            }
+
+            if (!result)
+            {
+                return result;
+            }
+        }
+        result = dir.rmdir(dirName);
+    }
+    return result;
+}
 
 void HomeWidget::on_pushButtonClearCache_clicked()
 {
-    QDir dir(mangalistdir);
-    dir.setNameFilters(QStringList() << "*.*");
-    dir.setFilter(QDir::Files);
-    foreach (QString dirFile, dir.entryList())
-        dir.remove(dirFile);
+    foreach (AbstractMangaSource *s, *mangasources)
+    {
+//        qDebug() << cachedir + s->name;
+        removeDir(cachedir + s->name);
+    }
 }
 
 void HomeWidget::on_listViewSources_clicked(const QModelIndex &index)
@@ -172,6 +206,9 @@ void HomeWidget::on_pushButtonFilterClear_clicked()
 
 void HomeWidget::refreshMangaListView()
 {
+//    if (filteredmangatitles.empty() && currentsource->mangalist))
+//        return;
+
     QStringListModel *model = new QStringListModel(this);
 
     if (filteredmangatitles.empty())

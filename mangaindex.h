@@ -21,6 +21,9 @@ public:
 
     MangaIndex deltaPageIndex(QList<MangaChapter> *chapters, int delta);
 
+
+    bool checkLegal(QList<MangaChapter> *chapters);
+
 };
 
 

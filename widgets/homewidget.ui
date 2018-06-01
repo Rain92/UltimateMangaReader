@@ -121,7 +121,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>X</string>
+        <string> X </string>
        </property>
       </widget>
      </item>

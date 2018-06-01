@@ -4,19 +4,7 @@
 #include <QScrollBar>
 #include "configs.h"
 
-#ifndef WINDOWS
 
-#include "Config.h"
-#include "QtUtils.h"
-#include "Platform.h"
-#include "FileOpenDialog.h"
-#include "FileSaveDialog.h"
-#include "WidgetCommon.h"
-#include "VirtualKeyboard.h"
-#include "VirtualKeyboardContainer.h"
-#include "platform/KoboPlatform.h"
-
-#endif
 
 
 
@@ -37,15 +25,16 @@ MainWidget::MainWidget(QWidget *parent) :
     downloadmanager = new DownloadManager(this);
 
 
-    mangasources.append(new MangaPanda(this, downloadmanager));
-    mangasources.append(new MangaDex(this, downloadmanager));
+    //mangasources.append(new MangaPanda(this, downloadmanager));
+    //mangasources.append(new MangaDex(this, downloadmanager));
     mangasources.append(new MangaTown(this, downloadmanager));
+    //mangasources.append(new MangaWindow(this, downloadmanager));
 
 
-    currentsource = mangasources[0];
 
     ui->homeWidget->setMangaSources(&mangasources);
     ui->favoritesWidget->mangasources = mangasources;
+    currentsource = mangasources[0];
 
     downloadmanager->connect();
 
@@ -54,7 +43,7 @@ MainWidget::MainWidget(QWidget *parent) :
 
 
     setupUI();
-    setFrontLight();
+    setupFrontLight();
 
     QObject::connect(ui->homeWidget, SIGNAL(mangaSourceClicked(AbstractMangaSource *)), this, SLOT(setCurrentSource(AbstractMangaSource *)));
     QObject::connect(ui->homeWidget, SIGNAL(mangaClicked(QString, QString)), this, SLOT(viewMangaInfo(QString, QString)));
@@ -68,6 +57,7 @@ MainWidget::MainWidget(QWidget *parent) :
     QObject::connect(ui->mangaReaderWidget, SIGNAL(advancPageClicked(bool)), this, SLOT(advanceMangaPage(bool)));
     QObject::connect(ui->mangaReaderWidget, SIGNAL(closeApp()), this, SLOT(on_pushButtonClose_clicked()));
     QObject::connect(ui->mangaReaderWidget, SIGNAL(back()), this, SLOT(readerGoBack()));
+    QObject::connect(ui->mangaReaderWidget, SIGNAL(frontlightchanged(int, int)), this, SLOT(setFrontLight(int, int)));
 }
 
 MainWidget::~MainWidget()
@@ -80,10 +70,12 @@ void  MainWidget::setupUI()
 #ifndef WINDOWS
     initTopLevelWidget(this);
 
+    //ui->pushButtonClose->setText( static_cast<KoboPlatform *>(Platform::get())->a1FlTable.empty()?"true":"false");
+
     VirtualKeyboard *vk = getVirtualKeyboard();
 
-
     ui->verticalLayout->insertWidget(1, vk);
+
 #endif
 
     downloadmanager->setImageSize(this->width(), this->height());
@@ -108,14 +100,37 @@ void MainWidget::setupDirs()
 }
 
 
-
-void MainWidget::setFrontLight()
+void MainWidget::setupFrontLight()
 {
 #ifndef WINDOWS
-    Platform::get()->frontlightSetOn(true);
-    Platform::get()->frontlightSetLevel(30, 6400);
+    ui->mangaReaderWidget->setFrontLightPanelState(
+                Platform::get()->frontlightGetMinLevel(),
+                Platform::get()->frontlightGetMaxLevel(),
+                Platform::get()->frontlightGetLevel(),
+                Platform::get()->frontlightGetMinTemp(),
+                Platform::get()->frontlightGetMaxTemp(),
+                Platform::get()->frontlightGetTemp());
+#endif
+}
 
-//    static_cast<KoboPlatform*>(KoboPlatform::get())->toRgb(0x0000ff00);
+void MainWidget::setFrontLight(int light, int comflight)
+{
+#ifndef WINDOWS
+    if (light > Platform::get()->frontlightGetMinLevel())
+    {
+        if(!Platform::get()->frontlightIsOn())
+            Platform::get()->frontlightSetOn(true);
+
+        Platform::get()->frontlightSetLevel(light, comflight);
+
+    }
+    else
+    {
+        Platform::get()->frontlightSetOn(false);
+    }
+#else
+    Q_UNUSED(light)
+    Q_UNUSED(comflight)
 #endif
 }
 
@@ -215,8 +230,8 @@ void MainWidget::setCurrentSource(AbstractMangaSource *source)
 
 void MainWidget::viewMangaInfo(const QString &mangalink, const QString &mangatitle)
 {
-    if (currentmanga != nullptr)
-        delete currentmanga;
+//    if (currentmanga != nullptr)
+//        delete currentmanga;
     currentmanga = currentsource->loadMangaInfo(mangalink, mangatitle);
     QObject::connect(currentmanga, SIGNAL(completedImagePreloadSignal(QString)), ui->mangaReaderWidget, SLOT(addImageToCache(QString)));
 
@@ -225,7 +240,9 @@ void MainWidget::viewMangaInfo(const QString &mangalink, const QString &mangatit
 
     setWidgetTab(1);
 
+#ifndef QT_DEBUG
     currentmanga->preloadPopular();
+#endif
 }
 
 void MainWidget::toggleFavorite(MangaInfo *manga)

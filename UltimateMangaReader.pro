@@ -5,7 +5,10 @@
 #-------------------------------------------------
 
 #CONFIG += windows
-#CONFIG += kobo
+
+!windows {
+CONFIG += kobo
+}
 
 windows {
     DEFINES += DESKTOP WINDOWS
@@ -15,8 +18,9 @@ windows {
 
     INCLUDEPATH += D:/dev/lib/win32/OpenSSL/include
 
-    DEFINES += Q_COMPILER_INITIALIZER_LISTS
+#    DEFINES += Q_COMPILER_INITIALIZER_LISTS
 }
+
 kobo {
     DEFINES += KOBO
 
@@ -24,6 +28,7 @@ kobo {
 
 
     LIBS  += -L../build-free-Kobo-Release/common -lcommon
+    LIBS  += -lc -lm
 }
 
 QT       += core gui network
@@ -83,7 +88,9 @@ HEADERS += \
     widgets/mangareaderwidget.h \
     widgets/cscrollbar.h \
     favorite.h \
-    favoritesmanager.h
+    favoritesmanager.h \
+    mangasources/jaiminisbox.h \
+    mangasources/mangawindow.h
 
 SOURCES += \
     mangasources/abstractmangasource.cpp \
@@ -108,7 +115,9 @@ SOURCES += \
     widgets/mangareaderwidget.cpp \
     widgets/cscrollbar.cpp \
     favorite.cpp \
-    favoritesmanager.cpp
+    favoritesmanager.cpp \
+    mangasources/jaiminisbox.cpp \
+    mangasources/mangawindow.cpp
 
 
 

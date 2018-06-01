@@ -1,12 +1,17 @@
 <RCC>
     <qresource prefix="/resources">
-        <file>images/icons/mangadex.png</file>
-        <file>images/icons/mangafox.png</file>
-        <file>images/icons/mangapanda.png</file>
-        <file>images/icons/mangareader.png</file>
-        <file>images/icons/mangarock.png</file>
-        <file>images/icons/mangatown.png</file>
         <file>eink.qss</file>
+        <file>images/mangahostlogos/mangadex.png</file>
+        <file>images/mangahostlogos/mangafox.png</file>
+        <file>images/mangahostlogos/mangapanda.png</file>
+        <file>images/mangahostlogos/mangareader.png</file>
+        <file>images/mangahostlogos/mangarock.png</file>
+        <file>images/mangahostlogos/mangatown.png</file>
+        <file>images/mangahostlogos/mangawindow.png</file>
+        <file>images/icons/darker.png</file>
+        <file>images/icons/lighter.png</file>
+        <file>images/icons/moon.png</file>
+        <file>images/icons/sun.png</file>
     </qresource>
     <qresource prefix="/"/>
 </RCC>

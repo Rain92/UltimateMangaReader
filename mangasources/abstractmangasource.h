@@ -3,8 +3,8 @@
 #include <QtCore>
 #include <qdatetime.h>
 #include <qstringlist.h>
+#include <QTextDocument>
 #include "downloadmanager.h"
-//#include "mangainfo.h"
 
 class MangaInfo;
 
@@ -55,11 +55,16 @@ public:
 //    static QList<AbstractMangaSource *> sources;
 //    static AbstractMangaSource *getSourceByName(const QString &name);
 
+
+    QString htmlToPlainText(const QString &str);
+
 signals:
     void  progress(int);
 
 protected:
     DownloadManager *downloadmanager;
+    QTextDocument htmlconverter;
+
 
 };
 

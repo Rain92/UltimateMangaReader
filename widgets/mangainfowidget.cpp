@@ -31,8 +31,14 @@ void  MangaInfoWidget::adjustSizes()
 
     ui->listViewChapters->setVerticalScrollBar(new CScrollBar(Qt::Vertical, ui->listViewChapters));
     ui->listViewChapters->setHorizontalScrollBar(new CScrollBar(Qt::Horizontal, ui->listViewChapters));
+    ui->listViewChapters->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    ui->listViewChapters->setUniformItemSizes(true);
+
     ui->scrollAreaMangaInfoSummary->setVerticalScrollBar(new CScrollBar(Qt::Vertical, ui->scrollAreaMangaInfoSummary, summaryscrollbarwidth));
 
+    QFont titlefont = ui->labelMangaInfoTitle->font();
+    titlefont.setPointSize(titlefont.pointSize() * 2);
+    ui->labelMangaInfoTitle->setFont(titlefont);
 //    ui->labelMangaInfoCover->setMinimumHeight(coversize);
 //    ui->labelMangaInfoCover->setMaximumWidth(coversize);
 //    resizeEvent(nullptr);
@@ -56,6 +62,7 @@ void MangaInfoWidget::setManga(MangaInfo *manga)
     ui->labelMangaInfoLabelSummary->setText(currentmanga->summary);
 
     QPixmap img;
+//    qDebug() << currentmanga->coverpath;
     img.load(currentmanga->coverpath);
     ui->labelMangaInfoCover->setPixmap(img.scaled(coversize, coversize, Qt::KeepAspectRatio, Qt::SmoothTransformation));
 

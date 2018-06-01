@@ -66,9 +66,10 @@ bool MangaTown::updateMangaList()
                 QString l = rx.cap(1);
                 l = l.right(l.length() - 19);
                 mangalist.links.append(l);
-                mangalist.titles.append(rx.cap(2));
+                mangalist.titles.append(htmlToPlainText(rx.cap(2)));
                 nummangas++;
-//                qDebug() << l;
+                //qDebug() << l;
+                //qDebug() << htmlToPlainText(rx.cap(2));
             }
 
             qDebug() << "rx" << rxi << "time:" << timer.elapsed();
@@ -115,16 +116,15 @@ MangaInfo *MangaTown::getMangaInfo(QString mangalink)
     int spos = job->buffer.indexOf("<div class=\"article_content\">");
 
     if (titlerx.indexIn(job->buffer, spos) != -1)
-        info->title = titlerx.cap(1).trimmed();
+        info->title = htmlToPlainText(titlerx.cap(1)).trimmed();
     if (authorrx.indexIn(job->buffer, spos) != -1)
-        info->author = authorrx.cap(1);
+        info->author = htmlToPlainText(authorrx.cap(1));
     if (artistrx.indexIn(job->buffer, spos) != -1)
-        info->artist = artistrx.cap(1);
+        info->artist = htmlToPlainText(artistrx.cap(1));
     if (statusrx.indexIn(job->buffer, spos) != -1)
         info->status = statusrx.cap(1);
     if (summaryrx.indexIn(job->buffer, spos) != -1)
-        info->summary = summaryrx.cap(1);
-    info->summary = info->summary.remove("&quot;").remove("<br />");
+        info->summary = htmlToPlainText(summaryrx.cap(1));
 
 
     info->releaseyear = "";
@@ -273,15 +273,21 @@ QString MangaTown::getImageLink(const QString &pagelink)
 {
     DownloadStringJob *job = AbstractMangaSource::downloadmanager->downloadAsString(pagelink);
 
+
+//    qDebug() << pagelink;
+
     if (!job->await(3000))
         return "";
 
-    QRegExp rx("<img src=\"(https://mangatown.secure[^\"]*)");
+    QRegExp rx("<img src=\"([^\"]*)\"[^>]*id=\"image\"");
 
     if (rx.indexIn(job->buffer, 0) == -1)
+    {
+        qDebug() << "no hit";
         return "";
+    }
 
-//    qDebug() << rx.cap(1);
+    qDebug() << rx.cap(1);
 
     return rx.cap(1);
 }

@@ -23,7 +23,7 @@ FavoritesWidget::~FavoritesWidget()
 
 void FavoritesWidget::adjustSizes()
 {
-    ui->tableWidget->setHorizontalHeaderLabels(QStringList() << "Manga" << "Host" << "Status" << "Progress");
+    ui->tableWidget->setHorizontalHeaderLabels(QStringList() << "Manga" << "Host" << "Status" << "My Progress");
     ui->tableWidget->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
 
     QHeaderView *verticalHeader = ui->tableWidget->verticalHeader();
@@ -85,7 +85,7 @@ void FavoritesWidget::insertRow(const Favorite &fav, int row)
     QTableWidgetItem *chapters = new QTableWidgetItem(statusstring);
     chapters->setTextAlignment(Qt::AlignCenter);
 
-    QString progressstring = "Chapter: " + QString::number(fav.currentindex.chapter) + "\nPage: " + QString::number(fav.currentindex.page);
+    QString progressstring = "Chapter: " + QString::number(fav.currentindex.chapter + 1) + "\nPage: " + QString::number(fav.currentindex.page + 1);
     QTableWidgetItem *progress = new QTableWidgetItem(progressstring);
     progress->setTextAlignment(Qt::AlignCenter);
 

@@ -8,7 +8,8 @@
 
 AbstractMangaSource::AbstractMangaSource(QObject *parent) :
     QObject(parent),
-    nummangas(0)
+    nummangas(0),
+    htmlconverter()
 {
 }
 
@@ -113,6 +114,11 @@ void AbstractMangaSource::updateMangaInfo(MangaInfo *info)
 
 }
 
+QString AbstractMangaSource::htmlToPlainText(const QString &str)
+{
+    htmlconverter.setHtml(str);
+    return htmlconverter.toPlainText();
+}
 
 //AbstractMangaSource *AbstractMangaSource::getSourceByName(const QString &name)
 //{

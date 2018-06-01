@@ -70,7 +70,7 @@ bool MangaDex::updateMangaList()
             for (int pos = 0; (pos = rx.indexIn(jobs[rxi]->buffer, pos)) != -1; pos += rx.matchedLength())
             {
                 mangalist.links.append(rx.cap(2));
-                mangalist.titles.append(rx.cap(1));
+                mangalist.titles.append(htmlToPlainText(htmlToPlainText(rx.cap(1))));
             }
 
 //            qDebug() << "rx" << rxi << "time:" << timer.elapsed();
@@ -118,16 +118,15 @@ MangaInfo *MangaDex::getMangaInfo( QString mangalink)
     int spos = job->buffer.indexOf("<div class=\"container\" role=\"main\">");
 
     if (titlerx.indexIn(job->buffer, spos) != -1)
-        info->title = titlerx.cap(1).trimmed();
+        info->title = htmlToPlainText(titlerx.cap(1)).trimmed();
     if (authorrx.indexIn(job->buffer, spos) != -1)
-        info->author = authorrx.cap(1);
+        info->author = htmlToPlainText(authorrx.cap(1));
     if (artistrx.indexIn(job->buffer, spos) != -1)
-        info->artist = artistrx.cap(1);
+        info->artist = htmlToPlainText(artistrx.cap(1));
     if (statusrx.indexIn(job->buffer, spos) != -1)
         info->status = statusrx.cap(1);
     if (summaryrx.indexIn(job->buffer, spos) != -1)
-        info->summary = summaryrx.cap(1);
-    info->summary = info->summary.remove("&quot;").remove("<br />");
+        info->summary = htmlToPlainText(summaryrx.cap(1));
 
     info->releaseyear = "";
 
@@ -196,18 +195,6 @@ MangaInfo *MangaDex::getMangaInfo( QString mangalink)
     }
 
 
-    info->chapters.removeLast();
-    info->chapertitlesreversed.removeAt(0);
-    info->numchapters--;
-
-
-    info->chapters.removeLast();
-    info->chapertitlesreversed.removeAt(0);
-    info->numchapters--;
-
-    info->chapters.removeLast();
-    info->chapertitlesreversed.removeAt(0);
-    info->numchapters--;
 
 
 

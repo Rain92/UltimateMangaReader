@@ -5,17 +5,29 @@
 #include <QStandardItemModel>
 #include "favoritesmanager.h"
 #include "downloadmanager.h"
-#include "mangapanda.h"
-#include "mangadex.h"
-#include "mangatown.h"
-#include "homewidget.h"
 #include "mangainfowidget.h"
 #include "favoriteswidget.h"
 #include "mangareaderwidget.h"
+#include "homewidget.h"
 
+#include "mangapanda.h"
+#include "mangadex.h"
+#include "mangatown.h"
+#include "mangawindow.h"
 
-#ifdef KOBO
+#ifndef WINDOWS
+
 #include "WidgetCommon.h"
+#include "Config.h"
+#include "QtUtils.h"
+#include "Platform.h"
+#include "FileOpenDialog.h"
+#include "FileSaveDialog.h"
+#include "WidgetCommon.h"
+#include "VirtualKeyboard.h"
+#include "VirtualKeyboardContainer.h"
+#include "platform/KoboPlatform.h"
+
 #endif
 
 namespace Ui {
@@ -49,7 +61,7 @@ public slots:
 
     void setWidgetTab(int page);
 
-    void setFrontLight();
+    void setFrontLight(int light, int comflight);
 
 private slots:
     void on_pushButtonHome_clicked();
@@ -64,6 +76,7 @@ protected:
 private:
 
     void setupUI();
+    void setupFrontLight();
     void adjustSizes();
     void setupDirs();
 
@@ -86,6 +99,7 @@ private:
     FavoritesManager favorites;
 
     int lastTab;
+
 };
 
 #endif // MAINWIDGET_H
