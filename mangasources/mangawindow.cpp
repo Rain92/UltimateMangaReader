@@ -211,7 +211,7 @@ MangaInfo *MangaWindow::getMangaInfo(QString mangalink)
     if (coverlink != "" && !coverjob->await(6000))
     {
 
-        qDebug() << "coverload failed";
+//        qDebug() << "coverload failed";
 //        info->coverpath = "";
     }
     delete job;

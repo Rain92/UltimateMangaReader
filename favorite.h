@@ -30,6 +30,7 @@ struct Favorite
     QString mangaInfoPath() const;
     QString mangaProgressPath() const;
 
+    QString coverpathscaled() const;
 
     static Favorite fromMangaInfo(MangaInfo *info)
     {

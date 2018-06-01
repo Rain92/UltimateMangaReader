@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include "mangainfo.h"
+#include "gotodialog.h"
 
 namespace Ui {
 class MangaReaderWidget;
@@ -32,6 +33,7 @@ signals:
     void closeApp();
     void back();
     void frontlightchanged(int light, int comflight);
+    void gotoIndex(MangaIndex index);
 
 private slots:
     void on_pushButtonReaderHome_clicked();
@@ -43,6 +45,8 @@ private slots:
 
     void on_horizontalSliderComfLight_valueChanged(int value);
 
+    void on_pushButtonReaderGoto_clicked();
+
 private:
     Ui::MangaReaderWidget *ui;
 
@@ -50,6 +54,10 @@ private:
 
     QList<QPixmap *> imgcache;
     QList<QString> imgcachepaths;
+
+    MangaInfo* currentmanga;
+
+    GotoDialog *gotodialog;
 };
 
 #endif // MANGAREADERWIDGET_H

@@ -9,7 +9,7 @@
 FavoritesWidget::FavoritesWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::FavoritesWidget),
-    favorites()
+    favorites(nullptr)
 {
     ui->setupUi(this);
 
@@ -40,7 +40,7 @@ void FavoritesWidget::adjustSizes()
 }
 
 
-void FavoritesWidget::showFavoritesList(const QList<Favorite> &favs)
+void FavoritesWidget::showFavoritesList(QList<Favorite> *favs)
 {
     favorites = favs;
 
@@ -54,7 +54,7 @@ void FavoritesWidget::showFavoritesList(const QList<Favorite> &favs)
     while (ui->tableWidget->model()->rowCount() > 0)
         ui->tableWidget->removeRow(0);
     int r =  0;
-    foreach (const Favorite &fav, favs)
+    foreach (const Favorite &fav, *favs)
     {
         insertRow(fav, r);
         r++;
@@ -74,12 +74,12 @@ void FavoritesWidget::showFavoritesList(const QList<Favorite> &favs)
 
 void FavoritesWidget::insertRow(const Favorite &fav, int row)
 {
-    QString hosticonpath = ":/resources/images/icons/" + fav.hostname.toLower() + ".png";
-
-    QWidget *titlewidget = makeIconTextWidget(fav.coverpath, fav.title, QSize(favoritecoverheight, favoritecoverheight));
-    QWidget *hostwidget = makeIconTextWidget(hosticonpath, fav.hostname, QSize(favoritecoverheight, favoritecoverheight));
+    QWidget *titlewidget = makeIconTextWidget(fav.coverpathscaled(), fav.title, QSize(favoritecoverheight, favoritecoverheight));
 
     ui->tableWidget->insertRow(row);
+
+    QTableWidgetItem *hostwidget = new QTableWidgetItem(fav.hostname);
+    hostwidget->setTextAlignment(Qt::AlignCenter);
 
     QString statusstring = (fav.updated ? "Updated!\n" : fav.status + "\n") + "Chapters: " + QString::number(fav.numchapters);
     QTableWidgetItem *chapters = new QTableWidgetItem(statusstring);
@@ -90,7 +90,7 @@ void FavoritesWidget::insertRow(const Favorite &fav, int row)
     progress->setTextAlignment(Qt::AlignCenter);
 
     ui->tableWidget->setCellWidget(row, 0, titlewidget);
-    ui->tableWidget->setCellWidget(row, 1, hostwidget);
+    ui->tableWidget->setItem(row, 2, hostwidget);
     ui->tableWidget->setItem(row, 2, chapters);
     ui->tableWidget->setItem(row, 3, progress);
 }
@@ -101,15 +101,17 @@ void FavoritesWidget::mangaUpdated()
     MangaInfo *mi = static_cast<MangaInfo *>(sender());
 
     int i = 0;
-    while (favorites[i].title != mi->title && favorites[i].title != mi->title)
+    while (favorites->at(i).title != mi->title && favorites->at(i).title != mi->title)
         i++;
 
-    favorites.move(i, 0);
-    favorites[0].updated = true;
-    favorites[0].numchapters = mi->numchapters;
+    favorites->move(i, 0);
+    favorites->first().updated = true;
+    favorites->first().numchapters = mi->numchapters;
 
     ui->tableWidget->removeRow(i);
-    insertRow(favorites[0], 0);
+    insertRow(favorites->at(0), 0);
+
+    emit(mangaListUpdated());
 }
 
 QWidget *FavoritesWidget::makeIconTextWidget(const QString &path, const QString &text, const QSize &iconsize)
@@ -120,13 +122,14 @@ QWidget *FavoritesWidget::makeIconTextWidget(const QString &path, const QString 
 
     QLabel *iconlabel = new QLabel(widget);
     iconlabel->setMaximumSize(iconsize);
-    iconlabel->setScaledContents(true);
+    iconlabel->setScaledContents(false);
     iconlabel->setPixmap(QPixmap(path));
 
     QVBoxLayout *vlayout = new QVBoxLayout(widget);
     vlayout->setAlignment(Qt::AlignCenter);
     QHBoxLayout *hlayout = new QHBoxLayout();
     hlayout->addWidget(iconlabel);
+    hlayout->setAlignment(Qt::AlignCenter);
 
     vlayout->addLayout(hlayout);
     vlayout->addWidget(textlabel);
@@ -140,5 +143,5 @@ QWidget *FavoritesWidget::makeIconTextWidget(const QString &path, const QString 
 
 void FavoritesWidget::on_tableWidget_cellClicked(int row, int column)
 {
-    emit favoriteClicked(favorites[row], column >= 2);
+    emit favoriteClicked(favorites->at(row), column >= 2);
 }

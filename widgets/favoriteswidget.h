@@ -16,12 +16,13 @@ public:
     explicit FavoritesWidget(QWidget *parent = 0);
     ~FavoritesWidget();
 
-    void showFavoritesList(const QList<Favorite> &favs);
+    void showFavoritesList(QList<Favorite> *favs);
 
 
     QList<AbstractMangaSource *> mangasources;
 signals:
     void favoriteClicked(Favorite fav, bool current);
+    void mangaListUpdated();
 
 private slots:
     void on_tableWidget_cellClicked(int row, int column);
@@ -29,7 +30,7 @@ private slots:
 
 private:
     Ui::FavoritesWidget *ui;
-    QList<Favorite> favorites;
+    QList<Favorite> *favorites;
 
     void insertRow(const Favorite &fav, int row);
     void adjustSizes();

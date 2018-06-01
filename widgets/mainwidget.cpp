@@ -14,13 +14,13 @@ MainWidget::MainWidget(QWidget *parent) :
 #endif
     ui(new Ui::MainWidget),
     currentmanga(nullptr),
-    favorites(),
+    favoritesmanager(),
     lastTab(0)
 {
     ui->setupUi(this);
     setupDirs();
 
-    favorites.deserialize();
+    favoritesmanager.deserialize();
 
     downloadmanager = new DownloadManager(this);
 
@@ -52,12 +52,14 @@ MainWidget::MainWidget(QWidget *parent) :
     QObject::connect(ui->mangaInfoWidget, SIGNAL(readMangaClicked(MangaIndex)), this, SLOT(viewMangaImage(MangaIndex)));
 
     QObject::connect(ui->favoritesWidget, SIGNAL(favoriteClicked(Favorite, bool)), this, SLOT(viewFavorite(Favorite, bool)));
+    QObject::connect(ui->favoritesWidget, SIGNAL(mangaListUpdated()), &favoritesmanager, SLOT(serialize()));
 
     QObject::connect(ui->mangaReaderWidget, SIGNAL(changeView(int)), this, SLOT(setWidgetTab(int)));
     QObject::connect(ui->mangaReaderWidget, SIGNAL(advancPageClicked(bool)), this, SLOT(advanceMangaPage(bool)));
     QObject::connect(ui->mangaReaderWidget, SIGNAL(closeApp()), this, SLOT(on_pushButtonClose_clicked()));
     QObject::connect(ui->mangaReaderWidget, SIGNAL(back()), this, SLOT(readerGoBack()));
     QObject::connect(ui->mangaReaderWidget, SIGNAL(frontlightchanged(int, int)), this, SLOT(setFrontLight(int, int)));
+    QObject::connect(ui->mangaReaderWidget, SIGNAL(gotoIndex(MangaIndex)), this, SLOT(viewMangaImage(MangaIndex)));
 }
 
 MainWidget::~MainWidget()
@@ -185,7 +187,7 @@ void MainWidget::setWidgetTab(int page)
         }
         if (page == 2)
         {
-            ui->favoritesWidget->showFavoritesList(favorites.getFavorites());
+            ui->favoritesWidget->showFavoritesList(favoritesmanager.getFavorites());
             lastTab = 2;
         }
 
@@ -213,7 +215,7 @@ void MainWidget::viewFavorite(Favorite fav, bool current)
 
 
         ui->mangaInfoWidget->setManga(currentmanga);
-        ui->mangaInfoWidget->setFavoriteButtonState(!favorites.isFavorite(currentmanga));
+        ui->mangaInfoWidget->setFavoriteButtonState(!favoritesmanager.isFavorite(currentmanga));
 
         viewMangaImage(fav.currentindex);
     }
@@ -236,7 +238,7 @@ void MainWidget::viewMangaInfo(const QString &mangalink, const QString &mangatit
     QObject::connect(currentmanga, SIGNAL(completedImagePreloadSignal(QString)), ui->mangaReaderWidget, SLOT(addImageToCache(QString)));
 
     ui->mangaInfoWidget->setManga(currentmanga);
-    ui->mangaInfoWidget->setFavoriteButtonState(!favorites.isFavorite(currentmanga));
+    ui->mangaInfoWidget->setFavoriteButtonState(!favoritesmanager.isFavorite(currentmanga));
 
     setWidgetTab(1);
 
@@ -247,7 +249,7 @@ void MainWidget::viewMangaInfo(const QString &mangalink, const QString &mangatit
 
 void MainWidget::toggleFavorite(MangaInfo *manga)
 {
-    ui->mangaInfoWidget->setFavoriteButtonState(!favorites.toggleFavorite(manga));
+    ui->mangaInfoWidget->setFavoriteButtonState(!favoritesmanager.toggleFavorite(manga));
 }
 
 

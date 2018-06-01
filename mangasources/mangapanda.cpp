@@ -48,7 +48,9 @@ bool MangaPanda::updateMangaList()
 
 MangaInfo *MangaPanda::getMangaInfo(QString mangalink)
 {
-//    qDebug() << mangalink;
+    //    qDebug() << mangalink;
+    //int tc = 0;
+    //qDebug() << tc++ << QTime::currentTime().currentTime().toString("mm:ss:zzz");
 
     DownloadStringJob *job = downloadmanager->downloadAsString(mangalink);
 
@@ -130,7 +132,7 @@ MangaInfo *MangaPanda::getMangaInfo(QString mangalink)
     if (coverlink != "" && !coverjob->await(3000))
     {
 
-        info->coverpath = "";
+//        info->coverpath = "";
     }
 
 //    info->chapters.removeLast();

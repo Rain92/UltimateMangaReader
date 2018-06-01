@@ -199,12 +199,9 @@ MangaInfo *MangaDex::getMangaInfo( QString mangalink)
     }
 
 
-
-
-
     if (coverlink != "" && !coverjob->await(3000))
     {
-        info->coverpath = "";
+//        info->coverpath = "";
     }
 //    downloadmanager->fileDownloads->remove(coverlink);
 

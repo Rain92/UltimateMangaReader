@@ -1,5 +1,7 @@
 #include "favorite.h"
 #include <QFileInfo>
+#include <QImage>
+#include "configs.h"
 
 
 Favorite::Favorite():
@@ -27,6 +29,27 @@ QString Favorite::mangaInfoPath() const
 QString Favorite::mangaProgressPath() const
 {
     return mangainfodir(hostname, title) + "progress.dat";
+}
+
+
+QString Favorite::coverpathscaled() const
+{
+    if(coverpath == "")
+        return "";
+
+    QString scpath = coverpath;
+    scpath.insert(scpath.length() - 4, "_scaled");
+
+    QFileInfo scaledcover(scpath);
+    if(!scaledcover.exists())
+    {
+        QImage img;
+        img.load(coverpath);
+        img = img.scaled(favoritecoverwidth, favoritecoverheight, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        img.save(scpath);
+    }
+
+    return scpath;
 }
 
 QDataStream &operator<<(QDataStream &str, const Favorite &m)

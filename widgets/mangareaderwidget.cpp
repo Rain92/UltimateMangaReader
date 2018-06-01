@@ -14,6 +14,8 @@ MangaReaderWidget::MangaReaderWidget(QWidget *parent) :
     ui->readerFrontLightBar->setVisible(false);
     ui->readerNavigationBar->setVisible(false);
 
+    gotodialog = new GotoDialog(this);
+
     updateTime();
 }
 
@@ -28,6 +30,7 @@ void  MangaReaderWidget::adjustSizes()
     ui->pushButtonReaderBack->setMinimumHeight(buttonsize);
     ui->pushButtonReaderClose->setMinimumHeight(buttonsize);
     ui->pushButtonReaderHome->setMinimumHeight(buttonsize);
+    ui->pushButtonReaderGoto->setMinimumHeight(buttonsize);
 
 
     ui->horizontalSliderLight->setMinimumHeight(lighticonsize);
@@ -107,6 +110,7 @@ void MangaReaderWidget::updateReaderLabels(MangaInfo *currentmanga)
                                     "/" + QString::number(currentmanga->numchapters));
     ui->labelReaderPage->setText("Page: " + QString::number(currentmanga->currentindex.page + 1) + "/" +
                                  QString::number(currentmanga->chapters.at(currentmanga->currentindex.chapter).numpages));
+    this->currentmanga = currentmanga;
 }
 
 
@@ -229,4 +233,17 @@ void MangaReaderWidget::on_horizontalSliderLight_valueChanged(int value)
 void MangaReaderWidget::on_horizontalSliderComfLight_valueChanged(int value)
 {
     emit frontlightchanged(ui->horizontalSliderLight->value(), value);
+}
+
+void MangaReaderWidget::on_pushButtonReaderGoto_clicked()
+{
+    gotodialog->setup(currentmanga->numchapters, currentmanga->chapters[currentmanga->currentindex.chapter].numpages, currentmanga->currentindex);
+
+    if(gotodialog->exec() == QDialog::Accepted && !gotodialog->selectedindex.illegal)
+    {
+        ui->readerFrontLightBar->setVisible(false);
+        ui->readerNavigationBar->setVisible(false);
+
+        emit gotoIndex(gotodialog->selectedindex);
+    }
 }

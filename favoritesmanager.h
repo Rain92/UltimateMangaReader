@@ -7,23 +7,25 @@
 #include "configs.h"
 #include "favorite.h"
 
-class FavoritesManager
+class FavoritesManager : public QObject
 {
+    Q_OBJECT
 public:
     FavoritesManager();
     void update(MangaInfo *info);
 
     Favorite *findOrInsert(MangaInfo *info);
-    QList<Favorite> getFavorites();
+    QList<Favorite> *getFavorites();
 
 
     bool isFavorite(MangaInfo *info);
     bool toggleFavorite(MangaInfo *info);
 
-    void serialize();
     void deserialize();
+public slots:
+    void serialize();
 private:
-    QMap<QString, Favorite> favorites;
+    QList<Favorite> favorites;
 };
 
 #endif // READINGSTATEMANAGER_H

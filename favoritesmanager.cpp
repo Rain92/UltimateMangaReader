@@ -31,55 +31,58 @@ void FavoritesManager::serialize()
 
 Favorite *FavoritesManager::findOrInsert(MangaInfo *info)
 {
-    QString key = info->hostname + "_" + info->title;
-    if (favorites.contains(key))
-        return &favorites[key];
+    QString key = info->hostname + info->title;
 
-    favorites[key] = Favorite::fromMangaInfo(info);
+    QMutableListIterator<Favorite> iterator(favorites);
+    while (iterator.hasNext())
+    {
+        Favorite& f = iterator.next();
+        if(f.hostname + f.title == key)
+            return &f;
+    }
 
-    return &favorites[key];
+    favorites.append(Favorite::fromMangaInfo(info));
+
+    return &favorites.last();
 }
 
 
 bool FavoritesManager::isFavorite(MangaInfo *info)
 {
-    QString key = info->hostname + "_" + info->title;
-    return favorites.contains(key);
+    QString key = info->hostname + info->title;
+    foreach (const Favorite &f, favorites)
+    {
+        if(f.hostname + f.title == key)
+            return true;
+    }
+    return false;
 }
 
 bool FavoritesManager::toggleFavorite(MangaInfo *info)
 {
-    QString key = info->hostname + "_" + info->title;
-    if (favorites.contains(key))
+    QString key = info->hostname + info->title;
+
+    QMutableListIterator<Favorite> iterator(favorites);
+    while (iterator.hasNext())
     {
-        favorites.remove(key);
-        serialize();
-        return false;
+        Favorite& f = iterator.next();
+        if(f.hostname + f.title == key)
+        {
+            iterator.remove();
+            serialize();
+            return false;
+        }
+
     }
-    else
-    {
-        findOrInsert(info);
-        serialize();
-        return true;
-    }
+
+    favorites.append(Favorite::fromMangaInfo(info));
+    serialize();
+    return true;
+
+
 }
 
-QList<Favorite> FavoritesManager::getFavorites()
+QList<Favorite>* FavoritesManager::getFavorites()
 {
-    QList<Favorite> ret;
-
-    foreach (const Favorite &fav, favorites)
-    {
-        ret.append(fav);
-
-        QFile file(fav.mangaProgressPath());
-        if (file.open(QIODevice::ReadOnly))
-        {
-            QDataStream in(&file);
-            in >> ret.last().currentindex >> ret.last().numchapters;
-            file.close();
-        }
-    }
-
-    return ret;
+    return &favorites;
 }

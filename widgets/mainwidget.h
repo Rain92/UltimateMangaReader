@@ -96,7 +96,7 @@ private:
     AbstractMangaSource *currentsource;
     MangaInfo *currentmanga;
 
-    FavoritesManager favorites;
+    FavoritesManager favoritesmanager;
 
     int lastTab;
 

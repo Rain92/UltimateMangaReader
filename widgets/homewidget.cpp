@@ -6,6 +6,7 @@
 #include <QStringListModel>
 #include <QScrollBar>
 #include <QStandardItemModel>
+#include <QProgressDialog>
 
 HomeWidget::HomeWidget(QWidget *parent) :
     QWidget(parent),
@@ -102,6 +103,9 @@ void HomeWidget::on_pushButtonUpdate_clicked()
     ui->progressBar->setValue(0);
     ui->progressBar->show();
     sourcesprogress = QVector<int>(mangasources->count());
+
+
+
 
     foreach (AbstractMangaSource *ms, *mangasources)
     {

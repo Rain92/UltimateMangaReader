@@ -63,7 +63,7 @@ void MangaInfoWidget::setManga(MangaInfo *manga)
     ui->labelMangaInfoLabelSummary->setText(currentmanga->summary);
 
     QPixmap img;
-//    qDebug() << currentmanga->coverpath;
+    //qDebug() << currentmanga->coverpath;
     img.load(currentmanga->coverpath);
     ui->labelMangaInfoCover->setPixmap(img.scaled(coversize, coversize, Qt::KeepAspectRatio, Qt::SmoothTransformation));
 

@@ -230,6 +230,13 @@
             </widget>
            </item>
            <item>
+            <widget class="QPushButton" name="pushButtonReaderGoto">
+             <property name="text">
+              <string>Goto...</string>
+             </property>
+            </widget>
+           </item>
+           <item>
             <widget class="QLabel" name="labelReaderPage">
              <property name="text">
               <string>Page</string>
