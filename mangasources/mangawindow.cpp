@@ -141,6 +141,9 @@ MangaInfo *MangaWindow::getMangaInfo(QString mangalink)
     authorrx.setMinimal(true);
     QRegExp statusrx("<b>Status:</b>\\s+<span>([^<]*)");
 
+    QRegExp genresrx("Genres:(.*)</span>");
+    genresrx.setMinimal(true);
+
     QRegExp summaryrx("Summary:</h5>\\s+<pre>(?:<p>)?(.*)</");
     summaryrx.setMinimal(true);
 
@@ -164,7 +167,9 @@ MangaInfo *MangaWindow::getMangaInfo(QString mangalink)
     if (statusrx.indexIn(job->buffer, spos) != -1)
         info->status = statusrx.cap(1);
     if (summaryrx.indexIn(job->buffer, spos) != -1)
-        info->summary = htmlToPlainText(summaryrx.cap(1));
+        info->summary = htmlToPlainText(summaryrx.cap(1));    
+    if (genresrx.indexIn(job->buffer, 0) != -1)
+        info->genres = htmlToPlainText(genresrx.cap(1)).trimmed();
 
     info->releaseyear = "";
 

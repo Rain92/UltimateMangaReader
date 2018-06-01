@@ -57,6 +57,7 @@ void MangaInfoWidget::setManga(MangaInfo *manga)
 
     ui->labelMangaInfoLabelAuthor->setText(currentmanga->author);
     ui->labelMangaInfoLabelArtist->setText(currentmanga->artist);
+    ui->labelMangaInfoLabelGenres->setText(currentmanga->genres);
     ui->labelMangaInfoLabelStaus->setText(currentmanga->status);
     ui->labelMangaInfoLabelYear->setText(currentmanga->releaseyear);
     ui->labelMangaInfoLabelSummary->setText(currentmanga->summary);

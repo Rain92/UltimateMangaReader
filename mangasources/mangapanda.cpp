@@ -63,6 +63,8 @@ MangaInfo *MangaPanda::getMangaInfo(QString mangalink)
     QRegExp artistrx("Artist:</td>[^>]*>([^<]*)");
     QRegExp statusrx("Status:</td>[^>]*>([^<]*)");
     QRegExp yearrx("Year of Release:</td>[^>]*>([^<]*)");
+    QRegExp genresrx("Genre:</td>(.*)</td>");
+    genresrx.setMinimal(true);
 
     QRegExp summaryrx("<div id=\"readmangasum\">.*<p>([^<]*)</p>");
     summaryrx.setMinimal(true);
@@ -84,6 +86,9 @@ MangaInfo *MangaPanda::getMangaInfo(QString mangalink)
         info->author = htmlToPlainText(authorrx.cap(1));
     if (summaryrx.indexIn(job->buffer, 0) != -1)
         info->summary = htmlToPlainText(summaryrx.cap(1));
+    if (genresrx.indexIn(job->buffer, 0) != -1)
+        info->genres = htmlToPlainText(genresrx.cap(1)).trimmed();
+
 
 
     QRegExp coverrx("<div id=\"mangaimg\"><img src=\"([^\"]*)");

@@ -103,6 +103,12 @@ MangaInfo *MangaTown::getMangaInfo(QString mangalink)
     QRegExp artistrx("Artist\\(s\\):</b>[^>]*>([^<]*)");
     QRegExp statusrx("Status\\(s\\):</b>([^<&]*)");
 
+    QRegExp demorx("Demographic:(.*)</li>");
+    demorx.setMinimal(true);
+
+    QRegExp genresrx("Genre\\(s\\):(.*)</li>");
+    genresrx.setMinimal(true);
+
     QRegExp summaryrx("<span id=\"show\"[^>]*>([^<&]*)");
 //    summaryrx.setMinimal(true);
 
@@ -123,6 +129,10 @@ MangaInfo *MangaTown::getMangaInfo(QString mangalink)
         info->artist = htmlToPlainText(artistrx.cap(1));
     if (statusrx.indexIn(job->buffer, spos) != -1)
         info->status = statusrx.cap(1);
+    if (demorx.indexIn(job->buffer, 0) != -1)
+        info->genres = htmlToPlainText(demorx.cap(1)) + ", ";
+    if (genresrx.indexIn(job->buffer, 0) != -1)
+        info->genres.append(htmlToPlainText(genresrx.cap(1)).trimmed());
     if (summaryrx.indexIn(job->buffer, spos) != -1)
         info->summary = htmlToPlainText(summaryrx.cap(1));
 
