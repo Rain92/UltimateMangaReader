@@ -67,6 +67,7 @@ void DownloadStringJob::onSslErrors(const QList<QSslError> &)
 {
     QNetworkReply *reply = static_cast<QNetworkReply *>(sender());
     reply->ignoreSslErrors();
+    qDebug() << "SSL error";
     return;
 
 //    foreach (QSslError ssle, errors)
@@ -75,7 +76,7 @@ void DownloadStringJob::onSslErrors(const QList<QSslError> &)
 //    }
 //    errorString = reply->errorString();
 
-    emit downloadError();
+//    emit downloadError();
 }
 
 void DownloadStringJob::onError(QNetworkReply::NetworkError)
@@ -108,13 +109,14 @@ bool DownloadStringJob::await(int timeout, bool retry)
     if (errorString == "")
         loop.exec();
 
+    int rem = timeout - time.elapsed();
+    qDebug() << rem;
     if (errorString != "")
     {
         qDebug() << url;
         if (!retry)
             return false;
 
-        int rem = timeout - time.elapsed();
         qDebug() << rem;
         if (rem > 0)
         {
@@ -122,6 +124,8 @@ bool DownloadStringJob::await(int timeout, bool retry)
             return await(rem, retry);
         }
     }
+    if(rem <= 20)
+        errorString += "Download timeout.";
 
 
     return isCompleted;

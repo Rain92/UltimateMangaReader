@@ -4,7 +4,14 @@
 #include <QWidget>
 #include <QStandardItem>
 #include <QProgressBar>
+
+#include <QStringListModel>
+#include <QScrollBar>
+#include <QStandardItemModel>
+#include <QProgressDialog>
+
 #include "abstractmangasource.h"
+#include "updatedialog.h"
 
 
 namespace Ui {
@@ -26,7 +33,6 @@ signals:
     void mangaClicked(const QString &mangalink, const QString &mangatitle);
 
 private slots:
-
     void on_pushButtonUpdate_clicked();
     void on_pushButtonClearCache_clicked();
     void on_listViewSources_clicked(const QModelIndex &index);
@@ -34,6 +40,7 @@ private slots:
     void on_pushButtonFilterClear_clicked();
     void on_listViewMangas_clicked(const QModelIndex &index);
     void updateProgress(int p);
+    void updateError(const QString &error);
 
 private:
     Ui::HomeWidget *ui;
@@ -52,6 +59,7 @@ private:
 
     QList<QStandardItem *> *listViewItemfromMangaSource(AbstractMangaSource *source);
     QProgressBar *updateProgressBar;
+    UpdateDialog *updatedialog;
 };
 
 #endif // HOMEWIDGET_H

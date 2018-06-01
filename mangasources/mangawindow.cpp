@@ -25,7 +25,10 @@ bool MangaWindow::updateMangaList()
     DownloadStringJob *job = AbstractMangaSource::downloadmanager->downloadAsString(basedictlink + "1");
 
     if (!job->await(5000))
+    {
+        emit updateError(job->errorString);
         return false;
+    }
 
     mangalist.links.clear();
     mangalist.titles.clear();
@@ -72,7 +75,10 @@ bool MangaWindow::updateMangaList()
         for (; rxi < (batch + 1) * maxparalleldownloads && rxi < pages; rxi++)
         {
             if (!jobs[rxi]->await(15000, true))
+            {
+                emit updateError(job->errorString);
                 return false;
+            }
 
             for (int pos = 0; (pos = rxlink.indexIn(jobs[rxi]->buffer, pos)) != -1; pos += rxlink.matchedLength())
             {
@@ -103,12 +109,12 @@ bool MangaWindow::updateMangaList()
             delete jobs[rxi];
 //            break;
         }
-        emit progress(100 * rxi / pages);
+        emit updateProgress(100 * rxi / pages);
 //        break;
     }
 
 
-    emit progress(100);
+    emit updateProgress(100);
     qDebug() << "time" << timer.elapsed();
     return true;
 }

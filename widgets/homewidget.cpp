@@ -2,11 +2,7 @@
 #include "ui_homewidget.h"
 #include "configs.h"
 #include "cscrollbar.h"
-
-#include <QStringListModel>
-#include <QScrollBar>
-#include <QStandardItemModel>
-#include <QProgressDialog>
+#include <QLabel>
 
 HomeWidget::HomeWidget(QWidget *parent) :
     QWidget(parent),
@@ -18,7 +14,11 @@ HomeWidget::HomeWidget(QWidget *parent) :
     ui->setupUi(this);
     adjustSizes();
 
+    updatedialog = new UpdateDialog(this);
+
     QObject::connect(ui->lineEditFilter, SIGNAL(returnPressed()), ui->pushButtonFilter, SIGNAL(clicked()));
+
+    QObject::connect(updatedialog, SIGNAL(retry()), this, SLOT(on_pushButtonUpdate_clicked()));
 }
 
 HomeWidget::~HomeWidget()
@@ -28,7 +28,6 @@ HomeWidget::~HomeWidget()
 
 void HomeWidget::setMangaSources(QList<AbstractMangaSource *> *sources)
 {
-    ui->progressBar->hide();
     mangasources = sources;
 
     setupSourcesList();
@@ -67,10 +66,17 @@ void  HomeWidget::setupSourcesList()
 
     ui->listViewSources->setModel(model);
 
-    ui->progressBar->setMaximum(mangasources->count() * 100);
-
     foreach (AbstractMangaSource *src, *mangasources)
-        QObject::connect(src, SIGNAL(progress(int)), this, SLOT(updateProgress(int)));
+    {
+        QObject::connect(src, SIGNAL(updateProgress(int)), this, SLOT(updateProgress(int)));
+        QObject::connect(src, SIGNAL(updateError(QString)), this, SLOT(updateError(QString)));
+    }
+}
+
+void HomeWidget::updateError(const QString &error)
+{
+    AbstractMangaSource *src = static_cast<AbstractMangaSource *>(sender());
+    updatedialog->error("Error updating " + src->name + ": \n" + error);
 }
 
 void  HomeWidget::updateProgress(int p)
@@ -82,7 +88,28 @@ void  HomeWidget::updateProgress(int p)
     int sum = 0;
     foreach (int sp, sourcesprogress)
         sum += sp;
-    ui->progressBar->setValue(sum);
+
+    updatedialog->updateProgress(sum);
+}
+
+
+void HomeWidget::on_pushButtonUpdate_clicked()
+{
+    sourcesprogress = QVector<int>(mangasources->count());
+
+    updatedialog->setup(mangasources->count() * 100, "Updating Mangalists");
+
+    updatedialog->show();
+
+
+    foreach (AbstractMangaSource *ms, *mangasources)
+    {
+        updatedialog->setLabelText("Updating " + ms->name);
+        if(!ms->updateMangaList())
+            return;
+
+        ms->serializeMangaList();
+    }
 
 }
 
@@ -93,28 +120,8 @@ QList<QStandardItem *> *HomeWidget::listViewItemfromMangaSource(AbstractMangaSou
     item->setIcon(QIcon(QPixmap(":/resources/images/mangahostlogos/" + source->name.toLower() + ".png")));
     items->append(item);
     item->setSizeHint(QSize(mangasourceitemwidth, mangasourceitemheight));
-//    item->set
+
     return items;
-}
-
-
-void HomeWidget::on_pushButtonUpdate_clicked()
-{
-    ui->progressBar->setValue(0);
-    ui->progressBar->show();
-    sourcesprogress = QVector<int>(mangasources->count());
-
-
-
-
-    foreach (AbstractMangaSource *ms, *mangasources)
-    {
-        ms->updateMangaList();
-        ms->serializeMangaList();
-    }
-
-    ui->progressBar->hide();
-//    refreshMangaListView();
 }
 
 bool removeDir(const QString &dirName)
@@ -200,18 +207,20 @@ void HomeWidget::on_pushButtonFilter_clicked()
 
 void HomeWidget::on_pushButtonFilterClear_clicked()
 {
+
     if (ui->lineEditFilter->text() != "")
         ui->lineEditFilter->clear();
 
     filteredmangalinks.clear();
     filteredmangatitles.clear();
+
     refreshMangaListView();
 }
 
 void HomeWidget::refreshMangaListView()
 {
-//    if (filteredmangatitles.empty() && currentsource->mangalist))
-//        return;
+    if(currentsource == nullptr)
+        return;
 
     QStringListModel *model = new QStringListModel(this);
 

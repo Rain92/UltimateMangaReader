@@ -1,14 +1,28 @@
 #include "gotodialog.h"
 #include "ui_gotodialog.h"
+#include "configs.h"
 
 GotoDialog::GotoDialog(QWidget *parent) :
-    QDialog(parent),
+    QDialog(parent, Qt::FramelessWindowHint | Qt::Dialog),
     ui(new Ui::GotoDialog),
     selectedindex(-1, -1, true),
     currentindex(-1, -1, true)
 
 {
     ui->setupUi(this);
+    QString ss = "QDialog{                  "
+                 "border: 2px solid black;  "
+                 "background: white;        "
+                 "}                         ";
+    setWindowModality(Qt::WindowModal);
+    setStyleSheet(ss);
+
+    ui->pushButtonGoChapter->setMinimumHeight(buttonsize);
+    ui->pushButtonGoPage->setMinimumHeight(buttonsize);
+    ui->spinBoxChapter->setMinimumHeight(buttonsize*1.5);
+    ui->spinBoxPage->setMinimumHeight(buttonsize*1.5);
+
+    ui->buttonBox->buttons()[0]->setMinimumHeight(buttonsize);
 }
 
 GotoDialog::~GotoDialog()

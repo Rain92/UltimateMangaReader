@@ -16,9 +16,12 @@ bool MangaPanda::updateMangaList()
                                  baseurl + "/alphabetical");
 
     if (!job->await(8000))
+    {
+        emit updateError(job->errorString);
         return false;
+    }
 
-    emit progress(30);
+    emit updateProgress(30);
 
     mangalist.links.clear();
     mangalist.titles.clear();
@@ -40,7 +43,7 @@ bool MangaPanda::updateMangaList()
 
     qDebug() << nummangas;
 
-    emit progress(100);
+    emit updateProgress(100);
 
     delete job;
     return true;

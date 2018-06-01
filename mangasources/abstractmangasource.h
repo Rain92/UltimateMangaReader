@@ -59,7 +59,8 @@ public:
     QString htmlToPlainText(const QString &str);
 
 signals:
-    void  progress(int);
+    void  updateProgress(int);
+    void  updateError(QString);
 
 protected:
     DownloadManager *downloadmanager;

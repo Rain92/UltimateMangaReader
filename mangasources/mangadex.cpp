@@ -31,7 +31,10 @@ bool MangaDex::updateMangaList()
     DownloadStringJob *job = downloadmanager->downloadAsString(basedictlink + "1");
 
     if (!job->await(5000))
+    {
+        emit updateError(job->errorString);
         return false;
+    }
 
     mangalist.links.clear();
     mangalist.titles.clear();
@@ -65,7 +68,10 @@ bool MangaDex::updateMangaList()
         for (; rxi < (batch + 1) * maxparalleldownloads && rxi < pages; rxi++)
         {
             if (!jobs[rxi]->await(10000, true))
+            {
+                emit updateError(job->errorString);
                 return false;
+            }
 
             for (int pos = 0; (pos = rx.indexIn(jobs[rxi]->buffer, pos)) != -1; pos += rx.matchedLength())
             {
@@ -76,11 +82,11 @@ bool MangaDex::updateMangaList()
 //            qDebug() << "rx" << rxi << "time:" << timer.elapsed();
             delete jobs[rxi];
         }
-        emit progress(100 * rxi / pages);
+        emit updateProgress(100 * rxi / pages);
     }
 
 
-    emit progress(100);
+    emit updateProgress(100);
 //    qDebug() << "time" << timer.elapsed();
     return true;
 }

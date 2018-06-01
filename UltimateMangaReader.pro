@@ -65,7 +65,8 @@ FORMS += \
     widgets/homewidget.ui \
     widgets/mangainfowidget.ui \
     widgets/mangareaderwidget.ui \
-    widgets/gotodialog.ui
+    widgets/gotodialog.ui \
+    widgets/updatedialog.ui
 
 HEADERS += \
     mangasources/abstractmangasource.h \
@@ -92,7 +93,8 @@ HEADERS += \
     favoritesmanager.h \
     mangasources/jaiminisbox.h \
     mangasources/mangawindow.h \
-    widgets/gotodialog.h
+    widgets/gotodialog.h \
+    widgets/updatedialog.h
 
 SOURCES += \
     mangasources/abstractmangasource.cpp \
@@ -120,7 +122,8 @@ SOURCES += \
     favoritesmanager.cpp \
     mangasources/jaiminisbox.cpp \
     mangasources/mangawindow.cpp \
-    widgets/gotodialog.cpp
+    widgets/gotodialog.cpp \
+    widgets/updatedialog.cpp
 
 
 

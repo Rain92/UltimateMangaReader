@@ -3,6 +3,7 @@
 
 #include <QDialog>
 #include "mangadex.h"
+#include <QResizeEvent>
 
 namespace Ui {
 class GotoDialog;
@@ -20,6 +21,9 @@ public:
 
     MangaIndex selectedindex;
     MangaIndex currentindex;
+
+protected slots:
+
 
 private slots:
     void on_pushButtonGoChapter_clicked();
