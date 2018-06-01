@@ -23,6 +23,8 @@ GotoDialog::GotoDialog(QWidget *parent) :
     ui->spinBoxPage->setMinimumHeight(buttonsize*1.5);
 
     ui->buttonBox->buttons()[0]->setMinimumHeight(buttonsize);
+
+
 }
 
 GotoDialog::~GotoDialog()

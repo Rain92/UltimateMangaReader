@@ -17,6 +17,22 @@ void FavoritesManager::deserialize()
     file.close();
 }
 
+void FavoritesManager::deserializeProgresses()
+{
+    QMutableListIterator<Favorite> iterator(favorites);
+    while (iterator.hasNext())
+    {
+        Favorite &fav = iterator.next();
+        QFile file(mangainfodir(fav.hostname, fav.title) + "progress.dat");
+        if (!file.open(QIODevice::ReadOnly))
+            continue;
+
+        QDataStream in(&file);
+        in >> fav.currentindex;
+        file.close();
+    }
+}
+
 void FavoritesManager::serialize()
 {
     QFile file(QString(cachedir) + "favorites.dat");
@@ -84,5 +100,6 @@ bool FavoritesManager::toggleFavorite(MangaInfo *info)
 
 QList<Favorite>* FavoritesManager::getFavorites()
 {
+    deserializeProgresses();
     return &favorites;
 }

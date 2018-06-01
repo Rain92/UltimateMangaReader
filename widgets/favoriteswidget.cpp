@@ -90,7 +90,7 @@ void FavoritesWidget::insertRow(const Favorite &fav, int row)
     progress->setTextAlignment(Qt::AlignCenter);
 
     ui->tableWidget->setCellWidget(row, 0, titlewidget);
-    ui->tableWidget->setItem(row, 2, hostwidget);
+    ui->tableWidget->setItem(row, 1, hostwidget);
     ui->tableWidget->setItem(row, 2, chapters);
     ui->tableWidget->setItem(row, 3, progress);
 }

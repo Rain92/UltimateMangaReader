@@ -124,24 +124,25 @@ QList<QStandardItem *> *HomeWidget::listViewItemfromMangaSource(AbstractMangaSou
     return items;
 }
 
-bool removeDir(const QString &dirName)
+bool removeDir(const QString &dirName, const QString &ignore = "")
 {
     bool result = true;
     QDir dir(dirName);
 
-    qDebug() << dir.absoluteFilePath(dirName);
+//    qDebug() << dir.absoluteFilePath(dirName);
     if (dir.exists())
     {
-        qDebug() << dirName;
+//        qDebug() << dirName;
         Q_FOREACH (QFileInfo info, dir.entryInfoList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden  | QDir::AllDirs | QDir::Files, QDir::DirsFirst))
         {
             if (info.isDir())
             {
-                result = removeDir(info.absoluteFilePath());
+                result = removeDir(info.absoluteFilePath(), ignore);
             }
             else
             {
-                result = QFile::remove(info.absoluteFilePath());
+                if(ignore == "" || !info.absoluteFilePath().endsWith(ignore))
+                    result = QFile::remove(info.absoluteFilePath());
             }
 
             if (!result)
@@ -149,7 +150,7 @@ bool removeDir(const QString &dirName)
                 return result;
             }
         }
-        result = dir.rmdir(dirName);
+        //result = dir.rmdir(dirName);
     }
     return result;
 }
@@ -159,7 +160,7 @@ void HomeWidget::on_pushButtonClearCache_clicked()
     foreach (AbstractMangaSource *s, *mangasources)
     {
 //        qDebug() << cachedir + s->name;
-        removeDir(cachedir + s->name);
+        removeDir(cachedir + s->name, "progress.dat");
     }
 }
 

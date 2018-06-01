@@ -22,6 +22,9 @@ public:
     bool toggleFavorite(MangaInfo *info);
 
     void deserialize();
+
+    void deserializeProgresses();
+
 public slots:
     void serialize();
 private:

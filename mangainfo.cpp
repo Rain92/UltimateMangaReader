@@ -199,6 +199,8 @@ void MangaInfo::serializeProgress()
     if (!file.open(QIODevice::WriteOnly))
         return;
 
+//    qDebug() << file.fileName();
+
     QDataStream out(&file);
     out << currentindex << (qint32) numchapters;
 

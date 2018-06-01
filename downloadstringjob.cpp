@@ -110,7 +110,6 @@ bool DownloadStringJob::await(int timeout, bool retry)
         loop.exec();
 
     int rem = timeout - time.elapsed();
-    qDebug() << rem;
     if (errorString != "")
     {
         qDebug() << url;

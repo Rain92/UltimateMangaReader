@@ -19,7 +19,6 @@ UpdateDialog::UpdateDialog(QWidget *parent) :
     ui->pushButtonOk->setMinimumHeight(buttonsize);
     ui->pushButtonRetry->setMinimumHeight(buttonsize);
     ui->progressBar->setMinimumHeight(buttonsize);
-
 }
 
 UpdateDialog::~UpdateDialog()

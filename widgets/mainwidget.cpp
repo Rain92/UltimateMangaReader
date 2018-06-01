@@ -232,8 +232,8 @@ void MainWidget::setCurrentSource(AbstractMangaSource *source)
 
 void MainWidget::viewMangaInfo(const QString &mangalink, const QString &mangatitle)
 {
-//    if (currentmanga != nullptr)
-//        delete currentmanga;
+    if (currentmanga != nullptr)
+        delete currentmanga;
     currentmanga = currentsource->loadMangaInfo(mangalink, mangatitle);
     QObject::connect(currentmanga, SIGNAL(completedImagePreloadSignal(QString)), ui->mangaReaderWidget, SLOT(addImageToCache(QString)));
 

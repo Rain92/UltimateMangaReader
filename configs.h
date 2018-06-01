@@ -60,7 +60,7 @@
 #define scrollbarsliderminlength mm_to_px(8)
 #define scrollbarwidth mm_to_px(6)
 #define scrollbarheight mm_to_px(4)
-#define summaryscrollbarwidth mm_to_px(4)
+#define summaryscrollbarwidth mm_to_px(5)
 
 #define coversize mm_to_px(50)
 
