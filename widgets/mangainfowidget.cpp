@@ -62,6 +62,15 @@ void MangaInfoWidget::setManga(MangaInfo *manga)
     ui->labelMangaInfoLabelYear->setText(currentmanga->releaseyear);
     ui->labelMangaInfoLabelSummary->setText(currentmanga->summary);
 
+    ui->scrollAreaMangaInfoSummary->verticalScrollBar()->setValue(0);
+    ui->listViewChapters->verticalScrollBar()->setValue(0);
+
+    bool enable = currentmanga->numchapters > 0;
+
+    ui->pushButtonReadContinue->setEnabled(enable);
+    ui->pushButtonReadFirst->setEnabled(enable);
+    ui->pushButtonReadLatest->setEnabled(enable);
+
     QPixmap img;
     //qDebug() << currentmanga->coverpath;
     img.load(currentmanga->coverpath);

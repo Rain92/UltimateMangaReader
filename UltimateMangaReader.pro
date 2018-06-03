@@ -29,6 +29,11 @@ kobo {
 
     LIBS  += -L../build-free-Kobo-Release/common -lcommon
     LIBS  += -lc -lm
+
+
+    INCLUDEPATH += ../free/SuspendManager
+    DEPENDPATH += ../free/SuspendManager
+    LIBS    += -L../build-free-Kobo-Release/SuspendManager -lSuspendManager
 }
 
 QT       += core gui network

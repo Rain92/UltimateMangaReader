@@ -32,7 +32,6 @@ class DownloadManager : public QObject
 public:
     DownloadManager(QObject *parent);
 
-    bool connect();
     bool connected();
 
     QMap<QString, DownloadFileJob *> *fileDownloads;
@@ -51,6 +50,7 @@ signals:
 
 public slots:
     void onActivity();
+    bool connect();
 
 
 private:

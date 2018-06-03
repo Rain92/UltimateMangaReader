@@ -1,6 +1,7 @@
 #ifndef MAINWIDGET_H
 #define MAINWIDGET_H
 
+#include <QWSServer>
 #include <QWidget>
 #include <QStandardItemModel>
 #include "favoritesmanager.h"
@@ -27,6 +28,7 @@
 #include "VirtualKeyboard.h"
 #include "VirtualKeyboardContainer.h"
 #include "platform/KoboPlatform.h"
+
 
 #endif
 
@@ -63,6 +65,7 @@ public slots:
 
     void setFrontLight(int light, int comflight);
 
+
 private slots:
     void on_pushButtonHome_clicked();
     void on_pushButtonClose_clicked();
@@ -80,16 +83,13 @@ private:
     void adjustSizes();
     void setupDirs();
 
-
     void setAddFavoriteButtonState(bool state);
     void updateReaderLabels();
 
+    void readerShowImage(const QString &path);
 
     DownloadManager *downloadmanager;
     Ui::MainWidget *ui;
-
-    void readerShowImage(const QString &path);
-
 
     QList<AbstractMangaSource *> mangasources;
 

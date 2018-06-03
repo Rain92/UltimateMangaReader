@@ -25,7 +25,7 @@ DownloadManager::DownloadManager(QObject *parent)
 
 bool DownloadManager::connect()
 {
-#ifdef KOBO
+#ifndef WINDOWS
     return activateNetwork(static_cast<QWidget *>(this->parent()));
 #endif
 
@@ -34,7 +34,7 @@ bool DownloadManager::connect()
 
 bool DownloadManager::connected()
 {
-#ifdef KOBO
+#ifndef WINDOWS
     return Platform::get()->isNetworkActive();
 #endif
 
@@ -43,13 +43,16 @@ bool DownloadManager::connected()
 
 void DownloadManager::onActivity()
 {
-#ifdef KOBO
+#ifndef WINDOWS
     Platform::get()->networkActivity();
 #endif
 }
 
 DownloadStringJob *DownloadManager::downloadAsString(QString url)
 {
+    if(!connected())
+        connect();
+
     DownloadStringJob *job = new DownloadStringJob(this, manager, url);
 
     job->start();
@@ -59,6 +62,9 @@ DownloadStringJob *DownloadManager::downloadAsString(QString url)
 
 DownloadFileJob *DownloadManager::downloadAsFile(QString url, QString path)
 {
+    if(!connected())
+        connect();
+
     if (fileDownloads->contains(url))
     {
         return fileDownloads->value(url);
@@ -75,6 +81,9 @@ DownloadFileJob *DownloadManager::downloadAsFile(QString url, QString path)
 
 DownloadFileJob *DownloadManager::downloadAsScaledImage(QString url, QString path)
 {
+    if(!connected())
+        connect();
+
     if (fileDownloads->contains(url))
     {
         return fileDownloads->value(url);

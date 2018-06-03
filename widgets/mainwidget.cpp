@@ -36,7 +36,6 @@ MainWidget::MainWidget(QWidget *parent) :
     ui->favoritesWidget->mangasources = mangasources;
     currentsource = mangasources[0];
 
-    downloadmanager->connect();
 
     foreach (AbstractMangaSource *ms, mangasources)
         ms->deserializeMangaList();
@@ -44,6 +43,8 @@ MainWidget::MainWidget(QWidget *parent) :
 
     setupUI();
     setupFrontLight();
+
+    downloadmanager->connect();
 
     QObject::connect(ui->homeWidget, SIGNAL(mangaSourceClicked(AbstractMangaSource *)), this, SLOT(setCurrentSource(AbstractMangaSource *)));
     QObject::connect(ui->homeWidget, SIGNAL(mangaClicked(QString, QString)), this, SLOT(viewMangaInfo(QString, QString)));
@@ -60,6 +61,7 @@ MainWidget::MainWidget(QWidget *parent) :
     QObject::connect(ui->mangaReaderWidget, SIGNAL(back()), this, SLOT(readerGoBack()));
     QObject::connect(ui->mangaReaderWidget, SIGNAL(frontlightchanged(int, int)), this, SLOT(setFrontLight(int, int)));
     QObject::connect(ui->mangaReaderWidget, SIGNAL(gotoIndex(MangaIndex)), this, SLOT(viewMangaImage(MangaIndex)));
+
 }
 
 MainWidget::~MainWidget()
@@ -71,8 +73,6 @@ void  MainWidget::setupUI()
 {
 #ifndef WINDOWS
     initTopLevelWidget(this);
-
-    //ui->pushButtonClose->setText( static_cast<KoboPlatform *>(Platform::get())->a1FlTable.empty()?"true":"false");
 
     VirtualKeyboard *vk = getVirtualKeyboard();
 
@@ -242,9 +242,9 @@ void MainWidget::viewMangaInfo(const QString &mangalink, const QString &mangatit
 
     setWidgetTab(1);
 
-#ifndef QT_DEBUG
+//#ifndef QT_DEBUG
     currentmanga->preloadPopular();
-#endif
+//#endif
 }
 
 void MainWidget::toggleFavorite(MangaInfo *manga)

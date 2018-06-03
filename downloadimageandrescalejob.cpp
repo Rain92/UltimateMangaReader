@@ -59,6 +59,7 @@ void DownloadScaledImageJob::rescaleImage(QByteArray array, const QString &filen
     img = img.scaled(width, height, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     img.save(filename);
 
+//    qDebug() << filename;
 
     QFile completedFile(filename + ".completed");
     completedFile.open(QIODevice::WriteOnly);

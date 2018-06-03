@@ -24,6 +24,8 @@ GotoDialog::GotoDialog(QWidget *parent) :
 
     ui->buttonBox->buttons()[0]->setMinimumHeight(buttonsize);
 
+    this->setMinimumSize(QSize(mm_to_px(50), mm_to_px(40)));
+
 
 }
 

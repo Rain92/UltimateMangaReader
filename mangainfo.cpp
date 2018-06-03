@@ -90,8 +90,12 @@ QString MangaInfo::goFirstChapter()
 
 void MangaInfo::preloadImage(MangaIndex index)
 {
+//    qDebug() << "preloading" << index.chapter << index.page;
     if(!index.checkLegal(&chapters))
+    {
+//        qDebug() << "illegal";
         return;
+    }
 
     preloadqueue.addJob(DownloadImageInfo(getImageLink(index), title, index.chapter, index.page));
 //    mangasource->downloadImage(getImageLink(index), title, index.chapter, index.page);
@@ -102,7 +106,8 @@ void MangaInfo::preloadPopular()
     if(numchapters == 0)
         return;
     preloadImage(currentindex);
-    preloadImage(MangaIndex(numchapters - 1, 0));
+    if(numchapters > 1 && currentindex.chapter != numchapters -1)
+        preloadImage(MangaIndex(numchapters - 1, 0));
 }
 
 
