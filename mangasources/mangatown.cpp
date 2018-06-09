@@ -151,6 +151,8 @@ MangaInfo *MangaTown::getMangaInfo(QString mangalink)
     if (coverrx.indexIn(job->buffer, spos) != -1)
         coverlink = coverrx.cap(1);
 
+    info->coverlink = coverlink;
+
     int ind = coverlink.indexOf('?');
     if (ind == -1)
         ind = coverlink.length();

@@ -27,13 +27,13 @@ public:
 
     AbstractMangaSource(QObject *parent);
 
-    virtual void initialize() {};
+    virtual void initialize() {}
 
     virtual bool updateMangaList() = 0;
 
 
     virtual MangaInfo *getMangaInfo(QString mangalink) = 0;
-//    virtual bool updateMangaInfo(MangaInfo *mangainfo) = 0;
+
     virtual void updateMangaInfoFinishedLoading(DownloadStringJob *job, MangaInfo *mangainfo) = 0;
 
     virtual QStringList getPageList(const QString &chapterlink) = 0;
@@ -79,7 +79,7 @@ public:
         DownloadStringJob *job):
         mangasource(mangasource),
         mangainfo(mangainfo),
-        job(job) {};
+        job(job) {}
 
 public slots:
     void updateFinishedLoading()

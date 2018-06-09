@@ -123,7 +123,7 @@ bool DownloadStringJob::await(int timeout, bool retry)
             return await(rem, retry);
         }
     }
-    if(rem <= 20)
+    if (rem <= 20)
         errorString += "Download timeout.";
 
 

@@ -254,6 +254,7 @@ void MangaReaderWidget::on_pushButtonReaderGoto_clicked()
 {
     gotodialog->setup(currentmanga->numchapters, currentmanga->chapters[currentmanga->currentindex.chapter].numpages, currentmanga->currentindex);
 
+    emit enableVirtualKeyboard(false);
     if (gotodialog->exec() == QDialog::Accepted && !gotodialog->selectedindex.illegal)
     {
         ui->readerFrontLightBar->setVisible(false);
@@ -261,4 +262,5 @@ void MangaReaderWidget::on_pushButtonReaderGoto_clicked()
 
         emit gotoIndex(gotodialog->selectedindex);
     }
+    emit enableVirtualKeyboard(true);
 }

@@ -15,6 +15,7 @@ HomeWidget::HomeWidget(QWidget *parent) :
     adjustSizes();
 
     updatedialog = new UpdateDialog(this);
+    setupClearCacheDialog();
 
     QObject::connect(ui->lineEditFilter, SIGNAL(returnPressed()), ui->pushButtonFilter, SIGNAL(clicked()));
 
@@ -73,6 +74,44 @@ void  HomeWidget::setupSourcesList()
     }
 }
 
+void HomeWidget::setupClearCacheDialog()
+{
+
+    QPushButton *delbutton1 = new QPushButton("Delete all pages");
+    delbutton1->setDefault(true);
+    delbutton1->setProperty("action", 1);
+
+    QPushButton *delbutton2 = new QPushButton(" + covers and infos");
+    delbutton2->setAutoDefault(false);
+    delbutton2->setProperty("action", 2);
+
+    QPushButton *delbutton3 = new QPushButton(" + progress and favorites");
+    delbutton3->setAutoDefault(false);
+    delbutton3->setProperty("action", 3);
+
+    QPushButton *cancelbutton = new QPushButton("Cancel");
+    cancelbutton->setAutoDefault(false);
+    cancelbutton->setProperty("action", 0);
+
+    clearcachedialog = new QDialogButtonBox(Qt::Vertical, this);
+    clearcachedialog->setWindowFlags(Qt::FramelessWindowHint | Qt::Dialog);
+    clearcachedialog->setWindowModality(Qt::WindowModal);
+
+    clearcachedialog->addButton(delbutton1, QDialogButtonBox::ActionRole);
+    clearcachedialog->addButton(delbutton2, QDialogButtonBox::ActionRole);
+    clearcachedialog->addButton(delbutton3, QDialogButtonBox::ActionRole);
+    clearcachedialog->addButton(cancelbutton, QDialogButtonBox::RejectRole);
+
+    QString ss = "QDialogButtonBox{         "
+                 "border: 2px solid black;  "
+                 "background: white;        "
+                 "}                         ";
+    clearcachedialog->setStyleSheet(ss);
+
+    QObject::connect(clearcachedialog, SIGNAL(clicked(QAbstractButton *)), this, SLOT(clearCacheDialogButtonClicked(QAbstractButton *)));
+
+}
+
 void HomeWidget::updateError(const QString &error)
 {
     AbstractMangaSource *src = static_cast<AbstractMangaSource *>(sender());
@@ -105,7 +144,7 @@ void HomeWidget::on_pushButtonUpdate_clicked()
     foreach (AbstractMangaSource *ms, *mangasources)
     {
         updatedialog->setLabelText("Updating " + ms->name);
-        if(!ms->updateMangaList())
+        if (!ms->updateMangaList())
             return;
 
         ms->serializeMangaList();
@@ -133,7 +172,7 @@ bool removeDir(const QString &dirName, const QString &ignore = "")
     if (dir.exists())
     {
 //        qDebug() << dirName;
-        Q_FOREACH (QFileInfo info, dir.entryInfoList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden  | QDir::AllDirs | QDir::Files, QDir::DirsFirst))
+        foreach (QFileInfo info, dir.entryInfoList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden  | QDir::AllDirs | QDir::Files, QDir::DirsFirst))
         {
             if (info.isDir())
             {
@@ -141,7 +180,7 @@ bool removeDir(const QString &dirName, const QString &ignore = "")
             }
             else
             {
-                if(ignore == "" || !info.absoluteFilePath().endsWith(ignore))
+                if (ignore == "" || !info.absoluteFilePath().endsWith(ignore))
                     result = QFile::remove(info.absoluteFilePath());
             }
 
@@ -155,13 +194,42 @@ bool removeDir(const QString &dirName, const QString &ignore = "")
     return result;
 }
 
+void HomeWidget::clearCacheDialogButtonClicked(QAbstractButton *button)
+{
+    switch (button->property("action").toInt())
+    {
+    case 1:
+        foreach (AbstractMangaSource *s, *mangasources)
+        {
+            foreach (QFileInfo info, QDir(cachedir + s->name).entryInfoList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden  | QDir::AllDirs))
+                removeDir(info.absoluteFilePath() + "/images");
+        }
+        break;
+
+    case 2:
+        foreach (AbstractMangaSource *s, *mangasources)
+            removeDir(cachedir + s->name, "progress.dat");
+
+        break;
+
+    case 3:
+        removeDir(cachedir);
+        break;
+
+    default:
+        break;
+    }
+
+    clearcachedialog->hide();
+}
+
 void HomeWidget::on_pushButtonClearCache_clicked()
 {
-    foreach (AbstractMangaSource *s, *mangasources)
-    {
-//        qDebug() << cachedir + s->name;
-        removeDir(cachedir + s->name, "progress.dat");
-    }
+
+    clearcachedialog->show();
+
+    QRect scr = this->rect();
+    clearcachedialog->move(scr.center() - clearcachedialog->rect().center());
 }
 
 void HomeWidget::on_listViewSources_clicked(const QModelIndex &index)
@@ -220,7 +288,7 @@ void HomeWidget::on_pushButtonFilterClear_clicked()
 
 void HomeWidget::refreshMangaListView()
 {
-    if(currentsource == nullptr)
+    if (currentsource == nullptr)
         return;
 
     QStringListModel *model = new QStringListModel(this);

@@ -20,8 +20,8 @@
 //#define mangalistdir QCoreApplication::applicationDirPath() + "/cache/mangalists/"
 
 
-#define cachedir "./cache/"
-#define mangalistdir "./cache/mangalists/"
+#define cachedir "./UltimateMangaReader/cache/"
+#define mangalistdir "./UltimateMangaReader/cache/mangalists/"
 
 #else
 #define cachedir "./UltimateMangaReader/cache/"

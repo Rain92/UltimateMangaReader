@@ -173,7 +173,7 @@ MangaInfo *MangaWindow::getMangaInfo(QString mangalink)
     if (statusrx.indexIn(job->buffer, spos) != -1)
         info->status = statusrx.cap(1);
     if (summaryrx.indexIn(job->buffer, spos) != -1)
-        info->summary = htmlToPlainText(summaryrx.cap(1));    
+        info->summary = htmlToPlainText(summaryrx.cap(1));
     if (genresrx.indexIn(job->buffer, 0) != -1)
         info->genres = htmlToPlainText(genresrx.cap(1)).trimmed();
 
@@ -184,6 +184,8 @@ MangaInfo *MangaWindow::getMangaInfo(QString mangalink)
     QString coverlink;
     if (coverrx.indexIn(job->buffer, spos) != -1)
         coverlink = "https:" + coverrx.cap(1);
+
+    info->coverlink = coverlink;
 
     int ind = coverlink.indexOf('?');
     if (ind == -1)

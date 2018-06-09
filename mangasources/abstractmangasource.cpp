@@ -55,10 +55,6 @@ DownloadFileJob *AbstractMangaSource::downloadImage(const QString &imagelink, co
     QString filetype = imagelink.mid(ind - 4, 4);
     QString path = mangaimagesdir(name, mangatitle) + QString::number(chapternum) + "_" + QString::number(pagenum) + filetype;
 
-
-
-
-
     DownloadFileJob *job = downloadmanager->downloadAsScaledImage(imagelink, path);
 
     return job;
@@ -108,6 +104,13 @@ QSharedPointer<MangaInfo> AbstractMangaSource::loadMangaInfo(const QString &mang
 
 void AbstractMangaSource::updateMangaInfo(QSharedPointer<MangaInfo> info)
 {
+    if (info.isNull())
+        return;
+
+    if (!QFileInfo(info->coverpath).exists())
+        AbstractMangaSource::downloadmanager->downloadAsFile(info->coverlink, info->coverpath);
+
+//    qDebug() << info->link;
     DownloadStringJob *job = downloadmanager->downloadAsString(info->link);
 
     QObject::connect(job, SIGNAL(completed()), new BindingClass(this, info, job), SLOT(updateFinishedLoading()));

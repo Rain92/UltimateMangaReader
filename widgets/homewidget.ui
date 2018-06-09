@@ -46,7 +46,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>Clear Downloads</string>
+        <string>Clear Downloads...</string>
        </property>
       </widget>
      </item>

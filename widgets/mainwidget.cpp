@@ -46,7 +46,8 @@ MainWidget::MainWidget(QWidget *parent) :
     setupUI();
     setupFrontLight();
 
-    downloadmanager->connect();
+    if (!downloadmanager->connected())
+        downloadmanager->connect();
 
     QObject::connect(ui->homeWidget, SIGNAL(mangaSourceClicked(AbstractMangaSource *)), this, SLOT(setCurrentSource(AbstractMangaSource *)));
     QObject::connect(ui->homeWidget, SIGNAL(mangaClicked(QString, QString)), this, SLOT(viewMangaInfo(QString, QString)));
@@ -63,6 +64,7 @@ MainWidget::MainWidget(QWidget *parent) :
     QObject::connect(ui->mangaReaderWidget, SIGNAL(back()), this, SLOT(readerGoBack()));
     QObject::connect(ui->mangaReaderWidget, SIGNAL(frontlightchanged(int, int)), this, SLOT(setFrontLight(int, int)));
     QObject::connect(ui->mangaReaderWidget, SIGNAL(gotoIndex(MangaIndex)), this, SLOT(viewMangaImage(MangaIndex)));
+    QObject::connect(ui->mangaReaderWidget, SIGNAL(enableVirtualKeyboard(bool)), this, SLOT(enableVirtualKeyboard(bool)));
 
 }
 
@@ -71,15 +73,14 @@ MainWidget::~MainWidget()
     delete ui;
 }
 
+
+
 void  MainWidget::setupUI()
 {
 #ifndef WINDOWS
     initTopLevelWidget(this);
 
-    VirtualKeyboard *vk = getVirtualKeyboard();
-
-    ui->verticalLayout->insertWidget(1, vk);
-
+    enableVirtualKeyboard(true);
 #endif
 
     downloadmanager->setImageSize(this->width(), this->height());
@@ -87,7 +88,7 @@ void  MainWidget::setupUI()
     adjustSizes();
 }
 
-void  MainWidget::adjustSizes()
+void MainWidget::adjustSizes()
 {
     ui->pushButtonClose->setMinimumHeight(buttonsize);
     ui->pushButtonFavorites->setMinimumHeight(buttonsize);
@@ -103,10 +104,26 @@ void MainWidget::setupDirs()
         QDir().mkpath(mangalistdir);
 }
 
+void MainWidget::enableVirtualKeyboard(bool enabled)
+{
+#ifndef WINDOWS
+    VirtualKeyboard *vk = getVirtualKeyboard();
+
+    if (enabled)
+        ui->verticalLayout->insertWidget(1, vk);
+    else
+        ui->verticalLayout->removeWidget(vk);
+
+    vk-> hide();
+#else
+    Q_UNUSED(enabled);
+#endif
+}
+
 
 void MainWidget::setupFrontLight()
 {
-    setFrontLight(settings.lightvalue, settings.compflightvalue);
+    setFrontLight(settings.lightvalue, settings.comflightvalue);
 
 #ifndef WINDOWS
     ui->mangaReaderWidget->setFrontLightPanelState(
@@ -118,19 +135,19 @@ void MainWidget::setupFrontLight()
         Platform::get()->frontlightGetTemp());
 #endif
 
-    ui->mangaReaderWidget->setFrontLightPanelState(settings.lightvalue, settings.compflightvalue);
+    ui->mangaReaderWidget->setFrontLightPanelState(settings.lightvalue, settings.comflightvalue);
 }
 
 void MainWidget::setFrontLight(int light, int comflight)
 {
+//    qDebug() << light << comflight;
 #ifndef WINDOWS
     if (light > Platform::get()->frontlightGetMinLevel())
     {
-        if (!Platform::get()->frontlightIsOn())
-            Platform::get()->frontlightSetOn(true);
-
         Platform::get()->frontlightSetLevel(light, comflight);
 
+        if (!Platform::get()->frontlightIsOn())
+            Platform::get()->frontlightSetOn(true);
     }
     else
     {
@@ -141,7 +158,7 @@ void MainWidget::setFrontLight(int light, int comflight)
     Q_UNUSED(comflight)
 #endif
     settings.lightvalue = light;
-    settings.compflightvalue = comflight;
+    settings.comflightvalue = comflight;
 
     settings.scheduleSerialize();
 }
@@ -241,7 +258,6 @@ void MainWidget::setCurrentSource(AbstractMangaSource *source)
 
 void MainWidget::viewMangaInfo(const QString &mangalink, const QString &mangatitle)
 {
-//    if (!currentmanga.isNull())
     currentmanga.clear();
     currentmanga = QSharedPointer<MangaInfo>(currentsource->loadMangaInfo(mangalink, mangatitle));
     QObject::connect(currentmanga.data(), SIGNAL(completedImagePreloadSignal(QString)), ui->mangaReaderWidget, SLOT(addImageToCache(QString)));

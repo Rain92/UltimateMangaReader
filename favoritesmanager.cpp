@@ -78,7 +78,7 @@ bool FavoritesManager::toggleFavorite(MangaInfo *info)
 {
     QString key = info->hostname + info->title;
 
-    qDebug() << key;
+//    qDebug() << key;
 
     QMutableListIterator<Favorite> iterator(favorites);
     while (iterator.hasNext())

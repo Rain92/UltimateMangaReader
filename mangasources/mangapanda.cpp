@@ -102,12 +102,13 @@ MangaInfo *MangaPanda::getMangaInfo(QString mangalink)
     if (coverrx.indexIn(job->buffer, 0) != -1)
         coverlink = coverrx.cap(1);
 
+    coverlink = coverlink.replace("http:", "https:");
+    info->coverlink = coverlink;
 
     int ind = coverlink.indexOf('?');
     if (ind == -1)
         ind = coverlink.length();
     QString filetype = coverlink.mid(ind - 4, 4);
-    coverlink = coverlink.replace("http:", "https:");
     info->coverpath = mangainfodir(name, info->title) + "cover" + filetype;
 
 

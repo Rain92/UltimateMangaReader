@@ -9,6 +9,7 @@
 #include <QScrollBar>
 #include <QStandardItemModel>
 #include <QProgressDialog>
+#include <QDialogButtonBox>
 
 #include "abstractmangasource.h"
 #include "updatedialog.h"
@@ -41,6 +42,7 @@ private slots:
     void on_listViewMangas_clicked(const QModelIndex &index);
     void updateProgress(int p);
     void updateError(const QString &error);
+    void clearCacheDialogButtonClicked(QAbstractButton *button);
 
 private:
     Ui::HomeWidget *ui;
@@ -56,10 +58,12 @@ private:
     void refreshMangaListView();
     void setupSourcesList();
     void adjustSizes();
+    void setupClearCacheDialog();
 
     QList<QStandardItem *> *listViewItemfromMangaSource(AbstractMangaSource *source);
     QProgressBar *updateProgressBar;
     UpdateDialog *updatedialog;
+    QDialogButtonBox *clearcachedialog;
 };
 
 #endif // HOMEWIDGET_H

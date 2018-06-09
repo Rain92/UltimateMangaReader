@@ -28,7 +28,6 @@ kobo {
 
 
     LIBS  += -L../build-free-Kobo-Release/common -lcommon
-    LIBS  += -lc -lm
 }
 
 QT       += core gui network

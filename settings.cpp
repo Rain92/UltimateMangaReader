@@ -12,7 +12,7 @@ Settings::Settings() :
 
 
     lightvalue = 30;
-    compflightvalue = 6400;
+    comflightvalue = 6400;
 }
 
 void Settings::deserialize()
@@ -52,14 +52,14 @@ void Settings::serialize()
 
 QDataStream &operator<<(QDataStream &str, const Settings &m)
 {
-    str << (qint32)m.lightvalue << (qint32)m.compflightvalue;
+    str << (qint32)m.lightvalue << (qint32)m.comflightvalue;
 
     return str;
 }
 
 QDataStream &operator>>(QDataStream &str, Settings &m)
 {
-    str >> m.lightvalue >> m.compflightvalue;
+    str >> m.lightvalue >> m.comflightvalue;
 
     return str;
 }

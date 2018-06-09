@@ -30,6 +30,7 @@ public:
     QString status;
     QString summary;
     QString coverpath;
+    QString coverlink;
 
     QString hostname;
 

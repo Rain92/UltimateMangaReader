@@ -19,8 +19,14 @@ public:
 
     void setup(int maxchapter, int maxpage, MangaIndex currentindex);
 
+    void moveCursorRight(int steps = 4);
+
     MangaIndex selectedindex;
     MangaIndex currentindex;
+
+
+protected:
+    bool eventFilter(QObject *obj, QEvent *ev);
 
 protected slots:
 

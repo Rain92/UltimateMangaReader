@@ -109,7 +109,7 @@ MangaInfo *MangaDex::getMangaInfo( QString mangalink)
     QRegExp titlerx("<h3 class=\"panel-title\">[^>]*>[^>]*>([^<]*)");
     QRegExp authorrx("Author:</th>[^>]*>[^>]*>([^<]*)");
     QRegExp artistrx("Artist:</th>[^>]*>[^>]*>([^<]*)");
-    QRegExp statusrx("Pub. status:</th>[^>]*>([^<]*)");    
+    QRegExp statusrx("Pub. status:</th>[^>]*>([^<]*)");
     QRegExp genresrx("<th>Genres:</th>(.*)</td>");
     genresrx.setMinimal(true);
 
@@ -146,12 +146,13 @@ MangaInfo *MangaDex::getMangaInfo( QString mangalink)
     if (coverrx.indexIn(job->buffer, spos) != -1)
         coverlink = baseurl + coverrx.cap(1);
 
+    coverlink = coverlink.replace("http:", "https:");
+    info->coverlink = coverlink;
 
     int ind = coverlink.indexOf('?');
     if (ind == -1)
         ind = coverlink.length();
     QString filetype = coverlink.mid(ind - 4, 4);
-    coverlink = coverlink.replace("http:", "https:");
     info->coverpath = mangainfodir(name, info->title) + "cover" + filetype;
 
 

@@ -18,7 +18,7 @@ public:
 
 
     int lightvalue;
-    int compflightvalue;
+    int comflightvalue;
 
 public slots:
     void serialize();

@@ -66,6 +66,7 @@ public slots:
 
     void setFrontLight(int light, int comflight);
 
+    void enableVirtualKeyboard(bool enabled);
 
 private slots:
     void on_pushButtonHome_clicked();

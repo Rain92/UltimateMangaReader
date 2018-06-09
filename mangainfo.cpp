@@ -90,8 +90,9 @@ QString MangaInfo::goFirstChapter()
 
 void MangaInfo::preloadImage(MangaIndex index)
 {
+//    return;
 //    qDebug() << "preloading" << index.chapter << index.page;
-    if(!index.checkLegal(&chapters))
+    if (!index.checkLegal(&chapters))
     {
 //        qDebug() << "illegal";
         return;
@@ -103,10 +104,10 @@ void MangaInfo::preloadImage(MangaIndex index)
 
 void MangaInfo::preloadPopular()
 {
-    if(numchapters == 0)
+    if (numchapters == 0)
         return;
     preloadImage(currentindex);
-    if(numchapters > 1 && currentindex.chapter != numchapters -1)
+    if (numchapters > 1 && currentindex.chapter != numchapters - 1)
         preloadImage(MangaIndex(numchapters - 1, 0));
 }
 
@@ -194,7 +195,8 @@ void MangaInfo::serialize()
 
     file.close();
 
-    serializeProgress();
+    if (!QFileInfo(mangainfodir(hostname, title) + "progress.dat").exists())
+        serializeProgress();
 }
 
 
