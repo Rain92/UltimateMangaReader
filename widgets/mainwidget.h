@@ -52,9 +52,11 @@ public:
 
 public slots:
 
+    void viewFavorite(QSharedPointer<MangaInfo> info, bool current);
     void viewFavorite(Favorite fav, bool current);
 
     void setCurrentSource(AbstractMangaSource *source);
+    void viewMangaInfo(QSharedPointer<MangaInfo> info);
     void viewMangaInfo(const QString &mangalink, const QString &mangatitle);
     void toggleFavorite(MangaInfo *manga);
 

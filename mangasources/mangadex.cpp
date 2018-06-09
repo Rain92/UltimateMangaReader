@@ -242,7 +242,10 @@ void MangaDex::updateMangaInfoFinishedLoading(DownloadStringJob *job, MangaInfo 
     }
 
     if (numchapters == oldnumchapters)
+    {
+        info->sendUpdated(false);
         return;
+    }
 
 
 
@@ -273,7 +276,10 @@ void MangaDex::updateMangaInfoFinishedLoading(DownloadStringJob *job, MangaInfo 
         for (; rxi < (batch + 1) * maxparalleldownloads && rxi < pages; rxi++)
         {
             if (!jobs[rxi]->await(6000, true))
+            {
+                info->sendUpdated(false);
                 return;
+            }
 
             for (int pos = 0; (pos = rx.indexIn(jobs[rxi]->buffer, pos)) != -1 && chapterstoadd > 0; pos += rx.matchedLength(), chapterstoadd--)
             {
@@ -290,7 +296,7 @@ void MangaDex::updateMangaInfoFinishedLoading(DownloadStringJob *job, MangaInfo 
 
     info->serialize();
 
-    info->sendUpdated();
+    info->sendUpdated(true);
 }
 
 

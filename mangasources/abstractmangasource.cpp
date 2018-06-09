@@ -102,10 +102,12 @@ QSharedPointer<MangaInfo> AbstractMangaSource::loadMangaInfo(const QString &mang
 }
 
 
-void AbstractMangaSource::updateMangaInfo(QSharedPointer<MangaInfo> info)
+DownloadStringJob *AbstractMangaSource::updateMangaInfo(QSharedPointer<MangaInfo> info)
 {
-    if (info.isNull())
-        return;
+    if (info.isNull() || info->updating)
+        return nullptr;
+
+    info->updating = true;
 
     if (!QFileInfo(info->coverpath).exists())
         AbstractMangaSource::downloadmanager->downloadAsFile(info->coverlink, info->coverpath);
@@ -113,7 +115,12 @@ void AbstractMangaSource::updateMangaInfo(QSharedPointer<MangaInfo> info)
 //    qDebug() << info->link;
     DownloadStringJob *job = downloadmanager->downloadAsString(info->link);
 
+    //synchronously to prevent crashes
+//    job->await();
+//    BindingClass(this, info, job).updateFinishedLoading();
+
     QObject::connect(job, SIGNAL(completed()), new BindingClass(this, info, job), SLOT(updateFinishedLoading()));
+    return job;
 }
 
 QString AbstractMangaSource::htmlToPlainText(const QString &str)

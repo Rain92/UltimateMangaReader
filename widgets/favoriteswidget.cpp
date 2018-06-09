@@ -143,5 +143,11 @@ QWidget *FavoritesWidget::makeIconTextWidget(const QString &path, const QString 
 
 void FavoritesWidget::on_tableWidget_cellClicked(int row, int column)
 {
-    emit favoriteClicked(favorites->at(row), column >= 2);
+    QEventLoop loop;
+    connect(infos.at(row).data(), SIGNAL(updated()), &loop, SLOT(quit()));
+
+    if (infos.at(row)->updating)
+        loop.exec();
+
+    emit favoriteClicked(infos.at(row), column >= 2);
 }

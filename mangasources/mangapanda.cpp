@@ -164,7 +164,10 @@ void MangaPanda::updateMangaInfoFinishedLoading(DownloadStringJob *job, MangaInf
 {
     int spos = job->buffer.indexOf("LATEST CHAPTERS");
     if (spos == -1)
+    {
+        info->sendUpdated(false);
         return;
+    }
 
     QRegExp chrx("(\\d+)\">");
 
@@ -175,8 +178,10 @@ void MangaPanda::updateMangaInfoFinishedLoading(DownloadStringJob *job, MangaInf
         numchapters = chrx.cap(1).toInt();
 
     if (numchapters == 0 || numchapters == info->numchapters)
+    {
+        info->sendUpdated(false);
         return;
-
+    }
 
     QRegExp statusrx("Status:</td>[^>]*>([^<]*)");
 
@@ -208,12 +213,15 @@ void MangaPanda::updateMangaInfoFinishedLoading(DownloadStringJob *job, MangaInf
     }
 
     if (oldnumchapters == info->numchapters)
+    {
+        info->sendUpdated(false);
         return;
+    }
 
 
     info->serialize();
 
-    info->sendUpdated();
+    info->sendUpdated(true);
 }
 
 

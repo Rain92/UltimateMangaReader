@@ -7,9 +7,16 @@ MangaInfo::MangaInfo(QObject *parent, AbstractMangaSource *mangasource):
     currentindex(0, 0),
     numchapters(0),
     mangasource(mangasource),
-    preloadqueue(parent, mangasource)
+    preloadqueue(parent, mangasource),
+    updating(false)
 {
     QObject::connect(&preloadqueue, SIGNAL(completedDownload(QString)), this, SLOT(completedImagePreload(QString)));
+}
+
+
+MangaInfo::~MangaInfo()
+{
+
 }
 
 QString MangaInfo::getImageLink(MangaIndex index)
@@ -215,9 +222,14 @@ void MangaInfo::serializeProgress()
 }
 
 
-void MangaInfo::sendUpdated()
+void MangaInfo::sendUpdated(bool changed)
 {
-    emit updated();
+    updating = false;
+
+    if (changed)
+        emit updated();
+    else
+        emit updatedNoChanges();
 }
 
 

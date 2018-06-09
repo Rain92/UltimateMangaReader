@@ -21,7 +21,7 @@ public:
 
     QList<AbstractMangaSource *> mangasources;
 signals:
-    void favoriteClicked(Favorite fav, bool current);
+    void favoriteClicked(QSharedPointer<MangaInfo> fav, bool current);
     void mangaListUpdated();
 
 private slots:

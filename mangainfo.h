@@ -13,6 +13,7 @@ class MangaInfo : public QObject
 
 public:
     MangaInfo(QObject *parent, AbstractMangaSource *mangasource);
+    ~MangaInfo();
 
     static MangaInfo *deserialize(QObject *parent, AbstractMangaSource *mangasource, const QString &path);
 
@@ -43,6 +44,8 @@ public:
     QStringList chapertitlesreversed;
     QList<MangaChapter> chapters;
 
+    bool updating;
+
     QString getImageLink(MangaIndex index);
 
     QString getCurrentImage();
@@ -62,11 +65,12 @@ public:
     void cancelAllPreloads();
 
 
-    void sendUpdated();
+    void sendUpdated(bool changed);
 
 signals:
     void completedImagePreloadSignal(const QString &path);
     void updated();
+    void updatedNoChanges();
 
 private slots:
     void completedImagePreload(const QString &path);

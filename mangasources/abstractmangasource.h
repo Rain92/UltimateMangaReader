@@ -41,7 +41,7 @@ public:
 
     QSharedPointer<MangaInfo> loadMangaInfo(const QString &mangalink, const QString &mangatitle);
 
-    void updateMangaInfo(QSharedPointer<MangaInfo> mangainfo);
+    DownloadStringJob *updateMangaInfo(QSharedPointer<MangaInfo> mangainfo);
 
     bool serializeMangaList();
     bool deserializeMangaList();

@@ -55,7 +55,7 @@ MainWidget::MainWidget(QWidget *parent) :
     QObject::connect(ui->mangaInfoWidget, SIGNAL(toggleFavoriteClicked(MangaInfo *)), this, SLOT(toggleFavorite(MangaInfo *)));
     QObject::connect(ui->mangaInfoWidget, SIGNAL(readMangaClicked(MangaIndex)), this, SLOT(viewMangaImage(MangaIndex)));
 
-    QObject::connect(ui->favoritesWidget, SIGNAL(favoriteClicked(Favorite, bool)), this, SLOT(viewFavorite(Favorite, bool)));
+    QObject::connect(ui->favoritesWidget, SIGNAL(favoriteClicked(QSharedPointer<MangaInfo>, bool)), this, SLOT(viewFavorite(QSharedPointer<MangaInfo>, bool)));
     QObject::connect(ui->favoritesWidget, SIGNAL(mangaListUpdated()), &favoritesmanager, SLOT(serialize()));
 
     QObject::connect(ui->mangaReaderWidget, SIGNAL(changeView(int)), this, SLOT(setWidgetTab(int)));
@@ -224,7 +224,29 @@ void MainWidget::setWidgetTab(int page)
 
 }
 
+void MainWidget::viewFavorite(QSharedPointer<MangaInfo> info, bool current)
+{
+    foreach (AbstractMangaSource *source, mangasources)
+        if (info->hostname == source->name)
+            currentsource = source;
 
+    if (current)
+    {
+        currentmanga.clear();
+        currentmanga = info;
+        QObject::connect(currentmanga.data(), SIGNAL(completedImagePreloadSignal(QString)), ui->mangaReaderWidget, SLOT(addImageToCache(QString)));
+
+
+        ui->mangaInfoWidget->setManga(currentmanga);
+        ui->mangaInfoWidget->setFavoriteButtonState(!favoritesmanager.isFavorite(currentmanga.data()));
+
+        viewMangaImage(info->currentindex);
+    }
+    else
+    {
+        viewMangaInfo(info);
+    }
+}
 
 void MainWidget::viewFavorite(Favorite fav, bool current)
 {
@@ -256,10 +278,10 @@ void MainWidget::setCurrentSource(AbstractMangaSource *source)
     currentsource = source;
 }
 
-void MainWidget::viewMangaInfo(const QString &mangalink, const QString &mangatitle)
+void MainWidget::viewMangaInfo(QSharedPointer<MangaInfo> info)
 {
     currentmanga.clear();
-    currentmanga = QSharedPointer<MangaInfo>(currentsource->loadMangaInfo(mangalink, mangatitle));
+    currentmanga = info;
     QObject::connect(currentmanga.data(), SIGNAL(completedImagePreloadSignal(QString)), ui->mangaReaderWidget, SLOT(addImageToCache(QString)));
 
     ui->mangaInfoWidget->setManga(currentmanga);
@@ -270,6 +292,12 @@ void MainWidget::viewMangaInfo(const QString &mangalink, const QString &mangatit
 //#ifndef QT_DEBUG
     currentmanga->preloadPopular();
 //#endif
+}
+
+
+void MainWidget::viewMangaInfo(const QString &mangalink, const QString &mangatitle)
+{
+    viewMangaInfo(QSharedPointer<MangaInfo>(currentsource->loadMangaInfo(mangalink, mangatitle)));
 }
 
 void MainWidget::toggleFavorite(MangaInfo *manga)

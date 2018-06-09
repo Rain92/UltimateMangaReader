@@ -235,7 +235,10 @@ void MangaWindow::updateMangaInfoFinishedLoading(DownloadStringJob *job, MangaIn
     int spos = job->buffer.indexOf("<!-- chapters -->");
     int epos = job->buffer.indexOf("<!-- /chapters -->", spos);
     if (spos == -1)
+    {
+        info->sendUpdated(false);
         return;
+    }
 
     QString countstr = job->buffer.mid(spos, epos - spos);
 
@@ -245,7 +248,10 @@ void MangaWindow::updateMangaInfoFinishedLoading(DownloadStringJob *job, MangaIn
     int numchapters = countstr.count("<a class=\"chapt\" href=");
 
     if (numchapters == 0 || numchapters <= info->numchapters)
+    {
+        info->sendUpdated(false);
         return;
+    }
 
 
     QRegExp statusrx("<b>Status:</b>\\s+<span>([^<]*)");
@@ -273,7 +279,7 @@ void MangaWindow::updateMangaInfoFinishedLoading(DownloadStringJob *job, MangaIn
     qDebug() << "update";
     info->serialize();
 
-    info->sendUpdated();
+    info->sendUpdated(true);
 }
 
 

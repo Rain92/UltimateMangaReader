@@ -209,7 +209,10 @@ void MangaTown::updateMangaInfoFinishedLoading(DownloadStringJob *job, MangaInfo
     int spos = job->buffer.indexOf("<div class=\"chapter_content\">");
     int epos = job->buffer.indexOf("</div>", spos);
     if (spos == -1)
+    {
+        info->sendUpdated(false);
         return;
+    }
 
     QString countstr = job->buffer.mid(spos, epos - spos);
 
@@ -219,7 +222,10 @@ void MangaTown::updateMangaInfoFinishedLoading(DownloadStringJob *job, MangaInfo
     int numchapters = countstr.count("<a href=\"//www.mangatown.com/manga/");
 
     if (numchapters == 0 || numchapters == info->numchapters)
+    {
+        info->sendUpdated(false);
         return;
+    }
 
 
     QRegExp statusrx("Status\\(s\\):</b>([^<&]*)");
@@ -254,7 +260,7 @@ void MangaTown::updateMangaInfoFinishedLoading(DownloadStringJob *job, MangaInfo
 
     info->serialize();
 
-    info->sendUpdated();
+    info->sendUpdated(true);
 }
 
 
