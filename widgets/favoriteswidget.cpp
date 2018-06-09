@@ -46,7 +46,7 @@ void FavoritesWidget::showFavoritesList(QList<Favorite> *favs)
 
     while (infos.count() > 0)
     {
-        delete infos.first();
+        infos.first().clear();
         infos.removeFirst();
     }
 
@@ -64,8 +64,8 @@ void FavoritesWidget::showFavoritesList(QList<Favorite> *favs)
             if (s->name != fav.hostname)
                 continue;
 
-            MangaInfo *mi = s->loadMangaInfo(fav.mangalink, fav.title);
-            QObject::connect(mi, SIGNAL(updated()), this, SLOT(mangaUpdated()));
+            QSharedPointer<MangaInfo> mi = s->loadMangaInfo(fav.mangalink, fav.title);
+            QObject::connect(mi.data(), SIGNAL(updated()), this, SLOT(mangaUpdated()));
             infos.append(mi);
             break;
         }

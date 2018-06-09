@@ -18,7 +18,7 @@ public:
     explicit MangaInfoWidget(QWidget *parent = 0);
     ~MangaInfoWidget();
 
-    void setManga(MangaInfo *manga);
+    void setManga(QSharedPointer<MangaInfo> manga);
     void setFavoriteButtonState(bool state);
 
 signals:
@@ -40,7 +40,7 @@ private slots:
 private:
     Ui::MangaInfoWidget *ui;
 
-    MangaInfo *currentmanga;
+    QSharedPointer<MangaInfo> currentmanga;
 
     void adjustSizes();
 };

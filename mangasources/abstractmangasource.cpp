@@ -92,26 +92,25 @@ QString AbstractMangaSource::downloadAwaitImage(const QString &imagelink, const 
 }
 
 
-MangaInfo *AbstractMangaSource::loadMangaInfo(const QString &mangalink, const QString &mangatitle)
+QSharedPointer<MangaInfo> AbstractMangaSource::loadMangaInfo(const QString &mangalink, const QString &mangatitle)
 {
     QFileInfo infofile(mangainfodir(name, mangatitle) + "mangainfo.dat");
     if (infofile.exists())
     {
-        MangaInfo *mi = MangaInfo::deserialize(this->parent(), this, infofile.filePath());
+        QSharedPointer<MangaInfo> mi = QSharedPointer<MangaInfo>(MangaInfo::deserialize(this->parent(), this, infofile.filePath()));
         mi->mangasource->updateMangaInfo(mi);
         return mi;
     }
 
-    return getMangaInfo(mangalink);
+    return QSharedPointer<MangaInfo>(getMangaInfo(mangalink));
 }
 
 
-void AbstractMangaSource::updateMangaInfo(MangaInfo *info)
+void AbstractMangaSource::updateMangaInfo(QSharedPointer<MangaInfo> info)
 {
     DownloadStringJob *job = downloadmanager->downloadAsString(info->link);
 
     QObject::connect(job, SIGNAL(completed()), new BindingClass(this, info, job), SLOT(updateFinishedLoading()));
-
 }
 
 QString AbstractMangaSource::htmlToPlainText(const QString &str)

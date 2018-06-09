@@ -52,8 +52,8 @@ Favorite *FavoritesManager::findOrInsert(MangaInfo *info)
     QMutableListIterator<Favorite> iterator(favorites);
     while (iterator.hasNext())
     {
-        Favorite& f = iterator.next();
-        if(f.hostname + f.title == key)
+        Favorite &f = iterator.next();
+        if (f.hostname + f.title == key)
             return &f;
     }
 
@@ -68,7 +68,7 @@ bool FavoritesManager::isFavorite(MangaInfo *info)
     QString key = info->hostname + info->title;
     foreach (const Favorite &f, favorites)
     {
-        if(f.hostname + f.title == key)
+        if (f.hostname + f.title == key)
             return true;
     }
     return false;
@@ -78,11 +78,13 @@ bool FavoritesManager::toggleFavorite(MangaInfo *info)
 {
     QString key = info->hostname + info->title;
 
+    qDebug() << key;
+
     QMutableListIterator<Favorite> iterator(favorites);
     while (iterator.hasNext())
     {
-        Favorite& f = iterator.next();
-        if(f.hostname + f.title == key)
+        Favorite &f = iterator.next();
+        if (f.hostname + f.title == key)
         {
             iterator.remove();
             serialize();
@@ -98,7 +100,7 @@ bool FavoritesManager::toggleFavorite(MangaInfo *info)
 
 }
 
-QList<Favorite>* FavoritesManager::getFavorites()
+QList<Favorite> *FavoritesManager::getFavorites()
 {
     deserializeProgresses();
     return &favorites;

@@ -1,6 +1,7 @@
 #include "gotodialog.h"
 #include "ui_gotodialog.h"
 #include "configs.h"
+#include "numpadwidget.h"
 
 GotoDialog::GotoDialog(QWidget *parent) :
     QDialog(parent, Qt::FramelessWindowHint | Qt::Dialog),
@@ -19,13 +20,12 @@ GotoDialog::GotoDialog(QWidget *parent) :
 
     ui->pushButtonGoChapter->setMinimumHeight(buttonsize);
     ui->pushButtonGoPage->setMinimumHeight(buttonsize);
-    ui->spinBoxChapter->setMinimumHeight(buttonsize*1.5);
-    ui->spinBoxPage->setMinimumHeight(buttonsize*1.5);
+    ui->spinBoxChapter->setMinimumHeight(buttonsize * 1.5);
+    ui->spinBoxPage->setMinimumHeight(buttonsize * 1.5);
 
     ui->buttonBox->buttons()[0]->setMinimumHeight(buttonsize);
 
     this->setMinimumSize(QSize(mm_to_px(50), mm_to_px(40)));
-
 
 }
 
@@ -43,7 +43,10 @@ void GotoDialog::setup(int maxchapter, int maxpage, MangaIndex currentindex)
     ui->spinBoxChapter->setValue(currentindex.chapter + 1);
 
     ui->spinBoxPage->setMaximum(maxpage);
-    ui->spinBoxPage->setValue(currentindex.page + 1);
+    ui->spinBoxPage->setValue(currentindex. page + 1);
+
+
+    ui->spinBoxChapter->setCorrectionMode(QAbstractSpinBox::CorrectToNearestValue);
 
 }
 

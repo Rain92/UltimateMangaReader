@@ -35,7 +35,7 @@ private:
     void insertRow(const Favorite &fav, int row);
     void adjustSizes();
 
-    QList<MangaInfo *> infos;
+    QList< QSharedPointer<MangaInfo> > infos;
 
     QWidget *makeIconTextWidget(const QString &path, const QString &text, const QSize &iconsize);
 

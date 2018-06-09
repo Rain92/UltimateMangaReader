@@ -18,9 +18,10 @@ public:
     ~MangaReaderWidget();
 
     void showImage(const QString &path);
-    void updateReaderLabels(MangaInfo *currentmanga);
+    void updateReaderLabels(QSharedPointer<MangaInfo> currentmanga);
 
     void setFrontLightPanelState(int lightmin, int lightmax, int light, int comflightmin, int comflightmax, int comflight);
+    void setFrontLightPanelState(int light, int comflight);
 
 
 public slots:
@@ -50,12 +51,14 @@ private slots:
 private:
     Ui::MangaReaderWidget *ui;
 
+    bool pagechanging;
+
     void adjustSizes();
 
     QList<QPixmap *> imgcache;
     QList<QString> imgcachepaths;
 
-    MangaInfo* currentmanga;
+    QSharedPointer<MangaInfo> currentmanga;
 
     GotoDialog *gotodialog;
 };

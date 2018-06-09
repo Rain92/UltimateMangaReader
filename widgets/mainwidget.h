@@ -10,6 +10,7 @@
 #include "favoriteswidget.h"
 #include "mangareaderwidget.h"
 #include "homewidget.h"
+#include "settings.h"
 
 #include "mangapanda.h"
 #include "mangadex.h"
@@ -94,9 +95,10 @@ private:
     QList<AbstractMangaSource *> mangasources;
 
     AbstractMangaSource *currentsource;
-    MangaInfo *currentmanga;
+    QSharedPointer<MangaInfo> currentmanga;
 
     FavoritesManager favoritesmanager;
+    Settings settings;
 
     int lastTab;
 

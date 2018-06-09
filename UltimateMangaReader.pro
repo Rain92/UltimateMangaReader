@@ -29,11 +29,6 @@ kobo {
 
     LIBS  += -L../build-free-Kobo-Release/common -lcommon
     LIBS  += -lc -lm
-
-
-    INCLUDEPATH += ../free/SuspendManager
-    DEPENDPATH += ../free/SuspendManager
-    LIBS    += -L../build-free-Kobo-Release/SuspendManager -lSuspendManager
 }
 
 QT       += core gui network
@@ -71,7 +66,8 @@ FORMS += \
     widgets/mangainfowidget.ui \
     widgets/mangareaderwidget.ui \
     widgets/gotodialog.ui \
-    widgets/updatedialog.ui
+    widgets/updatedialog.ui \
+    widgets/numpadwidget.ui
 
 HEADERS += \
     mangasources/abstractmangasource.h \
@@ -99,7 +95,9 @@ HEADERS += \
     mangasources/jaiminisbox.h \
     mangasources/mangawindow.h \
     widgets/gotodialog.h \
-    widgets/updatedialog.h
+    widgets/updatedialog.h \
+    settings.h \
+    widgets/numpadwidget.h
 
 SOURCES += \
     mangasources/abstractmangasource.cpp \
@@ -128,7 +126,9 @@ SOURCES += \
     mangasources/jaiminisbox.cpp \
     mangasources/mangawindow.cpp \
     widgets/gotodialog.cpp \
-    widgets/updatedialog.cpp
+    widgets/updatedialog.cpp \
+    settings.cpp \
+    widgets/numpadwidget.cpp
 
 
 

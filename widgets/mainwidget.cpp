@@ -13,14 +13,16 @@ MainWidget::MainWidget(QWidget *parent) :
     QWidget(parent),
 #endif
     ui(new Ui::MainWidget),
-    currentmanga(nullptr),
+    currentmanga(),
     favoritesmanager(),
+    settings(),
     lastTab(0)
 {
     ui->setupUi(this);
     setupDirs();
 
     favoritesmanager.deserialize();
+    settings.deserialize();
 
     downloadmanager = new DownloadManager(this);
 
@@ -104,15 +106,19 @@ void MainWidget::setupDirs()
 
 void MainWidget::setupFrontLight()
 {
+    setFrontLight(settings.lightvalue, settings.compflightvalue);
+
 #ifndef WINDOWS
     ui->mangaReaderWidget->setFrontLightPanelState(
-                Platform::get()->frontlightGetMinLevel(),
-                Platform::get()->frontlightGetMaxLevel(),
-                Platform::get()->frontlightGetLevel(),
-                Platform::get()->frontlightGetMinTemp(),
-                Platform::get()->frontlightGetMaxTemp(),
-                Platform::get()->frontlightGetTemp());
+        Platform::get()->frontlightGetMinLevel(),
+        Platform::get()->frontlightGetMaxLevel(),
+        Platform::get()->frontlightGetLevel(),
+        Platform::get()->frontlightGetMinTemp(),
+        Platform::get()->frontlightGetMaxTemp(),
+        Platform::get()->frontlightGetTemp());
 #endif
+
+    ui->mangaReaderWidget->setFrontLightPanelState(settings.lightvalue, settings.compflightvalue);
 }
 
 void MainWidget::setFrontLight(int light, int comflight)
@@ -120,7 +126,7 @@ void MainWidget::setFrontLight(int light, int comflight)
 #ifndef WINDOWS
     if (light > Platform::get()->frontlightGetMinLevel())
     {
-        if(!Platform::get()->frontlightIsOn())
+        if (!Platform::get()->frontlightIsOn())
             Platform::get()->frontlightSetOn(true);
 
         Platform::get()->frontlightSetLevel(light, comflight);
@@ -134,6 +140,10 @@ void MainWidget::setFrontLight(int light, int comflight)
     Q_UNUSED(light)
     Q_UNUSED(comflight)
 #endif
+    settings.lightvalue = light;
+    settings.compflightvalue = comflight;
+
+    settings.scheduleSerialize();
 }
 
 
@@ -171,7 +181,7 @@ void MainWidget::setWidgetTab(int page)
     if (page == ui->stackedWidget->currentIndex())
         return;
 
-    if (currentmanga != nullptr)
+    if (!currentmanga.isNull())
         currentmanga->cancelAllPreloads();
 
     if (page == 3)
@@ -208,14 +218,13 @@ void MainWidget::viewFavorite(Favorite fav, bool current)
 
     if (current)
     {
-        if (currentmanga != nullptr)
-            delete currentmanga;
-        currentmanga = currentsource->loadMangaInfo(fav.mangalink, fav.title);
-        QObject::connect(currentmanga, SIGNAL(completedImagePreloadSignal(QString)), ui->mangaReaderWidget, SLOT(addImageToCache(QString)));
+        currentmanga.clear();
+        currentmanga = QSharedPointer<MangaInfo>(currentsource->loadMangaInfo(fav.mangalink, fav.title));
+        QObject::connect(currentmanga.data(), SIGNAL(completedImagePreloadSignal(QString)), ui->mangaReaderWidget, SLOT(addImageToCache(QString)));
 
 
         ui->mangaInfoWidget->setManga(currentmanga);
-        ui->mangaInfoWidget->setFavoriteButtonState(!favoritesmanager.isFavorite(currentmanga));
+        ui->mangaInfoWidget->setFavoriteButtonState(!favoritesmanager.isFavorite(currentmanga.data()));
 
         viewMangaImage(fav.currentindex);
     }
@@ -232,13 +241,13 @@ void MainWidget::setCurrentSource(AbstractMangaSource *source)
 
 void MainWidget::viewMangaInfo(const QString &mangalink, const QString &mangatitle)
 {
-    if (currentmanga != nullptr)
-        delete currentmanga;
-    currentmanga = currentsource->loadMangaInfo(mangalink, mangatitle);
-    QObject::connect(currentmanga, SIGNAL(completedImagePreloadSignal(QString)), ui->mangaReaderWidget, SLOT(addImageToCache(QString)));
+//    if (!currentmanga.isNull())
+    currentmanga.clear();
+    currentmanga = QSharedPointer<MangaInfo>(currentsource->loadMangaInfo(mangalink, mangatitle));
+    QObject::connect(currentmanga.data(), SIGNAL(completedImagePreloadSignal(QString)), ui->mangaReaderWidget, SLOT(addImageToCache(QString)));
 
     ui->mangaInfoWidget->setManga(currentmanga);
-    ui->mangaInfoWidget->setFavoriteButtonState(!favoritesmanager.isFavorite(currentmanga));
+    ui->mangaInfoWidget->setFavoriteButtonState(!favoritesmanager.isFavorite(currentmanga.data()));
 
     setWidgetTab(1);
 

@@ -1,0 +1,57 @@
+#include "numpadwidget.h"
+#include "ui_numpadwidget.h"
+
+#include "configs.h"
+
+#include <QKeyEvent>
+
+NumpadWidget::NumpadWidget(QWidget *parent) :
+    QWidget(parent),
+    ui(new Ui::NumpadWidget)
+{
+    ui->setupUi(this);
+
+    setupButtons();
+}
+
+NumpadWidget::~NumpadWidget()
+{
+    delete ui;
+}
+
+
+void NumpadWidget::setupButtons()
+{
+    foreach (QAbstractButton *btn, ui->buttonGroupAllButtons->buttons())
+    {
+        if (btn->text() == "<-")
+            btn->setProperty("key", Qt::Key_Backspace);
+        else if (btn->text() == "OK")
+            btn->setProperty("key", Qt::Key_Enter);
+        else
+            btn->setProperty("key", Qt::Key_0 + btn->text().trimmed().toInt());
+
+        btn->setFocusPolicy(Qt::NoFocus);
+        btn->setMinimumHeight(buttonsize);
+    }
+
+    QObject::connect(ui->buttonGroupAllButtons, SIGNAL(buttonPressed(QAbstractButton *)), this, SLOT(numButtonPressed(QAbstractButton *)));
+}
+
+void NumpadWidget::numButtonPressed(QAbstractButton *button)
+{
+//    qDebug() << button->text().trimmed();
+
+    Qt::Key key = (Qt::Key)button->property("key").toInt();
+
+    QString repr = QKeySequence(key).toString();
+
+    qDebug() << repr;
+
+    QWidget *target = qApp->focusWidget();
+
+    QKeyEvent *pressEvent = new QKeyEvent(QEvent::KeyPress, key, Qt::NoModifier, repr);
+    QKeyEvent *releaseEvent = new QKeyEvent(QEvent::KeyRelease, key, Qt::NoModifier, repr);
+    qApp->postEvent(target, pressEvent);
+    qApp->postEvent(target, releaseEvent);
+}

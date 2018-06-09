@@ -5,6 +5,7 @@
 MangaReaderWidget::MangaReaderWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::MangaReaderWidget),
+    pagechanging(false),
     imgcache(),
     imgcachepaths()
 {
@@ -52,13 +53,13 @@ void  MangaReaderWidget::adjustSizes()
     ui->labelLessComfLight->setMinimumSize(QSize(lighticonsize, lighticonsize));
     ui->labelLessComfLight->setMaximumSize(QSize(lighticonsize, lighticonsize));
 
-    QPixmap p3(":/resources/images/icons/moon.png");
+    QPixmap p3(":/resources/images/icons/sun.png");
     ui->labelLessComfLight->setPixmap(p3.scaledToHeight(lighticonsize, Qt::SmoothTransformation));
 
     ui->labelMoreComfLight->setMinimumSize(QSize(lighticonsize, lighticonsize));
     ui->labelMoreComfLight->setMaximumSize(QSize(lighticonsize, lighticonsize));
 
-    QPixmap p4(":/resources/images/icons/sun.png");
+    QPixmap p4(":/resources/images/icons/moon.png");
     ui->labelMoreComfLight->setPixmap(p4.scaledToHeight(lighticonsize, Qt::SmoothTransformation));
 
 
@@ -93,6 +94,7 @@ void  MangaReaderWidget::adjustSizes()
     ui->horizontalSliderLight->setStyleSheet(sliderstylesheet.arg(frontlightslidergrooveheight).arg(frontlightsliderhandlewidth).arg(
                                                  frontlightsliderhandleheight));
 
+    ui->horizontalSliderComfLight->setInvertedAppearance(true);
 }
 
 void MangaReaderWidget::updateTime()
@@ -104,7 +106,7 @@ void MangaReaderWidget::updateTime()
     QTimer::singleShot(msecsleft, this, SLOT(updateTime()));
 }
 
-void MangaReaderWidget::updateReaderLabels(MangaInfo *currentmanga)
+void MangaReaderWidget::updateReaderLabels(QSharedPointer<MangaInfo> currentmanga)
 {
     ui->labelReaderChapter->setText("Chapter: " + QString::number(currentmanga->currentindex.chapter + 1) +
                                     "/" + QString::number(currentmanga->numchapters));
@@ -116,11 +118,13 @@ void MangaReaderWidget::updateReaderLabels(MangaInfo *currentmanga)
 
 void MangaReaderWidget::on_pushButtonReaderHome_clicked()
 {
+    pagechanging = false;
     emit changeView(0);
 }
 
 void MangaReaderWidget::on_pushButtonReaderBack_clicked()
 {
+    pagechanging = false;
     emit back();
 }
 
@@ -148,11 +152,13 @@ void MangaReaderWidget::showImage(const QString &path)
             addImageToCache(path);
             ui->mangaImageContainer->setImage(*imgcache[0]);
         }
+
     }
     else
     {
         emit changeView(1);
     }
+    pagechanging = false;
 }
 
 void MangaReaderWidget::addImageToCache(const QString &path)
@@ -181,7 +187,7 @@ void MangaReaderWidget::on_mangaImageContainer_clicked(QPoint pos)
 {
     if (ui->readerNavigationBar->isVisible())
     {
-        if(pos.y() > this->height() * readerbottommenuethreshold * 2)
+        if (pos.y() > this->height() * readerbottommenuethreshold * 2)
         {
             ui->readerFrontLightBar->setVisible(false);
             ui->readerNavigationBar->setVisible(false);
@@ -192,8 +198,9 @@ void MangaReaderWidget::on_mangaImageContainer_clicked(QPoint pos)
         ui->readerNavigationBar->setVisible(true);
         ui->readerFrontLightBar->setVisible(true);
     }
-    else
+    else if (!pagechanging)
     {
+        pagechanging = true;
         if (pos.x() > this->width() * readerpreviouspagethreshold)
         {
             emit advancPageClicked(true);
@@ -225,6 +232,14 @@ void MangaReaderWidget::setFrontLightPanelState(int lightmin, int lightmax, int 
     }
 }
 
+
+void MangaReaderWidget::setFrontLightPanelState(int light, int comflight)
+{
+    ui->horizontalSliderLight->setValue(light);
+    ui->horizontalSliderComfLight->setValue(comflight);
+}
+
+
 void MangaReaderWidget::on_horizontalSliderLight_valueChanged(int value)
 {
     emit frontlightchanged(value, ui->horizontalSliderComfLight->value());
@@ -239,7 +254,7 @@ void MangaReaderWidget::on_pushButtonReaderGoto_clicked()
 {
     gotodialog->setup(currentmanga->numchapters, currentmanga->chapters[currentmanga->currentindex.chapter].numpages, currentmanga->currentindex);
 
-    if(gotodialog->exec() == QDialog::Accepted && !gotodialog->selectedindex.illegal)
+    if (gotodialog->exec() == QDialog::Accepted && !gotodialog->selectedindex.illegal)
     {
         ui->readerFrontLightBar->setVisible(false);
         ui->readerNavigationBar->setVisible(false);

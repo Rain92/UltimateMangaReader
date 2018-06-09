@@ -39,9 +39,9 @@ public:
     virtual QStringList getPageList(const QString &chapterlink) = 0;
     virtual QString getImageLink(const QString &pagelink) = 0;
 
-    MangaInfo *loadMangaInfo(const QString &mangalink, const QString &mangatitle);
+    QSharedPointer<MangaInfo> loadMangaInfo(const QString &mangalink, const QString &mangatitle);
 
-    void updateMangaInfo(MangaInfo *mangainfo);
+    void updateMangaInfo(QSharedPointer<MangaInfo> mangainfo);
 
     bool serializeMangaList();
     bool deserializeMangaList();
@@ -75,7 +75,7 @@ class BindingClass : public QObject
 public:
     BindingClass(
         AbstractMangaSource *mangasource,
-        MangaInfo *mangainfo,
+        QSharedPointer<MangaInfo> mangainfo,
         DownloadStringJob *job):
         mangasource(mangasource),
         mangainfo(mangainfo),
@@ -84,13 +84,13 @@ public:
 public slots:
     void updateFinishedLoading()
     {
-        mangasource->updateMangaInfoFinishedLoading(job, mangainfo);
+        mangasource->updateMangaInfoFinishedLoading(job, mangainfo.data());
         this->deleteLater();
     }
 
 private:
     AbstractMangaSource *mangasource;
-    MangaInfo *mangainfo;
+    QSharedPointer<MangaInfo> mangainfo;
     DownloadStringJob *job;
 };
 
