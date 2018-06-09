@@ -12,6 +12,9 @@
         <file>images/icons/lighter.png</file>
         <file>images/icons/moon.png</file>
         <file>images/icons/sun.png</file>
+        <file>images/icons/favourite-star.png</file>
+        <file>images/icons/favourite-star-full.png</file>
+        <file>images/icons/backspace.png</file>
     </qresource>
     <qresource prefix="/"/>
 </RCC>

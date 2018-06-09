@@ -2,6 +2,7 @@
 #define MANGAINFOWIDGET_H
 
 #include <QWidget>
+#include <QIcon>
 #include "mangainfo.h"
 #include "configs.h"
 
@@ -41,6 +42,9 @@ private:
     Ui::MangaInfoWidget *ui;
 
     QSharedPointer<MangaInfo> currentmanga;
+
+    QIcon isfavoriteicon;
+    QIcon isnotfavoriteicon;
 
     void adjustSizes();
 };

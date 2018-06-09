@@ -80,6 +80,9 @@ void  MainWidget::setupUI()
 #ifndef WINDOWS
     initTopLevelWidget(this);
 
+    VirtualKeyboard *vk = getVirtualKeyboard();
+    ui->verticalLayoutKeyboardContainer->insertWidget(0, vk);
+
     enableVirtualKeyboard(true);
 #endif
 
@@ -109,12 +112,13 @@ void MainWidget::enableVirtualKeyboard(bool enabled)
 #ifndef WINDOWS
     VirtualKeyboard *vk = getVirtualKeyboard();
 
-    if (enabled)
-        ui->verticalLayout->insertWidget(1, vk);
-    else
-        ui->verticalLayout->removeWidget(vk);
+    vk->hide();
 
-    vk-> hide();
+    if (enabled)
+        ui->frameKeyboardContainer->show();
+    else
+        ui->frameKeyboardContainer->hide();
+
 #else
     Q_UNUSED(enabled);
 #endif
@@ -238,7 +242,7 @@ void MainWidget::viewFavorite(QSharedPointer<MangaInfo> info, bool current)
 
 
         ui->mangaInfoWidget->setManga(currentmanga);
-        ui->mangaInfoWidget->setFavoriteButtonState(!favoritesmanager.isFavorite(currentmanga.data()));
+        ui->mangaInfoWidget->setFavoriteButtonState(favoritesmanager.isFavorite(currentmanga.data()));
 
         viewMangaImage(info->currentindex);
     }
@@ -263,7 +267,7 @@ void MainWidget::viewFavorite(Favorite fav, bool current)
 
 
         ui->mangaInfoWidget->setManga(currentmanga);
-        ui->mangaInfoWidget->setFavoriteButtonState(!favoritesmanager.isFavorite(currentmanga.data()));
+        ui->mangaInfoWidget->setFavoriteButtonState(favoritesmanager.isFavorite(currentmanga.data()));
 
         viewMangaImage(fav.currentindex);
     }
@@ -285,7 +289,7 @@ void MainWidget::viewMangaInfo(QSharedPointer<MangaInfo> info)
     QObject::connect(currentmanga.data(), SIGNAL(completedImagePreloadSignal(QString)), ui->mangaReaderWidget, SLOT(addImageToCache(QString)));
 
     ui->mangaInfoWidget->setManga(currentmanga);
-    ui->mangaInfoWidget->setFavoriteButtonState(!favoritesmanager.isFavorite(currentmanga.data()));
+    ui->mangaInfoWidget->setFavoriteButtonState(favoritesmanager.isFavorite(currentmanga.data()));
 
     setWidgetTab(1);
 
@@ -302,7 +306,7 @@ void MainWidget::viewMangaInfo(const QString &mangalink, const QString &mangatit
 
 void MainWidget::toggleFavorite(MangaInfo *manga)
 {
-    ui->mangaInfoWidget->setFavoriteButtonState(!favoritesmanager.toggleFavorite(manga));
+    ui->mangaInfoWidget->setFavoriteButtonState(favoritesmanager.toggleFavorite(manga));
 }
 
 

@@ -4,6 +4,7 @@
 #include "configs.h"
 
 #include <QKeyEvent>
+#include <QIcon>
 
 NumpadWidget::NumpadWidget(QWidget *parent) :
     QWidget(parent),
@@ -25,7 +26,13 @@ void NumpadWidget::setupButtons()
     foreach (QAbstractButton *btn, ui->buttonGroupAllButtons->buttons())
     {
         if (btn->text() == "<-")
+        {
             btn->setProperty("key", Qt::Key_Backspace);
+            QIcon icon = QIcon(QPixmap(":/resources/images/icons/backspace.png").scaledToHeight(buttonsize, Qt::SmoothTransformation));
+            btn->setIconSize(QSize(buttonsize * 0.5, buttonsize * 0.5));
+            btn->setIcon(icon);
+            btn->setText("");
+        }
         else if (btn->text() == "OK")
             btn->setProperty("key", Qt::Key_Enter);
         else

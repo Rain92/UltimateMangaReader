@@ -27,6 +27,13 @@ void  MangaInfoWidget::adjustSizes()
     ui->pushButtonReadLatest->setMinimumHeight(buttonsize);
     ui->pushButtonMangaInfoAddFavorites->setMinimumHeight(buttonsizeaddfavorite);
     ui->pushButtonMangaInfoAddFavorites->setMaximumWidth(buttonsizeaddfavorite);
+    ui->pushButtonMangaInfoAddFavorites->setFocusPolicy(Qt::NoFocus);
+    ui->pushButtonMangaInfoAddFavorites->setText("");
+    ui->pushButtonMangaInfoAddFavorites->setIconSize(QSize(buttonsizeaddfavorite * 0.8, buttonsizeaddfavorite * 0.8));
+
+    isfavoriteicon = QIcon(QPixmap(":/resources/images/icons/favourite-star-full.png").scaledToHeight(buttonsizeaddfavorite, Qt::SmoothTransformation));
+    isnotfavoriteicon = QIcon(QPixmap(":/resources/images/icons/favourite-star.png").scaledToHeight(buttonsizeaddfavorite, Qt::SmoothTransformation));
+
 
 
     ui->listViewChapters->setVerticalScrollBar(new CScrollBar(Qt::Vertical, ui->listViewChapters));
@@ -39,9 +46,7 @@ void  MangaInfoWidget::adjustSizes()
     QFont titlefont = ui->labelMangaInfoTitle->font();
     titlefont.setPointSize(titlefont.pointSize() * 2);
     ui->labelMangaInfoTitle->setFont(titlefont);
-//    ui->labelMangaInfoCover->setMinimumHeight(coversize);
-//    ui->labelMangaInfoCover->setMaximumWidth(coversize);
-//    resizeEvent(nullptr);
+
 }
 
 void MangaInfoWidget::setManga(QSharedPointer<MangaInfo> manga)
@@ -90,9 +95,9 @@ void MangaInfoWidget::updateManga()
 void MangaInfoWidget::setFavoriteButtonState(bool state)
 {
     if (state)
-        ui->pushButtonMangaInfoAddFavorites->setText("+");
+        ui->pushButtonMangaInfoAddFavorites->setIcon(isfavoriteicon);
     else
-        ui->pushButtonMangaInfoAddFavorites->setText("-");
+        ui->pushButtonMangaInfoAddFavorites->setIcon(isnotfavoriteicon);
 }
 
 void MangaInfoWidget::on_pushButtonMangaInfoAddFavorites_clicked()

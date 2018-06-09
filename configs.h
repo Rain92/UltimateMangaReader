@@ -53,9 +53,9 @@
 #define mangacourceiconspacing mm_to_px(3)
 
 #define buttonsize mm_to_px(10)
-#define buttonsizeaddfavorite mm_to_px(6)
+#define buttonsizeaddfavorite mm_to_px(8)
 
-#define lighticonsize mm_to_px(6)
+#define resourceiconsize mm_to_px(6)
 
 #define scrollbarsliderminlength mm_to_px(8)
 #define scrollbarwidth mm_to_px(6)
