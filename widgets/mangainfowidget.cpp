@@ -79,8 +79,8 @@ void MangaInfoWidget::setManga(QSharedPointer<MangaInfo> manga)
     ui->labelMangaInfoLabelArtistContent->setText(currentmanga->artist);
     ui->labelMangaInfoLabelGenresContent->setText(currentmanga->genres);
     ui->labelMangaInfoLabelStausContent->setText(currentmanga->status);
-//    ui->labelMangaInfoLabelYearContent->setText(currentmanga->releaseyear);
     ui->labelMangaInfoLabelSummaryContent->setText(currentmanga->summary);
+    //    ui->labelMangaInfoLabelYearContent->setText(currentmanga->releaseyear);
 
     ui->scrollAreaMangaInfoSummary->verticalScrollBar()->setValue(0);
     ui->listViewChapters->verticalScrollBar()->setValue(0);
@@ -91,21 +91,9 @@ void MangaInfoWidget::setManga(QSharedPointer<MangaInfo> manga)
     ui->pushButtonReadFirst->setEnabled(enable);
     ui->pushButtonReadLatest->setEnabled(enable);
 
-    qDebug() << currentmanga->genres;
-
     QPixmap img;
     img.load(currentmanga->coverpath);
     ui->labelMangaInfoCover->setPixmap(img.scaled(coversize, coversize, Qt::KeepAspectRatio, Qt::SmoothTransformation));
-
-//    qDebug() << ui->pushButtonReadLatest->mapToGlobal(QPoint()) << ui->scrollAreaMangaInfoSummary->mapToGlobal(
-//                 QPoint());
-
-//    ui->scrollAreaMangaInfoSummary->setMinimumHeight(ui->pushButtonReadLatest->mapToGlobal(QPoint()).y() - ui->scrollAreaMangaInfoSummary->mapToGlobal(
-//                                                         QPoint()).y() - 10);
-
-//    ui->scrollAreaMangaInfoSummary->setMinimumHeight(coversize - (ui->labelMangaInfoCover->mapToGlobal(QPoint()).y() - ui->scrollAreaMangaInfoSummary->mapToGlobal(
-//                                                                      QPoint()).y()) - 10);
-
 
     QObject::connect(currentmanga.data(), SIGNAL(updated()), this, SLOT(updateManga()));
 }

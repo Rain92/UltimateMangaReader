@@ -119,7 +119,6 @@ void MainWidget::enableVirtualKeyboard(bool enabled)
         ui->frameKeyboardContainer->show();
     else
         ui->frameKeyboardContainer->hide();
-
 #else
     Q_UNUSED(enabled);
 #endif

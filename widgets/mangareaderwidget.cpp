@@ -2,6 +2,11 @@
 #include "ui_mangareaderwidget.h"
 #include "configs.h"
 
+#ifndef WINDOWS
+#include "Platform.h"
+#endif
+
+
 MangaReaderWidget::MangaReaderWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::MangaReaderWidget),
@@ -61,6 +66,16 @@ void  MangaReaderWidget::adjustSizes()
 
     QPixmap p4(":/resources/images/icons/moon.png");
     ui->labelMoreComfLight->setPixmap(p4.scaledToHeight(resourceiconsize, Qt::SmoothTransformation));
+
+
+    batteryicons[0] = QPixmap(":/resources/images/icons/batterylow.png").scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
+    batteryicons[1] = QPixmap(":/resources/images/icons/battery15.png").scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
+    batteryicons[2] = QPixmap(":/resources/images/icons/battery30.png").scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
+    batteryicons[3] = QPixmap(":/resources/images/icons/battery50.png").scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
+    batteryicons[4] = QPixmap(":/resources/images/icons/battery70.png").scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
+    batteryicons[5] = QPixmap(":/resources/images/icons/battery85.png").scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
+    batteryicons[6] = QPixmap(":/resources/images/icons/battery95.png").scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
+    batteryicons[7] = QPixmap(":/resources/images/icons/batterycharging.png").scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
 
 
 
@@ -195,6 +210,7 @@ void MangaReaderWidget::on_mangaImageContainer_clicked(QPoint pos)
     }
     else if (pos.y() < this->height() * readerbottommenuethreshold || pos.y() > this->height() * (1.0 - readerbottommenuethreshold))
     {
+        setBatteryIcon();
         ui->readerNavigationBar->setVisible(true);
         ui->readerFrontLightBar->setVisible(true);
     }
@@ -264,3 +280,39 @@ void MangaReaderWidget::on_pushButtonReaderGoto_clicked()
     }
     emit enableVirtualKeyboard(true);
 }
+
+void MangaReaderWidget::setBatteryIcon()
+{
+    QPair<int, bool> batterystate = getBatteryState();
+    int bat = batterystate.first;
+    bool charging = batterystate.second;
+
+    if (bat >= 95)
+        ui->labelBattery->setPixmap(batteryicons[6]);
+    else if (charging)
+        ui->labelBattery->setPixmap(batteryicons[7]);
+    else if (bat >= 85)
+        ui->labelBattery->setPixmap(batteryicons[5]);
+    else if (bat >= 70)
+        ui->labelBattery->setPixmap(batteryicons[4]);
+    else if (bat >= 50)
+        ui->labelBattery->setPixmap(batteryicons[3]);
+    else if (bat >= 30)
+        ui->labelBattery->setPixmap(batteryicons[2]);
+    else if (bat >= 15)
+        ui->labelBattery->setPixmap(batteryicons[1]);
+    else
+        ui->labelBattery->setPixmap(batteryicons[0]);
+
+//    ui->labelBattery->setText(QString::number(batterystate.first));
+}
+
+QPair<int, bool> MangaReaderWidget::getBatteryState()
+{
+#ifndef WINDOWS
+    return QPair<int, bool>(Platform::get()->getBatteryLevel(), Platform::get()->isBatteryCharging());
+#endif
+
+    return QPair<int, bool>(100, false);
+}
+

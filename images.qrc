@@ -16,6 +16,14 @@
         <file>images/icons/favourite-star-full.png</file>
         <file>images/icons/backspace.png</file>
         <file>images/mangahostlogos/jaiminisbox.png</file>
+        <file>images/icons/battery15.png</file>
+        <file>images/icons/battery30.png</file>
+        <file>images/icons/battery50.png</file>
+        <file>images/icons/battery70.png</file>
+        <file>images/icons/battery85.png</file>
+        <file>images/icons/battery95.png</file>
+        <file>images/icons/batterycharging.png</file>
+        <file>images/icons/batterylow.png</file>
     </qresource>
     <qresource prefix="/"/>
 </RCC>

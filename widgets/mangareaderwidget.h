@@ -2,6 +2,7 @@
 #define MANGAREADERWIDGET_H
 
 #include <QWidget>
+#include <QPair>
 #include "mangainfo.h"
 #include "gotodialog.h"
 
@@ -56,10 +57,16 @@ private:
 
     void adjustSizes();
 
+
+    void setBatteryIcon();
+    QPair<int, bool> getBatteryState();
+
     QList<QPixmap *> imgcache;
     QList<QString> imgcachepaths;
 
     QSharedPointer<MangaInfo> currentmanga;
+
+    QPixmap batteryicons[8];
 
     GotoDialog *gotodialog;
 };
