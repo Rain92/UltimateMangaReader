@@ -86,6 +86,7 @@ public slots:
     {
         mangasource->updateMangaInfoFinishedLoading(job, mangainfo.data());
         this->deleteLater();
+        job->deleteLater();
     }
 
 private:

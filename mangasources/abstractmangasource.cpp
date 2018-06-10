@@ -110,7 +110,7 @@ DownloadStringJob *AbstractMangaSource::updateMangaInfo(QSharedPointer<MangaInfo
     info->updating = true;
 
     if (!QFileInfo(info->coverpath).exists())
-        AbstractMangaSource::downloadmanager->downloadAsFile(info->coverlink, info->coverpath);
+        AbstractMangaSource::downloadmanager->downloadAsFile(info->coverlink, info->coverpath)->await(4000);
 
 //    qDebug() << info->link;
     DownloadStringJob *job = downloadmanager->downloadAsString(info->link);
