@@ -29,7 +29,7 @@ void  MangaInfoWidget::adjustSizes()
     ui->pushButtonMangaInfoAddFavorites->setMaximumWidth(buttonsizeaddfavorite);
     ui->pushButtonMangaInfoAddFavorites->setFocusPolicy(Qt::NoFocus);
     ui->pushButtonMangaInfoAddFavorites->setText("");
-    ui->pushButtonMangaInfoAddFavorites->setIconSize(QSize(buttonsizeaddfavorite * 0.8, buttonsizeaddfavorite * 0.8));
+    ui->pushButtonMangaInfoAddFavorites->setIconSize(QSize(buttonsizeaddfavorite * 0.7, buttonsizeaddfavorite * 0.7));
 
     isfavoriteicon = QIcon(QPixmap(":/resources/images/icons/favourite-star-full.png").scaledToHeight(buttonsizeaddfavorite, Qt::SmoothTransformation));
     isnotfavoriteicon = QIcon(QPixmap(":/resources/images/icons/favourite-star.png").scaledToHeight(buttonsizeaddfavorite, Qt::SmoothTransformation));

@@ -15,6 +15,7 @@
         <file>images/icons/favourite-star.png</file>
         <file>images/icons/favourite-star-full.png</file>
         <file>images/icons/backspace.png</file>
+        <file>images/mangahostlogos/jaiminisbox.png</file>
     </qresource>
     <qresource prefix="/"/>
 </RCC>

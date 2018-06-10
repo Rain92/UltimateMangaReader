@@ -62,6 +62,14 @@ void  HomeWidget::setupSourcesList()
         model->appendRow(*listViewItemfromMangaSource(ms));
 
     ui->listViewSources->setIconSize(QSize(mangasourceiconsize, mangasourceiconsize));
+
+    QString style = "QListView { "
+                    "font-size: %1pt;"
+                    "}";
+
+    style = style.arg(ui->listViewSources->font().pointSize() * 0.65);
+
+    ui->listViewSources->setStyleSheet(style);
 //    ui->listViewSources->setSpacing(mangacourceiconspacing);
 
 
@@ -157,8 +165,8 @@ QList<QStandardItem *> *HomeWidget::listViewItemfromMangaSource(AbstractMangaSou
     QList<QStandardItem *> *items = new QList<QStandardItem *> ();
     QStandardItem *item = new QStandardItem(source->name);
     item->setIcon(QIcon(QPixmap(":/resources/images/mangahostlogos/" + source->name.toLower() + ".png")));
-    items->append(item);
     item->setSizeHint(QSize(mangasourceitemwidth, mangasourceitemheight));
+    items->append(item);
 
     return items;
 }

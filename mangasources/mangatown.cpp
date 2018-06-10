@@ -143,7 +143,7 @@ MangaInfo *MangaTown::getMangaInfo(QString mangalink)
         info->summary = htmlToPlainText(summaryrx.cap(1));
 
 
-    info->releaseyear = "";
+    info->releaseyear = "-";
 
     QRegExp coverrx("<div class=\"detail_info clearfix\">[^\"]*\"([^\"]*)");
 
@@ -205,7 +205,6 @@ MangaInfo *MangaTown::getMangaInfo(QString mangalink)
 
 void MangaTown::updateMangaInfoFinishedLoading(DownloadStringJob *job, MangaInfo *info)
 {
-
     int spos = job->buffer.indexOf("<div class=\"chapter_content\">");
     int epos = job->buffer.indexOf("</div>", spos);
     if (spos == -1)

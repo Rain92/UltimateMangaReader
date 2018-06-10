@@ -31,6 +31,7 @@ MainWidget::MainWidget(QWidget *parent) :
     mangasources.append(new MangaTown(this, downloadmanager));
     mangasources.append(new MangaWindow(this, downloadmanager));
     mangasources.append(new MangaDex(this, downloadmanager));
+    mangasources.append(new JaiminisBox(this, downloadmanager));
 
 
 
@@ -293,9 +294,9 @@ void MainWidget::viewMangaInfo(QSharedPointer<MangaInfo> info)
 
     setWidgetTab(1);
 
-//#ifndef QT_DEBUG
+#ifndef QT_DEBUG
     currentmanga->preloadPopular();
-//#endif
+#endif
 }
 
 

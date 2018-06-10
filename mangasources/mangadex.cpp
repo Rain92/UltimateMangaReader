@@ -138,7 +138,7 @@ MangaInfo *MangaDex::getMangaInfo( QString mangalink)
     if (genresrx.indexIn(job->buffer, 0) != -1)
         info->genres = htmlToPlainText(genresrx.cap(1)).trimmed();
 
-    info->releaseyear = "";
+    info->releaseyear = "-";
 
     QRegExp coverrx("src='([^']*)[^>]*title='Manga image'");
 

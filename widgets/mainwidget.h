@@ -16,6 +16,7 @@
 #include "mangadex.h"
 #include "mangatown.h"
 #include "mangawindow.h"
+#include "jaiminisbox.h"
 
 #ifndef WINDOWS
 

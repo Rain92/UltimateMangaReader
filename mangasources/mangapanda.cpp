@@ -12,8 +12,7 @@ MangaPanda::MangaPanda(QObject *parent, DownloadManager *dm):
 
 bool MangaPanda::updateMangaList()
 {
-    DownloadStringJob *job = downloadmanager->downloadAsString(
-                                 baseurl + "/alphabetical");
+    DownloadStringJob *job = downloadmanager->downloadAsString(baseurl + "/alphabetical");
 
     if (!job->await(8000))
     {

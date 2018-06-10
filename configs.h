@@ -48,7 +48,7 @@
 #define listsourceswidth mm_to_px(65)
 #define listsourcesheight mm_to_px(50)
 #define mangasourceiconsize mm_to_px(14)
-#define mangasourceitemwidth mm_to_px(30)
+#define mangasourceitemwidth mm_to_px(21)
 #define mangasourceitemheight mm_to_px(20)
 #define mangacourceiconspacing mm_to_px(3)
 

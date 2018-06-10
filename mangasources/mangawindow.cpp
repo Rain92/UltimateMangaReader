@@ -177,7 +177,8 @@ MangaInfo *MangaWindow::getMangaInfo(QString mangalink)
     if (genresrx.indexIn(job->buffer, 0) != -1)
         info->genres = htmlToPlainText(genresrx.cap(1)).trimmed();
 
-    info->releaseyear = "";
+//    info->artist = "-";
+    info->releaseyear = "-";
 
     QRegExp coverrx("<img class=\"shadow-6\" src=\"([^\"]*)");
 
