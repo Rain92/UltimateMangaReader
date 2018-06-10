@@ -162,7 +162,8 @@ MangaInfo *MangaInfo::deserialize(QObject *parent, AbstractMangaSource *mangasou
         return mi;
 
     QDataStream in(&file);
-    in >> mi->hostname >> mi->title >> mi->link >> mi->author >> mi->artist >> mi->releaseyear >> mi->status >> mi->summary >> mi->coverpath >> mi->numchapters;
+    in >> mi->hostname >> mi->title >> mi->link >> mi->author >> mi->artist >> mi->releaseyear >> mi->status >> mi->genres >> mi->summary >> mi->coverpath >>
+       mi->numchapters;
     in >> mi->chapertitlesreversed >> mi->chapters;
 
     file.close();
@@ -197,7 +198,7 @@ void MangaInfo::serialize()
         return;
 
     QDataStream out(&file);
-    out << hostname << title << link << author << artist << releaseyear << status << summary << coverpath << (qint32) numchapters;
+    out << hostname << title << link << author << artist << releaseyear << status << genres << summary << coverpath << (qint32) numchapters;
     out << chapertitlesreversed << chapters;
 
     file.close();
