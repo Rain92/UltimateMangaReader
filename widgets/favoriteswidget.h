@@ -34,6 +34,7 @@ private:
 
     void insertRow(const Favorite &fav, int row);
     void adjustSizes();
+    void moveFavoriteToFront(int i);
 
     QList< QSharedPointer<MangaInfo> > infos;
 

@@ -41,11 +41,13 @@ public slots:
 
 private slots:
     void sendComletedSignal();
+    void resetQueue();
 
 private:
     AbstractMangaSource *source;
     QQueue<DownloadImageInfo> queue;
     DownloadScaledImageJob *job;
+    QTimer *resettimer;
     bool running;
 };
 

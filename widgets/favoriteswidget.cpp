@@ -95,6 +95,14 @@ void FavoritesWidget::insertRow(const Favorite &fav, int row)
     ui->tableWidget->setItem(row, 3, progress);
 }
 
+void FavoritesWidget::moveFavoriteToFront(int i)
+{
+    favorites->move(i, 0);
+    infos.move(i, 0);
+
+    ui->tableWidget->removeRow(i);
+    insertRow(favorites->at(0), 0);
+}
 
 void FavoritesWidget::mangaUpdated()
 {
@@ -104,12 +112,9 @@ void FavoritesWidget::mangaUpdated()
     while (favorites->at(i).title != mi->title && favorites->at(i).title != mi->title)
         i++;
 
-    favorites->move(i, 0);
+    moveFavoriteToFront(i);
     favorites->first().updated = true;
     favorites->first().numchapters = mi->numchapters;
-
-    ui->tableWidget->removeRow(i);
-    insertRow(favorites->at(0), 0);
 
     emit(mangaListUpdated());
 }
@@ -154,5 +159,7 @@ void FavoritesWidget::on_tableWidget_cellClicked(int row, int column)
             loop.exec();
     }
 
-    emit favoriteClicked(infos.at(row), column >= 2);
+    moveFavoriteToFront(row);
+
+    emit favoriteClicked(infos.at(0), column >= 2);
 }

@@ -6,9 +6,16 @@ PreloadQueue::PreloadQueue(QObject *parent, AbstractMangaSource *source):
     source(source),
     queue(),
     job(nullptr),
+    resettimer(new QTimer(this)),
     running(false)
 {
+    resettimer->setSingleShot(true);
+    connect(resettimer, SIGNAL(timeout()), this, SLOT(resetQueue()));
+}
 
+void PreloadQueue::resetQueue()
+{
+    running = false;
 }
 
 void PreloadQueue::addJob(DownloadImageInfo info)
@@ -45,6 +52,7 @@ void PreloadQueue::processNext()
         return;
     }
     running = true;
+    resettimer->start(4000);
 
     DownloadImageInfo info = queue.dequeue();
 
@@ -58,6 +66,7 @@ void PreloadQueue::processNext()
     {
         QObject::connect(job, SIGNAL(completed()), this, SLOT(sendComletedSignal()));
         QObject::connect(job, SIGNAL(completed()), this, SLOT(processNext()));
+        QObject::connect(job, SIGNAL(downloadError()), this, SLOT(processNext()));
     }
     else
     {
