@@ -30,7 +30,7 @@
 #include "VirtualKeyboard.h"
 #include "VirtualKeyboardContainer.h"
 #include "platform/KoboPlatform.h"
-
+#include "pipethread.h"
 
 #endif
 
@@ -76,12 +76,16 @@ private slots:
     void on_pushButtonClose_clicked();
     void on_pushButtonFavorites_clicked();
 
-
+    void pipeMsg(const QString &msg);
 
 protected:
     void resizeEvent(QResizeEvent *event);
 
 private:
+#ifndef WINDOWS
+    QString fifo;
+    PipeThread pt;
+#endif
 
     void setupUI();
     void setupFrontLight();

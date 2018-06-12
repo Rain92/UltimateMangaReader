@@ -11,6 +11,9 @@
 MainWidget::MainWidget(QWidget *parent) :
 #ifdef WINDOWS
     QWidget(parent),
+#else
+    fifo(qgetenv("VLASOVSOFT_FIFO1")),
+    pt(qgetenv("VLASOVSOFT_FIFO2")),
 #endif
     ui(new Ui::MainWidget),
     currentmanga(),
@@ -66,7 +69,6 @@ MainWidget::MainWidget(QWidget *parent) :
     QObject::connect(ui->mangaReaderWidget, SIGNAL(frontlightchanged(int, int)), this, SLOT(setFrontLight(int, int)));
     QObject::connect(ui->mangaReaderWidget, SIGNAL(gotoIndex(MangaIndex)), this, SLOT(viewMangaImage(MangaIndex)));
     QObject::connect(ui->mangaReaderWidget, SIGNAL(enableVirtualKeyboard(bool)), this, SLOT(enableVirtualKeyboard(bool)));
-
 }
 
 MainWidget::~MainWidget()
@@ -85,6 +87,10 @@ void  MainWidget::setupUI()
     ui->verticalLayoutKeyboardContainer->insertWidget(0, vk);
 
     enableVirtualKeyboard(true);
+
+
+    writeFifoCommand(fifo, "n+");
+    QObject::connect( &pt, SIGNAL(sigPipeMsg(QString)), this, SLOT(pipeMsg(QString)) );
 #endif
 
     downloadmanager->setImageSize(this->width(), this->height());
@@ -340,6 +346,16 @@ void MainWidget::viewMangaImage(const MangaIndex &index)
 }
 
 
+void MainWidget::pipeMsg(const QString &msg)
+{
+    if ( msg == "suspend" )
+    {
+    }
+    else if ( msg == "resume" )
+    {
+        setFrontLight(settings.lightvalue, settings.comflightvalue);
+    }
+}
 
 
 

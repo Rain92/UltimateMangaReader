@@ -70,6 +70,8 @@ void FavoritesWidget::showFavoritesList(QList<Favorite> *favs)
             break;
         }
     }
+
+    ui->tableWidget->verticalScrollBar()->setValue(0);
 }
 
 void FavoritesWidget::insertRow(const Favorite &fav, int row)
@@ -102,6 +104,8 @@ void FavoritesWidget::moveFavoriteToFront(int i)
 
     ui->tableWidget->removeRow(i);
     insertRow(favorites->at(0), 0);
+
+    emit(mangaListUpdated());
 }
 
 void FavoritesWidget::mangaUpdated()
@@ -112,11 +116,11 @@ void FavoritesWidget::mangaUpdated()
     while (favorites->at(i).title != mi->title && favorites->at(i).title != mi->title)
         i++;
 
-    moveFavoriteToFront(i);
-    favorites->first().updated = true;
-    favorites->first().numchapters = mi->numchapters;
+    (*favorites)[i].updated = true;
+    (*favorites)[i].numchapters = mi->numchapters;
 
-    emit(mangaListUpdated());
+    moveFavoriteToFront(i);
+//    emit(mangaListUpdated());
 }
 
 QWidget *FavoritesWidget::makeIconTextWidget(const QString &path, const QString &text, const QSize &iconsize)
@@ -161,5 +165,5 @@ void FavoritesWidget::on_tableWidget_cellClicked(int row, int column)
 
     moveFavoriteToFront(row);
 
-    emit favoriteClicked(infos.at(0), column >= 2);
+    emit favoriteClicked(infos.first(), column >= 2);
 }

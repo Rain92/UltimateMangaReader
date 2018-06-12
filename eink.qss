@@ -2,6 +2,7 @@ QWidget {
     background-color: white;
     selection-color: white;
     selection-background-color: black;
+    font-size: 10pt;
 }
 
 QMenu 
@@ -129,12 +130,19 @@ QComboBox::down-arrow:focus
   padding-bottom: 0px;
   padding-left: 0px;  
 }
-
-QTreeView, QListView, QTableView {
+QTreeView, QListView {
     padding: 2px;
     border: 1px solid black;
     background: white;
     outline: none;
+    font-size: 10pt;
+}
+QTreeView, QListView {
+    padding: 2px;
+    border: 1px solid black;
+    background: white;
+    outline: none;
+    font-size: 12pt;
 }
 QTreeView:focus, QListView:focus, QTableView:focus {
     padding: 1px;
@@ -164,6 +172,7 @@ QPushButton
     color: black;
     padding: 9px;
     outline: none;
+    font-size: 13pt;
 }
 QPushButton:focus {
     border: 3px solid black;

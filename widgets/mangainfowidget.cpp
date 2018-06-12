@@ -41,9 +41,7 @@ void  MangaInfoWidget::adjustSizes()
 
     ui->scrollAreaMangaInfoSummary->setVerticalScrollBar(new CScrollBar(Qt::Vertical, ui->scrollAreaMangaInfoSummary, summaryscrollbarwidth));
 
-    QFont titlefont = ui->labelMangaInfoTitle->font();
-    titlefont.setPointSize(titlefont.pointSize() * 2);
-    ui->labelMangaInfoTitle->setFont(titlefont);
+    ui->labelMangaInfoTitle->setStyleSheet("QLabel{ font-size: 18pt; }");
 
     QString favbuttonstyle =
         "QPushButton {         "
