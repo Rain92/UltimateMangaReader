@@ -49,6 +49,11 @@ MainWidget::MainWidget(QWidget *parent) :
     foreach (AbstractMangaSource *ms, mangasources)
         ms->deserializeMangaList();
 
+
+//    foreach (AbstractMangaSource *ms, mangasources)
+//        if (ms->nummangas != ms->mangalist.links.count())
+//            qDebug() << ms->name << " nummangas wrong:" << ms->nummangas << ms->mangalist.links.count();
+
     ui->favoritesWidget->favoritesmanager = &favoritesmanager;
 
 

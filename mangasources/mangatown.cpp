@@ -21,9 +21,9 @@ bool MangaTown::updateMangaList()
     QString basedictlink = AbstractMangaSource::baseurl + "/directory/0-0-0-0-0-0/";
     QString basedictsuffix = ".htm?name.az";
 
-    DownloadStringJob *job = AbstractMangaSource::downloadmanager->downloadAsString(basedictlink + "1" + basedictsuffix);
+    DownloadStringJob *job = AbstractMangaSource::downloadmanager->downloadAsString(basedictlink + "1" + basedictsuffix, -1);
 
-    if (!job->await(5000))
+    if (!job->await(6000))
     {
         emit updateError(job->errorString);
         return false;
@@ -55,7 +55,7 @@ bool MangaTown::updateMangaList()
     {
         for (; dli < (batch + 1) * maxparalleldownloads && dli < pages; dli++)
         {
-            jobs[dli] = AbstractMangaSource::downloadmanager->downloadAsString(basedictlink + QString::number(dli + 1) + basedictsuffix);
+            jobs[dli] = AbstractMangaSource::downloadmanager->downloadAsString(basedictlink + QString::number(dli + 1) + basedictsuffix, -1);
             qDebug() << "dl" << dli << "time:" << timer.elapsed();
         }
 //        for (rxi = (batch + 1) * maxparalleldownloads - 1; rxi > (batch) * maxparalleldownloads && rxi > 0; rxi--)

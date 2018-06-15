@@ -28,7 +28,7 @@ bool MangaDex::updateMangaList()
 
     QString basedictlink = baseurl + "/titles/2/";
 
-    DownloadStringJob *job = downloadmanager->downloadAsString(basedictlink + "1");
+    DownloadStringJob *job = downloadmanager->downloadAsString(basedictlink + "1", -1);
 
     if (!job->await(5000))
     {
@@ -62,8 +62,8 @@ bool MangaDex::updateMangaList()
     {
         for (; dli < (batch + 1) * maxparalleldownloads && dli < pages; dli++)
         {
-            jobs[dli] = downloadmanager->downloadAsString(basedictlink + QString::number(dli + 1));
-//            qDebug() << "dl" << dli << "time:" << timer.elapsed();
+            jobs[dli] = downloadmanager->downloadAsString(basedictlink + QString::number(dli + 1), -1);
+            qDebug() << "dl" << dli << "time:" << timer.elapsed();
         }
         for (; rxi < (batch + 1) * maxparalleldownloads && rxi < pages; rxi++)
         {
@@ -79,7 +79,7 @@ bool MangaDex::updateMangaList()
                 mangalist.titles.append(htmlToPlainText(htmlToPlainText(rx.cap(1))));
             }
 
-//            qDebug() << "rx" << rxi << "time:" << timer.elapsed();
+            qDebug() << "rx" << rxi << "time:" << timer.elapsed();
             delete jobs[rxi];
         }
         emit updateProgress(100 * rxi / pages);

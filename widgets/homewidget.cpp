@@ -155,6 +155,9 @@ void HomeWidget::on_pushButtonUpdate_clicked()
         if (!ms->updateMangaList())
             return;
 
+        if (ms->nummangas != ms->mangalist.links.count())
+            updateError("Number of mangas does not match.");
+
         ms->serializeMangaList();
     }
 

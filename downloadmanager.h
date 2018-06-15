@@ -36,7 +36,7 @@ public:
 
     QMap<QString, DownloadFileJob *> *fileDownloads;
 
-    DownloadStringJob *downloadAsString(QString url);
+    DownloadStringJob *downloadAsString(QString url, int timeout = 4000);
     DownloadFileJob *downloadAsFile(QString url, QString path);
     DownloadFileJob *downloadAsScaledImage(QString url, QString path);
 

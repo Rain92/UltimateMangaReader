@@ -27,8 +27,11 @@ void DownloadStringJob::start()
     QObject::connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(onError(QNetworkReply::NetworkError)));
     QObject::connect(reply, SIGNAL(sslErrors(const QList<QSslError> &)), this, SLOT(onSslErrors(const QList<QSslError> &)));
 
-    QObject::connect(&timeouttimer, SIGNAL(timeout()), this, SLOT(timeout()));
-    timeouttimer.start(timeouttime);
+    if (timeouttime > 0)
+    {
+        QObject::connect(&timeouttimer, SIGNAL(timeout()), this, SLOT(timeout()));
+        timeouttimer.start(timeouttime);
+    }
 }
 
 void DownloadStringJob::restart()
@@ -55,7 +58,7 @@ void DownloadStringJob::downloadStringFinished()
 
     if (QNetworkReply::NoError != reply->error())
     {
-        onError(QNetworkReply::NetworkError());
+//        onError(QNetworkReply::NetworkError());
     }
     else
     {
@@ -95,9 +98,9 @@ void DownloadStringJob::onError(QNetworkReply::NetworkError)
 
     qDebug() << errorString;
 
-    if (reply != nullptr)
-        reply->deleteLater();
-    reply = nullptr;
+//    if (reply != nullptr)
+//        reply->deleteLater();
+//    reply = nullptr;
 
     emit downloadError();
 }
@@ -109,9 +112,9 @@ void DownloadStringJob::timeout()
 
     qDebug() << errorString;
 
-    if (reply != nullptr)
-        reply->deleteLater();
-    reply = nullptr;
+//    if (reply != nullptr)
+//        reply->deleteLater();
+//    reply = nullptr;
     emit downloadError();
 }
 

@@ -48,12 +48,12 @@ void DownloadManager::onActivity()
 #endif
 }
 
-DownloadStringJob *DownloadManager::downloadAsString(QString url)
+DownloadStringJob *DownloadManager::downloadAsString(QString url, int timeout)
 {
     if (!connected())
         connect();
 
-    DownloadStringJob *job = new DownloadStringJob(this, manager, url);
+    DownloadStringJob *job = new DownloadStringJob(this, manager, url, timeout);
 
     job->start();
     return job;

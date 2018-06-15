@@ -22,9 +22,9 @@ bool MangaWindow::updateMangaList()
 
     QString basedictlink = AbstractMangaSource::baseurl + "/browse?chapters=1&langs=english&sort=title&page=";
 
-    DownloadStringJob *job = AbstractMangaSource::downloadmanager->downloadAsString(basedictlink + "1");
+    DownloadStringJob *job = AbstractMangaSource::downloadmanager->downloadAsString(basedictlink + "1", -1);
 
-    if (!job->await(5000))
+    if (!job->await(6000))
     {
         emit updateError(job->errorString);
         return false;
@@ -34,8 +34,6 @@ bool MangaWindow::updateMangaList()
     mangalist.titles.clear();
 
     qDebug() << "time" << timer.elapsed();
-
-    qDebug() << job->buffer.left(1000);
 
 
     int cpos = 0;
@@ -68,7 +66,7 @@ bool MangaWindow::updateMangaList()
     {
         for (; dli < (batch + 1) * maxparalleldownloads && dli < pages; dli++)
         {
-            jobs[dli] = AbstractMangaSource::downloadmanager->downloadAsString(basedictlink + QString::number(dli + 1));
+            jobs[dli] = AbstractMangaSource::downloadmanager->downloadAsString(basedictlink + QString::number(dli + 1), -1);
             qDebug() << "dl" << dli << "time:" << timer.elapsed();
         }
 //        for (rxi = (batch + 1) * maxparalleldownloads - 1; rxi > (batch) * maxparalleldownloads && rxi > 0; rxi--)

@@ -34,7 +34,7 @@ bool JaiminisBox::updateMangaList()
 
     do
     {
-        DownloadStringJob *job = downloadmanager->downloadAsString(nextlink);
+        DownloadStringJob *job = downloadmanager->downloadAsString(nextlink, -1);
         if (!job->await(5000))
         {
             emit updateError(job->errorString);
