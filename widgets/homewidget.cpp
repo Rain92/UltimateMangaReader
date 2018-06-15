@@ -221,7 +221,8 @@ void HomeWidget::clearCacheDialogButtonClicked(QAbstractButton *button)
         break;
 
     case 3:
-        removeDir(cachedir);
+        removeDir(cachedir, "mangalist.dat");
+        emit favoritesCleared();
         break;
 
     default:

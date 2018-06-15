@@ -92,7 +92,7 @@ bool MangaDex::updateMangaList()
 }
 
 
-MangaInfo *MangaDex::getMangaInfo( QString mangalink)
+MangaInfo *MangaDex::getMangaInfo(QString mangalink)
 {
 
     if (mangalink.left(5) != "https")
@@ -200,6 +200,10 @@ MangaInfo *MangaDex::getMangaInfo( QString mangalink)
                 info->numchapters++;
             }
 
+//            info->chapters.removeLast();
+//            info->chapertitlesreversed.removeAt(0);
+//            info->numchapters--;
+
 //            qDebug() << "rx" << rxi ;
             jobs[rxi]->deleteLater();
         }
@@ -290,7 +294,8 @@ void MangaDex::updateMangaInfoFinishedLoading(DownloadStringJob *job, MangaInfo 
             }
 
 //            qDebug() << "rx" << rxi ;
-            jobs[rxi]->deleteLater();
+            if (rxi > 0)
+                jobs[rxi]->deleteLater();
         }
     }
 

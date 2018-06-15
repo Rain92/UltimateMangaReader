@@ -35,6 +35,8 @@ public:
 
     QString hostname;
 
+    bool updated;
+
     MangaIndex currentindex;
 
     int numchapters;
@@ -45,6 +47,9 @@ public:
     QList<MangaChapter> chapters;
 
     bool updating;
+
+
+    QString getCoverpathScaled() const;
 
     QString getImageLink(MangaIndex index);
 
@@ -64,16 +69,19 @@ public:
     void preloadPopular();
     void cancelAllPreloads();
 
-
     void sendUpdated(bool changed);
 
 signals:
     void completedImagePreloadSignal(const QString &path);
-    void updated();
+    void updatedSignal();
     void updatedNoChanges();
+    void coverLoaded();
 
 private slots:
     void completedImagePreload(const QString &path);
+
+public slots:
+    void sendCoverLoaded();
 
 private:
     PreloadQueue preloadqueue;

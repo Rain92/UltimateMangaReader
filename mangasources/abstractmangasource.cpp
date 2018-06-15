@@ -88,13 +88,14 @@ QString AbstractMangaSource::downloadAwaitImage(const QString &imagelink, const 
 }
 
 
-QSharedPointer<MangaInfo> AbstractMangaSource::loadMangaInfo(const QString &mangalink, const QString &mangatitle)
+QSharedPointer<MangaInfo> AbstractMangaSource::loadMangaInfo(const QString &mangalink, const QString &mangatitle, bool update)
 {
     QFileInfo infofile(mangainfodir(name, mangatitle) + "mangainfo.dat");
     if (infofile.exists())
     {
         QSharedPointer<MangaInfo> mi = QSharedPointer<MangaInfo>(MangaInfo::deserialize(this->parent(), this, infofile.filePath()));
-        mi->mangasource->updateMangaInfo(mi);
+        if (update)
+            mi->mangasource->updateMangaInfo(mi);
         return mi;
     }
 
@@ -102,25 +103,38 @@ QSharedPointer<MangaInfo> AbstractMangaSource::loadMangaInfo(const QString &mang
 }
 
 
-DownloadStringJob *AbstractMangaSource::updateMangaInfo(QSharedPointer<MangaInfo> info)
+void AbstractMangaSource::updateMangaInfo(QSharedPointer<MangaInfo> info)
 {
     if (info.isNull() || info->updating)
-        return nullptr;
+        return;
 
     info->updating = true;
 
-    if (!QFileInfo(info->coverpath).exists())
-        AbstractMangaSource::downloadmanager->downloadAsFile(info->coverlink, info->coverpath)->await(4000);
+//    qDebug() << "updating" << info->title;
 
-//    qDebug() << info->link;
+    if (!QFileInfo(info->coverpath).exists())
+    {
+        DownloadFileJob *cjob = AbstractMangaSource::downloadmanager->downloadAsFile(info->coverlink, info->coverpath);
+        QObject::connect(cjob, SIGNAL(completed()), info.data(), SLOT(sendCoverLoaded()));
+    }
+
     DownloadStringJob *job = downloadmanager->downloadAsString(info->link);
 
     //synchronously to prevent crashes
 //    job->await();
+//    updateMangaInfoFinishedLoading(job, info.data());
 //    BindingClass(this, info, job).updateFinishedLoading();
+    BindingClass *b = new BindingClass(this, info, job);
 
-    QObject::connect(job, SIGNAL(completed()), new BindingClass(this, info, job), SLOT(updateFinishedLoading()));
-    return job;
+    QObject::connect(b, SIGNAL(completed()), this, SLOT(updateMangaInfoReady()));
+}
+
+void AbstractMangaSource::updateMangaInfoReady()
+{
+    BindingClass *b = static_cast<BindingClass *>(sender());
+
+    updateMangaInfoFinishedLoading(b->job, b->mangainfo.data());
+    b->deleteLater();
 }
 
 QString AbstractMangaSource::htmlToPlainText(const QString &str)

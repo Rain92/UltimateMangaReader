@@ -31,17 +31,15 @@ public:
 
     virtual bool updateMangaList() = 0;
 
+    virtual void updateMangaInfoFinishedLoading(DownloadStringJob *job, MangaInfo *mangainfo) = 0;
 
     virtual MangaInfo *getMangaInfo(QString mangalink) = 0;
-
-    virtual void updateMangaInfoFinishedLoading(DownloadStringJob *job, MangaInfo *mangainfo) = 0;
 
     virtual QStringList getPageList(const QString &chapterlink) = 0;
     virtual QString getImageLink(const QString &pagelink) = 0;
 
-    QSharedPointer<MangaInfo> loadMangaInfo(const QString &mangalink, const QString &mangatitle);
+    QSharedPointer<MangaInfo> loadMangaInfo(const QString &mangalink, const QString &mangatitle, bool update = true);
 
-    DownloadStringJob *updateMangaInfo(QSharedPointer<MangaInfo> mangainfo);
 
     bool serializeMangaList();
     bool deserializeMangaList();
@@ -57,6 +55,12 @@ public:
 
 
     QString htmlToPlainText(const QString &str);
+
+public slots:
+    void updateMangaInfo(QSharedPointer<MangaInfo> mangainfo);
+
+private slots:
+    void updateMangaInfoReady();
 
 signals:
     void  updateProgress(int);
@@ -79,17 +83,37 @@ public:
         DownloadStringJob *job):
         mangasource(mangasource),
         mangainfo(mangainfo),
-        job(job) {}
+        job(job)
+    {
+        QObject::connect(job, SIGNAL(completed()), this, SLOT(updateFinishedLoading()));
+        QObject::connect(job, SIGNAL(downloadError()), this, SLOT(error()));
+    }
+    ~BindingClass()
+    {
+        delete job;
+    }
 
 public slots:
     void updateFinishedLoading()
     {
-        mangasource->updateMangaInfoFinishedLoading(job, mangainfo.data());
-        this->deleteLater();
-        job->deleteLater();
+        emit completed();
+//        mangasource->updateMangaInfoFinishedLoading(job, mangainfo.data());
+//        mangainfo.clear();
+//        job->deleteLater();
+//        this->deleteLater();
+    }
+private slots:
+    void error()
+    {
+        qDebug() << "binding class: download error";
+//        delete job;
+//        this->deleteLater();
     }
 
-private:
+signals:
+    void completed();
+
+public:
     AbstractMangaSource *mangasource;
     QSharedPointer<MangaInfo> mangainfo;
     DownloadStringJob *job;

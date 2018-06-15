@@ -6,12 +6,13 @@
 #include "abstractmangasource.h"
 #include "configs.h"
 #include "favorite.h"
+#include "downloadmanager.h"
 
 class FavoritesManager : public QObject
 {
     Q_OBJECT
 public:
-    FavoritesManager();
+    FavoritesManager(const QList<AbstractMangaSource *> &mangasources);
     void update(MangaInfo *info);
 
     Favorite *findOrInsert(MangaInfo *info);
@@ -19,16 +20,24 @@ public:
 
 
     bool isFavorite(MangaInfo *info);
-    bool toggleFavorite(MangaInfo *info);
+    bool toggleFavorite(QSharedPointer<MangaInfo> info);
 
     void deserialize();
 
-    void deserializeProgresses();
 
+    void moveFavoriteToFront(int i);
+
+    void updateInfos();
+
+    void loadInfos();
+
+    QList< QSharedPointer<MangaInfo> > favoriteinfos;
 public slots:
     void serialize();
+    void clearFavorites();
 private:
     QList<Favorite> favorites;
+    const QList<AbstractMangaSource *> &mangasources;
 };
 
 #endif // READINGSTATEMANAGER_H

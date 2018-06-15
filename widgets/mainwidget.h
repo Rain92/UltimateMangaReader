@@ -54,12 +54,11 @@ public:
 public slots:
 
     void viewFavorite(QSharedPointer<MangaInfo> info, bool current);
-    void viewFavorite(Favorite fav, bool current);
 
     void setCurrentSource(AbstractMangaSource *source);
     void viewMangaInfo(QSharedPointer<MangaInfo> info);
     void viewMangaInfo(const QString &mangalink, const QString &mangatitle);
-    void toggleFavorite(MangaInfo *manga);
+    void toggleFavorite(QSharedPointer<MangaInfo> manga);
 
     void viewMangaImage(const MangaIndex &index);
     void advanceMangaPage(bool direction);
@@ -77,6 +76,8 @@ private slots:
     void on_pushButtonFavorites_clicked();
 
     void pipeMsg(const QString &msg);
+
+    void resetCloseCounter();
 
 protected:
     void resizeEvent(QResizeEvent *event);
@@ -110,6 +111,8 @@ private:
 
     int lastTab;
 
+    int closecounter;
+    QTimer closecounterresettimer;
 };
 
 #endif // MAINWIDGET_H

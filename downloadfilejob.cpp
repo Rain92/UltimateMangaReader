@@ -1,5 +1,6 @@
 #include "downloadfilejob.h"
 #include "downloadmanager.h"
+#include "configs.h"
 
 
 DownloadFileJob::DownloadFileJob(QObject *parent, QNetworkAccessManager *nm, const QString &url, const QString &path)
@@ -49,7 +50,6 @@ DownloadFileJob::DownloadFileJob(QObject *parent, QNetworkAccessManager *nm, con
     }
 }
 
-
 void DownloadFileJob::downloadFileReadyRead()
 {
     file.write(reply->readAll());
@@ -58,7 +58,6 @@ void DownloadFileJob::downloadFileReadyRead()
 void DownloadFileJob::downloadFileFinished()
 {
     file.flush();
-    reply->deleteLater();
     file.close();
     if ( QNetworkReply::NoError != reply->error() )
     {
@@ -73,7 +72,9 @@ void DownloadFileJob::downloadFileFinished()
         completedFile.open(QIODevice::WriteOnly);
         completedFile.close();
 
-
+        if (reply != nullptr)
+            reply->deleteLater();
+        reply = nullptr;
         emit completed();
     }
 }
@@ -110,7 +111,9 @@ void DownloadFileJob::onError(QNetworkReply::NetworkError)
 
     qDebug() << errorString;
 
-    reply->deleteLater();
+    if (reply != nullptr)
+        reply->deleteLater();
+    reply = nullptr;
 
     emit downloadError();
 }

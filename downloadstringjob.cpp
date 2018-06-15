@@ -1,8 +1,9 @@
 #include "downloadstringjob.h"
 #include "downloadmanager.h"
 #include "configs.h"
+#include <QSslError>
 
-DownloadStringJob::DownloadStringJob(QObject *parent, QNetworkAccessManager *nm, const QString &url)
+DownloadStringJob::DownloadStringJob(QObject *parent, QNetworkAccessManager *nm, const QString &url, int timeout)
     : QObject(parent)
     , url(url)
     , isCompleted(false)
@@ -10,13 +11,9 @@ DownloadStringJob::DownloadStringJob(QObject *parent, QNetworkAccessManager *nm,
     , errorString("")
     , buffer("")
     , reply(nullptr)
+    , timeouttimer()
+    , timeouttime(timeout)
 {
-
-}
-DownloadStringJob::~DownloadStringJob()
-{
-    if (reply != nullptr)
-        delete reply;
 }
 
 void DownloadStringJob::start()
@@ -29,12 +26,17 @@ void DownloadStringJob::start()
     QObject::connect(reply, SIGNAL(finished()), qobject_cast<DownloadManager *>(parent()), SLOT(onActivity()));
     QObject::connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(onError(QNetworkReply::NetworkError)));
     QObject::connect(reply, SIGNAL(sslErrors(const QList<QSslError> &)), this, SLOT(onSslErrors(const QList<QSslError> &)));
+
+    QObject::connect(&timeouttimer, SIGNAL(timeout()), this, SLOT(timeout()));
+    timeouttimer.start(timeouttime);
 }
 
 void DownloadStringJob::restart()
 {
     if (reply != nullptr)
-        delete reply;
+        reply->deleteLater();
+    reply = nullptr;
+
     isCompleted = false;
     errorString = "";
     buffer = "";
@@ -49,7 +51,7 @@ void DownloadStringJob::downloadStringReadyRead()
 
 void DownloadStringJob::downloadStringFinished()
 {
-//    reply->deleteLater();
+    timeouttimer.stop();
 
     if (QNetworkReply::NoError != reply->error())
     {
@@ -59,15 +61,20 @@ void DownloadStringJob::downloadStringFinished()
     {
         isCompleted = true;
 
+        if (reply != nullptr)
+            reply->deleteLater();
+        reply = nullptr;
         emit completed();
     }
 }
 
-void DownloadStringJob::onSslErrors(const QList<QSslError> &)
+void DownloadStringJob::onSslErrors(const QList<QSslError> &errors)
 {
     QNetworkReply *reply = static_cast<QNetworkReply *>(sender());
     reply->ignoreSslErrors();
     qDebug() << "SSL error";
+    foreach (const QSslError &ssle, errors)
+        qDebug() << ssle.errorString();
     return;
 
 //    foreach (QSslError ssle, errors)
@@ -81,17 +88,40 @@ void DownloadStringJob::onSslErrors(const QList<QSslError> &)
 
 void DownloadStringJob::onError(QNetworkReply::NetworkError)
 {
+    timeouttimer.stop();
+
     qDebug() << "ERROR";
     errorString = reply->errorString();
 
     qDebug() << errorString;
-//    reply->deleteLater();
 
+    if (reply != nullptr)
+        reply->deleteLater();
+    reply = nullptr;
+
+    emit downloadError();
+}
+
+void DownloadStringJob::timeout()
+{
+    qDebug() << "ERROR";
+    errorString = "timeout";
+
+    qDebug() << errorString;
+
+    if (reply != nullptr)
+        reply->deleteLater();
+    reply = nullptr;
     emit downloadError();
 }
 
 bool DownloadStringJob::await(int timeout, bool retry)
 {
+    timeouttimer.stop();
+
+    if (isCompleted)
+        return true;
+
     QTime time;
     time.start();
     QEventLoop loop;
@@ -103,8 +133,6 @@ bool DownloadStringJob::await(int timeout, bool retry)
     connect(&timer, SIGNAL(timeout()), &loop, SLOT(quit()));
     timer.start(timeout);
 
-    if (isCompleted)
-        return true;
 
     if (errorString == "")
         loop.exec();

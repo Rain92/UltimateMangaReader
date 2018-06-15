@@ -1,14 +1,16 @@
 #include "mangainfo.h"
 #include "configs.h"
+#include <QImage>
 
 
 MangaInfo::MangaInfo(QObject *parent, AbstractMangaSource *mangasource):
     QObject(parent),
+    updated(false),
     currentindex(0, 0),
     numchapters(0),
     mangasource(mangasource),
-    preloadqueue(parent, mangasource),
-    updating(false)
+    updating(false),
+    preloadqueue(parent, mangasource)
 {
     QObject::connect(&preloadqueue, SIGNAL(completedDownload(QString)), this, SLOT(completedImagePreload(QString)));
 }
@@ -18,6 +20,27 @@ MangaInfo::~MangaInfo()
 {
 
 }
+
+QString MangaInfo::getCoverpathScaled() const
+{
+    if (coverpath == "")
+        return "";
+
+    QString scpath = coverpath;
+    scpath.insert(scpath.length() - 4, "_scaled");
+
+    QFileInfo scaledcover(scpath);
+    if (!scaledcover.exists())
+    {
+        QImage img;
+        img.load(coverpath);
+        img = img.scaled(favoritecoverwidth, favoritecoverheight, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        img.save(scpath);
+    }
+
+    return scpath;
+}
+
 
 QString MangaInfo::getImageLink(MangaIndex index)
 {
@@ -162,9 +185,8 @@ MangaInfo *MangaInfo::deserialize(QObject *parent, AbstractMangaSource *mangasou
         return mi;
 
     QDataStream in(&file);
-    in >> mi->hostname >> mi->title >> mi->link >> mi->author >> mi->artist >> mi->releaseyear >> mi->status >> mi->genres >> mi->summary >> mi->coverpath >>
-       mi->numchapters;
-    in >> mi->chapertitlesreversed >> mi->chapters;
+    in >> mi->hostname >> mi->title >> mi->link >> mi->author >> mi->artist >> mi->releaseyear >> mi->status >> mi->genres >> mi->summary;
+    in >> mi->coverlink >> mi->coverpath >> mi->numchapters >> mi->chapertitlesreversed >> mi->chapters;
 
     file.close();
 
@@ -198,8 +220,8 @@ void MangaInfo::serialize()
         return;
 
     QDataStream out(&file);
-    out << hostname << title << link << author << artist << releaseyear << status << genres << summary << coverpath << (qint32) numchapters;
-    out << chapertitlesreversed << chapters;
+    out << hostname << title << link << author << artist << releaseyear << status << genres << summary;
+    out << coverlink << coverpath << (qint32) numchapters << chapertitlesreversed << chapters;
 
     file.close();
 
@@ -228,15 +250,19 @@ void MangaInfo::sendUpdated(bool changed)
     updating = false;
 
     if (changed)
-        emit updated();
+    {
+        updated = true;
+        emit updatedSignal();
+    }
     else
         emit updatedNoChanges();
 }
 
 
-
-
-
+void MangaInfo::sendCoverLoaded()
+{
+    emit coverLoaded();
+}
 
 
 

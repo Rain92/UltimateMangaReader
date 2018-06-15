@@ -93,7 +93,7 @@ void MangaInfoWidget::setManga(QSharedPointer<MangaInfo> manga)
     img.load(currentmanga->coverpath);
     ui->labelMangaInfoCover->setPixmap(img.scaled(coversize, coversize, Qt::KeepAspectRatio, Qt::SmoothTransformation));
 
-    QObject::connect(currentmanga.data(), SIGNAL(updated()), this, SLOT(updateManga()));
+    QObject::connect(currentmanga.data(), SIGNAL(updatedSignal()), this, SLOT(updateManga()));
 }
 
 void MangaInfoWidget::updateManga()
@@ -115,7 +115,7 @@ void MangaInfoWidget::setFavoriteButtonState(bool state)
 void MangaInfoWidget::on_pushButtonMangaInfoAddFavorites_clicked()
 {
     if (!currentmanga.isNull())
-        emit toggleFavoriteClicked(currentmanga.data());
+        emit toggleFavoriteClicked(currentmanga);
 }
 
 

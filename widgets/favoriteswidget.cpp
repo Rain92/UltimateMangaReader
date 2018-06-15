@@ -8,8 +8,8 @@
 
 FavoritesWidget::FavoritesWidget(QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::FavoritesWidget),
-    favorites(nullptr)
+    favoritesmanager(nullptr),
+    ui(new Ui::FavoritesWidget)
 {
     ui->setupUi(this);
 
@@ -40,54 +40,53 @@ void FavoritesWidget::adjustSizes()
 }
 
 
-void FavoritesWidget::showFavoritesList(QList<Favorite> *favs)
+void FavoritesWidget::showFavoritesList()
 {
-    favorites = favs;
+    favoritesmanager->updateInfos();
 
-    while (infos.count() > 0)
+    bool same = favoritesmanager->favoriteinfos.count() == ui->tableWidget->rowCount();
+//    qDebug() << "same: " << same;
+
+    for (int i = 0; same && i < favoritesmanager->favoriteinfos.count(); i++)
     {
-        infos.first().clear();
-        infos.removeFirst();
+        same = favoritesmanager->favoriteinfos[i]->title == ui->tableWidget->cellWidget(i, 0)->property("ptext") &&
+               favoritesmanager->favoriteinfos[i]->hostname == ui->tableWidget->item(i, 1)->text();
     }
 
-    ui->tableWidget->clearContents();
-    while (ui->tableWidget->model()->rowCount() > 0)
-        ui->tableWidget->removeRow(0);
-    int r =  0;
-    foreach (const Favorite &fav, *favs)
-    {
-        insertRow(fav, r);
-        r++;
+//    qDebug() << "same: " << same;
 
-        foreach (AbstractMangaSource *s, mangasources)
+    if (!same)
+    {
+        ui->tableWidget->clearContents();
+        while (ui->tableWidget->model()->rowCount() > 0)
+            ui->tableWidget->removeRow(0);
+
+        for (int r = 0; r < favoritesmanager->favoriteinfos.count(); r++)
         {
-            if (s->name != fav.hostname)
-                continue;
+            insertRow(favoritesmanager->favoriteinfos[r], r);
+            QObject::connect(favoritesmanager->favoriteinfos[r].data(), SIGNAL(updatedSignal()), this, SLOT(mangaUpdated()));
+            QObject::connect(favoritesmanager->favoriteinfos[r].data(), SIGNAL(coverLoaded()), this, SLOT(coverLoaded()));
 
-            QSharedPointer<MangaInfo> mi = s->loadMangaInfo(fav.mangalink, fav.title);
-            QObject::connect(mi.data(), SIGNAL(updated()), this, SLOT(mangaUpdated()));
-            infos.append(mi);
-            break;
         }
-    }
 
+    }
     ui->tableWidget->verticalScrollBar()->setValue(0);
 }
 
-void FavoritesWidget::insertRow(const Favorite &fav, int row)
+void FavoritesWidget::insertRow(const QSharedPointer<MangaInfo> &fav, int row)
 {
-    QWidget *titlewidget = makeIconTextWidget(fav.coverpathscaled(), fav.title, QSize(favoritecoverheight, favoritecoverheight));
+    QWidget *titlewidget = makeIconTextWidget(fav->getCoverpathScaled(), fav->title, QSize(favoritecoverheight, favoritecoverheight));
 
     ui->tableWidget->insertRow(row);
 
-    QTableWidgetItem *hostwidget = new QTableWidgetItem(fav.hostname);
+    QTableWidgetItem *hostwidget = new QTableWidgetItem(fav->hostname);
     hostwidget->setTextAlignment(Qt::AlignCenter);
 
-    QString statusstring = (fav.updated ? "Updated!\n" : fav.status + "\n") + "Chapters: " + QString::number(fav.numchapters);
+    QString statusstring = (fav->updated ? "Updated!\n" : fav->status + "\n") + "Chapters: " + QString::number(fav->numchapters);
     QTableWidgetItem *chapters = new QTableWidgetItem(statusstring);
     chapters->setTextAlignment(Qt::AlignCenter);
 
-    QString progressstring = "Chapter: " + QString::number(fav.currentindex.chapter + 1) + "\nPage: " + QString::number(fav.currentindex.page + 1);
+    QString progressstring = "Chapter: " + QString::number(fav->currentindex.chapter + 1) + "\nPage: " + QString::number(fav->currentindex.page + 1);
     QTableWidgetItem *progress = new QTableWidgetItem(progressstring);
     progress->setTextAlignment(Qt::AlignCenter);
 
@@ -99,11 +98,10 @@ void FavoritesWidget::insertRow(const Favorite &fav, int row)
 
 void FavoritesWidget::moveFavoriteToFront(int i)
 {
-    favorites->move(i, 0);
-    infos.move(i, 0);
+    favoritesmanager->moveFavoriteToFront(i);
 
     ui->tableWidget->removeRow(i);
-    insertRow(favorites->at(0), 0);
+    insertRow(favoritesmanager->favoriteinfos.at(0), 0);
 
     emit(mangaListUpdated());
 }
@@ -113,15 +111,26 @@ void FavoritesWidget::mangaUpdated()
     MangaInfo *mi = static_cast<MangaInfo *>(sender());
 
     int i = 0;
-    while (favorites->at(i).title != mi->title && favorites->at(i).title != mi->title)
+    while (favoritesmanager->favoriteinfos.at(i)->title != mi->title && favoritesmanager->favoriteinfos.at(i)->title != mi->title)
         i++;
 
-    (*favorites)[i].updated = true;
-    (*favorites)[i].numchapters = mi->numchapters;
-
+//    favoritesmanager->moveFavoriteToFront(i);
     moveFavoriteToFront(i);
 //    emit(mangaListUpdated());
 }
+
+void FavoritesWidget::coverLoaded()
+{
+    MangaInfo *mi = static_cast<MangaInfo *>(sender());
+
+    int i = 0;
+    while (favoritesmanager->favoriteinfos.at(i)->title != mi->title && favoritesmanager->favoriteinfos.at(i)->title != mi->title)
+        i++;
+
+    ui->tableWidget->removeRow(i);
+    insertRow(favoritesmanager->favoriteinfos.at(i), i);
+}
+
 
 QWidget *FavoritesWidget::makeIconTextWidget(const QString &path, const QString &text, const QSize &iconsize)
 {
@@ -147,23 +156,14 @@ QWidget *FavoritesWidget::makeIconTextWidget(const QString &path, const QString 
     vlayout->setMargin(0);
     widget->setLayout(vlayout);
 
+    widget->setProperty("ptext", text);
+
     return widget;
 }
 
 void FavoritesWidget::on_tableWidget_cellClicked(int row, int column)
 {
-
-    if (infos.at(row)->updating)
-    {
-        QEventLoop loop;
-        connect(infos.at(row).data(), SIGNAL(updated()), &loop, SLOT(quit()));
-        connect(infos.at(row).data(), SIGNAL(updatedNoChanges()), &loop, SLOT(quit()));
-
-        if (infos.at(row)->updating)
-            loop.exec();
-    }
-
     moveFavoriteToFront(row);
 
-    emit favoriteClicked(infos.first(), column >= 2);
+    emit favoriteClicked(favoritesmanager->favoriteinfos.first(), column >= 2);
 }

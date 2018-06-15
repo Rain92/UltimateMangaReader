@@ -23,7 +23,7 @@ public:
     void setFavoriteButtonState(bool state);
 
 signals:
-    void toggleFavoriteClicked(MangaInfo *manga);
+    void toggleFavoriteClicked(QSharedPointer<MangaInfo> manga);
     void readMangaClicked(MangaIndex index);
 
 public slots:
