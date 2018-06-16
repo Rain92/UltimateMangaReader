@@ -60,7 +60,7 @@ public slots:
     void updateMangaInfo(QSharedPointer<MangaInfo> mangainfo);
 
 private slots:
-    void updateMangaInfoReady();
+    void updateMangaInfoReady(bool downladsccessfull);
 
 signals:
     void  updateProgress(int);
@@ -96,7 +96,7 @@ public:
 public slots:
     void updateFinishedLoading()
     {
-        emit completed();
+        emit completed(true);
 //        mangasource->updateMangaInfoFinishedLoading(job, mangainfo.data());
 //        mangainfo.clear();
 //        job->deleteLater();
@@ -108,10 +108,11 @@ private slots:
         qDebug() << "binding class: download error";
 //        delete job;
 //        this->deleteLater();
+        emit completed(false);
     }
 
 signals:
-    void completed();
+    void completed(bool);
 
 public:
     AbstractMangaSource *mangasource;

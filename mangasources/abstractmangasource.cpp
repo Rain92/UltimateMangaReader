@@ -126,14 +126,16 @@ void AbstractMangaSource::updateMangaInfo(QSharedPointer<MangaInfo> info)
 //    BindingClass(this, info, job).updateFinishedLoading();
     BindingClass *b = new BindingClass(this, info, job);
 
-    QObject::connect(b, SIGNAL(completed()), this, SLOT(updateMangaInfoReady()));
+    QObject::connect(b, SIGNAL(completed(bool)), this, SLOT(updateMangaInfoReady(bool)));
 }
 
-void AbstractMangaSource::updateMangaInfoReady()
+void AbstractMangaSource::updateMangaInfoReady(bool downladsccessfull)
 {
     BindingClass *b = static_cast<BindingClass *>(sender());
 
-    updateMangaInfoFinishedLoading(b->job, b->mangainfo.data());
+    if (downladsccessfull)
+        updateMangaInfoFinishedLoading(b->job, b->mangainfo.data());
+    b->mangainfo->updating = false;
     b->deleteLater();
 }
 

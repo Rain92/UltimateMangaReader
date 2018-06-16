@@ -63,15 +63,7 @@ void  HomeWidget::setupSourcesList()
 
     ui->listViewSources->setIconSize(QSize(mangasourceiconsize, mangasourceiconsize));
 
-//    QString style = "QListView { "
-//                    "font-size: %1pt;"
-//                    "}";
-
-//    style = style.arg(ui->listViewSources->font().pointSize() * 0.65);
-
     ui->listViewSources->setStyleSheet("QListView { font-size: 8pt; }");
-//    ui->listViewSources->setSpacing(mangacourceiconspacing);
-
 
     ui->listViewSources->setModel(model);
 

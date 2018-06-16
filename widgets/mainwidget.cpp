@@ -22,7 +22,8 @@ MainWidget::MainWidget(QWidget *parent) :
     settings(),
     lastTab(0),
     closecounter(0),
-    closecounterresettimer()
+    closecounterresettimer(),
+    restorefrontlighttimer()
 {
     ui->setupUi(this);
     setupDirs();
@@ -33,10 +34,10 @@ MainWidget::MainWidget(QWidget *parent) :
     downloadmanager = new DownloadManager(this);
 
 
+    mangasources.append(new MangaDex(this, downloadmanager));
     mangasources.append(new MangaPanda(this, downloadmanager));
     mangasources.append(new MangaTown(this, downloadmanager));
     mangasources.append(new MangaWindow(this, downloadmanager));
-    mangasources.append(new MangaDex(this, downloadmanager));
     mangasources.append(new JaiminisBox(this, downloadmanager));
 
 
@@ -83,6 +84,9 @@ MainWidget::MainWidget(QWidget *parent) :
 
     closecounterresettimer.setSingleShot(true);
     QObject::connect(&closecounterresettimer, SIGNAL(timeout()), this, SLOT(resetCloseCounter()));
+
+    restorefrontlighttimer.setSingleShot(true);
+    QObject::connect(&restorefrontlighttimer, SIGNAL(timeout()), this, SLOT(restoreFrontLight()));
 }
 
 MainWidget::~MainWidget()
@@ -101,7 +105,6 @@ void  MainWidget::setupUI()
     ui->verticalLayoutKeyboardContainer->insertWidget(0, vk);
 
     enableVirtualKeyboard(true);
-
 
     writeFifoCommand(fifo, "n+");
     QObject::connect( &pt, SIGNAL(sigPipeMsg(QString)), this, SLOT(pipeMsg(QString)) );
@@ -164,14 +167,14 @@ void MainWidget::setupFrontLight()
 
 void MainWidget::setFrontLight(int light, int comflight)
 {
-//    qDebug() << light << comflight;
+//    qDebug() << "frontlight:" << light << comflight;
 #ifndef WINDOWS
     if (light > Platform::get()->frontlightGetMinLevel())
     {
+        Platform::get()->frontlightSetOn(true);
         Platform::get()->frontlightSetLevel(light, comflight);
 
-        if (!Platform::get()->frontlightIsOn())
-            Platform::get()->frontlightSetOn(true);
+//        if (!Platform::get()->frontlightIsOn())
     }
     else
     {
@@ -348,12 +351,18 @@ void MainWidget::pipeMsg(const QString &msg)
     }
     else if ( msg == "resume" )
     {
-        setFrontLight(settings.lightvalue, settings.comflightvalue);
+//        setFrontLight(settings.lightvalue, settings.comflightvalue);
+        restorefrontlighttimer.start(200);
         closecounter++;
         closecounterresettimer.start(3000);
         if (closecounter >= 6)
             close();
     }
+}
+
+void MainWidget::restoreFrontLight()
+{
+    setFrontLight(settings.lightvalue, settings.comflightvalue);
 }
 
 void MainWidget::resetCloseCounter()

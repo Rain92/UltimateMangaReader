@@ -2,9 +2,6 @@
 #include "ui_mangareaderwidget.h"
 #include "configs.h"
 
-#ifndef WINDOWS
-#include "Platform.h"
-#endif
 
 
 MangaReaderWidget::MangaReaderWidget(QWidget *parent) :
@@ -110,6 +107,11 @@ void  MangaReaderWidget::adjustSizes()
                                                  frontlightsliderhandleheight));
 
     ui->horizontalSliderComfLight->setInvertedAppearance(true);
+
+#ifndef WINDOWS
+   GesturesController *g = new GesturesController(ui->mangaImageContainer);
+   QObject::connect(g, SIGNAL(sigGesture(QPoint,GesturesController::GestureType)), this, SLOT(gestureInput(QPoint,GesturesController::GestureType)));
+#endif
 }
 
 void MangaReaderWidget::updateTime()
@@ -200,6 +202,7 @@ void MangaReaderWidget::addImageToCache(const QString &path)
 
 void MangaReaderWidget::on_mangaImageContainer_clicked(QPoint pos)
 {
+#ifdef WINDOWS
     if (ui->readerNavigationBar->isVisible())
     {
         if (pos.y() > this->height() * readerbottommenuethreshold * 2)
@@ -226,6 +229,9 @@ void MangaReaderWidget::on_mangaImageContainer_clicked(QPoint pos)
             emit advancPageClicked(false);
         }
     }
+#else
+    Q_UNUSED(pos);
+#endif
 }
 
 void MangaReaderWidget::setFrontLightPanelState(int lightmin, int lightmax, int light, int comflightmin, int comflightmax, int comflight)
@@ -316,3 +322,47 @@ QPair<int, bool> MangaReaderWidget::getBatteryState()
     return QPair<int, bool>(100, false);
 }
 
+#ifndef WINDOWS
+    void MangaReaderWidget::gestureInput(QPoint pos, GesturesController::GestureType gesture)
+    {
+        if (gesture == GesturesController::gtSwipeRL && !pagechanging)
+        {
+            pagechanging = true;
+            emit advancPageClicked(true);
+        }
+        else if (gesture == GesturesController::gtSwipeLR && !pagechanging)
+        {
+            pagechanging = true;
+            emit advancPageClicked(false);
+        }
+        else if (gesture == GesturesController::gtTapShort)
+        {
+            if (ui->readerNavigationBar->isVisible())
+            {
+                if (pos.y() > this->height() * readerbottommenuethreshold * 2)
+                {
+                    ui->readerFrontLightBar->setVisible(false);
+                    ui->readerNavigationBar->setVisible(false);
+                }
+            }
+            else if (pos.y() < this->height() * readerbottommenuethreshold || pos.y() > this->height() * (1.0 - readerbottommenuethreshold))
+            {
+                setBatteryIcon();
+                ui->readerNavigationBar->setVisible(true);
+                ui->readerFrontLightBar->setVisible(true);
+            }
+            else if (!pagechanging)
+            {
+                pagechanging = true;
+                if (pos.x() > this->width() * readerpreviouspagethreshold)
+                {
+                    emit advancPageClicked(true);
+                }
+                else
+                {
+                    emit advancPageClicked(false);
+                }
+            }
+        }
+    }
+#endif

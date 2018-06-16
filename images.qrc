@@ -24,6 +24,7 @@
         <file>images/icons/battery95.png</file>
         <file>images/icons/batterycharging.png</file>
         <file>images/icons/batterylow.png</file>
+        <file>images/mangahostlogos/mangakakalot.png</file>
     </qresource>
     <qresource prefix="/"/>
 </RCC>

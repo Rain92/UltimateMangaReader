@@ -6,6 +6,11 @@
 #include "mangainfo.h"
 #include "gotodialog.h"
 
+#ifndef WINDOWS
+#include "Platform.h"
+#include "gesturescontroller.h"
+#endif
+
 namespace Ui {
 class MangaReaderWidget;
 }
@@ -49,6 +54,10 @@ private slots:
     void on_horizontalSliderComfLight_valueChanged(int value);
 
     void on_pushButtonReaderGoto_clicked();
+
+#ifndef WINDOWS
+    void gestureInput(QPoint pos, GesturesController::GestureType gesture);
+#endif
 
 private:
     Ui::MangaReaderWidget *ui;

@@ -69,7 +69,7 @@ bool MangaDex::updateMangaList()
         {
             if (!jobs[rxi]->await(10000, true))
             {
-                emit updateError(job->errorString);
+                emit updateError(jobs[rxi]->errorString);
                 return false;
             }
 
@@ -80,7 +80,8 @@ bool MangaDex::updateMangaList()
             }
 
             qDebug() << "rx" << rxi << "time:" << timer.elapsed();
-            delete jobs[rxi];
+            if (rxi > 0)
+                delete jobs[rxi];
         }
         emit updateProgress(100 * rxi / pages);
     }

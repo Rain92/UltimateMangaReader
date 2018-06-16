@@ -3,6 +3,7 @@
 #include <QImage>
 #include <QPixmap>
 #include <QtConcurrentRun>
+#include "configs.h"
 
 //#include <QtTest/QTest>
 
@@ -24,9 +25,8 @@ void DownloadScaledImageJob::downloadFileReadyRead()
 void DownloadScaledImageJob::downloadFileFinished()
 {
 
-    reply->deleteLater();
 
-    if ( QNetworkReply::NoError != reply->error() )
+    if (reply == nullptr || QNetworkReply::NoError != reply->error() )
     {
         file.close();
         file.remove();
@@ -40,6 +40,9 @@ void DownloadScaledImageJob::downloadFileFinished()
         array = reply->readAll();
         QFuture<void> conc = QtConcurrent::run(this, &DownloadScaledImageJob::rescaleImage, array, file.fileName());
         watcher.setFuture(conc);
+        if (reply != nullptr)
+            reply->deleteLater();
+        reply = nullptr;
     }
 }
 

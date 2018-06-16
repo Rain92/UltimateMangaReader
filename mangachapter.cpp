@@ -34,6 +34,12 @@ void MangaChapter::loadPages()
         return;
 
     pagelinks = source->getPageList(chapterlink);
+    if (pagelinks.count() == 0)
+    {
+        pagelinks.clear();
+        pagelinks << "";
+        return;
+    }
     numpages = pagelinks.count();
     imagelinks = QStringList();
     for (int i = 0; i < pagelinks.count(); i++)

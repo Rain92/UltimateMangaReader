@@ -57,6 +57,8 @@ void PreloadQueue::processNext()
     DownloadImageInfo info = queue.dequeue();
 
 //        job->deleteLater();
+
+
 //        job = nullptr;
 
 

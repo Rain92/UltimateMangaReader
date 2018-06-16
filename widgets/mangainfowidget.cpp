@@ -6,6 +6,10 @@
 #include <QScrollBar>
 #include <QResizeEvent>
 
+#ifndef WINDOWS
+#include "QtUtils.h"
+#endif
+
 MangaInfoWidget::MangaInfoWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::MangaInfoWidget),
@@ -60,6 +64,9 @@ void  MangaInfoWidget::adjustSizes()
     ui->pushButtonMangaInfoAddFavorites->setStyleSheet(favbuttonstyle);
 
 
+#ifndef WINDOWS
+    activate_scroller(qobject_cast<QAbstractScrollArea*>(ui->scrollAreaMangaInfoSummary));
+#endif
 }
 
 void MangaInfoWidget::setManga(QSharedPointer<MangaInfo> manga)

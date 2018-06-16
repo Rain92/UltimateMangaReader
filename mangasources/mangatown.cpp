@@ -63,7 +63,7 @@ bool MangaTown::updateMangaList()
         {
             if (!jobs[rxi]->await(15000, true))
             {
-                emit updateError(job->errorString);
+                emit updateError(jobs[rxi]->errorString);
                 return false;
             }
 

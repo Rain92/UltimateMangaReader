@@ -53,6 +53,9 @@ QString MangaInfo::getImageLink(MangaIndex index)
 //    qDebug() << "chapter" << index.chapter << "page" << index.page << "of" << chapters[index.chapter].pagelinks->count();
 //    qDebug() << chapters.count();
 
+    if (index.chapter >= numchapters || chapters[index.chapter].imagelinks.count() <= index.page)
+        return "";
+
     if (chapters[index.chapter].imagelinks[index.page] == "")
         chapters[index.chapter].imagelinks[index.page] =
             mangasource->getImageLink(chapters[index.chapter].pagelinks.at(index.page));

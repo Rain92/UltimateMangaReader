@@ -79,6 +79,8 @@ private slots:
 
     void resetCloseCounter();
 
+    void restoreFrontLight();
+
 protected:
     void resizeEvent(QResizeEvent *event);
 
@@ -113,6 +115,7 @@ private:
 
     int closecounter;
     QTimer closecounterresettimer;
+    QTimer restorefrontlighttimer;
 };
 
 #endif // MAINWIDGET_H
