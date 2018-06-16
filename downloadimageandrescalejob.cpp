@@ -12,21 +12,29 @@
 DownloadScaledImageJob::DownloadScaledImageJob(QObject *parent, QNetworkAccessManager *nm, const QString &url, const QString &path, int width, int height) :
     DownloadFileJob(parent, nm, url, path),
     width(width),
-    height(height)
+    height(height),
+    array()
 {
 }
 
 
 void DownloadScaledImageJob::downloadFileReadyRead()
 {
+    //don't save to file bcs its gonna be rescaled anyway
 //    file.write(reply->readAll());
 }
 
 void DownloadScaledImageJob::downloadFileFinished()
 {
+//    qDebug() << "download finished rescaler:" << url;
 
-
-    if (reply == nullptr || QNetworkReply::NoError != reply->error() )
+    if (reply == nullptr)
+    {
+        errorString += " reply is nullptr";
+        emit downloadError();
+        return;
+    }
+    if (QNetworkReply::NoError != reply->error() )
     {
         file.close();
         file.remove();
@@ -38,8 +46,11 @@ void DownloadScaledImageJob::downloadFileFinished()
         connect(&watcher, SIGNAL(finished()), this, SLOT(rescaleImageFinised()));
 
         array = reply->readAll();
-        QFuture<void> conc = QtConcurrent::run(this, &DownloadScaledImageJob::rescaleImage, array, file.fileName());
-        watcher.setFuture(conc);
+        if (array.length() > 0)
+        {
+            QFuture<void> conc = QtConcurrent::run(this, &DownloadScaledImageJob::rescaleImage, array, file.fileName());
+            watcher.setFuture(conc);
+        }
         if (reply != nullptr)
             reply->deleteLater();
         reply = nullptr;

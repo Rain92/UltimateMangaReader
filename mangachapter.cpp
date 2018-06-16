@@ -36,6 +36,7 @@ void MangaChapter::loadPages()
     pagelinks = source->getPageList(chapterlink);
     if (pagelinks.count() == 0)
     {
+        numpages = 1;
         pagelinks.clear();
         pagelinks << "";
         return;

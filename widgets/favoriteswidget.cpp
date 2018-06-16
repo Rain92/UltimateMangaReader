@@ -42,16 +42,16 @@ void FavoritesWidget::adjustSizes()
 
 void FavoritesWidget::showFavoritesList()
 {
-    favoritesmanager->updateInfos();
+//    favoritesmanager->updateInfos();
 
-    bool same = favoritesmanager->favoriteinfos.count() == ui->tableWidget->rowCount();
-//    qDebug() << "same: " << same;
+    bool same = false;
+//    bool same = favoritesmanager->favoriteinfos.count() == ui->tableWidget->rowCount();
 
-    for (int i = 0; same && i < favoritesmanager->favoriteinfos.count(); i++)
-    {
-        same = favoritesmanager->favoriteinfos[i]->title == ui->tableWidget->cellWidget(i, 0)->property("ptext") &&
-               favoritesmanager->favoriteinfos[i]->hostname == ui->tableWidget->item(i, 1)->text();
-    }
+//    for (int i = 0; same && i < favoritesmanager->favoriteinfos.count(); i++)
+//    {
+//        same = favoritesmanager->favoriteinfos[i]->title == ui->tableWidget->cellWidget(i, 0)->property("ptext") &&
+//               favoritesmanager->favoriteinfos[i]->hostname == ui->tableWidget->item(i, 1)->text();
+//    }
 
 //    qDebug() << "same: " << same;
 

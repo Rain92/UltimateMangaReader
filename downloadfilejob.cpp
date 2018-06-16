@@ -52,11 +52,13 @@ DownloadFileJob::DownloadFileJob(QObject *parent, QNetworkAccessManager *nm, con
 
 void DownloadFileJob::downloadFileReadyRead()
 {
+//    qDebug() << "downloadFileReadyRead:" << file.fileName();
     file.write(reply->readAll());
 }
 
 void DownloadFileJob::downloadFileFinished()
 {
+//    qDebug() << "download finished:" << file.fileName();
     file.flush();
     file.close();
     if ( QNetworkReply::NoError != reply->error() )
