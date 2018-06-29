@@ -49,7 +49,10 @@ QString MangaInfo::getImageLink(MangaIndex index)
         return "";
 
     if (!chapters[index.chapter].pagesloaded)
+    {
         chapters[index.chapter].loadPages();
+        serialize();
+    }
 
 //    qDebug() << "chapter" << index.chapter << "page" << index.page << "of" << chapters[index.chapter].pagelinks->count();
 //    qDebug() << chapters.count();

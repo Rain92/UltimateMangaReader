@@ -209,13 +209,12 @@ void JaiminisBox::updateMangaInfoFinishedLoading(DownloadStringJob *job, MangaIn
 
 QStringList JaiminisBox::getPageList(const QString &chapterlink)
 {
-    qDebug() << "getPageList start:" << chapterlink;
     DownloadStringJob *job = downloadmanager->downloadAsString(chapterlink, -1);
     QStringList pageLinks;
 
     if (!job->await(4000))
     {
-        qDebug() << "getPageList start: download error.";
+        qDebug() << "getPageList: download error.";
         return pageLinks;
     }
 

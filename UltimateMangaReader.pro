@@ -66,7 +66,8 @@ FORMS += \
     widgets/mangareaderwidget.ui \
     widgets/gotodialog.ui \
     widgets/updatedialog.ui \
-    widgets/numpadwidget.ui
+    widgets/numpadwidget.ui \
+    widgets/clearcachedialog.ui
 
 HEADERS += \
     mangasources/abstractmangasource.h \
@@ -96,7 +97,8 @@ HEADERS += \
     widgets/gotodialog.h \
     widgets/updatedialog.h \
     settings.h \
-    widgets/numpadwidget.h
+    widgets/numpadwidget.h \
+    widgets/clearcachedialog.h
 
 SOURCES += \
     mangasources/abstractmangasource.cpp \
@@ -127,7 +129,8 @@ SOURCES += \
     widgets/gotodialog.cpp \
     widgets/updatedialog.cpp \
     settings.cpp \
-    widgets/numpadwidget.cpp
+    widgets/numpadwidget.cpp \
+    widgets/clearcachedialog.cpp
 
 
 

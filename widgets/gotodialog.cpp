@@ -5,9 +5,9 @@
 
 GotoDialog::GotoDialog(QWidget *parent) :
     QDialog(parent, Qt::FramelessWindowHint | Qt::Dialog),
-    ui(new Ui::GotoDialog),
     selectedindex(-1, -1, true),
-    currentindex(-1, -1, true)
+    currentindex(-1, -1, true),
+    ui(new Ui::GotoDialog)
 
 {
     ui->setupUi(this);

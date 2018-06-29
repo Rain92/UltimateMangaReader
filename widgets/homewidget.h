@@ -13,6 +13,7 @@
 
 #include "abstractmangasource.h"
 #include "updatedialog.h"
+#include "clearcachedialog.h"
 
 
 namespace Ui {
@@ -44,7 +45,7 @@ private slots:
     void on_listViewMangas_clicked(const QModelIndex &index);
     void updateProgress(int p);
     void updateError(const QString &error);
-    void clearCacheDialogButtonClicked(QAbstractButton *button);
+    void clearCacheDialogButtonClicked(int level);
 
 private:
     Ui::HomeWidget *ui;
@@ -65,7 +66,7 @@ private:
     QList<QStandardItem *> *listViewItemfromMangaSource(AbstractMangaSource *source);
     QProgressBar *updateProgressBar;
     UpdateDialog *updatedialog;
-    QDialogButtonBox *clearcachedialog;
+    ClearCacheDialog *clearcachedialog;
 };
 
 #endif // HOMEWIDGET_H

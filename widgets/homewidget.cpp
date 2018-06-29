@@ -15,11 +15,13 @@ HomeWidget::HomeWidget(QWidget *parent) :
     adjustSizes();
 
     updatedialog = new UpdateDialog(this);
-    setupClearCacheDialog();
+    clearcachedialog = new ClearCacheDialog(this);
 
     QObject::connect(ui->lineEditFilter, SIGNAL(returnPressed()), ui->pushButtonFilter, SIGNAL(clicked()));
 
     QObject::connect(updatedialog, SIGNAL(retry()), this, SLOT(on_pushButtonUpdate_clicked()));
+    QObject::connect(clearcachedialog, SIGNAL(clearCache(int)), this, SLOT(clearCacheDialogButtonClicked(int)));
+
 }
 
 HomeWidget::~HomeWidget()
@@ -74,43 +76,6 @@ void  HomeWidget::setupSourcesList()
     }
 }
 
-void HomeWidget::setupClearCacheDialog()
-{
-
-    QPushButton *delbutton1 = new QPushButton("Delete all pages");
-    delbutton1->setDefault(true);
-    delbutton1->setProperty("action", 1);
-
-    QPushButton *delbutton2 = new QPushButton(" + covers and infos");
-    delbutton2->setAutoDefault(false);
-    delbutton2->setProperty("action", 2);
-
-    QPushButton *delbutton3 = new QPushButton(" + progress and favorites");
-    delbutton3->setAutoDefault(false);
-    delbutton3->setProperty("action", 3);
-
-    QPushButton *cancelbutton = new QPushButton("Cancel");
-    cancelbutton->setAutoDefault(false);
-    cancelbutton->setProperty("action", 0);
-
-    clearcachedialog = new QDialogButtonBox(Qt::Vertical, this);
-    clearcachedialog->setWindowFlags(Qt::FramelessWindowHint | Qt::Dialog);
-    clearcachedialog->setWindowModality(Qt::WindowModal);
-
-    clearcachedialog->addButton(delbutton1, QDialogButtonBox::ActionRole);
-    clearcachedialog->addButton(delbutton2, QDialogButtonBox::ActionRole);
-    clearcachedialog->addButton(delbutton3, QDialogButtonBox::ActionRole);
-    clearcachedialog->addButton(cancelbutton, QDialogButtonBox::RejectRole);
-
-    QString ss = "QDialogButtonBox{         "
-                 "border: 2px solid black;  "
-                 "background: white;        "
-                 "}                         ";
-    clearcachedialog->setStyleSheet(ss);
-
-    QObject::connect(clearcachedialog, SIGNAL(clicked(QAbstractButton *)), this, SLOT(clearCacheDialogButtonClicked(QAbstractButton *)));
-
-}
 
 void HomeWidget::updateError(const QString &error)
 {
@@ -197,9 +162,9 @@ bool removeDir(const QString &dirName, const QString &ignore = "")
     return result;
 }
 
-void HomeWidget::clearCacheDialogButtonClicked(QAbstractButton *button)
+void HomeWidget::clearCacheDialogButtonClicked(int level)
 {
-    switch (button->property("action").toInt())
+    switch (level)
     {
     case 1:
         foreach (AbstractMangaSource *s, *mangasources)
@@ -223,17 +188,13 @@ void HomeWidget::clearCacheDialogButtonClicked(QAbstractButton *button)
     default:
         break;
     }
-
-    clearcachedialog->hide();
 }
 
 void HomeWidget::on_pushButtonClearCache_clicked()
 {
 
     clearcachedialog->show();
-
-    QRect scr = this->rect();
-    clearcachedialog->move(scr.center() - clearcachedialog->rect().center());
+    clearcachedialog->getCacheSize();
 }
 
 void HomeWidget::on_listViewSources_clicked(const QModelIndex &index)
