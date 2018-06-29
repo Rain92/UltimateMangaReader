@@ -24,7 +24,7 @@ public:
     ~MangaReaderWidget();
 
     void showImage(const QString &path);
-    void updateReaderLabels(QSharedPointer<MangaInfo> currentmanga);
+    void updateReaderLabels(QSharedPointer<MangaInfo> info);
 
     void setFrontLightPanelState(int lightmin, int lightmax, int light, int comflightmin, int comflightmax, int comflight);
     void setFrontLightPanelState(int light, int comflight);
@@ -70,12 +70,14 @@ private:
     void setBatteryIcon();
     QPair<int, bool> getBatteryState();
 
+    void showMenuBar(bool show);
+
     QList<QPixmap *> imgcache;
     QList<QString> imgcachepaths;
 
     QSharedPointer<MangaInfo> currentmanga;
 
-    QPixmap batteryicons[8];
+    QPixmap batteryicons[4];
 
     GotoDialog *gotodialog;
 };

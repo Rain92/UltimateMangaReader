@@ -60,12 +60,12 @@ DownloadStringJob *DownloadManager::downloadAsString(QString url, int timeout)
 }
 
 
-DownloadFileJob *DownloadManager::downloadAsFile(QString url, QString path)
+DownloadFileJob *DownloadManager::downloadAsFile(QString url, QString path, bool usedownloadmap)
 {
     if (!connected())
         connect();
 
-    if (fileDownloads->contains(url))
+    if (usedownloadmap && fileDownloads->contains(url))
     {
         return fileDownloads->value(url);
     }
@@ -73,7 +73,8 @@ DownloadFileJob *DownloadManager::downloadAsFile(QString url, QString path)
     {
         DownloadFileJob *job = new DownloadFileJob(this, manager, url, path);
 
-        fileDownloads->insert(url, job);
+        if (usedownloadmap)
+            fileDownloads->insert(url, job);
 
         return job;
     }

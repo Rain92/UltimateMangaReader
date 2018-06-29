@@ -42,7 +42,7 @@ void FavoritesWidget::adjustSizes()
 
 void FavoritesWidget::showFavoritesList()
 {
-//    favoritesmanager->updateInfos();
+    favoritesmanager->updateInfos();
 
     bool same = false;
 //    bool same = favoritesmanager->favoriteinfos.count() == ui->tableWidget->rowCount();

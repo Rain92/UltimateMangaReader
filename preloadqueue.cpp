@@ -20,6 +20,9 @@ void PreloadQueue::resetQueue()
 
 void PreloadQueue::addJob(DownloadImageInfo info)
 {
+    if (info.imagelink == "")
+        return;
+
 //    qDebug() << info.page;
     queue.enqueue(info);
 //    if(queue.count() == 1)

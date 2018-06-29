@@ -19,6 +19,7 @@ public:
 
     void serialize();
     void serializeProgress();
+    void deserializeProgress();
 
 
     QString title;

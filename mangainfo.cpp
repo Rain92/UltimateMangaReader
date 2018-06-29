@@ -44,6 +44,7 @@ QString MangaInfo::getCoverpathScaled() const
 
 QString MangaInfo::getImageLink(MangaIndex index)
 {
+//    qDebug() << "chapters:" << numchapters << chapters.count();
     if (index.chapter < 0 || index.chapter >= numchapters)
         return "";
 
@@ -200,18 +201,7 @@ MangaInfo *MangaInfo::deserialize(QObject *parent, AbstractMangaSource *mangasou
         c.source = mangasource;
     }
 
-
-    QString progresspath(path);
-    progresspath.replace("mangainfo", "progress");
-
-    QFile file2(progresspath);
-    if (!file2.open(QIODevice::ReadOnly))
-        return mi;
-
-    QDataStream in2(&file2);
-    in2 >> mi->currentindex;
-
-    file2.close();
+    mi->deserializeProgress();
 
     return mi;
 }
@@ -246,6 +236,21 @@ void MangaInfo::serializeProgress()
 
     file.close();
 }
+
+void MangaInfo::deserializeProgress()
+{
+    QFile file(mangainfodir(hostname, title) + "progress.dat");
+
+    if (!file.open(QIODevice::ReadOnly))
+        return;
+
+    QDataStream in2(&file);
+    in2 >> this->currentindex;
+
+    file.close();
+}
+
+
 
 
 void MangaInfo::sendUpdated(bool changed)

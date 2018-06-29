@@ -99,7 +99,9 @@ QSharedPointer<MangaInfo> AbstractMangaSource::loadMangaInfo(const QString &mang
         return mi;
     }
 
-    return QSharedPointer<MangaInfo>(getMangaInfo(mangalink));
+    QSharedPointer<MangaInfo> mi(getMangaInfo(mangalink));
+    mi->deserializeProgress();
+    return mi;
 }
 
 
@@ -114,7 +116,7 @@ void AbstractMangaSource::updateMangaInfo(QSharedPointer<MangaInfo> info)
 
     if (!QFileInfo(info->coverpath).exists())
     {
-        DownloadFileJob *cjob = AbstractMangaSource::downloadmanager->downloadAsFile(info->coverlink, info->coverpath);
+        DownloadFileJob *cjob = AbstractMangaSource::downloadmanager->downloadAsFile(info->coverlink, info->coverpath, false);
         QObject::connect(cjob, SIGNAL(completed()), info.data(), SLOT(sendCoverLoaded()));
     }
 

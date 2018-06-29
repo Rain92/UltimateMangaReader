@@ -222,6 +222,8 @@ void MainWidget::setWidgetTab(int page)
     getVirtualKeyboard()->hide();
 #endif
 
+//    qDebug() << "setWidgetTab" << page;
+
     if (page == ui->stackedWidget->currentIndex())
         return;
 
@@ -259,9 +261,12 @@ void MainWidget::viewFavorite(QSharedPointer<MangaInfo> info, bool current)
 
     if (current)
     {
-        currentmanga.clear();
-        currentmanga = info;
-        QObject::connect(currentmanga.data(), SIGNAL(completedImagePreloadSignal(QString)), ui->mangaReaderWidget, SLOT(addImageToCache(QString)));
+        if (currentmanga.data() != info.data())
+        {
+            currentmanga.clear();
+            currentmanga = info;
+            QObject::connect(currentmanga.data(), SIGNAL(completedImagePreloadSignal(QString)), ui->mangaReaderWidget, SLOT(addImageToCache(QString)));
+        }
 
 
         ui->mangaInfoWidget->setManga(currentmanga);
@@ -329,6 +334,9 @@ void MainWidget::readerGoBack()
 
 void MainWidget::viewMangaImage(const MangaIndex &index)
 {
+    if (currentmanga->numchapters == 0)
+        return;
+
     if (index.illegal)
         return readerGoBack();
 
@@ -351,6 +359,7 @@ void MainWidget::pipeMsg(const QString &msg)
     }
     else if ( msg == "resume" )
     {
+        // delay setting frontlight to avoid a bug in the launcher
 //        setFrontLight(settings.lightvalue, settings.comflightvalue);
         restorefrontlighttimer.start(200);
         closecounter++;

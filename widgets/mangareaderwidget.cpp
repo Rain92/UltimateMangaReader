@@ -1,6 +1,7 @@
 #include "mangareaderwidget.h"
 #include "ui_mangareaderwidget.h"
 #include "configs.h"
+#include <QPainter>
 
 
 
@@ -65,14 +66,9 @@ void  MangaReaderWidget::adjustSizes()
     ui->labelMoreComfLight->setPixmap(p4.scaledToHeight(resourceiconsize, Qt::SmoothTransformation));
 
 
-    batteryicons[0] = QPixmap(":/resources/images/icons/batterylow.png").scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
-    batteryicons[1] = QPixmap(":/resources/images/icons/battery15.png").scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
-    batteryicons[2] = QPixmap(":/resources/images/icons/battery30.png").scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
-    batteryicons[3] = QPixmap(":/resources/images/icons/battery50.png").scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
-    batteryicons[4] = QPixmap(":/resources/images/icons/battery70.png").scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
-    batteryicons[5] = QPixmap(":/resources/images/icons/battery85.png").scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
-    batteryicons[6] = QPixmap(":/resources/images/icons/battery95.png").scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
-    batteryicons[7] = QPixmap(":/resources/images/icons/batterycharging.png").scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
+    batteryicons[0] = QPixmap(":/resources/images/icons/batteryfull.png").scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
+    batteryicons[1] = QPixmap(":/resources/images/icons/batterycharging.png").scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
+    batteryicons[2] = QPixmap(":/resources/images/icons/batteryempty.png").scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
 
 
 
@@ -109,8 +105,8 @@ void  MangaReaderWidget::adjustSizes()
     ui->horizontalSliderComfLight->setInvertedAppearance(true);
 
 #ifndef WINDOWS
-   GesturesController *g = new GesturesController(ui->mangaImageContainer);
-   QObject::connect(g, SIGNAL(sigGesture(QPoint,GesturesController::GestureType)), this, SLOT(gestureInput(QPoint,GesturesController::GestureType)));
+    GesturesController *g = new GesturesController(ui->mangaImageContainer);
+    QObject::connect(g, SIGNAL(sigGesture(QPoint, GesturesController::GestureType)), this, SLOT(gestureInput(QPoint, GesturesController::GestureType)));
 #endif
 }
 
@@ -123,13 +119,18 @@ void MangaReaderWidget::updateTime()
     QTimer::singleShot(msecsleft, this, SLOT(updateTime()));
 }
 
-void MangaReaderWidget::updateReaderLabels(QSharedPointer<MangaInfo> currentmanga)
+void MangaReaderWidget::updateReaderLabels(QSharedPointer<MangaInfo> info)
 {
-    ui->labelReaderChapter->setText("Chapter: " + QString::number(currentmanga->currentindex.chapter + 1) +
-                                    "/" + QString::number(currentmanga->numchapters));
-    ui->labelReaderPage->setText("Page: " + QString::number(currentmanga->currentindex.page + 1) + "/" +
-                                 QString::number(currentmanga->chapters.at(currentmanga->currentindex.chapter).numpages));
-    this->currentmanga = currentmanga;
+    if (this->currentmanga.data() != info.data())
+    {
+        this->currentmanga.clear();
+        this->currentmanga = info;
+    }
+
+    ui->labelReaderChapter->setText("Chapter: " + QString::number(info->currentindex.chapter + 1) +
+                                    "/" + QString::number(info->numchapters));
+    ui->labelReaderPage->setText("Page: " + QString::number(info->currentindex.page + 1) + "/" +
+                                 QString::number(info->chapters.at(info->currentindex.chapter).numpages));
 }
 
 
@@ -152,8 +153,7 @@ void MangaReaderWidget::on_pushButtonReaderClose_clicked()
 
 void MangaReaderWidget::showImage(const QString &path)
 {
-    ui->readerFrontLightBar->setVisible(false);
-    ui->readerNavigationBar->setVisible(false);
+    showMenuBar(false);
 
     if (path != "")
     {
@@ -170,10 +170,6 @@ void MangaReaderWidget::showImage(const QString &path)
             ui->mangaImageContainer->setImage(*imgcache[0]);
         }
 
-    }
-    else
-    {
-        emit changeView(1);
     }
     pagechanging = false;
 }
@@ -207,15 +203,12 @@ void MangaReaderWidget::on_mangaImageContainer_clicked(QPoint pos)
     {
         if (pos.y() > this->height() * readerbottommenuethreshold * 2)
         {
-            ui->readerFrontLightBar->setVisible(false);
-            ui->readerNavigationBar->setVisible(false);
+            showMenuBar(false);
         }
     }
     else if (pos.y() < this->height() * readerbottommenuethreshold || pos.y() > this->height() * (1.0 - readerbottommenuethreshold))
     {
-        setBatteryIcon();
-        ui->readerNavigationBar->setVisible(true);
-        ui->readerFrontLightBar->setVisible(true);
+        showMenuBar(true);
     }
     else if (!pagechanging)
     {
@@ -279,8 +272,7 @@ void MangaReaderWidget::on_pushButtonReaderGoto_clicked()
     emit enableVirtualKeyboard(false);
     if (gotodialog->exec() == QDialog::Accepted && !gotodialog->selectedindex.illegal)
     {
-        ui->readerFrontLightBar->setVisible(false);
-        ui->readerNavigationBar->setVisible(false);
+        showMenuBar(false);
 
         emit gotoIndex(gotodialog->selectedindex);
     }
@@ -293,24 +285,29 @@ void MangaReaderWidget::setBatteryIcon()
     int bat = batterystate.first;
     bool charging = batterystate.second;
 
-    if (bat >= 95)
-        ui->labelBattery->setPixmap(batteryicons[6]);
+    if (bat >= 98)
+        ui->labelBattery->setPixmap(batteryicons[0]);
     else if (charging)
-        ui->labelBattery->setPixmap(batteryicons[7]);
-    else if (bat >= 85)
-        ui->labelBattery->setPixmap(batteryicons[5]);
-    else if (bat >= 70)
-        ui->labelBattery->setPixmap(batteryicons[4]);
-    else if (bat >= 50)
-        ui->labelBattery->setPixmap(batteryicons[3]);
-    else if (bat >= 30)
-        ui->labelBattery->setPixmap(batteryicons[2]);
-    else if (bat >= 15)
         ui->labelBattery->setPixmap(batteryicons[1]);
     else
-        ui->labelBattery->setPixmap(batteryicons[0]);
+    {
+        batteryicons[3] = QPixmap(":/resources/images/icons/batteryempty.png");
 
-//    ui->labelBattery->setText(QString::number(batterystate.first));
+        QPainter painter(&batteryicons[3]);
+        QBrush brush(Qt::black);
+
+        if (bat > 90)
+        {
+            int w = (bat - 90) / 2;
+            painter.fillRect(7 + (5 - w), 12, w, 8, brush);
+        }
+
+        int w = qMin(45, bat / 2);
+        painter.fillRect(12 + (45 - w), 6, w, 20, brush);
+
+        painter.end();
+        ui->labelBattery->setPixmap(batteryicons[3].scaledToHeight(batteryiconsize, Qt::SmoothTransformation));
+    }
 }
 
 QPair<int, bool> MangaReaderWidget::getBatteryState()
@@ -322,47 +319,64 @@ QPair<int, bool> MangaReaderWidget::getBatteryState()
     return QPair<int, bool>(100, false);
 }
 
-#ifndef WINDOWS
-    void MangaReaderWidget::gestureInput(QPoint pos, GesturesController::GestureType gesture)
+
+void MangaReaderWidget::showMenuBar(bool show)
+{
+    if (!show && ui->readerNavigationBar->isVisible())
     {
-        if (gesture == GesturesController::gtSwipeRL && !pagechanging)
+        ui->readerFrontLightBar->setVisible(false);
+        ui->readerNavigationBar->setVisible(false);
+    }
+    else if (show && !ui->readerNavigationBar->isVisible())
+    {
+        setBatteryIcon();
+        ui->readerNavigationBar->setVisible(true);
+        ui->readerFrontLightBar->setVisible(true);
+    }
+}
+
+#ifndef WINDOWS
+void MangaReaderWidget::gestureInput(QPoint pos, GesturesController::GestureType gesture)
+{
+    if (gesture == GesturesController::gtSwipeRL && !pagechanging)
+    {
+        pagechanging = true;
+        emit advancPageClicked(true);
+    }
+    else if (gesture == GesturesController::gtSwipeLR && !pagechanging)
+    {
+        pagechanging = true;
+        emit advancPageClicked(false);
+    }
+    else if (gesture == GesturesController::gtSwipeTB && pos.y() < this->height() * readerbottommenuethreshold)
+    {
+        showMenuBar(true);
+    }
+    else if (gesture == GesturesController::gtTapShort)
+    {
+        if (ui->readerNavigationBar->isVisible())
+        {
+            if (pos.y() > this->height() * readerbottommenuethreshold * 2)
+            {
+                showMenuBar(false);
+            }
+        }
+        else if (pos.y() < this->height() * readerbottommenuethreshold || pos.y() > this->height() * (1.0 - readerbottommenuethreshold))
+        {
+            showMenuBar(true);
+        }
+        else if (!pagechanging)
         {
             pagechanging = true;
-            emit advancPageClicked(true);
-        }
-        else if (gesture == GesturesController::gtSwipeLR && !pagechanging)
-        {
-            pagechanging = true;
-            emit advancPageClicked(false);
-        }
-        else if (gesture == GesturesController::gtTapShort)
-        {
-            if (ui->readerNavigationBar->isVisible())
+            if (pos.x() > this->width() * readerpreviouspagethreshold)
             {
-                if (pos.y() > this->height() * readerbottommenuethreshold * 2)
-                {
-                    ui->readerFrontLightBar->setVisible(false);
-                    ui->readerNavigationBar->setVisible(false);
-                }
+                emit advancPageClicked(true);
             }
-            else if (pos.y() < this->height() * readerbottommenuethreshold || pos.y() > this->height() * (1.0 - readerbottommenuethreshold))
+            else
             {
-                setBatteryIcon();
-                ui->readerNavigationBar->setVisible(true);
-                ui->readerFrontLightBar->setVisible(true);
-            }
-            else if (!pagechanging)
-            {
-                pagechanging = true;
-                if (pos.x() > this->width() * readerpreviouspagethreshold)
-                {
-                    emit advancPageClicked(true);
-                }
-                else
-                {
-                    emit advancPageClicked(false);
-                }
+                emit advancPageClicked(false);
             }
         }
     }
+}
 #endif

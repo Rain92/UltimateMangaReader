@@ -76,7 +76,7 @@ bool JaiminisBox::updateMangaList()
 
 MangaInfo *JaiminisBox::getMangaInfo( QString mangalink)
 {
-    qDebug() << mangalink;
+//    qDebug() << mangalink;
     DownloadStringJob *job = downloadmanager->downloadAsString(mangalink);
 
     MangaInfo *info = new MangaInfo(this, this);
@@ -209,11 +209,15 @@ void JaiminisBox::updateMangaInfoFinishedLoading(DownloadStringJob *job, MangaIn
 
 QStringList JaiminisBox::getPageList(const QString &chapterlink)
 {
-    DownloadStringJob *job = downloadmanager->downloadAsString(chapterlink);
+    qDebug() << "getPageList start:" << chapterlink;
+    DownloadStringJob *job = downloadmanager->downloadAsString(chapterlink, -1);
     QStringList pageLinks;
 
-    if (!job->await(3000))
+    if (!job->await(4000))
+    {
+        qDebug() << "getPageList start: download error.";
         return pageLinks;
+    }
 
 //    qDebug() << chapterlink;
 

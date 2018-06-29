@@ -33,6 +33,7 @@ signals:
     void mangaSourceClicked(AbstractMangaSource *source);
     void mangaClicked(const QString &mangalink, const QString &mangatitle);
     void favoritesCleared();
+//    void favoritesInvalid();
 
 private slots:
     void on_pushButtonUpdate_clicked();

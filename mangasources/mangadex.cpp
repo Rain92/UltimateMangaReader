@@ -302,6 +302,7 @@ void MangaDex::updateMangaInfoFinishedLoading(DownloadStringJob *job, MangaInfo 
 
     info->serialize();
 
+
     info->sendUpdated(true);
 }
 

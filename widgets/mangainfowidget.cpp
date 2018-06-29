@@ -65,13 +65,17 @@ void  MangaInfoWidget::adjustSizes()
 
 
 #ifndef WINDOWS
-    activate_scroller(qobject_cast<QAbstractScrollArea*>(ui->scrollAreaMangaInfoSummary));
+    activate_scroller(qobject_cast<QAbstractScrollArea *>(ui->scrollAreaMangaInfoSummary));
 #endif
 }
 
 void MangaInfoWidget::setManga(QSharedPointer<MangaInfo> manga)
 {
-    currentmanga = manga;
+    if (currentmanga.data() != manga.data())
+    {
+        currentmanga.clear();
+        currentmanga = manga;
+    }
 
     QStringListModel *model = new QStringListModel(this);
     model->setStringList(currentmanga->chapertitlesreversed);

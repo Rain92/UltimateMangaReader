@@ -36,6 +36,7 @@ void MangaChapter::loadPages()
     pagelinks = source->getPageList(chapterlink);
     if (pagelinks.count() == 0)
     {
+        qDebug() << "pagelinks empty" << chapterlink;
         numpages = 1;
         pagelinks.clear();
         pagelinks << "";
@@ -51,7 +52,7 @@ void MangaChapter::loadPages()
 
 QDataStream &operator<<(QDataStream &str, const MangaChapter &m)
 {
-    str << m.chapterlink << m.pagesloaded;
+    str << m.chapterlink << m.pagesloaded << (qint32)m.numpages << m.pagelinks << m.imagelinks;
 
     if (m.pagesloaded)
         return str  << (qint32)m.numpages << m.pagelinks << m.imagelinks;
@@ -62,10 +63,10 @@ QDataStream &operator<<(QDataStream &str, const MangaChapter &m)
 QDataStream &operator>>(QDataStream &str, MangaChapter &m)
 {
 
-    str >> m.chapterlink >> m.pagesloaded;
+    str >> m.chapterlink >> m.pagesloaded >> m.numpages >> m.pagelinks >> m.imagelinks;
 
-    if (!m.pagesloaded)
-        return str;
+//    if (!m.pagesloaded)
+    return str;
 
     str >> m.numpages >> m.pagelinks >> m.imagelinks;
 

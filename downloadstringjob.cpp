@@ -49,15 +49,16 @@ void DownloadStringJob::restart()
 
 void DownloadStringJob::downloadStringReadyRead()
 {
+//    onError(QNetworkReply::NetworkError());
+//    return;
     buffer.append(reply->readAll());
-//    reply->close();
 }
 
 void DownloadStringJob::downloadStringFinished()
 {
     timeouttimer.stop();
 
-    if (reply == nullptr || QNetworkReply::NoError != reply->error())
+    if (errorString != "" || (reply != nullptr && QNetworkReply::NoError != reply->error()))
     {
         emit downloadError();
     }
@@ -94,10 +95,12 @@ void DownloadStringJob::onError(QNetworkReply::NetworkError)
 {
     timeouttimer.stop();
 
-    qDebug() << "ERROR";
-    errorString = reply->errorString();
+    errorString = "ERROR: ";
 
-    qDebug() << errorString;
+    if (reply != nullptr)
+        errorString += reply->errorString();
+
+    qDebug() << "ERROR: " << errorString;
 
     if (reply != nullptr)
         reply->deleteLater();
@@ -144,11 +147,11 @@ bool DownloadStringJob::await(int timeout, bool retry)
     int rem = timeout - time.elapsed();
     if (errorString != "")
     {
-        qDebug() << url;
+//        qDebug() << url;
         if (!retry)
             return false;
 
-        qDebug() << rem;
+        qDebug() << url << rem;
         if (rem > 0)
         {
             restart();
