@@ -2,6 +2,7 @@
 #include "downloadmanager.h"
 #include "configs.h"
 #include <QSslError>
+#include <QElapsedTimer>
 
 DownloadStringJob::DownloadStringJob(QObject *parent, QNetworkAccessManager *nm, const QString &url, int timeout)
     : QObject(parent)
@@ -23,7 +24,7 @@ void DownloadStringJob::start()
 
     QObject::connect(reply, SIGNAL(readyRead()), this, SLOT(downloadStringReadyRead()));
     QObject::connect(reply, SIGNAL(finished()), this, SLOT(downloadStringFinished()));
-    QObject::connect(reply, SIGNAL(finished()), qobject_cast<DownloadManager *>(parent()), SLOT(onActivity()));
+//    QObject::connect(reply, SIGNAL(finished()), qobject_cast<DownloadManager *>(parent()), SLOT(onActivity()));
     QObject::connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(onError(QNetworkReply::NetworkError)));
     QObject::connect(reply, SIGNAL(sslErrors(const QList<QSslError> &)), this, SLOT(onSslErrors(const QList<QSslError> &)));
 
@@ -36,8 +37,12 @@ void DownloadStringJob::start()
 
 void DownloadStringJob::restart()
 {
+
     if (reply != nullptr)
+    {
+        reply->close();
         reply->deleteLater();
+    }
     reply = nullptr;
 
     isCompleted = false;
@@ -129,25 +134,29 @@ bool DownloadStringJob::await(int timeout, bool retry)
     if (isCompleted)
         return true;
 
-    QTime time;
-    time.start();
+    QElapsedTimer time;
     QEventLoop loop;
-    connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
-    connect(this, SIGNAL(downloadError()), &loop, SLOT(quit()));
+    time.start();
 
-    QTimer timer;
-    timer.setSingleShot(true);
-    connect(&timer, SIGNAL(timeout()), &loop, SLOT(quit()));
-    timer.start(timeout);
+    if (reply != nullptr)
+    {
+        connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+//        connect(this, SIGNAL(downloadError()), &loop, SLOT(quit()));
+
+        QTimer timer;
+        timer.setSingleShot(true);
+        connect(&timer, SIGNAL(timeout()), &loop, SLOT(quit()));
+        timer.start(timeout);
 
 
-    if (errorString == "")
-        loop.exec();
+        if (errorString == "")
+            loop.exec();
+    }
 
     int rem = timeout - time.elapsed();
     if (errorString != "")
     {
-//        qDebug() << url;
+        qDebug() << "url" << url;
         if (!retry)
             return false;
 

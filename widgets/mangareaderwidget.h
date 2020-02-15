@@ -3,13 +3,11 @@
 
 #include <QWidget>
 #include <QPair>
+#include <QGesture>
+
 #include "mangainfo.h"
 #include "gotodialog.h"
-
-#ifndef WINDOWS
-#include "Platform.h"
-#include "gesturescontroller.h"
-#endif
+#include "configs.h"
 
 namespace Ui {
 class MangaReaderWidget;
@@ -48,18 +46,21 @@ private slots:
     void on_pushButtonReaderBack_clicked();
     void on_pushButtonReaderClose_clicked();
 
-    void on_mangaImageContainer_clicked(QPoint pos);
     void on_horizontalSliderLight_valueChanged(int value);
 
     void on_horizontalSliderComfLight_valueChanged(int value);
 
     void on_pushButtonReaderGoto_clicked();
 
-#ifndef WINDOWS
-    void gestureInput(QPoint pos, GesturesController::GestureType gesture);
-#endif
+
+protected:
+    bool event(QEvent *event) override;
+
 
 private:
+    bool gestureEvent(QGestureEvent *event);
+
+
     Ui::MangaReaderWidget *ui;
 
     bool pagechanging;

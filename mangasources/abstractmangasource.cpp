@@ -68,12 +68,10 @@ QString AbstractMangaSource::downloadAwaitImage(const QString &imagelink, const 
     QString filetype = imagelink.mid(ind - 4, 4);
     QString path = mangaimagesdir(name, mangatitle) + QString::number(chapternum) + "_" + QString::number(pagenum) + filetype;
 
-    QFileInfo completedfile (path + ".completed");
-
     DownloadFileJob *job = downloadmanager->downloadAsScaledImage(imagelink, path);
 
 
-    if (completedfile.exists() || job->await(5000))
+    if (QFile::exists(path) || job->await(5000))
     {
         downloadmanager->fileDownloads->remove(imagelink);
         delete job;

@@ -4,17 +4,11 @@
 #include <QScrollBar>
 #include "configs.h"
 
-
-
+#include "../koboplatformintegrationplugin/koboplatformfunctions.h"
 
 
 MainWidget::MainWidget(QWidget *parent) :
-#ifdef WINDOWS
     QWidget(parent),
-#else
-    fifo(qgetenv("VLASOVSOFT_FIFO1")),
-    pt(qgetenv("VLASOVSOFT_FIFO2")),
-#endif
     ui(new Ui::MainWidget),
     mangasources(),
     currentmanga(),
@@ -32,12 +26,13 @@ MainWidget::MainWidget(QWidget *parent) :
     settings.deserialize();
 
     downloadmanager = new DownloadManager(this);
+    downloadmanager->connect();
 
 
-    mangasources.append(new MangaDex(this, downloadmanager));
-    mangasources.append(new MangaPanda(this, downloadmanager));
-    mangasources.append(new MangaTown(this, downloadmanager));
-    mangasources.append(new MangaWindow(this, downloadmanager));
+//    mangasources.append(new MangaDex(this, downloadmanager));
+//    mangasources.append(new MangaPanda(this, downloadmanager));
+//    mangasources.append(new MangaTown(this, downloadmanager));
+//    mangasources.append(new MangaWindow(this, downloadmanager));
     mangasources.append(new JaiminisBox(this, downloadmanager));
 
 
@@ -61,8 +56,8 @@ MainWidget::MainWidget(QWidget *parent) :
     setupUI();
     setupFrontLight();
 
-    if (!downloadmanager->connected())
-        downloadmanager->connect();
+//    if (!downloadmanager->connected())
+//        downloadmanager->connect();
 
     QObject::connect(ui->homeWidget, SIGNAL(mangaSourceClicked(AbstractMangaSource *)), this, SLOT(setCurrentSource(AbstractMangaSource *)));
     QObject::connect(ui->homeWidget, SIGNAL(mangaClicked(QString, QString)), this, SLOT(viewMangaInfo(QString, QString)));
@@ -87,6 +82,8 @@ MainWidget::MainWidget(QWidget *parent) :
 
     restorefrontlighttimer.setSingleShot(true);
     QObject::connect(&restorefrontlighttimer, SIGNAL(timeout()), this, SLOT(restoreFrontLight()));
+
+
 }
 
 MainWidget::~MainWidget()
@@ -98,16 +95,12 @@ MainWidget::~MainWidget()
 
 void  MainWidget::setupUI()
 {
-#ifndef WINDOWS
-    initTopLevelWidget(this);
+#ifdef KOBO
+    //TODO
+//    VirtualKeyboard *vk = getVirtualKeyboard();
+//    ui->verticalLayoutKeyboardContainer->insertWidget(0, vk);
 
-    VirtualKeyboard *vk = getVirtualKeyboard();
-    ui->verticalLayoutKeyboardContainer->insertWidget(0, vk);
-
-    enableVirtualKeyboard(true);
-
-    writeFifoCommand(fifo, "n+");
-    QObject::connect( &pt, SIGNAL(sigPipeMsg(QString)), this, SLOT(pipeMsg(QString)) );
+//    enableVirtualKeyboard(true);
 #endif
 
     downloadmanager->setImageSize(this->width(), this->height());
@@ -124,6 +117,7 @@ void MainWidget::adjustSizes()
 
 void MainWidget::setupDirs()
 {
+    qDebug() << mangalistdir;
     if (!QDir(cachedir).exists())
         QDir().mkpath(cachedir);
 
@@ -133,15 +127,16 @@ void MainWidget::setupDirs()
 
 void MainWidget::enableVirtualKeyboard(bool enabled)
 {
-#ifndef WINDOWS
-    VirtualKeyboard *vk = getVirtualKeyboard();
+#ifdef KOBO
+    //TODO
+//    VirtualKeyboard *vk = getVirtualKeyboard();
 
-    vk->hide();
+//    vk->hide();
 
-    if (enabled)
-        ui->frameKeyboardContainer->show();
-    else
-        ui->frameKeyboardContainer->hide();
+//    if (enabled)
+//        ui->frameKeyboardContainer->show();
+//    else
+//        ui->frameKeyboardContainer->hide();
 #else
     Q_UNUSED(enabled);
 #endif
@@ -152,14 +147,9 @@ void MainWidget::setupFrontLight()
 {
     setFrontLight(settings.lightvalue, settings.comflightvalue);
 
-#ifndef WINDOWS
-    ui->mangaReaderWidget->setFrontLightPanelState(
-        Platform::get()->frontlightGetMinLevel(),
-        Platform::get()->frontlightGetMaxLevel(),
-        Platform::get()->frontlightGetLevel(),
-        Platform::get()->frontlightGetMinTemp(),
-        Platform::get()->frontlightGetMaxTemp(),
-        Platform::get()->frontlightGetTemp());
+#ifdef KOBO
+    //TODO
+    ui->mangaReaderWidget->setFrontLightPanelState(0,100,0,0,100,0);
 #endif
 
     ui->mangaReaderWidget->setFrontLightPanelState(settings.lightvalue, settings.comflightvalue);
@@ -167,22 +157,8 @@ void MainWidget::setupFrontLight()
 
 void MainWidget::setFrontLight(int light, int comflight)
 {
-//    qDebug() << "frontlight:" << light << comflight;
-#ifndef WINDOWS
-    if (light > Platform::get()->frontlightGetMinLevel())
-    {
-        Platform::get()->frontlightSetOn(true);
-        Platform::get()->frontlightSetLevel(light, comflight);
-
-//        if (!Platform::get()->frontlightIsOn())
-    }
-    else
-    {
-        Platform::get()->frontlightSetOn(false);
-    }
-#else
-    Q_UNUSED(light)
-    Q_UNUSED(comflight)
+#ifdef KOBO
+        KoboPlatformFunctions::setFrontlightLevel(light, comflight);
 #endif
     settings.lightvalue = light;
     settings.comflightvalue = comflight;
@@ -218,8 +194,9 @@ void MainWidget::resizeEvent(QResizeEvent *event)
 
 void MainWidget::setWidgetTab(int page)
 {
-#ifndef WINDOWS
-    getVirtualKeyboard()->hide();
+#ifdef KOBO
+    //TODO
+//    getVirtualKeyboard()->hide();
 #endif
 
 //    qDebug() << "setWidgetTab" << page;
@@ -349,25 +326,6 @@ void MainWidget::viewMangaImage(const MangaIndex &index)
     currentmanga->serializeProgress();
 }
 
-
-void MainWidget::pipeMsg(const QString &msg)
-{
-    if ( msg == "suspend" )
-    {
-        closecounter++;
-        closecounterresettimer.start(3000);
-    }
-    else if ( msg == "resume" )
-    {
-        // delay setting frontlight to avoid a bug in the launcher
-//        setFrontLight(settings.lightvalue, settings.comflightvalue);
-        restorefrontlighttimer.start(200);
-        closecounter++;
-        closecounterresettimer.start(3000);
-        if (closecounter >= 6)
-            close();
-    }
-}
 
 void MainWidget::restoreFrontLight()
 {

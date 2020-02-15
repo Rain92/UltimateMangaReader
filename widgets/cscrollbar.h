@@ -4,7 +4,6 @@
 #include <QScrollBar>
 #include "qstyle.h"
 #include "qstyleoption.h"
-#include <QWindowsStyle>
 
 class CScrollBar : public QScrollBar
 {

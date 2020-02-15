@@ -9,24 +9,26 @@
 #include "downloadmanager.h"
 
 #ifdef KOBO
-#include "wifidialog.h"
-#include "Platform.h"
-#include "QtUtils.h"
+#include "../koboplatformintegrationplugin/koboplatformfunctions.h"
 #endif
 
 DownloadManager::DownloadManager(QObject *parent)
     : QObject(parent)
 {
-    manager = new QNetworkAccessManager(parent);
+    networkmanager = new QNetworkAccessManager(parent);
     fileDownloads = new QMap<QString, DownloadFileJob *>();
     cookies = new CCookieJar();
-    manager->setCookieJar(cookies);
+    networkmanager->setCookieJar(cookies);
+#ifdef KOBO
+    loadCertificates("/mnt/onboard/.adds/qt-5.14.1-kobo/ssl_certs");
+#endif
 }
 
 bool DownloadManager::connect()
 {
-#ifndef WINDOWS
-    return activateNetwork(static_cast<QWidget *>(this->parent()));
+#ifdef KOBO
+    KoboPlatformFunctions::enableWiFiConnection();
+    return KoboPlatformFunctions::testInternetConnection();
 #endif
 
     return true;
@@ -34,18 +36,11 @@ bool DownloadManager::connect()
 
 bool DownloadManager::connected()
 {
-#ifndef WINDOWS
-    return Platform::get()->isNetworkActive();
+#ifdef KOBO
+//    return Platform::get()->isNetworkActive();
 #endif
 
     return true;
-}
-
-void DownloadManager::onActivity()
-{
-#ifndef WINDOWS
-    Platform::get()->networkActivity();
-#endif
 }
 
 DownloadStringJob *DownloadManager::downloadAsString(QString url, int timeout)
@@ -53,7 +48,8 @@ DownloadStringJob *DownloadManager::downloadAsString(QString url, int timeout)
     if (!connected())
         connect();
 
-    DownloadStringJob *job = new DownloadStringJob(this, manager, url, timeout);
+    qDebug() << "downloading:" << url ;
+    DownloadStringJob *job = new DownloadStringJob(this, networkmanager, url, timeout);
 
     job->start();
     return job;
@@ -71,7 +67,7 @@ DownloadFileJob *DownloadManager::downloadAsFile(QString url, QString path, bool
     }
     else
     {
-        DownloadFileJob *job = new DownloadFileJob(this, manager, url, path);
+        DownloadFileJob *job = new DownloadFileJob(this, networkmanager, url, path);
 
         if (usedownloadmap)
             fileDownloads->insert(url, job);
@@ -91,7 +87,7 @@ DownloadFileJob *DownloadManager::downloadAsScaledImage(QString url, QString pat
     }
     else
     {
-        DownloadFileJob *job = new DownloadScaledImageJob(this, manager, url, path, imagewidth, imageheight);
+        DownloadFileJob *job = new DownloadScaledImageJob(this, networkmanager, url, path, imagewidth, imageheight);
 
         fileDownloads->insert(url, job);
 
@@ -109,11 +105,12 @@ void DownloadManager::setImageSize(int width, int height)
 
 bool DownloadManager::awaitAllFileDownloads(int timeout)
 {
-    int start = QTime::currentTime().elapsed();
+    QElapsedTimer timer;
+    timer.start();
 
     foreach (DownloadFileJob *job, *fileDownloads)
     {
-        int remaining = timeout - (QTime::currentTime().elapsed() - start);
+        int remaining = timeout - timer.elapsed();
         if (remaining < 0 || !job->await(remaining))
             return false;
 
@@ -133,4 +130,29 @@ void DownloadManager::addCookie(QString domain, const char *key, const char *val
         }
 
     cookies->addCookie(domain, key, value);
+}
+
+void DownloadManager::loadCertificates(QString certsPath)
+{
+
+    auto sslConfig = QSslConfiguration::defaultConfiguration();
+    sslConfig.setProtocol(QSsl::SecureProtocols);
+    auto certs = sslConfig.caCertificates();
+
+    QDir dir(certsPath);
+    dir.setFilter(QDir::Files | QDir::NoDotAndDotDot | QDir::Hidden);
+    dir.setNameFilters({"*.cer", "*.crt", "*.pem"});
+    foreach( auto& entry, dir.entryInfoList() )
+    {
+       QFile cafile(entry.filePath());
+       cafile.open(QIODevice::ReadOnly);
+       QSslCertificate cert(&cafile);
+
+       certs << cert;
+       cafile.close();
+    }
+
+    sslConfig.setCaCertificates(certs);
+    QSslConfiguration::setDefaultConfiguration(sslConfig);
+
 }

@@ -1,31 +1,32 @@
 #include <QApplication>
 #include <QScreen>
+#include <QQuickView>
 #include "mainwidget.h"
-
-#ifndef WINDOWS
-#include "Application.h"
-#include "Log.h"
-#endif
 
 int main(int argc, char *argv[])
 {
-#ifndef WINDOWS
-    Application application(argc, argv);
-    application.init();
-    g_pLog->setLevel(2);
+    QApplication app(argc, argv);
 
-#else
-    QApplication application(argc, argv);
-#endif
+    qputenv("QT_IM_MODULE", QByteArray("qtvirtualkeyboard"));
+//    qApp->setAttribute(Qt::AA_SynthesizeMouseForUnhandledTouchEvents, true);
+//    qApp->setAttribute(Qt::AA_SynthesizeTouchForUnhandledMouseEvents, true);
+
+
+//    QQuickView view;
+//    view.setResizeMode(QQuickView::SizeRootObjectToView);
+//    view.setSource(QUrl("qrc:///MainQMLForm.qml"));
+//    view.show();
+
 
     MainWidget mainwidget;
 
-    QFile File(":/resources/eink.qss");
-    File.open(QFile::ReadOnly);
-    QString StyleSheet = QLatin1String(File.readAll());
-    mainwidget.setStyleSheet(StyleSheet);
+    QFile stylesheetFile(":/resources/eink.qss");
+    stylesheetFile.open(QFile::ReadOnly);
+    QString styleSheet = QLatin1String(stylesheetFile.readAll());
+    stylesheetFile.close();
+    mainwidget.setStyleSheet(styleSheet);
 
     mainwidget.show();
 
-    return application.exec();
+    return app.exec();
 }

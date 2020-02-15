@@ -6,23 +6,23 @@
 DownloadFileJob::DownloadFileJob(QObject *parent, QNetworkAccessManager *nm, const QString &url, const QString &path)
     : QObject(parent)
     , url(url)
+    , filepath(path)
     , isCompleted(false)
     , networkManager(nm)
     , errorString("")
 {
-    QFileInfo fi(path);
-    QString dirname = fi.path();
+    QString dirname = QFileInfo(path).path();
 //    qDebug() << path << dirname;
 
     if (!QDir(dirname).exists())
         QDir().mkpath(dirname);
 
-    file.setFileName(path);
+    file.setFileName(path + ".part");
 
 
-    QFileInfo completed_file(path + ".completed");
+    QFileInfo download_progress_file(path + ".part");
 
-    if (completed_file.exists())
+    if (QFile::exists(filepath))
     {
         isCompleted = true;
     }
@@ -38,7 +38,7 @@ DownloadFileJob::DownloadFileJob(QObject *parent, QNetworkAccessManager *nm, con
 
             QObject::connect(reply, SIGNAL(readyRead()), this, SLOT(downloadFileReadyRead()));
             QObject::connect(reply, SIGNAL(finished()), this, SLOT(downloadFileFinished()));
-            QObject::connect(reply, SIGNAL(finished()), qobject_cast<DownloadManager *>(parent), SLOT(onActivity()));
+//            QObject::connect(reply, SIGNAL(finished()), qobject_cast<DownloadManager *>(parent), SLOT(onActivity()));
             QObject::connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(onError(QNetworkReply::NetworkError)));
             QObject::connect(reply, SIGNAL(sslErrors(const QList<QSslError> &)), this, SLOT(onSslErrors(const QList<QSslError> &)));
         }
@@ -59,8 +59,15 @@ void DownloadFileJob::downloadFileReadyRead()
 void DownloadFileJob::downloadFileFinished()
 {
 //    qDebug() << "download finished:" << file.fileName();
-    file.flush();
-    file.close();
+    if (file.isOpen())
+    {
+        file.flush();
+        file.close();
+    }
+
+    if (reply == nullptr)
+        return;
+
     if ( QNetworkReply::NoError != reply->error() )
     {
         file.remove();
@@ -70,9 +77,7 @@ void DownloadFileJob::downloadFileFinished()
     {
         isCompleted = true;
 
-        QFile completedFile(file.fileName() + ".completed");
-        completedFile.open(QIODevice::WriteOnly);
-        completedFile.close();
+        file.rename(filepath);
 
         if (reply != nullptr)
             reply->deleteLater();
@@ -105,11 +110,17 @@ void DownloadFileJob::onSslErrors(const QList<QSslError> &)
 void DownloadFileJob::onError(QNetworkReply::NetworkError)
 {
     if (file.isOpen())
+    {
+        file.flush();
         file.close();
+    }
 
     file.remove();
 
-    errorString = reply->errorString();
+    if (reply != nullptr)
+        errorString = reply->errorString();
+    else if (errorString == "")
+        errorString = "error";
 
     qDebug() << errorString;
 

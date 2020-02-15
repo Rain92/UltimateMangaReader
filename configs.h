@@ -3,9 +3,6 @@
 
 #include <QRegExp>
 
-#ifndef WINDOWS
-#include "QtUtils.h"
-#endif
 
 
 // dirstructure:
@@ -14,36 +11,22 @@
 //               /cache/hostname/manganame/ -> mangainfo.dat progress.dat
 //               /cache/hostname/manganame/images/ -> manganame_chapter_page.jpg/png
 
-#ifdef WINDOWS
 
-//#define cachedir QCoreApplication::applicationDirPath() + "/cache/"
-//#define mangalistdir QCoreApplication::applicationDirPath() + "/cache/mangalists/"
-
-
-#define cachedir "./UltimateMangaReader/cache/"
-#define mangalistdir "./UltimateMangaReader/cache/mangalists/"
-
-#else
-#define cachedir "./UltimateMangaReader/cache/"
-#define mangalistdir "./UltimateMangaReader/cache/mangalists/"
-#endif
+#define cachedir QCoreApplication::applicationDirPath() + "/cache/"
+#define mangalistdir cachedir + "mangalists/"
 
 #define mangainfodir(hostname, manganame) (cachedir + hostname + "/" + makePathLegal(manganame) + "/")
 #define mangaimagesdir(hostname, manganame) (mangainfodir(hostname, manganame) + "images/")
 
 
-#ifdef WINDOWS
 
-#define dpi 108
-#define mm_to_px(mm) (mm * dpi * 0.0393701)
-
+#ifdef DESKTOP
+#define screen_dpi 108
 #else
-
-
-#define dpi 300
-#define nullptr NULL
-
+#define screen_dpi 300
 #endif
+
+#define mm_to_px(mm) (mm * screen_dpi * 0.0393701)
 
 #define listsourceswidth mm_to_px(65)
 #define listsourcesheight mm_to_px(50)
@@ -79,7 +62,7 @@
 
 #define imagecachesize 6
 
-#define maxparalleldownloads 16
+#define maxparalleldownloads 1
 
 
 QString makePathLegal(QString filename);

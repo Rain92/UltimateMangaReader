@@ -13,6 +13,7 @@ public:
     DownloadFileJob(QObject *parent, QNetworkAccessManager *nm, const QString &url, const QString &path);
 
     QUrl url;
+    QString filepath;
     bool isCompleted;
     QNetworkAccessManager *networkManager;
     QString errorString;

@@ -16,7 +16,7 @@ MangaWindow::MangaWindow(QObject *parent, DownloadManager *dm):
 
 bool MangaWindow::updateMangaList()
 {
-    QTime timer;
+    QElapsedTimer timer;
     timer.start();
 
 

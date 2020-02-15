@@ -86,11 +86,11 @@ void PreloadQueue::sendComletedSignal()
     QObject *send = sender();
     if (send == nullptr)
     {
-        emit completedDownload(job->file.fileName());
+        emit completedDownload(job->filepath);
     }
     else
     {
         DownloadScaledImageJob *job = static_cast<DownloadScaledImageJob *>(sender());
-        emit completedDownload(job->file.fileName());
+        emit completedDownload(job->filepath);
     }
 }

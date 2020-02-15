@@ -79,8 +79,11 @@ void  HomeWidget::setupSourcesList()
 
 void HomeWidget::updateError(const QString &error)
 {
-    AbstractMangaSource *src = static_cast<AbstractMangaSource *>(sender());
-    updatedialog->error("Error updating " + src->name + ": \n" + error);
+    AbstractMangaSource *src = dynamic_cast<AbstractMangaSource *>(sender());
+    if (src != nullptr)
+        updatedialog->error("Error updating " + src->name + ": \n" + error);
+    else
+        updatedialog->error("Error updating: \n" + error);
 }
 
 void  HomeWidget::updateProgress(int p)
@@ -113,7 +116,8 @@ void HomeWidget::on_pushButtonUpdate_clicked()
             return;
 
         if (ms->nummangas != ms->mangalist.links.count())
-            updateError("Number of mangas does not match.");
+            updateError("Number of mangas does not match.\n" +
+                        QString::number(ms->nummangas) + " vs " + QString::number(ms->mangalist.links.count()));
 
         ms->serializeMangaList();
     }

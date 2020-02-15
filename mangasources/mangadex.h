@@ -19,6 +19,9 @@ public:
     QString getImageLink(const QString &pagelink);
 
     void updateMangaInfoFinishedLoading(DownloadStringJob *job, MangaInfo *info);
+
+private:
+    void login();
 };
 
 #endif // MANGADEX_H

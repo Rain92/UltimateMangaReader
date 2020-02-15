@@ -14,7 +14,7 @@ MangaTown::MangaTown(QObject *parent, DownloadManager *dm):
 
 bool MangaTown::updateMangaList()
 {
-    QTime timer;
+    QElapsedTimer timer;
     timer.start();
 
 

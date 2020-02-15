@@ -6,9 +6,6 @@
 #include <QScrollBar>
 #include <QResizeEvent>
 
-#ifndef WINDOWS
-#include "QtUtils.h"
-#endif
 
 MangaInfoWidget::MangaInfoWidget(QWidget *parent) :
     QWidget(parent),
@@ -65,7 +62,9 @@ void  MangaInfoWidget::adjustSizes()
 
 
 #ifndef WINDOWS
-    activate_scroller(qobject_cast<QAbstractScrollArea *>(ui->scrollAreaMangaInfoSummary));
+
+    //TODO
+//    activate_scroller(qobject_cast<QAbstractScrollArea *>(ui->scrollAreaMangaInfoSummary));
 #endif
 }
 

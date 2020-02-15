@@ -1,7 +1,6 @@
 #ifndef MAINWIDGET_H
 #define MAINWIDGET_H
 
-#include <QWSServer>
 #include <QWidget>
 #include <QStandardItemModel>
 #include "favoritesmanager.h"
@@ -18,32 +17,12 @@
 #include "mangawindow.h"
 #include "jaiminisbox.h"
 
-#ifndef WINDOWS
-
-#include "WidgetCommon.h"
-#include "Config.h"
-#include "QtUtils.h"
-#include "Platform.h"
-#include "FileOpenDialog.h"
-#include "FileSaveDialog.h"
-#include "WidgetCommon.h"
-#include "VirtualKeyboard.h"
-#include "VirtualKeyboardContainer.h"
-#include "platform/KoboPlatform.h"
-#include "pipethread.h"
-
-#endif
-
 namespace Ui {
 class MainWidget;
 }
 
 class MainWidget :
-#ifdef WINDOWS
     public QWidget
-#else
-    public WidgetCommon
-#endif
 {
     Q_OBJECT
 
@@ -75,8 +54,6 @@ private slots:
     void on_pushButtonClose_clicked();
     void on_pushButtonFavorites_clicked();
 
-    void pipeMsg(const QString &msg);
-
     void resetCloseCounter();
 
     void restoreFrontLight();
@@ -85,10 +62,6 @@ protected:
     void resizeEvent(QResizeEvent *event);
 
 private:
-#ifndef WINDOWS
-    QString fifo;
-    PipeThread pt;
-#endif
 
     void setupUI();
     void setupFrontLight();

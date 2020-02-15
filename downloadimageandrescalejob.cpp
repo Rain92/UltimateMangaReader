@@ -2,7 +2,7 @@
 #include "downloadmanager.h"
 #include <QImage>
 #include <QPixmap>
-#include <QtConcurrentRun>
+#include <QtConcurrent/QtConcurrent>
 #include "configs.h"
 
 //#include <QtTest/QTest>
@@ -28,6 +28,14 @@ void DownloadScaledImageJob::downloadFileFinished()
 {
 //    qDebug() << "download finished rescaler:" << url;
 
+    if (file.isOpen())
+    {
+        file.flush();
+        file.close();
+        file.remove();
+    }
+
+
     if (reply == nullptr)
     {
         errorString += " reply is nullptr";
@@ -48,7 +56,7 @@ void DownloadScaledImageJob::downloadFileFinished()
         array = reply->readAll();
         if (array.length() > 0)
         {
-            QFuture<void> conc = QtConcurrent::run(this, &DownloadScaledImageJob::rescaleImage, array, file.fileName());
+            QFuture<void> conc = QtConcurrent::run(this, &DownloadScaledImageJob::rescaleImage, array, filepath);
             watcher.setFuture(conc);
         }
         if (reply != nullptr)
@@ -71,11 +79,6 @@ void DownloadScaledImageJob::rescaleImage(QByteArray array, const QString &filen
     QImage img;
     img.loadFromData(array);
     img = img.scaled(width, height, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-    img.save(filename);
-
-//    qDebug() << filename;
-
-    QFile completedFile(filename + ".completed");
-    completedFile.open(QIODevice::WriteOnly);
-    completedFile.close();
+    img = img.convertToFormat(QImage::Format_Grayscale8);
+    img.save(filename, "PNG");
 }

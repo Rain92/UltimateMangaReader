@@ -2,6 +2,7 @@
 #include "configs.h"
 #include "QTime"
 #include <QMessageBox>
+#include <QElapsedTimer>
 
 JaiminisBox::JaiminisBox(QObject *parent, DownloadManager *dm):
     AbstractMangaSource(parent)
@@ -16,7 +17,7 @@ JaiminisBox::JaiminisBox(QObject *parent, DownloadManager *dm):
 
 bool JaiminisBox::updateMangaList()
 {
-    QTime timer;
+    QElapsedTimer timer;
     timer.start();
 
     QString nextlink = baseurl + "/reader/directory/";

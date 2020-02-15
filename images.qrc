@@ -21,5 +21,7 @@
         <file>images/icons/batteryempty.png</file>
         <file>images/icons/batteryfull.png</file>
     </qresource>
-    <qresource prefix="/"/>
+    <qresource prefix="/">
+        <file>MainQMLForm.qml</file>
+    </qresource>
 </RCC>

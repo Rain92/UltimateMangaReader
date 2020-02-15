@@ -46,17 +46,19 @@ public:
 
 
     void addCookie(QString domain, const char *key, const char *value);
+
+    void loadCertificates(QString certsPath);
+
+    QNetworkAccessManager *networkmanager;
+
 signals:
 
 public slots:
-    void onActivity();
     bool connect();
-
 
 private:
     CCookieJar *cookies;
 
-    QNetworkAccessManager *manager;
     int imagewidth;
     int imageheight;
 

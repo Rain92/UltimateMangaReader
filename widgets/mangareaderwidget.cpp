@@ -1,7 +1,11 @@
 #include "mangareaderwidget.h"
 #include "ui_mangareaderwidget.h"
+#include "customgesturerecognizer.h"
 #include "configs.h"
 #include <QPainter>
+
+
+#include "../koboplatformintegrationplugin/koboplatformfunctions.h"
 
 
 
@@ -15,10 +19,20 @@ MangaReaderWidget::MangaReaderWidget(QWidget *parent) :
     ui->setupUi(this);
     adjustSizes();
 
+    setAttribute(Qt::WA_AcceptTouchEvents, true);
+
     ui->readerFrontLightBar->setVisible(false);
     ui->readerNavigationBar->setVisible(false);
 
     gotodialog = new GotoDialog(this);
+
+#ifndef KOBO
+    QGestureRecognizer::registerRecognizer(new TapGestureRecognizer());
+#endif
+
+    QGestureRecognizer::registerRecognizer(new SwipeGestureRecognizer());
+    grabGesture(Qt::GestureType::TapGesture);
+    grabGesture(Qt::GestureType::SwipeGesture);
 
     updateTime();
 }
@@ -104,10 +118,75 @@ void  MangaReaderWidget::adjustSizes()
 
     ui->horizontalSliderComfLight->setInvertedAppearance(true);
 
-#ifndef WINDOWS
-    GesturesController *g = new GesturesController(ui->mangaImageContainer);
-    QObject::connect(g, SIGNAL(sigGesture(QPoint, GesturesController::GestureType)), this, SLOT(gestureInput(QPoint, GesturesController::GestureType)));
-#endif
+}
+
+bool MangaReaderWidget::event(QEvent *event)
+{
+    if (event->type() == QEvent::Gesture)
+        return gestureEvent(static_cast<QGestureEvent*>(event));
+    return QWidget::event(event);
+}
+
+bool MangaReaderWidget::gestureEvent(QGestureEvent *event)
+{
+
+    if (QGesture *gesture = event->gesture(Qt::SwipeGesture))
+    {
+        auto swipe = static_cast<QSwipeGesture *>(gesture);
+        if (swipe->state() == Qt::GestureFinished)
+        {
+            auto angle = swipe->swipeAngle();
+             if (!pagechanging && angle > 155 && angle < 205)
+             {
+                 pagechanging = true;
+                 emit advancPageClicked(true);
+             }
+             else if (!pagechanging && (angle > 335 || angle < 25))
+             {
+                 pagechanging = true;
+                 emit advancPageClicked(false);
+             }
+             else if (!pagechanging && swipe->hotSpot().y() < this->height() * readerbottommenuethreshold &&
+                       angle > 245 && angle < 295)
+             {
+                 showMenuBar(true);
+             }
+
+        }
+    }
+    else if (QGesture *gesture = event->gesture(Qt::TapGesture))
+    {
+        auto pos = gesture->hotSpot().toPoint();
+        if (gesture->state() == Qt::GestureFinished)
+        {
+//            qDebug() << "Tap gesture." << gesture->hotSpot() << gesture->state();
+            if (ui->readerNavigationBar->isVisible())
+            {
+                if (pos.y() > this->height() * readerbottommenuethreshold * 2)
+                {
+                    showMenuBar(false);
+                }
+            }
+            else if (pos.y() < this->height() * readerbottommenuethreshold || pos.y() > this->height() * (1.0 - readerbottommenuethreshold))
+            {
+                showMenuBar(true);
+            }
+            else if (!pagechanging)
+            {
+                pagechanging = true;
+                if (pos.x() > this->width() * readerpreviouspagethreshold)
+                {
+                    emit advancPageClicked(true);
+                }
+                else
+                {
+                    emit advancPageClicked(false);
+                }
+            }
+        }
+    }
+
+    return true;
 }
 
 void MangaReaderWidget::updateTime()
@@ -196,36 +275,6 @@ void MangaReaderWidget::addImageToCache(const QString &path)
     }
 }
 
-void MangaReaderWidget::on_mangaImageContainer_clicked(QPoint pos)
-{
-#ifdef WINDOWS
-    if (ui->readerNavigationBar->isVisible())
-    {
-        if (pos.y() > this->height() * readerbottommenuethreshold * 2)
-        {
-            showMenuBar(false);
-        }
-    }
-    else if (pos.y() < this->height() * readerbottommenuethreshold || pos.y() > this->height() * (1.0 - readerbottommenuethreshold))
-    {
-        showMenuBar(true);
-    }
-    else if (!pagechanging)
-    {
-        pagechanging = true;
-        if (pos.x() > this->width() * readerpreviouspagethreshold)
-        {
-            emit advancPageClicked(true);
-        }
-        else
-        {
-            emit advancPageClicked(false);
-        }
-    }
-#else
-    Q_UNUSED(pos);
-#endif
-}
 
 void MangaReaderWidget::setFrontLightPanelState(int lightmin, int lightmax, int light, int comflightmin, int comflightmax, int comflight)
 {
@@ -312,8 +361,8 @@ void MangaReaderWidget::setBatteryIcon()
 
 QPair<int, bool> MangaReaderWidget::getBatteryState()
 {
-#ifndef WINDOWS
-    return QPair<int, bool>(Platform::get()->getBatteryLevel(), Platform::get()->isBatteryCharging());
+#ifdef KOBO
+    return QPair<int, bool>(KoboPlatformFunctions::getBatteryLevel(), KoboPlatformFunctions::isBatteryCharging());
 #endif
 
     return QPair<int, bool>(100, false);
@@ -335,48 +384,4 @@ void MangaReaderWidget::showMenuBar(bool show)
     }
 }
 
-#ifndef WINDOWS
-void MangaReaderWidget::gestureInput(QPoint pos, GesturesController::GestureType gesture)
-{
-    if (gesture == GesturesController::gtSwipeRL && !pagechanging)
-    {
-        pagechanging = true;
-        emit advancPageClicked(true);
-    }
-    else if (gesture == GesturesController::gtSwipeLR && !pagechanging)
-    {
-        pagechanging = true;
-        emit advancPageClicked(false);
-    }
-    else if (gesture == GesturesController::gtSwipeTB && pos.y() < this->height() * readerbottommenuethreshold)
-    {
-        showMenuBar(true);
-    }
-    else if (gesture == GesturesController::gtTapShort)
-    {
-        if (ui->readerNavigationBar->isVisible())
-        {
-            if (pos.y() > this->height() * readerbottommenuethreshold * 2)
-            {
-                showMenuBar(false);
-            }
-        }
-        else if (pos.y() < this->height() * readerbottommenuethreshold || pos.y() > this->height() * (1.0 - readerbottommenuethreshold))
-        {
-            showMenuBar(true);
-        }
-        else if (!pagechanging)
-        {
-            pagechanging = true;
-            if (pos.x() > this->width() * readerpreviouspagethreshold)
-            {
-                emit advancPageClicked(true);
-            }
-            else
-            {
-                emit advancPageClicked(false);
-            }
-        }
-    }
-}
-#endif
+

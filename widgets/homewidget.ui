@@ -71,6 +71,11 @@
          <verstretch>2</verstretch>
         </sizepolicy>
        </property>
+       <property name="font">
+        <font>
+         <family>Sans Serif</family>
+        </font>
+       </property>
        <property name="uniformItemSizes">
         <bool>true</bool>
        </property>

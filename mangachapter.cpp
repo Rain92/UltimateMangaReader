@@ -2,7 +2,11 @@
 #include "configs.h"
 
 MangaChapter::MangaChapter():
+    chapterlink(),
     pagesloaded(false),
+    numpages(0),
+    pagelinks(),
+    imagelinks(),
     source(nullptr)
 {
 
@@ -11,6 +15,9 @@ MangaChapter::MangaChapter():
 MangaChapter::MangaChapter(const QString &link, AbstractMangaSource *source):
     chapterlink(link),
     pagesloaded(false),
+    numpages(0),
+    pagelinks(),
+    imagelinks(),
     source(source)
 {
 

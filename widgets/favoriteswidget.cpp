@@ -25,16 +25,17 @@ void FavoritesWidget::adjustSizes()
 {
     ui->tableWidget->setHorizontalHeaderLabels(QStringList() << "Manga" << "Host" << "Status" << "My Progress");
     ui->tableWidget->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-
     QHeaderView *verticalHeader = ui->tableWidget->verticalHeader();
-    verticalHeader->setResizeMode(QHeaderView::Fixed);
+
+    // TODO
+//    verticalHeader-> setResizeMode(QHeaderView::Fixed);
     verticalHeader->setDefaultSectionSize(favoritesectonheight);
 
-    QHeaderView *horizontalHeader = ui->tableWidget->horizontalHeader();
-    horizontalHeader->setClickable(false);
+//    QHeaderView *horizontalHeader = ui->tableWidget->horizontalHeader();
+//    horizontalHeader->setClickable(false);
 
-    for (int i = 0; i < 4; i++)
-        horizontalHeader->setResizeMode(i, QHeaderView::Stretch);
+//    for (int i = 0; i < 4; i++)
+//        horizontalHeader->setResizeMode(i, QHeaderView::Stretch);
 
     ui->tableWidget->setVerticalScrollBar(new CScrollBar(Qt::Vertical, ui->tableWidget));
 }
