@@ -68,7 +68,7 @@ QString AbstractMangaSource::downloadAwaitImage(const QString &imagelink, const 
     QString filetype = imagelink.mid(ind - 4, 4);
     QString path = mangaimagesdir(name, mangatitle) + QString::number(chapternum) + "_" + QString::number(pagenum) + filetype;
 
-    if (!QFile::exists(path))
+    if (QFile::exists(path))
         return path;
 
     DownloadFileJob *job = downloadmanager->downloadAsScaledImage(imagelink, path);

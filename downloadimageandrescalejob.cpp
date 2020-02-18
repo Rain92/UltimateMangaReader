@@ -74,4 +74,5 @@ void DownloadScaledImageJob::rescaleImage(QByteArray array, const QString &filen
     img = img.convertToFormat(QImage::Format_Grayscale8);
     //    img.save(filename, "PNG");
     img.save(filename);
+//    qDebug() << "rescaled!";
 }

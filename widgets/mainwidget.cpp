@@ -147,11 +147,6 @@ void MainWidget::setupFrontLight()
 {
     setFrontLight(settings.lightvalue, settings.comflightvalue);
 
-#ifdef KOBO
-    //TODO
-    ui->mangaReaderWidget->setFrontLightPanelState(0,100,0,0,100,0);
-#endif
-
     ui->mangaReaderWidget->setFrontLightPanelState(settings.lightvalue, settings.comflightvalue);
 }
 
@@ -160,10 +155,14 @@ void MainWidget::setFrontLight(int light, int comflight)
 #ifdef KOBO
         KoboPlatformFunctions::setFrontlightLevel(light, comflight);
 #endif
-    settings.lightvalue = light;
-    settings.comflightvalue = comflight;
 
-    settings.scheduleSerialize();
+    if (settings.lightvalue != light || settings.comflightvalue != comflight)
+    {
+        settings.lightvalue = light;
+        settings.comflightvalue = comflight;
+
+        settings.scheduleSerialize();
+    }
 }
 
 
@@ -277,9 +276,7 @@ void MainWidget::viewMangaInfo(QSharedPointer<MangaInfo> info)
 
     setWidgetTab(1);
 
-//#ifndef QT_DEBUG
     currentmanga->preloadPopular();
-//#endif
 }
 
 
