@@ -7,16 +7,9 @@ int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
+#ifdef KOBO
     qputenv("QT_IM_MODULE", QByteArray("qtvirtualkeyboard"));
-//    qApp->setAttribute(Qt::AA_SynthesizeMouseForUnhandledTouchEvents, true);
-//    qApp->setAttribute(Qt::AA_SynthesizeTouchForUnhandledMouseEvents, true);
-
-
-//    QQuickView view;
-//    view.setResizeMode(QQuickView::SizeRootObjectToView);
-//    view.setSource(QUrl("qrc:///MainQMLForm.qml"));
-//    view.show();
-
+#endif
 
     MainWidget mainwidget;
 

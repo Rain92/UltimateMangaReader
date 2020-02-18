@@ -9,6 +9,7 @@ linux {
 
 kobo {
     DEFINES += KOBO
+    DEFINES -= DESKTOP
 
     target.path = /mnt/onboard/.adds/UltimateMangaReader
     INSTALLS += target
