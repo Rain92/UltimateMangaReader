@@ -174,7 +174,6 @@ void MangaInfo::cancelAllPreloads()
 
 void MangaInfo::completedImagePreload(const QString &path)
 {
-//    qDebug() << path;
     emit completedImagePreloadSignal(path);
 }
 
@@ -228,8 +227,6 @@ void MangaInfo::serializeProgress()
     QFile file(mangainfodir(hostname, title) + "progress.dat");
     if (!file.open(QIODevice::WriteOnly))
         return;
-
-//    qDebug() << file.fileName();
 
     QDataStream out(&file);
     out << currentindex << (qint32) numchapters;

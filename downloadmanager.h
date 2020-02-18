@@ -42,7 +42,7 @@ public:
 
     bool awaitAllFileDownloads(int timeout);
 
-    void setImageSize(int width, int height);
+    void setImageRescaleSize(QSize size);
 
 
     void addCookie(const QString &domain, const char *key, const char *value);
@@ -59,9 +59,7 @@ public slots:
 private:
     CCookieJar *cookies;
 
-    int imagewidth;
-    int imageheight;
-
+    QSize imageRescaleSize;
 };
 
 #endif // WIFI_H

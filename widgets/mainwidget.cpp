@@ -103,7 +103,7 @@ void  MainWidget::setupUI()
 //    enableVirtualKeyboard(true);
 #endif
 
-    downloadmanager->setImageSize(this->width(), this->height());
+    downloadmanager->setImageRescaleSize(this->size());
 
     adjustSizes();
 }
@@ -186,7 +186,7 @@ void MainWidget::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
 
-    downloadmanager->setImageSize(this->width(), this->height());
+    downloadmanager->setImageRescaleSize(this->size());
 }
 
 

@@ -9,10 +9,9 @@ class DownloadScaledImageJob : public DownloadFileJob
     Q_OBJECT
 
 public:
-    DownloadScaledImageJob(QObject *parent, QNetworkAccessManager *networkManager, const QString &url, const QString &path, int width, int height);
+    DownloadScaledImageJob(QObject *parent, QNetworkAccessManager *networkManager, const QString &url, const QString &path, QSize size);
 
-    int width;
-    int height;
+    QSize size;
 
 signals:
 

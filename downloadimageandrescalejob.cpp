@@ -5,10 +5,9 @@
 #include "configs.h"
 
 
-DownloadScaledImageJob::DownloadScaledImageJob(QObject *parent, QNetworkAccessManager *networkManager, const QString &url, const QString &path, int width, int height) :
+DownloadScaledImageJob::DownloadScaledImageJob(QObject *parent, QNetworkAccessManager *networkManager, const QString &url, const QString &path, QSize size) :
     DownloadFileJob(parent, networkManager, url, path),
-    width(width),
-    height(height),
+    size(size),
     array()
 {
 }
@@ -70,7 +69,7 @@ void DownloadScaledImageJob::rescaleImage(QByteArray array, const QString &filen
 {
     QImage img;
     img.loadFromData(array);
-    img = img.scaled(width, height, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    img = img.scaled(size.width(), size.height(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
     img = img.convertToFormat(QImage::Format_Grayscale8);
     //    img.save(filename, "PNG");
     img.save(filename);

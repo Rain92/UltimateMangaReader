@@ -87,7 +87,7 @@ DownloadFileJob *DownloadManager::downloadAsScaledImage(const QString &url, cons
     }
     else
     {
-        DownloadFileJob *job = new DownloadScaledImageJob(this, networkmanager, url, localPath, imagewidth, imageheight);
+        DownloadFileJob *job = new DownloadScaledImageJob(this, networkmanager, url, localPath, imageRescaleSize);
 
         fileDownloads->insert(url, job);
 
@@ -96,10 +96,9 @@ DownloadFileJob *DownloadManager::downloadAsScaledImage(const QString &url, cons
 }
 
 
-void DownloadManager::setImageSize(int width, int height)
+void DownloadManager::setImageRescaleSize(QSize size)
 {
-    imagewidth = width;
-    imageheight = height;
+    imageRescaleSize = size;
 }
 
 
