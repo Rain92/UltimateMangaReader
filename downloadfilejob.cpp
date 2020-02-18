@@ -3,24 +3,19 @@
 #include "configs.h"
 
 
-DownloadFileJob::DownloadFileJob(QObject *parent, QNetworkAccessManager *nm, const QString &url, const QString &path)
+DownloadFileJob::DownloadFileJob(QObject *parent, QNetworkAccessManager *networkManager, const QString &url, const QString &localFilePath)
     : QObject(parent)
+    , networkManager(networkManager)
+    , reply(nullptr)
     , url(url)
-    , filepath(path)
+    , filepath(localFilePath)
     , isCompleted(false)
-    , networkManager(nm)
     , errorString("")
 {
-    QString dirname = QFileInfo(path).path();
-//    qDebug() << path << dirname;
+    QString dirname = QFileInfo(localFilePath).path();
+    QDir().mkpath(dirname);
 
-    if (!QDir(dirname).exists())
-        QDir().mkpath(dirname);
-
-    file.setFileName(path + ".part");
-
-
-    QFileInfo download_progress_file(path + ".part");
+    file.setFileName(localFilePath + ".part");
 
     if (QFile::exists(filepath))
     {
@@ -28,17 +23,14 @@ DownloadFileJob::DownloadFileJob(QObject *parent, QNetworkAccessManager *nm, con
     }
     else
     {
-        if (file.open(QIODevice::WriteOnly | QIODevice::Truncate ))
+        if (file.open(QIODevice::WriteOnly | QIODevice::Truncate))
         {
 
             QNetworkRequest request(url);
             reply = networkManager->get(request);
 
-//            qDebug() << path;
-
             QObject::connect(reply, SIGNAL(readyRead()), this, SLOT(downloadFileReadyRead()));
             QObject::connect(reply, SIGNAL(finished()), this, SLOT(downloadFileFinished()));
-//            QObject::connect(reply, SIGNAL(finished()), qobject_cast<DownloadManager *>(parent), SLOT(onActivity()));
             QObject::connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(onError(QNetworkReply::NetworkError)));
             QObject::connect(reply, SIGNAL(sslErrors(const QList<QSslError> &)), this, SLOT(onSslErrors(const QList<QSslError> &)));
         }
@@ -48,6 +40,13 @@ DownloadFileJob::DownloadFileJob(QObject *parent, QNetworkAccessManager *nm, con
             emit downloadError();
         }
     }
+}
+
+DownloadFileJob::~DownloadFileJob()
+{
+    if (reply != nullptr)
+        reply->deleteLater();
+    reply = nullptr;
 }
 
 void DownloadFileJob::downloadFileReadyRead()
@@ -68,7 +67,7 @@ void DownloadFileJob::downloadFileFinished()
     if (reply == nullptr)
         return;
 
-    if ( QNetworkReply::NoError != reply->error() )
+    if (reply->error() != QNetworkReply::NoError)
     {
         file.remove();
         onError(QNetworkReply::NetworkError());
@@ -86,25 +85,15 @@ void DownloadFileJob::downloadFileFinished()
     }
 }
 
-void DownloadFileJob::onSslErrors(const QList<QSslError> &)
+void DownloadFileJob::onSslErrors(const QList<QSslError> &errors)
 {
-    QNetworkReply *reply = static_cast<QNetworkReply *>(sender());
-    qDebug() << "SSL Error";
-    reply->ignoreSslErrors();
-    return;
-
-//    if (file.isOpen())
-//        file.close();
-
-//    file.remove();
-
-//    foreach (QSslError& ssle, errors)
-//    {
-//        errorString += ssle.errorString();
-//    }
-//    errorString = reply->errorString();
-
-//    emit downloadError();
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    if (reply != nullptr)
+    {
+        foreach (const QSslError& ssle, errors)
+            qDebug() << "SSL Error" << ssle.errorString();
+        reply->ignoreSslErrors();
+    }
 }
 
 void DownloadFileJob::onError(QNetworkReply::NetworkError)

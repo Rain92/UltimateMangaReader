@@ -68,10 +68,12 @@ QString AbstractMangaSource::downloadAwaitImage(const QString &imagelink, const 
     QString filetype = imagelink.mid(ind - 4, 4);
     QString path = mangaimagesdir(name, mangatitle) + QString::number(chapternum) + "_" + QString::number(pagenum) + filetype;
 
+    if (!QFile::exists(path))
+        return path;
+
     DownloadFileJob *job = downloadmanager->downloadAsScaledImage(imagelink, path);
 
-
-    if (QFile::exists(path) || job->await(5000))
+    if (job->await(5000))
     {
         downloadmanager->fileDownloads->remove(imagelink);
         delete job;
@@ -91,7 +93,7 @@ QSharedPointer<MangaInfo> AbstractMangaSource::loadMangaInfo(const QString &mang
     QFileInfo infofile(mangainfodir(name, mangatitle) + "mangainfo.dat");
     if (infofile.exists())
     {
-        QSharedPointer<MangaInfo> mi = QSharedPointer<MangaInfo>(MangaInfo::deserialize(this->parent(), this, infofile.filePath()));
+        QSharedPointer<MangaInfo> mi(MangaInfo::deserialize(this->parent(), this, infofile.filePath()));
         if (update)
             mi->mangasource->updateMangaInfo(mi);
         return mi;

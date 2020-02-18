@@ -8,21 +8,22 @@ class DownloadStringJob : public QObject
 {
     Q_OBJECT
 
+protected:
+    QNetworkAccessManager *networkManager;
+    QNetworkReply *reply;
+
 public:
-    DownloadStringJob(QObject *parent, QNetworkAccessManager *nm, const QString &url, int timeout = 3000);
-
-
     QUrl url;
     bool isCompleted;
-    QNetworkAccessManager *networkManager;
     QString errorString;
     QString buffer;
-    QNetworkReply *reply;
+    QTimer timeouttimer;
+    int timeouttime;
+
+    DownloadStringJob(QObject *parent, QNetworkAccessManager *networkManager, const QString &url, int timeout = 3000);
 
     bool await(int timeout = 5000, bool retry = true);
 
-    QTimer timeouttimer;
-    int timeouttime;
 
 signals:
     void completed();
@@ -37,7 +38,6 @@ public slots:
     void onError(QNetworkReply::NetworkError);
     void timeout();
 
-private:
 };
 
 #endif // DOWNLOADFILEJOB_H

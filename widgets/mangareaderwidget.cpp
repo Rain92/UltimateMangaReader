@@ -26,7 +26,7 @@ MangaReaderWidget::MangaReaderWidget(QWidget *parent) :
 
     gotodialog = new GotoDialog(this);
 
-#ifndef KOBO
+#ifdef DESKTOP
     QGestureRecognizer::registerRecognizer(new TapGestureRecognizer());
 #endif
 
@@ -157,9 +157,13 @@ bool MangaReaderWidget::gestureEvent(QGestureEvent *event)
     else if (QGesture *gesture = event->gesture(Qt::TapGesture))
     {
         auto pos = gesture->hotSpot().toPoint();
+
+#ifdef DESKTOP
+        pos = this->mapFromGlobal(pos);
+#endif
+
         if (gesture->state() == Qt::GestureFinished)
         {
-//            qDebug() << "Tap gesture." << gesture->hotSpot() << gesture->state();
             if (ui->readerNavigationBar->isVisible())
             {
                 if (pos.y() > this->height() * readerbottommenuethreshold * 2)
@@ -240,11 +244,12 @@ void MangaReaderWidget::showImage(const QString &path)
 
         if (i != -1)
         {
-            qDebug() << "cachehit!" << i;
+            qDebug() << "Cachehit:" << i;
             ui->mangaImageContainer->setImage(*imgcache[i]);
         }
         else
         {
+            qDebug() << "No cachehit.";
             addImageToCache(path);
             ui->mangaImageContainer->setImage(*imgcache[0]);
         }

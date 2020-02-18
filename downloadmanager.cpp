@@ -43,7 +43,7 @@ bool DownloadManager::connected()
     return true;
 }
 
-DownloadStringJob *DownloadManager::downloadAsString(QString url, int timeout)
+DownloadStringJob *DownloadManager::downloadAsString(const QString &url, int timeout)
 {
     if (!connected())
         connect();
@@ -56,7 +56,7 @@ DownloadStringJob *DownloadManager::downloadAsString(QString url, int timeout)
 }
 
 
-DownloadFileJob *DownloadManager::downloadAsFile(QString url, QString path, bool usedownloadmap)
+DownloadFileJob *DownloadManager::downloadAsFile(const QString &url, const QString &localPath, bool usedownloadmap)
 {
     if (!connected())
         connect();
@@ -67,7 +67,7 @@ DownloadFileJob *DownloadManager::downloadAsFile(QString url, QString path, bool
     }
     else
     {
-        DownloadFileJob *job = new DownloadFileJob(this, networkmanager, url, path);
+        DownloadFileJob *job = new DownloadFileJob(this, networkmanager, url, localPath);
 
         if (usedownloadmap)
             fileDownloads->insert(url, job);
@@ -76,7 +76,7 @@ DownloadFileJob *DownloadManager::downloadAsFile(QString url, QString path, bool
     }
 }
 
-DownloadFileJob *DownloadManager::downloadAsScaledImage(QString url, QString path)
+DownloadFileJob *DownloadManager::downloadAsScaledImage(const QString &url, const QString &localPath)
 {
     if (!connected())
         connect();
@@ -87,7 +87,7 @@ DownloadFileJob *DownloadManager::downloadAsScaledImage(QString url, QString pat
     }
     else
     {
-        DownloadFileJob *job = new DownloadScaledImageJob(this, networkmanager, url, path, imagewidth, imageheight);
+        DownloadFileJob *job = new DownloadScaledImageJob(this, networkmanager, url, localPath, imagewidth, imageheight);
 
         fileDownloads->insert(url, job);
 
@@ -120,7 +120,7 @@ bool DownloadManager::awaitAllFileDownloads(int timeout)
 }
 
 
-void DownloadManager::addCookie(QString domain, const char *key, const char *value)
+void DownloadManager::addCookie(const QString &domain, const char *key, const char *value)
 {
     for (int i = 0; i < cookies->cookies.count(); i++)
         if (cookies->cookies[i].name() == QByteArray(key) && cookies->cookies[i].domain() == domain)
@@ -132,7 +132,7 @@ void DownloadManager::addCookie(QString domain, const char *key, const char *val
     cookies->addCookie(domain, key, value);
 }
 
-void DownloadManager::loadCertificates(QString certsPath)
+void DownloadManager::loadCertificates(const QString &certsPath)
 {
 
     auto sslConfig = QSslConfiguration::defaultConfiguration();

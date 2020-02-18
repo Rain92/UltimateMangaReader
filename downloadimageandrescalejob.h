@@ -9,7 +9,7 @@ class DownloadScaledImageJob : public DownloadFileJob
     Q_OBJECT
 
 public:
-    DownloadScaledImageJob(QObject *parent, QNetworkAccessManager *nm, const QString &url, const QString &path, int width, int height);
+    DownloadScaledImageJob(QObject *parent, QNetworkAccessManager *networkManager, const QString &url, const QString &path, int width, int height);
 
     int width;
     int height;
@@ -17,8 +17,8 @@ public:
 signals:
 
 public slots:
-    void downloadFileReadyRead();
-    void downloadFileFinished();
+    virtual void downloadFileReadyRead() override;
+    virtual void downloadFileFinished() override;
 
 private slots:
     void rescaleImageFinised();

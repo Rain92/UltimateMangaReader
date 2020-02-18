@@ -9,16 +9,19 @@ class DownloadFileJob : public QObject
 {
     Q_OBJECT
 
+protected:
+    QNetworkAccessManager *networkManager;
+    QFile file;
+    QNetworkReply *reply;
+
 public:
-    DownloadFileJob(QObject *parent, QNetworkAccessManager *nm, const QString &url, const QString &path);
+    DownloadFileJob(QObject *parent, QNetworkAccessManager *nm, const QString &url, const QString &localFilePath);
+    ~DownloadFileJob();
 
     QUrl url;
     QString filepath;
     bool isCompleted;
-    QNetworkAccessManager *networkManager;
     QString errorString;
-    QFile file;
-    QNetworkReply *reply;
 
     bool await(int timeout = 10000);
 
@@ -29,12 +32,9 @@ signals:
 public slots:
     virtual void downloadFileReadyRead();
     virtual void downloadFileFinished();
-    virtual void onSslErrors(const QList<QSslError> &);
-    virtual void onError(QNetworkReply::NetworkError code);
+    virtual void onSslErrors(const QList<QSslError> &errors);
+    virtual void onError(QNetworkReply::NetworkError);
 
-
-
-private:
 };
 
 #endif // DOWNLOADFILEJOB_H

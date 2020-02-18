@@ -1,16 +1,12 @@
 #include "downloadimageandrescalejob.h"
 #include "downloadmanager.h"
 #include <QImage>
-#include <QPixmap>
 #include <QtConcurrent/QtConcurrent>
 #include "configs.h"
 
-//#include <QtTest/QTest>
 
-
-
-DownloadScaledImageJob::DownloadScaledImageJob(QObject *parent, QNetworkAccessManager *nm, const QString &url, const QString &path, int width, int height) :
-    DownloadFileJob(parent, nm, url, path),
+DownloadScaledImageJob::DownloadScaledImageJob(QObject *parent, QNetworkAccessManager *networkManager, const QString &url, const QString &path, int width, int height) :
+    DownloadFileJob(parent, networkManager, url, path),
     width(width),
     height(height),
     array()
@@ -20,14 +16,12 @@ DownloadScaledImageJob::DownloadScaledImageJob(QObject *parent, QNetworkAccessMa
 
 void DownloadScaledImageJob::downloadFileReadyRead()
 {
-    //don't save to file bcs its gonna be rescaled anyway
+    // don't save to file because its gonna be rescaled anyway
 //    file.write(reply->readAll());
 }
 
 void DownloadScaledImageJob::downloadFileFinished()
 {
-//    qDebug() << "download finished rescaler:" << url;
-
     if (file.isOpen())
     {
         file.flush();
@@ -35,29 +29,28 @@ void DownloadScaledImageJob::downloadFileFinished()
         file.remove();
     }
 
-
     if (reply == nullptr)
     {
         errorString += " reply is nullptr";
         emit downloadError();
         return;
     }
-    if (QNetworkReply::NoError != reply->error() )
+    if (reply->error() != QNetworkReply::NoError)
     {
-        file.close();
-        file.remove();
         onError(QNetworkReply::NetworkError());
     }
     else
     {
         file.close();
-        connect(&watcher, SIGNAL(finished()), this, SLOT(rescaleImageFinised()));
+        //        connect(&watcher, SIGNAL(finished()), this, SLOT(rescaleImageFinised()));
 
         array = reply->readAll();
         if (array.length() > 0)
         {
-            QFuture<void> conc = QtConcurrent::run(this, &DownloadScaledImageJob::rescaleImage, array, filepath);
-            watcher.setFuture(conc);
+            //            QFuture<void> conc = QtConcurrent::run(this, &DownloadScaledImageJob::rescaleImage, array, filepath);
+            //            watcher.setFuture(conc);
+            rescaleImage(array, filepath);
+            rescaleImageFinised();
         }
         if (reply != nullptr)
             reply->deleteLater();
@@ -70,7 +63,6 @@ void DownloadScaledImageJob::rescaleImageFinised()
     array.clear();
     isCompleted = true;
     emit completed();
-
 }
 
 
@@ -80,5 +72,6 @@ void DownloadScaledImageJob::rescaleImage(QByteArray array, const QString &filen
     img.loadFromData(array);
     img = img.scaled(width, height, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     img = img.convertToFormat(QImage::Format_Grayscale8);
-    img.save(filename, "PNG");
+    //    img.save(filename, "PNG");
+    img.save(filename);
 }

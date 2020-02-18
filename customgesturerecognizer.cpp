@@ -3,6 +3,8 @@
 #include <QWidget>
 #include <QDebug>
 
+// quick and dirty qt guesture reimplementation
+
 SwipeGestureRecognizer::SwipeGestureRecognizer() :
       horizontalDirection(QSwipeGesture::NoDirection),
       verticalDirection(QSwipeGesture::NoDirection),
@@ -12,9 +14,9 @@ SwipeGestureRecognizer::SwipeGestureRecognizer() :
 
 QGesture *SwipeGestureRecognizer::create(QObject *target)
 {
-    if (target && target->isWidgetType()) {
-        static_cast<QWidget *>(target)->setAttribute(Qt::WA_AcceptTouchEvents);
-    }
+//    if (target && target->isWidgetType()) {
+//        static_cast<QWidget *>(target)->setAttribute(Qt::WA_AcceptTouchEvents);
+//    }
     return new QSwipeGesture;
 }
 
@@ -124,9 +126,9 @@ TapGestureRecognizer::TapGestureRecognizer()
 
 QGesture *TapGestureRecognizer::create(QObject *target)
 {
-    if (target && target->isWidgetType()) {
-        static_cast<QWidget *>(target)->setAttribute(Qt::WA_AcceptTouchEvents);
-    }
+//    if (target && target->isWidgetType()) {
+//        static_cast<QWidget *>(target)->setAttribute(Qt::WA_AcceptTouchEvents);
+//    }
     return new QTapGesture;
 }
 
@@ -146,8 +148,8 @@ QGestureRecognizer::Result TapGestureRecognizer::recognize(QGesture *state,
         q->setHotSpot(this->position);
         timer.start();
         this->pressed = true;
-        result = QGestureRecognizer::Ignore;
-        qDebug() << "pressed!";
+        result = QGestureRecognizer::MayBeGesture;
+//        qDebug() << "pressed!" << this->position;
         break;
     }
     case QEvent::MouseMove:
@@ -155,12 +157,13 @@ QGestureRecognizer::Result TapGestureRecognizer::recognize(QGesture *state,
     case QEvent::MouseButtonRelease: {
         if (q->state() == Qt::NoGesture && this->pressed) {
             this->pressed = false;
-            qDebug() << "released!";
+//            qDebug() << "released!";
             auto p = ev->screenPos().toPoint();
             QPoint delta = p - this->position.toPoint();
             if (delta.manhattanLength() <= TAPRADIUS && timer.elapsed() < TIMEOUT)
             {
                 result = QGestureRecognizer::FinishGesture;
+//                qDebug() << "released!";
             }
             else
                 result = QGestureRecognizer::CancelGesture;

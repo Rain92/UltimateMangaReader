@@ -13,7 +13,7 @@ class CCookieJar : public QNetworkCookieJar
 {
 public:
     CCookieJar(): cookies() {}
-    void addCookie(QString domain, const char *key, const char *value)
+    void addCookie(const QString &domain, const char *key, const char *value)
     {
         QNetworkCookie c = QNetworkCookie(QByteArray(key), QByteArray(value));
         c.setDomain(domain);
@@ -36,18 +36,18 @@ public:
 
     QMap<QString, DownloadFileJob *> *fileDownloads;
 
-    DownloadStringJob *downloadAsString(QString url, int timeout = 4000);
-    DownloadFileJob *downloadAsFile(QString url, QString path, bool usedownloadmap = true);
-    DownloadFileJob *downloadAsScaledImage(QString url, QString path);
+    DownloadStringJob *downloadAsString(const QString &url, int timeout = 4000);
+    DownloadFileJob *downloadAsFile(const QString &url, const QString &localPath, bool usedownloadmap = true);
+    DownloadFileJob *downloadAsScaledImage(const QString &url, const QString &localPath);
 
     bool awaitAllFileDownloads(int timeout);
 
     void setImageSize(int width, int height);
 
 
-    void addCookie(QString domain, const char *key, const char *value);
+    void addCookie(const QString &domain, const char *key, const char *value);
 
-    void loadCertificates(QString certsPath);
+    void loadCertificates(const QString &certsPath);
 
     QNetworkAccessManager *networkmanager;
 
