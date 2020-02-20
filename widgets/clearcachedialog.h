@@ -3,7 +3,8 @@
 
 #include <QDialog>
 
-namespace Ui {
+namespace Ui
+{
 class ClearCacheDialog;
 }
 
@@ -33,4 +34,4 @@ private:
     Ui::ClearCacheDialog *ui;
 };
 
-#endif // CLEARCACHEDIALOG_H
+#endif  // CLEARCACHEDIALOG_H

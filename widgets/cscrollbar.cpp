@@ -1,41 +1,39 @@
 #include "cscrollbar.h"
 
+#include <QtCore/qelapsedtimer.h>
+#include <limits.h>
+
+#include <QDebug>
+#include <QPaintEvent>
+#include <QPainter>
+#include <QScrollBar>
+
+#include "configs.h"
 #include "qapplication.h"
 #include "qcursor.h"
 #include "qevent.h"
+#include "qmenu.h"
 #include "qpainter.h"
 #include "qscrollbar.h"
 #include "qstyle.h"
 #include "qstyleoption.h"
-#include "qmenu.h"
-#include <QtCore/qelapsedtimer.h>
 
-#include <limits.h>
-#include <QPainter>
-#include <QScrollBar>
-#include <QPaintEvent>
-#include <QDebug>
-
-#include "configs.h"
-
-
-CScrollBar::CScrollBar(Qt::Orientation orientation, QWidget *parent):
-    QScrollBar(orientation, parent),
-    extent(-1),
-    sliderlength(scrollbarsliderminlength),
-    mousedownonslider(false),
-    clickoffset()
+CScrollBar::CScrollBar(Qt::Orientation orientation, QWidget *parent)
+    : QScrollBar(orientation, parent),
+      extent(-1),
+      sliderlength(scrollbarsliderminlength),
+      mousedownonslider(false),
+      clickoffset()
 {
 }
-CScrollBar::CScrollBar(Qt::Orientation orientation, QWidget *parent, int extent):
-    QScrollBar(orientation, parent),
-    extent(extent),
-    sliderlength(scrollbarsliderminlength),
-    mousedownonslider(false),
-    clickoffset()
+CScrollBar::CScrollBar(Qt::Orientation orientation, QWidget *parent, int extent)
+    : QScrollBar(orientation, parent),
+      extent(extent),
+      sliderlength(scrollbarsliderminlength),
+      mousedownonslider(false),
+      clickoffset()
 {
 }
-
 
 QSize CScrollBar::sizeHint() const
 {
@@ -43,23 +41,22 @@ QSize CScrollBar::sizeHint() const
     QStyleOptionSlider opt;
     initStyleOption(&opt);
 
-    int scrollBarExtent = style()->pixelMetric(QStyle::PM_ScrollBarExtent, &opt, this);
-    int scrollBarSliderMin = style()->pixelMetric(QStyle::PM_ScrollBarSliderMin, &opt, this);
+    int scrollBarExtent =
+        style()->pixelMetric(QStyle::PM_ScrollBarExtent, &opt, this);
+    int scrollBarSliderMin =
+        style()->pixelMetric(QStyle::PM_ScrollBarSliderMin, &opt, this);
     QSize size;
     if (opt.orientation == Qt::Horizontal)
-        size = QSize(scrollBarExtent * 2 + scrollBarSliderMin, extent > 0 ? extent : scrollbarheight);
+        size = QSize(scrollBarExtent * 2 + scrollBarSliderMin,
+                     extent > 0 ? extent : scrollbarheight);
     else
-        size = QSize(extent > 0 ? extent : scrollbarwidth, scrollBarExtent * 2 + scrollBarSliderMin);
+        size = QSize(extent > 0 ? extent : scrollbarwidth,
+                     scrollBarExtent * 2 + scrollBarSliderMin);
 
     return size;
 }
 
-QSize CScrollBar::minimumSizeHint() const
-{
-    return sizeHint();
-}
-
-
+QSize CScrollBar::minimumSizeHint() const { return sizeHint(); }
 
 void CScrollBar::paintEvent(QPaintEvent *)
 {
@@ -80,36 +77,35 @@ void CScrollBar::paintEvent(QPaintEvent *)
         QStyle::State saveFlags = scrollbar->state;
         if (scrollbar->subControls & QStyle::SC_ScrollBarSlider)
         {
-
             newScrollbar.rect = scrollbar->rect;
 
             newScrollbar.state = saveFlags;
-            QRect rect = subControlRect(QStyle::CC_ScrollBar, &newScrollbar, QStyle::SC_ScrollBarSlider, widget);
-            newScrollbar.rect = QRect(rect.topLeft(), QSize(rect.width(), rect.height()));
+            QRect rect = subControlRect(QStyle::CC_ScrollBar, &newScrollbar,
+                                        QStyle::SC_ScrollBarSlider, widget);
+            newScrollbar.rect =
+                QRect(rect.topLeft(), QSize(rect.width(), rect.height()));
 
             if (newScrollbar.rect.isValid())
             {
-                style()->drawControl(QStyle::CE_ScrollBarSlider, &newScrollbar, p, widget);
-
+                style()->drawControl(QStyle::CE_ScrollBarSlider, &newScrollbar,
+                                     p, widget);
             }
         }
     }
-
 }
-
 
 void CScrollBar::setSliderLength(int length)
 {
     sliderlength = length;
-//    qDebug() << length << minimum() << value() << maximum();
+    //    qDebug() << length << minimum() << value() << maximum();
 }
 
 void CScrollBar::adjustLength()
 {
-    int maxlen = (orientation() == Qt::Horizontal) ?
-                 width() : height();
+    int maxlen = (orientation() == Qt::Horizontal) ? width() : height();
 
-//    qDebug() << maxlen << sliderlength << minimum() << value() << maximum();
+    //    qDebug() << maxlen << sliderlength << minimum() << value() <<
+    //    maximum();
 
     if (maxlen - sliderlength > maximum() - minimum())
         setSliderLength(-maximum() + minimum() + maxlen);
@@ -117,19 +113,13 @@ void CScrollBar::adjustLength()
 
 void CScrollBar::mousePressEvent(QMouseEvent *e)
 {
-
-
     QPoint click = e->pos();
 
     int maxlen = (orientation() == Qt::Horizontal) ? width() : height();
-    int cpos = (orientation() == Qt::Horizontal) ?  click.x() : click.y();
+    int cpos = (orientation() == Qt::Horizontal) ? click.x() : click.y();
 
-    int sliderstart = this->sliderPositionFromValue(minimum(),
-                                                    maximum(),
-                                                    value(),
-                                                    maxlen - sliderlength,
-                                                    false);
-
+    int sliderstart = this->sliderPositionFromValue(
+        minimum(), maximum(), value(), maxlen - sliderlength, false);
 
     if (cpos < sliderstart)
     {
@@ -138,99 +128,93 @@ void CScrollBar::mousePressEvent(QMouseEvent *e)
     else if (cpos > sliderstart + sliderlength)
     {
         setValue(value() + pageStep());
-//        qDebug() << value() << maximum();
+        //        qDebug() << value() << maximum();
     }
     else
     {
         mousedownonslider = true;
         clickoffset = click;
-//        qDebug() << "clicked";
+        //        qDebug() << "clicked";
     }
 }
 
 void CScrollBar::mouseMoveEvent(QMouseEvent *e)
 {
-    if (!mousedownonslider)
-        return;
+    if (!mousedownonslider) return;
 
     QPoint click = e->pos();
 
-    int delta = (orientation() == Qt::Horizontal) ? clickoffset.x() - click.x() : clickoffset.y() - click.y();
+    int delta = (orientation() == Qt::Horizontal) ? clickoffset.x() - click.x()
+                                                  : clickoffset.y() - click.y();
 
     clickoffset = e->pos();
 
-    int maxlen = (orientation() == Qt::Horizontal) ?
-                 width() : height();
+    int maxlen = (orientation() == Qt::Horizontal) ? width() : height();
 
-    float valueperpixel = (float)(minimum() - maximum()) / (maxlen - sliderlength);
+    float valueperpixel =
+        (float)(minimum() - maximum()) / (maxlen - sliderlength);
     setValue(value() + delta * valueperpixel);
 }
 
+void CScrollBar::mouseReleaseEvent(QMouseEvent *) { mousedownonslider = false; }
 
-void CScrollBar::mouseReleaseEvent(QMouseEvent *)
-{
-    mousedownonslider = false;
-}
-
-
-QRect CScrollBar::subControlRect(QStyle::ComplexControl cc, const QStyleOptionComplex *opt, QStyle::SubControl sc, /*const*/ QWidget *widget)
+QRect CScrollBar::subControlRect(QStyle::ComplexControl cc,
+                                 const QStyleOptionComplex *opt,
+                                 QStyle::SubControl sc,
+                                 /*const*/ QWidget *widget)
 {
     QRect ret;
-    switch (cc)
+    if (cc == QStyle::CC_ScrollBar)
     {
-    case QStyle::CC_ScrollBar:
-        if (const QStyleOptionSlider *scrollbar = qstyleoption_cast<const QStyleOptionSlider *>(opt))
+        if (const QStyleOptionSlider *scrollbar =
+                qstyleoption_cast<const QStyleOptionSlider *>(opt))
         {
             const QRect scrollBarRect = scrollbar->rect;
 
-            int maxlen = ((scrollbar->orientation == Qt::Horizontal) ?
-                          scrollBarRect.width() : scrollBarRect.height());
+            int maxlen = ((scrollbar->orientation == Qt::Horizontal)
+                              ? scrollBarRect.width()
+                              : scrollBarRect.height());
 
             int sliderlen = ((CScrollBar *)widget)->sliderlength;
 
-            int sliderstart =  this->sliderPositionFromValue(scrollbar->minimum,
-                                                             scrollbar->maximum,
-                                                             scrollbar->sliderPosition,
-                                                             maxlen - sliderlen,
-                                                             scrollbar->upsideDown);
+            int sliderstart = this->sliderPositionFromValue(
+                scrollbar->minimum, scrollbar->maximum,
+                scrollbar->sliderPosition, maxlen - sliderlen,
+                scrollbar->upsideDown);
 
-            switch (sc)
+            if (sc == QStyle::SC_ScrollBarSlider)
             {
-
-            case QStyle::SC_ScrollBarSlider:
                 if (scrollbar->orientation == Qt::Horizontal)
-                    ret.setRect(sliderstart, 0, sliderlen, scrollBarRect.height());
+                    ret.setRect(sliderstart, 0, sliderlen,
+                                scrollBarRect.height());
                 else
-                    ret.setRect(0, sliderstart, scrollBarRect.width(), sliderlen);
-
-                break;
-            default:
-                break;
+                    ret.setRect(0, sliderstart, scrollBarRect.width(),
+                                sliderlen);
             }
             ret = visualRect(scrollbar->direction, scrollBarRect, ret);
         }
     }
-//    qDebug() << ret.width() << ret.height() ;
+    //    qDebug() << ret.width() << ret.height() ;
     return ret;
 }
 
-
-QRect CScrollBar::visualRect(Qt::LayoutDirection direction, const QRect &boundingRect, const QRect &logicalRect)
+QRect CScrollBar::visualRect(Qt::LayoutDirection direction,
+                             const QRect &boundingRect,
+                             const QRect &logicalRect)
 {
-    if (direction == Qt::LeftToRight)
-        return logicalRect;
+    if (direction == Qt::LeftToRight) return logicalRect;
     QRect rect = logicalRect;
     rect.translate(2 * (boundingRect.right() - logicalRect.right()) +
-                   logicalRect.width() - boundingRect.width(), 0);
+                       logicalRect.width() - boundingRect.width(),
+                   0);
     return rect;
 }
 
-int CScrollBar::sliderPositionFromValue(int min, int max, int logicalValue, int span, bool upsideDown)
+int CScrollBar::sliderPositionFromValue(int min, int max, int logicalValue,
+                                        int span, bool upsideDown)
 {
-    if (span <= 0 || logicalValue < min || max <= min)
-        return 0;
-    if (logicalValue > max)
-        return upsideDown ? span : min;
+    if (span <= 0 || logicalValue < min || max <= min) return 0;
+    if (logicalValue > max) return upsideDown ? span : min;
 
     uint range = max - min;
     uint p = upsideDown ? max - logicalValue : logicalValue - min;

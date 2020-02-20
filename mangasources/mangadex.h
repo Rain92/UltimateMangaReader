@@ -8,7 +8,6 @@
 class MangaDex : public AbstractMangaSource
 {
 public:
-
     MangaDex(QObject *parent, DownloadManager *dm);
 
     void initialize();
@@ -18,10 +17,11 @@ public:
     QStringList getPageList(const QString &chapterlink);
     QString getImageLink(const QString &pagelink);
 
-    void updateMangaInfoFinishedLoading(DownloadStringJob *job, MangaInfo *info);
+    void updateMangaInfoFinishedLoading(DownloadStringJob *job,
+                                        MangaInfo *info);
 
 private:
     void login();
 };
 
-#endif // MANGADEX_H
+#endif  // MANGADEX_H

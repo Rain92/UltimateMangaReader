@@ -3,7 +3,7 @@
 
 #include "mangachapter.h"
 
-class  MangaIndex
+class MangaIndex
 {
 public:
     int chapter;
@@ -13,22 +13,16 @@ public:
     MangaIndex(int chapter, int page);
     MangaIndex(int chapter, int page, bool illegal);
 
-
-
     MangaIndex nextPageIndex(QList<MangaChapter> *chapters);
 
     MangaIndex prevPageIndex(QList<MangaChapter> *chapters);
 
     MangaIndex deltaPageIndex(QList<MangaChapter> *chapters, int delta);
 
-
     bool checkLegal(QList<MangaChapter> *chapters);
-
 };
-
 
 QDataStream &operator<<(QDataStream &str, const MangaIndex &m);
 QDataStream &operator>>(QDataStream &str, MangaIndex &m);
 
-
-#endif // MANGAINDEX_H
+#endif  // MANGAINDEX_H

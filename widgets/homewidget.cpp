@@ -1,15 +1,17 @@
 #include "homewidget.h"
-#include "ui_homewidget.h"
-#include "configs.h"
-#include "cscrollbar.h"
+
 #include <QLabel>
 
-HomeWidget::HomeWidget(QWidget *parent) :
-    QWidget(parent),
-    ui(new Ui::HomeWidget),
-    currentsource(nullptr),
-    filteredmangatitles(),
-    filteredmangalinks()
+#include "configs.h"
+#include "cscrollbar.h"
+#include "ui_homewidget.h"
+
+HomeWidget::HomeWidget(QWidget *parent)
+    : QWidget(parent),
+      ui(new Ui::HomeWidget),
+      currentsource(nullptr),
+      filteredmangatitles(),
+      filteredmangalinks()
 {
     ui->setupUi(this);
     adjustSizes();
@@ -17,17 +19,16 @@ HomeWidget::HomeWidget(QWidget *parent) :
     updatedialog = new UpdateDialog(this);
     clearcachedialog = new ClearCacheDialog(this);
 
-    QObject::connect(ui->lineEditFilter, SIGNAL(returnPressed()), ui->pushButtonFilter, SIGNAL(clicked()));
+    QObject::connect(ui->lineEditFilter, SIGNAL(returnPressed()),
+                     ui->pushButtonFilter, SIGNAL(clicked()));
 
-    QObject::connect(updatedialog, SIGNAL(retry()), this, SLOT(on_pushButtonUpdate_clicked()));
-    QObject::connect(clearcachedialog, SIGNAL(clearCache(int)), this, SLOT(clearCacheDialogButtonClicked(int)));
-
+    QObject::connect(updatedialog, SIGNAL(retry()), this,
+                     SLOT(on_pushButtonUpdate_clicked()));
+    QObject::connect(clearcachedialog, SIGNAL(clearCache(int)), this,
+                     SLOT(clearCacheDialogButtonClicked(int)));
 }
 
-HomeWidget::~HomeWidget()
-{
-    delete ui;
-}
+HomeWidget::~HomeWidget() { delete ui; }
 
 void HomeWidget::setMangaSources(QList<AbstractMangaSource *> *sources)
 {
@@ -35,10 +36,10 @@ void HomeWidget::setMangaSources(QList<AbstractMangaSource *> *sources)
 
     setupSourcesList();
 
-//    currentsource = sources->at(0);
+    //    currentsource = sources->at(0);
 }
 
-void  HomeWidget::adjustSizes()
+void HomeWidget::adjustSizes()
 {
     ui->pushButtonFilter->setMinimumHeight(buttonsize);
     ui->pushButtonUpdate->setMinimumHeight(buttonsize);
@@ -49,13 +50,16 @@ void  HomeWidget::adjustSizes()
     ui->listViewSources->setMinimumHeight(listsourcesheight);
     ui->listViewSources->setMinimumWidth(listsourceswidth);
 
-    ui->listViewSources->setVerticalScrollBar(new CScrollBar(Qt::Vertical, ui->listViewSources));
-    ui->listViewMangas->setVerticalScrollBar(new CScrollBar(Qt::Vertical, ui->listViewMangas));
-    ui->listViewMangas->setHorizontalScrollBar(new CScrollBar(Qt::Horizontal, ui->listViewMangas));
+    ui->listViewSources->setVerticalScrollBar(
+        new CScrollBar(Qt::Vertical, ui->listViewSources));
+    ui->listViewMangas->setVerticalScrollBar(
+        new CScrollBar(Qt::Vertical, ui->listViewMangas));
+    ui->listViewMangas->setHorizontalScrollBar(
+        new CScrollBar(Qt::Horizontal, ui->listViewMangas));
     ui->listViewMangas->setUniformItemSizes(true);
 }
 
-void  HomeWidget::setupSourcesList()
+void HomeWidget::setupSourcesList()
 {
     ui->listViewSources->setViewMode(QListView::IconMode);
     QStandardItemModel *model = new QStandardItemModel(this);
@@ -63,7 +67,8 @@ void  HomeWidget::setupSourcesList()
     foreach (AbstractMangaSource *ms, *mangasources)
         model->appendRow(*listViewItemfromMangaSource(ms));
 
-    ui->listViewSources->setIconSize(QSize(mangasourceiconsize, mangasourceiconsize));
+    ui->listViewSources->setIconSize(
+        QSize(mangasourceiconsize, mangasourceiconsize));
 
     ui->listViewSources->setStyleSheet("QListView { font-size: 8pt; }");
 
@@ -71,11 +76,12 @@ void  HomeWidget::setupSourcesList()
 
     foreach (AbstractMangaSource *src, *mangasources)
     {
-        QObject::connect(src, SIGNAL(updateProgress(int)), this, SLOT(updateProgress(int)));
-        QObject::connect(src, SIGNAL(updateError(QString)), this, SLOT(updateError(QString)));
+        QObject::connect(src, SIGNAL(updateProgress(int)), this,
+                         SLOT(updateProgress(int)));
+        QObject::connect(src, SIGNAL(updateError(QString)), this,
+                         SLOT(updateError(QString)));
     }
 }
-
 
 void HomeWidget::updateError(const QString &error)
 {
@@ -86,7 +92,7 @@ void HomeWidget::updateError(const QString &error)
         updatedialog->error("Error updating: \n" + error);
 }
 
-void  HomeWidget::updateProgress(int p)
+void HomeWidget::updateProgress(int p)
 {
     int sind = mangasources->indexOf((AbstractMangaSource *)sender());
 
@@ -99,7 +105,6 @@ void  HomeWidget::updateProgress(int p)
     updatedialog->updateProgress(sum);
 }
 
-
 void HomeWidget::on_pushButtonUpdate_clicked()
 {
     sourcesprogress = QVector<int>(mangasources->count());
@@ -108,27 +113,27 @@ void HomeWidget::on_pushButtonUpdate_clicked()
 
     updatedialog->show();
 
-
     foreach (AbstractMangaSource *ms, *mangasources)
     {
         updatedialog->setLabelText("Updating " + ms->name);
-        if (!ms->updateMangaList())
-            return;
+        if (!ms->updateMangaList()) return;
 
         if (ms->nummangas != ms->mangalist.links.count())
             updateError("Number of mangas does not match.\n" +
-                        QString::number(ms->nummangas) + " vs " + QString::number(ms->mangalist.links.count()));
+                        QString::number(ms->nummangas) + " vs " +
+                        QString::number(ms->mangalist.links.count()));
 
         ms->serializeMangaList();
     }
-
 }
 
-QList<QStandardItem *> *HomeWidget::listViewItemfromMangaSource(AbstractMangaSource *source)
+QList<QStandardItem *> *HomeWidget::listViewItemfromMangaSource(
+    AbstractMangaSource *source)
 {
-    QList<QStandardItem *> *items = new QList<QStandardItem *> ();
+    QList<QStandardItem *> *items = new QList<QStandardItem *>();
     QStandardItem *item = new QStandardItem(source->name);
-    item->setIcon(QIcon(QPixmap(":/resources/images/mangahostlogos/" + source->name.toLower() + ".png")));
+    item->setIcon(QIcon(QPixmap(":/resources/images/mangahostlogos/" +
+                                source->name.toLower() + ".png")));
     item->setSizeHint(QSize(mangasourceitemwidth, mangasourceitemheight));
     items->append(item);
 
@@ -140,11 +145,15 @@ bool removeDir(const QString &dirName, const QString &ignore = "")
     bool result = true;
     QDir dir(dirName);
 
-//    qDebug() << dir.absoluteFilePath(dirName);
+    //    qDebug() << dir.absoluteFilePath(dirName);
     if (dir.exists())
     {
-//        qDebug() << dirName;
-        foreach (QFileInfo info, dir.entryInfoList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden  | QDir::AllDirs | QDir::Files, QDir::DirsFirst))
+        //        qDebug() << dirName;
+        foreach (
+            QFileInfo info,
+            dir.entryInfoList(QDir::NoDotAndDotDot | QDir::System |
+                                  QDir::Hidden | QDir::AllDirs | QDir::Files,
+                              QDir::DirsFirst))
         {
             if (info.isDir())
             {
@@ -161,7 +170,7 @@ bool removeDir(const QString &dirName, const QString &ignore = "")
                 return result;
             }
         }
-        //result = dir.rmdir(dirName);
+        // result = dir.rmdir(dirName);
     }
     return result;
 }
@@ -170,41 +179,43 @@ void HomeWidget::clearCacheDialogButtonClicked(int level)
 {
     switch (level)
     {
-    case 1:
-        foreach (AbstractMangaSource *s, *mangasources)
-        {
-            foreach (QFileInfo info, QDir(cachedir + s->name).entryInfoList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden  | QDir::AllDirs))
-                removeDir(info.absoluteFilePath() + "/images");
-        }
-        break;
+        case 1:
+            foreach (AbstractMangaSource *s, *mangasources)
+            {
+                foreach (
+                    QFileInfo info,
+                    QDir(cachedir + s->name)
+                        .entryInfoList(QDir::NoDotAndDotDot | QDir::System |
+                                       QDir::Hidden | QDir::AllDirs))
+                    removeDir(info.absoluteFilePath() + "/images");
+            }
+            break;
 
-    case 2:
-        foreach (AbstractMangaSource *s, *mangasources)
-            removeDir(cachedir + s->name, "progress.dat");
+        case 2:
+            foreach (AbstractMangaSource *s, *mangasources)
+                removeDir(cachedir + s->name, "progress.dat");
 
-        break;
+            break;
 
-    case 3:
-        removeDir(cachedir, "mangalist.dat");
-        emit favoritesCleared();
-        break;
+        case 3:
+            removeDir(cachedir, "mangalist.dat");
+            emit favoritesCleared();
+            break;
 
-    default:
-        break;
+        default:
+            break;
     }
 }
 
 void HomeWidget::on_pushButtonClearCache_clicked()
 {
-
     clearcachedialog->show();
     clearcachedialog->getCacheSize();
 }
 
 void HomeWidget::on_listViewSources_clicked(const QModelIndex &index)
 {
-    if (ui->lineEditFilter->text() != "")
-        ui->lineEditFilter->clear();
+    if (ui->lineEditFilter->text() != "") ui->lineEditFilter->clear();
 
     filteredmangalinks.clear();
     filteredmangatitles.clear();
@@ -215,12 +226,9 @@ void HomeWidget::on_listViewSources_clicked(const QModelIndex &index)
     emit mangaSourceClicked(currentsource);
 }
 
-
-
 void HomeWidget::on_pushButtonFilter_clicked()
 {
-    if (currentsource == nullptr || currentsource->nummangas == 0)
-        return;
+    if (currentsource == nullptr || currentsource->nummangas == 0) return;
 
     QString ss = ui->lineEditFilter->text();
 
@@ -234,7 +242,8 @@ void HomeWidget::on_pushButtonFilter_clicked()
     }
 
     for (int i = 0; i < currentsource->nummangas; i++)
-        if (currentsource->mangalist.titles[i].contains(ss, Qt::CaseInsensitive))
+        if (currentsource->mangalist.titles[i].contains(ss,
+                                                        Qt::CaseInsensitive))
         {
             filteredmangatitles.append(currentsource->mangalist.titles[i]);
             filteredmangalinks.append(currentsource->mangalist.links[i]);
@@ -245,9 +254,7 @@ void HomeWidget::on_pushButtonFilter_clicked()
 
 void HomeWidget::on_pushButtonFilterClear_clicked()
 {
-
-    if (ui->lineEditFilter->text() != "")
-        ui->lineEditFilter->clear();
+    if (ui->lineEditFilter->text() != "") ui->lineEditFilter->clear();
 
     filteredmangalinks.clear();
     filteredmangatitles.clear();
@@ -257,8 +264,7 @@ void HomeWidget::on_pushButtonFilterClear_clicked()
 
 void HomeWidget::refreshMangaListView()
 {
-    if (currentsource == nullptr)
-        return;
+    if (currentsource == nullptr) return;
 
     QStringListModel *model = new QStringListModel(this);
 
@@ -268,11 +274,10 @@ void HomeWidget::refreshMangaListView()
         model->setStringList(filteredmangatitles);
 
     if (ui->listViewMangas->model() != nullptr)
-        ui->listViewMangas->model()->removeRows(0, ui->listViewMangas->model()->rowCount());
+        ui->listViewMangas->model()->removeRows(
+            0, ui->listViewMangas->model()->rowCount());
     ui->listViewMangas->setModel(model);
-
 }
-
 
 void HomeWidget::on_listViewMangas_clicked(const QModelIndex &index)
 {
@@ -281,7 +286,8 @@ void HomeWidget::on_listViewMangas_clicked(const QModelIndex &index)
 
     if (filteredmangalinks.count() == 0)
     {
-        mangalink = currentsource->baseurl + currentsource->mangalist.links[index.row()];
+        mangalink = currentsource->baseurl +
+                    currentsource->mangalist.links[index.row()];
         mangatitle = currentsource->mangalist.titles[index.row()];
     }
     else
@@ -291,6 +297,5 @@ void HomeWidget::on_listViewMangas_clicked(const QModelIndex &index)
     }
 
     emit mangaClicked(mangalink, mangatitle);
-//    currentmanga = currentsource->getMangaInfo(mangalink);
+    //    currentmanga = currentsource->getMangaInfo(mangalink);
 }
-

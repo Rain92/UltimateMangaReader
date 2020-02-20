@@ -1,18 +1,17 @@
 #ifndef WIFI_H
 #define WIFI_H
 
-#include <QNetworkReply>
 #include <QList>
+#include <QNetworkReply>
 
 #include "downloadfilejob.h"
-#include "downloadstringjob.h"
 #include "downloadimageandrescalejob.h"
-
+#include "downloadstringjob.h"
 
 class CCookieJar : public QNetworkCookieJar
 {
 public:
-    CCookieJar(): cookies() {}
+    CCookieJar() : cookies() {}
     void addCookie(const QString &domain, const char *key, const char *value)
     {
         QNetworkCookie c = QNetworkCookie(QByteArray(key), QByteArray(value));
@@ -23,7 +22,6 @@ public:
     }
     QList<QNetworkCookie> cookies;
 };
-
 
 class DownloadManager : public QObject
 {
@@ -37,17 +35,19 @@ public:
     QMap<QString, DownloadFileJob *> *fileDownloads;
 
     DownloadStringJob *downloadAsString(const QString &url, int timeout = 4000);
-    DownloadFileJob *downloadAsFile(const QString &url, const QString &localPath, bool usedownloadmap = true);
-    DownloadFileJob *downloadAsScaledImage(const QString &url, const QString &localPath);
+    DownloadFileJob *downloadAsFile(const QString &url,
+                                    const QString &localPath,
+                                    bool usedownloadmap = true);
+    DownloadFileJob *downloadAsScaledImage(const QString &url,
+                                           const QString &localPath);
 
     bool awaitAllFileDownloads(int timeout);
 
     void setImageRescaleSize(QSize size);
 
-
     void addCookie(const QString &domain, const char *key, const char *value);
 
-    void loadCertificates(const QString &certsPath);
+    static void loadCertificates(const QString &certsPath);
 
     QNetworkAccessManager *networkmanager;
 
@@ -62,4 +62,4 @@ private:
     QSize imageRescaleSize;
 };
 
-#endif // WIFI_H
+#endif  // WIFI_H

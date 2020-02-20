@@ -1,19 +1,18 @@
 #include "jaiminisbox.h"
-#include "configs.h"
-#include "QTime"
-#include <QMessageBox>
-#include <QElapsedTimer>
 
-JaiminisBox::JaiminisBox(QObject *parent, DownloadManager *dm):
-    AbstractMangaSource(parent)
+#include <QElapsedTimer>
+#include <QMessageBox>
+
+#include "configs.h"
+
+JaiminisBox::JaiminisBox(QObject *parent, DownloadManager *dm)
+    : AbstractMangaSource(parent)
 {
     nummangas = 0;
     name = "JaiminisBox";
     baseurl = "https://jaiminisbox.com/";
     downloadmanager = dm;
-
 }
-
 
 bool JaiminisBox::updateMangaList()
 {
@@ -26,7 +25,7 @@ bool JaiminisBox::updateMangaList()
 
     int rem = 70;
 
-    QRegExp rx("<div class=\"title\"><a href=\"([^\"]*)\"[^\"]*\"([^\"]*)\"");
+    QRegExp rx(R"lit(<div class="title"><a href="([^"]*)"[^"]*"([^"]*)")lit");
     QRegExp nextrx("<a class=\"gbutton fright\" href=\"([^\"]*)\">Next");
 
     mangalist.links.clear();
@@ -35,7 +34,8 @@ bool JaiminisBox::updateMangaList()
 
     do
     {
-        DownloadStringJob *job = downloadmanager->downloadAsString(nextlink, -1);
+        DownloadStringJob *job =
+            downloadmanager->downloadAsString(nextlink, -1);
         if (!job->await(5000))
         {
             emit updateError(job->errorString);
@@ -49,23 +49,19 @@ bool JaiminisBox::updateMangaList()
             mangalist.links.append(rx.cap(1).mid(baseurl.length()));
             mangalist.titles.append(htmlToPlainText(rx.cap(2)));
 
-//            qDebug() << rx.cap(1) << htmlToPlainText(rx.cap(2));
+            //            qDebug() << rx.cap(1) << htmlToPlainText(rx.cap(2));
             nummangas++;
         }
-
 
         if (nextrx.indexIn(job->buffer, 0) != -1)
             nextlink = nextrx.cap(1);
         else
             nextlink = "";
 
-
         rem = rem / 2;
         emit updateProgress(100 - rem);
         delete job;
-    }
-    while (nextlink != "");
-
+    } while (nextlink != "");
 
     qDebug() << nummangas;
 
@@ -74,10 +70,9 @@ bool JaiminisBox::updateMangaList()
     return true;
 }
 
-
-MangaInfo *JaiminisBox::getMangaInfo( QString mangalink)
+MangaInfo *JaiminisBox::getMangaInfo(QString mangalink)
 {
-//    qDebug() << mangalink;
+    //    qDebug() << mangalink;
     DownloadStringJob *job = downloadmanager->downloadAsString(mangalink);
 
     MangaInfo *info = new MangaInfo(this, this);
@@ -86,14 +81,12 @@ MangaInfo *JaiminisBox::getMangaInfo( QString mangalink)
 
     info->link = mangalink;
 
-
-    QRegExp titlerx("<h1 class=\"title\">\\s+([^<]*)");
+    QRegExp titlerx(R"(<h1 class="title">\s+([^<]*))");
     QRegExp authorrx("Author</b>:([^<]*)");
     QRegExp artistrx("Artist</b>:([^<]*)");
 
     QRegExp summaryrx("Synopsis</b>:(.*)</div>");
     summaryrx.setMinimal(true);
-
 
     if (!job->await(3000))
     {
@@ -112,35 +105,30 @@ MangaInfo *JaiminisBox::getMangaInfo( QString mangalink)
     if (summaryrx.indexIn(job->buffer, spos) != -1)
         info->summary = htmlToPlainText(summaryrx.cap(1)).trimmed();
 
-
     info->genres = "-";
     info->status = "-";
     info->releaseyear = "-";
 
-    QRegExp coverrx("<div class=\"thumbnail\">[^\"]*\"([^\"]*)");
-//    coverrx.setMinimal(true);
+    QRegExp coverrx(R"(<div class="thumbnail">[^"]*"([^"]*))");
+    //    coverrx.setMinimal(true);
 
     QString coverlink;
-    if (coverrx.indexIn(job->buffer, spos) != -1)
-        coverlink = coverrx.cap(1);
+    if (coverrx.indexIn(job->buffer, spos) != -1) coverlink = coverrx.cap(1);
 
-//    qDebug() << coverlink;
+    //    qDebug() << coverlink;
 
-//    coverlink = coverlink.replace("http:", "https:");
+    //    coverlink = coverlink.replace("http:", "https:");
     info->coverlink = coverlink;
 
     int ind = coverlink.indexOf('?');
-    if (ind == -1)
-        ind = coverlink.length();
+    if (ind == -1) ind = coverlink.length();
     QString filetype = coverlink.mid(ind - 4, 4);
     info->coverpath = mangainfodir(name, info->title) + "cover" + filetype;
 
-
-    DownloadFileJob *coverjob = downloadmanager->downloadAsFile(coverlink, info->coverpath);
-
+    DownloadFileJob *coverjob =
+        downloadmanager->downloadAsFile(coverlink, info->coverpath);
 
     QRegExp rx("<div class=\"title\"><a href=\"([^\"]*)\"\\s+title=\"([^\"]*)");
-
 
     info->numchapters = 0;
     int pos = 0;
@@ -153,14 +141,13 @@ MangaInfo *JaiminisBox::getMangaInfo( QString mangalink)
         QString ctitle = rx.cap(2);
         info->chapertitlesreversed.append(ctitle);
         info->numchapters++;
-//        qDebug() << info->chapters[0].chapterlink;
-//        qDebug() << rx.cap(2);
+        //        qDebug() << info->chapters[0].chapterlink;
+        //        qDebug() << rx.cap(2);
     }
 
     if (coverlink != "" && !coverjob->await(3000))
     {
-
-//        info->coverpath = "";
+        //        info->coverpath = "";
     }
 
     delete job;
@@ -170,12 +157,9 @@ MangaInfo *JaiminisBox::getMangaInfo( QString mangalink)
     return info;
 }
 
-
-
-void JaiminisBox::updateMangaInfoFinishedLoading(DownloadStringJob *job, MangaInfo *info)
+void JaiminisBox::updateMangaInfoFinishedLoading(DownloadStringJob *job,
+                                                 MangaInfo *info)
 {
-    QRegExp chrx("(\\d+)\">");
-
     int numchapters = job->buffer.count("<div class=\"title\"><a");
 
     if (numchapters == 0 || numchapters == info->numchapters)
@@ -207,7 +191,6 @@ void JaiminisBox::updateMangaInfoFinishedLoading(DownloadStringJob *job, MangaIn
     info->sendUpdated(true);
 }
 
-
 QStringList JaiminisBox::getPageList(const QString &chapterlink)
 {
     DownloadStringJob *job = downloadmanager->downloadAsString(chapterlink, -1);
@@ -219,19 +202,18 @@ QStringList JaiminisBox::getPageList(const QString &chapterlink)
         return pageLinks;
     }
 
-//    qDebug() << chapterlink;
+    //    qDebug() << chapterlink;
 
-    QRegExp rx("JSON.parse\\(atob\\(\"([^\"]*)");
+    QRegExp rx(R"(JSON.parse\(atob\("([^"]*))");
 
-    if (rx.indexIn(job->buffer, 0) == -1)
-        return pageLinks;
+    if (rx.indexIn(job->buffer, 0) == -1) return pageLinks;
 
     QByteArray decoded = QByteArray::fromBase64(rx.cap(1).toLatin1());
     QString decodedstr(decoded);
 
-//    qDebug() << decodedstr;
+    //    qDebug() << decodedstr;
 
-    QRegExp pagerx("\"url\":\"([^\"]*)");
+    QRegExp pagerx(R"("url":"([^"]*))");
 
     int pos = 0;
     while ((pos = pagerx.indexIn(decodedstr, pos)) != -1)
@@ -239,16 +221,11 @@ QStringList JaiminisBox::getPageList(const QString &chapterlink)
         pos += pagerx.matchedLength();
 
         pageLinks.append(pagerx.cap(1).replace("\\/", "/"));
-//        qDebug() << pagerx.cap(1).replace("\\/", "/");
+        //        qDebug() << pagerx.cap(1).replace("\\/", "/");
     }
 
     delete job;
     return pageLinks;
 }
 
-
-QString JaiminisBox::getImageLink(const QString &pagelink)
-{
-    return pagelink;
-}
-
+QString JaiminisBox::getImageLink(const QString &pagelink) { return pagelink; }

@@ -1,14 +1,15 @@
 #ifndef CUSTOMGESTURERECOGNIZER_H
 #define CUSTOMGESTURERECOGNIZER_H
 
+#include <QElapsedTimer>
+#include <QGesture>
 #include <QGestureRecognizer>
 #include <QPointF>
-#include <QGesture>
-#include <QElapsedTimer>
 
 class SwipeGestureRecognizer : public QGestureRecognizer
 {
-    enum State {
+    enum State
+    {
         NoGesture,
         Started,
         ThreePointsReached
@@ -16,7 +17,6 @@ class SwipeGestureRecognizer : public QGestureRecognizer
 
     static const int MoveThreshold = 80;
     static const int directionChangeThreshold = MoveThreshold / 2;
-
 
     qreal velocity() const { return velocityValue; }
     void setVelocity(qreal value) { velocityValue = value; }
@@ -31,10 +31,10 @@ class SwipeGestureRecognizer : public QGestureRecognizer
     QElapsedTimer time;
 
 public:
-  SwipeGestureRecognizer();
-  QGesture *create(QObject *target);
-  Result recognize(QGesture *state, QObject *watched, QEvent *event);
-  void reset(QGesture *state);
+    SwipeGestureRecognizer();
+    QGesture *create(QObject *);
+    Result recognize(QGesture *state, QObject *watched, QEvent *event);
+    void reset(QGesture *state);
 };
 
 class TapGestureRecognizer : public QGestureRecognizer
@@ -44,13 +44,14 @@ class TapGestureRecognizer : public QGestureRecognizer
     QElapsedTimer timer;
     static const int TIMEOUT = 3000;
     static const int TAPRADIUS = 40;
+
 public:
     TapGestureRecognizer();
 
-    QGesture *create(QObject *target) override;
-    QGestureRecognizer::Result recognize(QGesture *state, QObject *watched, QEvent *event) override;
+    QGesture *create(QObject *) override;
+    QGestureRecognizer::Result recognize(QGesture *state, QObject *watched,
+                                         QEvent *event) override;
     void reset(QGesture *state) override;
 };
 
-
-#endif // CUSTOMGESTURERECOGNIZER_H
+#endif  // CUSTOMGESTURERECOGNIZER_H

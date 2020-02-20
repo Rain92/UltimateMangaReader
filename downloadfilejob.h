@@ -1,9 +1,9 @@
 #ifndef DOWNLOADFILEJOB_H
 #define DOWNLOADFILEJOB_H
 
+#include <QSslError>
 #include <QtCore>
 #include <QtNetwork>
-#include <QSslError>
 
 class DownloadFileJob : public QObject
 {
@@ -15,7 +15,8 @@ protected:
     QNetworkReply *reply;
 
 public:
-    DownloadFileJob(QObject *parent, QNetworkAccessManager *nm, const QString &url, const QString &localFilePath);
+    DownloadFileJob(QObject *parent, QNetworkAccessManager *networkManager,
+                    const QString &url, const QString &localFilePath);
     ~DownloadFileJob();
 
     QUrl url;
@@ -34,7 +35,6 @@ public slots:
     virtual void downloadFileFinished();
     virtual void onSslErrors(const QList<QSslError> &errors);
     virtual void onError(QNetworkReply::NetworkError);
-
 };
 
-#endif // DOWNLOADFILEJOB_H
+#endif  // DOWNLOADFILEJOB_H

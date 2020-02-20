@@ -1,8 +1,8 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
-#include <QtCore>
 #include <QTimer>
+#include <QtCore>
 
 #include "configs.h"
 
@@ -16,7 +16,6 @@ public:
     void deserialize();
     void scheduleSerialize();
 
-
     int lightvalue;
     int comflightvalue;
 
@@ -27,9 +26,8 @@ private:
     QTimer timer;
 };
 
-
 QDataStream &operator<<(QDataStream &str, const Settings &m);
 
 QDataStream &operator>>(QDataStream &str, Settings &m);
 
-#endif // SETTINGS_H
+#endif  // SETTINGS_H

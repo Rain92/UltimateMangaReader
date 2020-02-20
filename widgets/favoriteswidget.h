@@ -2,9 +2,11 @@
 #define FAVORITESWIDGET_H
 
 #include <QWidget>
+
 #include "favoritesmanager.h"
 
-namespace Ui {
+namespace Ui
+{
 class FavoritesWidget;
 }
 
@@ -35,9 +37,8 @@ private:
     void adjustSizes();
     void moveFavoriteToFront(int i);
 
-
-    QWidget *makeIconTextWidget(const QString &path, const QString &text, const QSize &iconsize);
-
+    QWidget *makeIconTextWidget(const QString &path, const QString &text,
+                                const QSize &iconsize);
 };
 
-#endif // FAVORITESWIDGET_H
+#endif  // FAVORITESWIDGET_H

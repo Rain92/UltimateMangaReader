@@ -1,17 +1,17 @@
 #include "favorite.h"
+
 #include <QFileInfo>
 #include <QImage>
+
 #include "configs.h"
 
+Favorite::Favorite() = default;
 
-Favorite::Favorite()
-{}
-
-Favorite::Favorite(QString hostname, QString title, QString mangalink) :
-    hostname(hostname),
-    title(title),
-    mangalink(mangalink)
-{}
+Favorite::Favorite(const QString &hostname, const QString &title,
+                   const QString &mangalink)
+    : hostname(hostname), title(title), mangalink(mangalink)
+{
+}
 
 QString Favorite::mangaInfoPath() const
 {
@@ -36,5 +36,3 @@ QDataStream &operator>>(QDataStream &str, Favorite &m)
 
     return str;
 }
-
-

@@ -1,15 +1,16 @@
 #ifndef MANGAREADERWIDGET_H
 #define MANGAREADERWIDGET_H
 
-#include <QWidget>
-#include <QPair>
 #include <QGesture>
+#include <QPair>
+#include <QWidget>
 
-#include "mangainfo.h"
-#include "gotodialog.h"
 #include "configs.h"
+#include "gotodialog.h"
+#include "mangainfo.h"
 
-namespace Ui {
+namespace Ui
+{
 class MangaReaderWidget;
 }
 
@@ -24,9 +25,10 @@ public:
     void showImage(const QString &path);
     void updateReaderLabels(QSharedPointer<MangaInfo> info);
 
-    void setFrontLightPanelState(int lightmin, int lightmax, int light, int comflightmin, int comflightmax, int comflight);
+    void setFrontLightPanelState(int lightmin, int lightmax, int light,
+                                 int comflightmin, int comflightmax,
+                                 int comflight);
     void setFrontLightPanelState(int light, int comflight);
-
 
 public slots:
     void addImageToCache(const QString &path);
@@ -52,21 +54,17 @@ private slots:
 
     void on_pushButtonReaderGoto_clicked();
 
-
 protected:
     bool event(QEvent *event) override;
 
-
 private:
     bool gestureEvent(QGestureEvent *event);
-
 
     Ui::MangaReaderWidget *ui;
 
     bool pagechanging;
 
     void adjustSizes();
-
 
     void setBatteryIcon();
     QPair<int, bool> getBatteryState();
@@ -83,4 +81,4 @@ private:
     GotoDialog *gotodialog;
 };
 
-#endif // MANGAREADERWIDGET_H
+#endif  // MANGAREADERWIDGET_H

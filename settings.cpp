@@ -1,15 +1,13 @@
 #include "settings.h"
-#include <QFile>
+
 #include <QDataStream>
+#include <QFile>
 #include <QTime>
 
-
-Settings::Settings() :
-    timer()
+Settings::Settings() : timer()
 {
     timer.setSingleShot(true);
     QObject::connect(&timer, SIGNAL(timeout()), this, SLOT(serialize()));
-
 
     lightvalue = 30;
     comflightvalue = 6400;
@@ -17,38 +15,33 @@ Settings::Settings() :
 
 void Settings::deserialize()
 {
-
     QFile file(QString(cachedir) + "/settings.dat");
-    if (!file.open(QIODevice::ReadOnly))
-        return;
+    if (!file.open(QIODevice::ReadOnly)) return;
 
     QDataStream in(&file);
     in >> *this;
     file.close();
 }
 
-
 void Settings::scheduleSerialize()
 {
-//    if (timer.isActive())
-//        timer.stop();
+    //    if (timer.isActive())
+    //        timer.stop();
 
     timer.start(2000);
 }
 
 void Settings::serialize()
 {
-//    qDebug() << "saving";
+    //    qDebug() << "saving";
 
     QFile file(QString(cachedir) + "/settings.dat");
-    if (!file.open(QIODevice::WriteOnly))
-        return;
+    if (!file.open(QIODevice::WriteOnly)) return;
 
     QDataStream out(&file);
     out << *this;
     file.close();
 }
-
 
 QDataStream &operator<<(QDataStream &str, const Settings &m)
 {
@@ -63,5 +56,3 @@ QDataStream &operator>>(QDataStream &str, Settings &m)
 
     return str;
 }
-
-

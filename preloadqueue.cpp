@@ -1,31 +1,28 @@
 #include "preloadqueue.h"
+
 #include "configs.h"
 
-PreloadQueue::PreloadQueue(QObject *parent, AbstractMangaSource *source):
-    QObject(parent),
-    source(source),
-    queue(),
-    job(nullptr),
-    resettimer(new QTimer(this)),
-    running(false)
+PreloadQueue::PreloadQueue(QObject *parent, AbstractMangaSource *source)
+    : QObject(parent),
+      source(source),
+      queue(),
+      job(nullptr),
+      resettimer(new QTimer(this)),
+      running(false)
 {
     resettimer->setSingleShot(true);
     connect(resettimer, SIGNAL(timeout()), this, SLOT(resetQueue()));
 }
 
-void PreloadQueue::resetQueue()
-{
-    running = false;
-}
+void PreloadQueue::resetQueue() { running = false; }
 
 void PreloadQueue::addJob(DownloadImageInfo info)
 {
-    if (info.imagelink == "")
-        return;
+    if (info.imagelink == "") return;
 
-//    qDebug() << info.page;
+    //    qDebug() << info.page;
     queue.enqueue(info);
-//    if(queue.count() == 1)
+    //    if(queue.count() == 1)
     if (!running)
     {
         running = true;
@@ -33,16 +30,11 @@ void PreloadQueue::addJob(DownloadImageInfo info)
     }
 }
 
-void PreloadQueue::clearQuene()
-{
-    queue.clear();
-}
-
+void PreloadQueue::clearQuene() { queue.clear(); }
 
 DownloadScaledImageJob *PreloadQueue::PreloadQueue::currentJob()
 {
-    if (running)
-        return job;
+    if (running) return job;
 
     return nullptr;
 }
@@ -59,19 +51,19 @@ void PreloadQueue::processNext()
 
     DownloadImageInfo info = queue.dequeue();
 
-//        job->deleteLater();
+    //        job->deleteLater();
 
+    //        job = nullptr;
 
-//        job = nullptr;
-
-
-
-    job = static_cast<DownloadScaledImageJob *>(source->downloadImage(info.imagelink, info.title, info.chapter, info.page));
+    job = static_cast<DownloadScaledImageJob *>(source->downloadImage(
+        info.imagelink, info.title, info.chapter, info.page));
     if (!job->isCompleted)
     {
-        QObject::connect(job, SIGNAL(completed()), this, SLOT(sendComletedSignal()));
+        QObject::connect(job, SIGNAL(completed()), this,
+                         SLOT(sendComletedSignal()));
         QObject::connect(job, SIGNAL(completed()), this, SLOT(processNext()));
-        QObject::connect(job, SIGNAL(downloadError()), this, SLOT(processNext()));
+        QObject::connect(job, SIGNAL(downloadError()), this,
+                         SLOT(processNext()));
     }
     else
     {
@@ -82,7 +74,7 @@ void PreloadQueue::processNext()
 
 void PreloadQueue::sendComletedSignal()
 {
-//    qDebug() << "preload completed";
+    //    qDebug() << "preload completed";
     QObject *send = sender();
     if (send == nullptr)
     {
@@ -90,7 +82,8 @@ void PreloadQueue::sendComletedSignal()
     }
     else
     {
-        DownloadScaledImageJob *job = static_cast<DownloadScaledImageJob *>(sender());
+        DownloadScaledImageJob *job =
+            static_cast<DownloadScaledImageJob *>(sender());
         emit completedDownload(job->filepath);
     }
 }

@@ -3,7 +3,8 @@
 
 #include <QDialog>
 
-namespace Ui {
+namespace Ui
+{
 class UpdateDialog;
 }
 
@@ -14,7 +15,6 @@ class UpdateDialog : public QDialog
 public:
     explicit UpdateDialog(QWidget *parent = 0);
     ~UpdateDialog();
-
 
     void setup(int maximum, const QString &msg);
 
@@ -35,4 +35,4 @@ private:
     Ui::UpdateDialog *ui;
 };
 
-#endif // UPDATEDIALOG_H
+#endif  // UPDATEDIALOG_H

@@ -5,8 +5,6 @@
 #include "mangaindex.h"
 #include "preloadqueue.h"
 
-
-
 class MangaInfo : public QObject
 {
     Q_OBJECT
@@ -15,12 +13,13 @@ public:
     MangaInfo(QObject *parent, AbstractMangaSource *mangasource);
     ~MangaInfo();
 
-    static MangaInfo *deserialize(QObject *parent, AbstractMangaSource *mangasource, const QString &path);
+    static MangaInfo *deserialize(QObject *parent,
+                                  AbstractMangaSource *mangasource,
+                                  const QString &path);
 
     void serialize();
     void serializeProgress();
     void deserializeProgress();
-
 
     QString title;
     QString link;
@@ -48,7 +47,6 @@ public:
     QList<MangaChapter> chapters;
 
     bool updating;
-
 
     QString getCoverpathScaled() const;
 
@@ -86,7 +84,6 @@ public slots:
 
 private:
     PreloadQueue preloadqueue;
-
 };
 
-#endif // MANGAINFO_H
+#endif  // MANGAINFO_H

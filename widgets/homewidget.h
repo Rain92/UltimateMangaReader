@@ -1,22 +1,21 @@
 #ifndef HOMEWIDGET_H
 #define HOMEWIDGET_H
 
-#include <QWidget>
-#include <QStandardItem>
-#include <QProgressBar>
-
-#include <QStringListModel>
-#include <QScrollBar>
-#include <QStandardItemModel>
-#include <QProgressDialog>
 #include <QDialogButtonBox>
+#include <QProgressBar>
+#include <QProgressDialog>
+#include <QScrollBar>
+#include <QStandardItem>
+#include <QStandardItemModel>
+#include <QStringListModel>
+#include <QWidget>
 
 #include "abstractmangasource.h"
-#include "updatedialog.h"
 #include "clearcachedialog.h"
+#include "updatedialog.h"
 
-
-namespace Ui {
+namespace Ui
+{
 class HomeWidget;
 }
 
@@ -34,7 +33,7 @@ signals:
     void mangaSourceClicked(AbstractMangaSource *source);
     void mangaClicked(const QString &mangalink, const QString &mangatitle);
     void favoritesCleared();
-//    void favoritesInvalid();
+    //    void favoritesInvalid();
 
 private slots:
     void on_pushButtonUpdate_clicked();
@@ -57,16 +56,16 @@ private:
     QStringList filteredmangatitles;
     QStringList filteredmangalinks;
 
-
     void refreshMangaListView();
     void setupSourcesList();
     void adjustSizes();
     void setupClearCacheDialog();
 
-    QList<QStandardItem *> *listViewItemfromMangaSource(AbstractMangaSource *source);
+    QList<QStandardItem *> *listViewItemfromMangaSource(
+        AbstractMangaSource *source);
     QProgressBar *updateProgressBar;
     UpdateDialog *updatedialog;
     ClearCacheDialog *clearcachedialog;
 };
 
-#endif // HOMEWIDGET_H
+#endif  // HOMEWIDGET_H

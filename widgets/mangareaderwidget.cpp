@@ -1,20 +1,18 @@
 #include "mangareaderwidget.h"
-#include "ui_mangareaderwidget.h"
-#include "customgesturerecognizer.h"
-#include "configs.h"
+
 #include <QPainter>
 
-
 #include "../koboplatformintegrationplugin/koboplatformfunctions.h"
+#include "configs.h"
+#include "customgesturerecognizer.h"
+#include "ui_mangareaderwidget.h"
 
-
-
-MangaReaderWidget::MangaReaderWidget(QWidget *parent) :
-    QWidget(parent),
-    ui(new Ui::MangaReaderWidget),
-    pagechanging(false),
-    imgcache(),
-    imgcachepaths()
+MangaReaderWidget::MangaReaderWidget(QWidget *parent)
+    : QWidget(parent),
+      ui(new Ui::MangaReaderWidget),
+      pagechanging(false),
+      imgcache(),
+      imgcachepaths()
 {
     ui->setupUi(this);
     adjustSizes();
@@ -37,54 +35,63 @@ MangaReaderWidget::MangaReaderWidget(QWidget *parent) :
     updateTime();
 }
 
-MangaReaderWidget::~MangaReaderWidget()
-{
-    delete ui;
-}
+MangaReaderWidget::~MangaReaderWidget() { delete ui; }
 
-
-void  MangaReaderWidget::adjustSizes()
+void MangaReaderWidget::adjustSizes()
 {
     ui->pushButtonReaderBack->setMinimumHeight(buttonsize);
     ui->pushButtonReaderClose->setMinimumHeight(buttonsize);
     ui->pushButtonReaderHome->setMinimumHeight(buttonsize);
     ui->pushButtonReaderGoto->setMinimumHeight(buttonsize);
 
-
     ui->horizontalSliderLight->setMinimumHeight(resourceiconsize);
     ui->horizontalSliderComfLight->setMinimumHeight(resourceiconsize);
 
-    ui->labelLessLight->setMinimumSize(QSize(resourceiconsize, resourceiconsize));
-    ui->labelLessLight->setMaximumSize(QSize(resourceiconsize, resourceiconsize));
+    ui->labelLessLight->setMinimumSize(
+        QSize(resourceiconsize, resourceiconsize));
+    ui->labelLessLight->setMaximumSize(
+        QSize(resourceiconsize, resourceiconsize));
 
     QPixmap p(":/resources/images/icons/darker.png");
-    ui->labelLessLight->setPixmap(p.scaledToHeight(resourceiconsize, Qt::SmoothTransformation));
+    ui->labelLessLight->setPixmap(
+        p.scaledToHeight(resourceiconsize, Qt::SmoothTransformation));
 
-    ui->labelMoreLight->setMinimumSize(QSize(resourceiconsize, resourceiconsize));
-    ui->labelMoreLight->setMaximumSize(QSize(resourceiconsize, resourceiconsize));
+    ui->labelMoreLight->setMinimumSize(
+        QSize(resourceiconsize, resourceiconsize));
+    ui->labelMoreLight->setMaximumSize(
+        QSize(resourceiconsize, resourceiconsize));
 
     QPixmap p2(":/resources/images/icons/lighter.png");
-    ui->labelMoreLight->setPixmap(p2.scaledToHeight(resourceiconsize, Qt::SmoothTransformation));
+    ui->labelMoreLight->setPixmap(
+        p2.scaledToHeight(resourceiconsize, Qt::SmoothTransformation));
 
-
-    ui->labelLessComfLight->setMinimumSize(QSize(resourceiconsize, resourceiconsize));
-    ui->labelLessComfLight->setMaximumSize(QSize(resourceiconsize, resourceiconsize));
+    ui->labelLessComfLight->setMinimumSize(
+        QSize(resourceiconsize, resourceiconsize));
+    ui->labelLessComfLight->setMaximumSize(
+        QSize(resourceiconsize, resourceiconsize));
 
     QPixmap p3(":/resources/images/icons/sun.png");
-    ui->labelLessComfLight->setPixmap(p3.scaledToHeight(resourceiconsize, Qt::SmoothTransformation));
+    ui->labelLessComfLight->setPixmap(
+        p3.scaledToHeight(resourceiconsize, Qt::SmoothTransformation));
 
-    ui->labelMoreComfLight->setMinimumSize(QSize(resourceiconsize, resourceiconsize));
-    ui->labelMoreComfLight->setMaximumSize(QSize(resourceiconsize, resourceiconsize));
+    ui->labelMoreComfLight->setMinimumSize(
+        QSize(resourceiconsize, resourceiconsize));
+    ui->labelMoreComfLight->setMaximumSize(
+        QSize(resourceiconsize, resourceiconsize));
 
     QPixmap p4(":/resources/images/icons/moon.png");
-    ui->labelMoreComfLight->setPixmap(p4.scaledToHeight(resourceiconsize, Qt::SmoothTransformation));
+    ui->labelMoreComfLight->setPixmap(
+        p4.scaledToHeight(resourceiconsize, Qt::SmoothTransformation));
 
-
-    batteryicons[0] = QPixmap(":/resources/images/icons/batteryfull.png").scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
-    batteryicons[1] = QPixmap(":/resources/images/icons/batterycharging.png").scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
-    batteryicons[2] = QPixmap(":/resources/images/icons/batteryempty.png").scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
-
-
+    batteryicons[0] =
+        QPixmap(":/resources/images/icons/batteryfull.png")
+            .scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
+    batteryicons[1] =
+        QPixmap(":/resources/images/icons/batterycharging.png")
+            .scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
+    batteryicons[2] =
+        QPixmap(":/resources/images/icons/batteryempty.png")
+            .scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
 
     QString sliderstylesheet =
         "QSlider::groove:horizontal {       "
@@ -107,51 +114,56 @@ void  MangaReaderWidget::adjustSizes()
         "     background: black;            "
         "}";
 
-    ui->horizontalSliderComfLight->setFixedHeight(frontlightsliderhandleheight + 10);
-    ui->horizontalSliderLight->setFixedHeight(frontlightsliderhandleheight + 10);
+    ui->horizontalSliderComfLight->setFixedHeight(frontlightsliderhandleheight +
+                                                  10);
+    ui->horizontalSliderLight->setFixedHeight(frontlightsliderhandleheight +
+                                              10);
 
-    ui->horizontalSliderComfLight->setStyleSheet(sliderstylesheet.arg(frontlightslidergrooveheight).arg(frontlightsliderhandlewidth).arg(
-                                                     frontlightsliderhandleheight));
+    ui->horizontalSliderComfLight->setStyleSheet(
+        sliderstylesheet.arg(frontlightslidergrooveheight)
+            .arg(frontlightsliderhandlewidth)
+            .arg(frontlightsliderhandleheight));
 
-    ui->horizontalSliderLight->setStyleSheet(sliderstylesheet.arg(frontlightslidergrooveheight).arg(frontlightsliderhandlewidth).arg(
-                                                 frontlightsliderhandleheight));
+    ui->horizontalSliderLight->setStyleSheet(
+        sliderstylesheet.arg(frontlightslidergrooveheight)
+            .arg(frontlightsliderhandlewidth)
+            .arg(frontlightsliderhandleheight));
 
     ui->horizontalSliderComfLight->setInvertedAppearance(true);
-
 }
 
 bool MangaReaderWidget::event(QEvent *event)
 {
     if (event->type() == QEvent::Gesture)
-        return gestureEvent(static_cast<QGestureEvent*>(event));
+        return gestureEvent(static_cast<QGestureEvent *>(event));
     return QWidget::event(event);
 }
 
 bool MangaReaderWidget::gestureEvent(QGestureEvent *event)
 {
-
     if (QGesture *gesture = event->gesture(Qt::SwipeGesture))
     {
         auto swipe = static_cast<QSwipeGesture *>(gesture);
         if (swipe->state() == Qt::GestureFinished)
         {
             auto angle = swipe->swipeAngle();
-             if (!pagechanging && angle > 155 && angle < 205)
-             {
-                 pagechanging = true;
-                 emit advancPageClicked(true);
-             }
-             else if (!pagechanging && (angle > 335 || angle < 25))
-             {
-                 pagechanging = true;
-                 emit advancPageClicked(false);
-             }
-             else if (!pagechanging && swipe->hotSpot().y() < this->height() * readerbottommenuethreshold &&
-                       angle > 245 && angle < 295)
-             {
-                 showMenuBar(true);
-             }
-
+            if (!pagechanging && angle > 155 && angle < 205)
+            {
+                pagechanging = true;
+                emit advancPageClicked(true);
+            }
+            else if (!pagechanging && (angle > 335 || angle < 25))
+            {
+                pagechanging = true;
+                emit advancPageClicked(false);
+            }
+            else if (!pagechanging &&
+                     swipe->hotSpot().y() <
+                         this->height() * readerbottommenuethreshold &&
+                     angle > 245 && angle < 295)
+            {
+                showMenuBar(true);
+            }
         }
     }
     else if (QGesture *gesture = event->gesture(Qt::TapGesture))
@@ -171,7 +183,9 @@ bool MangaReaderWidget::gestureEvent(QGestureEvent *event)
                     showMenuBar(false);
                 }
             }
-            else if (pos.y() < this->height() * readerbottommenuethreshold || pos.y() > this->height() * (1.0 - readerbottommenuethreshold))
+            else if (pos.y() < this->height() * readerbottommenuethreshold ||
+                     pos.y() >
+                         this->height() * (1.0 - readerbottommenuethreshold))
             {
                 showMenuBar(true);
             }
@@ -210,12 +224,14 @@ void MangaReaderWidget::updateReaderLabels(QSharedPointer<MangaInfo> info)
         this->currentmanga = info;
     }
 
-    ui->labelReaderChapter->setText("Chapter: " + QString::number(info->currentindex.chapter + 1) +
-                                    "/" + QString::number(info->numchapters));
-    ui->labelReaderPage->setText("Page: " + QString::number(info->currentindex.page + 1) + "/" +
-                                 QString::number(info->chapters.at(info->currentindex.chapter).numpages));
+    ui->labelReaderChapter->setText(
+        "Chapter: " + QString::number(info->currentindex.chapter + 1) + "/" +
+        QString::number(info->numchapters));
+    ui->labelReaderPage->setText(
+        "Page: " + QString::number(info->currentindex.page + 1) + "/" +
+        QString::number(
+            info->chapters.at(info->currentindex.chapter).numpages));
 }
-
 
 void MangaReaderWidget::on_pushButtonReaderHome_clicked()
 {
@@ -229,10 +245,7 @@ void MangaReaderWidget::on_pushButtonReaderBack_clicked()
     emit back();
 }
 
-void MangaReaderWidget::on_pushButtonReaderClose_clicked()
-{
-    emit closeApp();
-}
+void MangaReaderWidget::on_pushButtonReaderClose_clicked() { emit closeApp(); }
 
 void MangaReaderWidget::showImage(const QString &path)
 {
@@ -253,7 +266,6 @@ void MangaReaderWidget::showImage(const QString &path)
             addImageToCache(path);
             ui->mangaImageContainer->setImage(*imgcache[0]);
         }
-
     }
     pagechanging = false;
 }
@@ -280,8 +292,9 @@ void MangaReaderWidget::addImageToCache(const QString &path)
     }
 }
 
-
-void MangaReaderWidget::setFrontLightPanelState(int lightmin, int lightmax, int light, int comflightmin, int comflightmax, int comflight)
+void MangaReaderWidget::setFrontLightPanelState(int lightmin, int lightmax,
+                                                int light, int comflightmin,
+                                                int comflightmax, int comflight)
 {
     ui->horizontalSliderLight->setMinimum(lightmin);
     ui->horizontalSliderLight->setMaximum(lightmax);
@@ -301,13 +314,11 @@ void MangaReaderWidget::setFrontLightPanelState(int lightmin, int lightmax, int 
     }
 }
 
-
 void MangaReaderWidget::setFrontLightPanelState(int light, int comflight)
 {
     ui->horizontalSliderLight->setValue(light);
     ui->horizontalSliderComfLight->setValue(comflight);
 }
-
 
 void MangaReaderWidget::on_horizontalSliderLight_valueChanged(int value)
 {
@@ -321,10 +332,14 @@ void MangaReaderWidget::on_horizontalSliderComfLight_valueChanged(int value)
 
 void MangaReaderWidget::on_pushButtonReaderGoto_clicked()
 {
-    gotodialog->setup(currentmanga->numchapters, currentmanga->chapters[currentmanga->currentindex.chapter].numpages, currentmanga->currentindex);
+    gotodialog->setup(
+        currentmanga->numchapters,
+        currentmanga->chapters[currentmanga->currentindex.chapter].numpages,
+        currentmanga->currentindex);
 
     emit enableVirtualKeyboard(false);
-    if (gotodialog->exec() == QDialog::Accepted && !gotodialog->selectedindex.illegal)
+    if (gotodialog->exec() == QDialog::Accepted &&
+        !gotodialog->selectedindex.illegal)
     {
         showMenuBar(false);
 
@@ -360,19 +375,20 @@ void MangaReaderWidget::setBatteryIcon()
         painter.fillRect(12 + (45 - w), 6, w, 20, brush);
 
         painter.end();
-        ui->labelBattery->setPixmap(batteryicons[3].scaledToHeight(batteryiconsize, Qt::SmoothTransformation));
+        ui->labelBattery->setPixmap(batteryicons[3].scaledToHeight(
+            batteryiconsize, Qt::SmoothTransformation));
     }
 }
 
 QPair<int, bool> MangaReaderWidget::getBatteryState()
 {
 #ifdef KOBO
-    return QPair<int, bool>(KoboPlatformFunctions::getBatteryLevel(), KoboPlatformFunctions::isBatteryCharging());
+    return QPair<int, bool>(KoboPlatformFunctions::getBatteryLevel(),
+                            KoboPlatformFunctions::isBatteryCharging());
 #endif
 
     return QPair<int, bool>(100, false);
 }
-
 
 void MangaReaderWidget::showMenuBar(bool show)
 {
@@ -388,5 +404,3 @@ void MangaReaderWidget::showMenuBar(bool show)
         ui->readerFrontLightBar->setVisible(true);
     }
 }
-
-

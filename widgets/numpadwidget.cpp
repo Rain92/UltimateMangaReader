@@ -1,25 +1,20 @@
 #include "numpadwidget.h"
-#include "ui_numpadwidget.h"
+
+#include <QIcon>
+#include <QKeyEvent>
 
 #include "configs.h"
+#include "ui_numpadwidget.h"
 
-#include <QKeyEvent>
-#include <QIcon>
-
-NumpadWidget::NumpadWidget(QWidget *parent) :
-    QWidget(parent),
-    ui(new Ui::NumpadWidget)
+NumpadWidget::NumpadWidget(QWidget *parent)
+    : QWidget(parent), ui(new Ui::NumpadWidget)
 {
     ui->setupUi(this);
 
     setupButtons();
 }
 
-NumpadWidget::~NumpadWidget()
-{
-    delete ui;
-}
-
+NumpadWidget::~NumpadWidget() { delete ui; }
 
 void NumpadWidget::setupButtons()
 {
@@ -28,7 +23,9 @@ void NumpadWidget::setupButtons()
         if (btn->text() == "<-")
         {
             btn->setProperty("key", Qt::Key_Backspace);
-            QIcon icon = QIcon(QPixmap(":/resources/images/icons/backspace.png").scaledToHeight(buttonsize, Qt::SmoothTransformation));
+            QIcon icon = QIcon(
+                QPixmap(":/resources/images/icons/backspace.png")
+                    .scaledToHeight(buttonsize, Qt::SmoothTransformation));
             btn->setIconSize(QSize(buttonsize * 0.5, buttonsize * 0.5));
             btn->setIcon(icon);
             btn->setText("");
@@ -42,23 +39,27 @@ void NumpadWidget::setupButtons()
         btn->setMinimumHeight(buttonsize);
     }
 
-    QObject::connect(ui->buttonGroupAllButtons, SIGNAL(buttonPressed(QAbstractButton *)), this, SLOT(numButtonPressed(QAbstractButton *)));
+    QObject::connect(ui->buttonGroupAllButtons,
+                     SIGNAL(buttonPressed(QAbstractButton *)), this,
+                     SLOT(numButtonPressed(QAbstractButton *)));
 }
 
 void NumpadWidget::numButtonPressed(QAbstractButton *button)
 {
-//    qDebug() << button->text().trimmed();
+    //    qDebug() << button->text().trimmed();
 
     Qt::Key key = (Qt::Key)button->property("key").toInt();
 
     QString repr = QKeySequence(key).toString();
 
-//    qDebug() << repr;
+    //    qDebug() << repr;
 
     QWidget *target = qApp->focusWidget();
 
-    QKeyEvent *pressEvent = new QKeyEvent(QEvent::KeyPress, key, Qt::NoModifier, repr);
-    QKeyEvent *releaseEvent = new QKeyEvent(QEvent::KeyRelease, key, Qt::NoModifier, repr);
+    QKeyEvent *pressEvent =
+        new QKeyEvent(QEvent::KeyPress, key, Qt::NoModifier, repr);
+    QKeyEvent *releaseEvent =
+        new QKeyEvent(QEvent::KeyRelease, key, Qt::NoModifier, repr);
     qApp->postEvent(target, pressEvent);
     qApp->postEvent(target, releaseEvent);
 }

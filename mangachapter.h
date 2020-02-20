@@ -11,7 +11,6 @@ public:
     bool pagesloaded;
     int numpages;
 
-
     QStringList pagelinks;
     QStringList imagelinks;
 
@@ -21,13 +20,11 @@ public:
 
     void loadPages();
 
-//private:
+    // private:
     AbstractMangaSource *source;
 };
-
 
 QDataStream &operator<<(QDataStream &str, const MangaChapter &m);
 QDataStream &operator>>(QDataStream &str, MangaChapter &m);
 
-
-#endif // MANGACHAPTER_H
+#endif  // MANGACHAPTER_H

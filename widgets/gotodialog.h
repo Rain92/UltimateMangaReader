@@ -2,10 +2,12 @@
 #define GOTODIALOG_H
 
 #include <QDialog>
-#include "mangadex.h"
 #include <QResizeEvent>
 
-namespace Ui {
+#include "mangadex.h"
+
+namespace Ui
+{
 class GotoDialog;
 }
 
@@ -24,12 +26,10 @@ public:
     MangaIndex selectedindex;
     MangaIndex currentindex;
 
-
 protected:
     bool eventFilter(QObject *obj, QEvent *ev);
 
 protected slots:
-
 
 private slots:
     void on_pushButtonGoChapter_clicked();
@@ -40,4 +40,4 @@ private:
     Ui::GotoDialog *ui;
 };
 
-#endif // GOTODIALOG_H
+#endif  // GOTODIALOG_H

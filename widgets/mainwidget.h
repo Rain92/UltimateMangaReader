@@ -1,28 +1,28 @@
 #ifndef MAINWIDGET_H
 #define MAINWIDGET_H
 
-#include <QWidget>
 #include <QStandardItemModel>
-#include "favoritesmanager.h"
-#include "downloadmanager.h"
-#include "mangainfowidget.h"
-#include "favoriteswidget.h"
-#include "mangareaderwidget.h"
-#include "homewidget.h"
-#include "settings.h"
+#include <QWidget>
 
-#include "mangapanda.h"
+#include "downloadmanager.h"
+#include "favoritesmanager.h"
+#include "favoriteswidget.h"
+#include "homewidget.h"
+#include "jaiminisbox.h"
 #include "mangadex.h"
+#include "mangainfowidget.h"
+#include "mangapanda.h"
+#include "mangareaderwidget.h"
 #include "mangatown.h"
 #include "mangawindow.h"
-#include "jaiminisbox.h"
+#include "settings.h"
 
-namespace Ui {
+namespace Ui
+{
 class MainWidget;
 }
 
-class MainWidget :
-    public QWidget
+class MainWidget : public QWidget
 {
     Q_OBJECT
 
@@ -62,7 +62,6 @@ protected:
     void resizeEvent(QResizeEvent *event);
 
 private:
-
     void setupUI();
     void setupFrontLight();
     void adjustSizes();
@@ -91,4 +90,4 @@ private:
     QTimer restorefrontlighttimer;
 };
 
-#endif // MAINWIDGET_H
+#endif  // MAINWIDGET_H

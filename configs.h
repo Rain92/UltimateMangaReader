@@ -3,22 +3,20 @@
 
 #include <QRegExp>
 
-
-
 // dirstructure:
 //               /cache/      -> favorites.dat
 //               /cache/mangalists/ -> hostname_mangalist.dat
 //               /cache/hostname/manganame/ -> mangainfo.dat progress.dat
-//               /cache/hostname/manganame/images/ -> manganame_chapter_page.jpg/png
-
+//               /cache/hostname/manganame/images/ ->
+//               manganame_chapter_page.jpg/png
 
 #define cachedir QCoreApplication::applicationDirPath() + "/cache/"
 #define mangalistdir cachedir + "mangalists/"
 
-#define mangainfodir(hostname, manganame) (cachedir + hostname + "/" + makePathLegal(manganame) + "/")
-#define mangaimagesdir(hostname, manganame) (mangainfodir(hostname, manganame) + "images/")
-
-
+#define mangainfodir(hostname, manganame) \
+    (cachedir + hostname + "/" + makePathLegal(manganame) + "/")
+#define mangaimagesdir(hostname, manganame) \
+    (mangainfodir(hostname, manganame) + "images/")
 
 #ifdef DESKTOP
 #define screen_dpi 108
@@ -64,8 +62,6 @@
 
 #define maxparalleldownloads 1
 
-
 QString makePathLegal(QString filename);
 
-
-#endif // CONFIGSS_H
+#endif  // CONFIGSS_H

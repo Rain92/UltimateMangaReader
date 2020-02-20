@@ -1,18 +1,19 @@
 #include "updatedialog.h"
-#include "ui_updatedialog.h"
-#include "configs.h"
 
-UpdateDialog::UpdateDialog(QWidget *parent) :
-    QDialog(parent, Qt::FramelessWindowHint | Qt::Dialog),
-    ui(new Ui::UpdateDialog)
+#include "configs.h"
+#include "ui_updatedialog.h"
+
+UpdateDialog::UpdateDialog(QWidget *parent)
+    : QDialog(parent, Qt::FramelessWindowHint | Qt::Dialog),
+      ui(new Ui::UpdateDialog)
 {
     ui->setupUi(this);
 
-
-    QString ss = "QDialog{                  "
-                 "border: 2px solid black;  "
-                 "background: white;        "
-                 "}                         ";
+    QString ss =
+        "QDialog{                  "
+        "border: 2px solid black;  "
+        "background: white;        "
+        "}                         ";
     setWindowModality(Qt::WindowModal);
     setStyleSheet(ss);
 
@@ -21,11 +22,7 @@ UpdateDialog::UpdateDialog(QWidget *parent) :
     ui->progressBar->setMinimumHeight(buttonsize);
 }
 
-UpdateDialog::~UpdateDialog()
-{
-    delete ui;
-}
-
+UpdateDialog::~UpdateDialog() { delete ui; }
 
 void UpdateDialog::setup(int maximum, const QString &msg)
 {
@@ -54,7 +51,7 @@ void UpdateDialog::setLabelText(const QString &msg)
 void UpdateDialog::updateProgress(int i)
 {
     ui->progressBar->setValue(i);
-    if(i==ui->progressBar->maximum())
+    if (i == ui->progressBar->maximum())
     {
         ui->labelStatus->setText("Update completed!");
         ui->pushButtonOk->setText("Sweet");
@@ -62,13 +59,6 @@ void UpdateDialog::updateProgress(int i)
     }
 }
 
+void UpdateDialog::on_pushButtonRetry_clicked() { emit retry(); }
 
-void UpdateDialog::on_pushButtonRetry_clicked()
-{
-    emit retry();
-}
-
-void UpdateDialog::on_pushButtonOk_clicked()
-{
-    this->close();
-}
+void UpdateDialog::on_pushButtonOk_clicked() { this->close(); }

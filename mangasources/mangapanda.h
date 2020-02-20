@@ -8,7 +8,6 @@
 class MangaPanda : public AbstractMangaSource
 {
 public:
-
     MangaPanda(QObject *parent, DownloadManager *dm);
 
     bool updateMangaList();
@@ -16,8 +15,8 @@ public:
     QStringList getPageList(const QString &chapterlink);
     QString getImageLink(const QString &pagelink);
 
-    void updateMangaInfoFinishedLoading(DownloadStringJob *job, MangaInfo *info);
-
+    void updateMangaInfoFinishedLoading(DownloadStringJob *job,
+                                        MangaInfo *info);
 };
 
-#endif // MANGAPANDA_H
+#endif  // MANGAPANDA_H

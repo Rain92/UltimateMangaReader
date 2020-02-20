@@ -2,6 +2,7 @@
 #define MANGAIMAGECONTAINER2_H
 
 #include <qframe.h>
+
 #include <QMouseEvent>
 
 class MangaImageContainer : public QFrame
@@ -27,4 +28,4 @@ signals:
     void clicked(QPoint);
 };
 
-#endif // MANGAIMAGECONTAINER2_H
+#endif  // MANGAIMAGECONTAINER2_H

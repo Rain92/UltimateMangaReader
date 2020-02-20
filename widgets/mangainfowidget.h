@@ -1,13 +1,14 @@
 #ifndef MANGAINFOWIDGET_H
 #define MANGAINFOWIDGET_H
 
-#include <QWidget>
 #include <QIcon>
-#include "mangainfo.h"
+#include <QWidget>
+
 #include "configs.h"
+#include "mangainfo.h"
 
-
-namespace Ui {
+namespace Ui
+{
 class MangaInfoWidget;
 }
 
@@ -49,4 +50,4 @@ private:
     void adjustSizes();
 };
 
-#endif // MANGAINFOWIDGET_H
+#endif  // MANGAINFOWIDGET_H

@@ -3,13 +3,14 @@
 
 #include "downloadfilejob.h"
 
-
 class DownloadScaledImageJob : public DownloadFileJob
 {
     Q_OBJECT
 
 public:
-    DownloadScaledImageJob(QObject *parent, QNetworkAccessManager *networkManager, const QString &url, const QString &path, QSize size);
+    DownloadScaledImageJob(QObject *parent,
+                           QNetworkAccessManager *networkManager,
+                           const QString &url, const QString &path, QSize size);
 
     QSize size;
 
@@ -23,9 +24,9 @@ private slots:
     void rescaleImageFinised();
 
 private:
-    void rescaleImage(QByteArray array, const QString &filename);
+    void rescaleImage(const QByteArray &array, const QString &filename);
     QFutureWatcher<void> watcher;
     QByteArray array;
 };
 
-#endif // DOWNLOADIMAGEANDRESCALEJOB_H
+#endif  // DOWNLOADIMAGEANDRESCALEJOB_H

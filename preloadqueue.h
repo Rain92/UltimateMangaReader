@@ -1,19 +1,18 @@
 #ifndef PRELOADQUEUE_H
 #define PRELOADQUEUE_H
 
-#include <QQueue>
 #include <QObject>
-#include "downloadimageandrescalejob.h"
+#include <QQueue>
+
 #include "abstractmangasource.h"
+#include "downloadimageandrescalejob.h"
 
 struct DownloadImageInfo
 {
-    DownloadImageInfo(QString imagelink, QString title, int chapter, int page):
-        imagelink(imagelink),
-        title(title),
-        chapter(chapter),
-        page(page)
-    { }
+    DownloadImageInfo(QString imagelink, QString title, int chapter, int page)
+        : imagelink(imagelink), title(title), chapter(chapter), page(page)
+    {
+    }
 
     QString imagelink;
     QString title;
@@ -51,4 +50,4 @@ private:
     bool running;
 };
 
-#endif // PRELOADQUEUE_H
+#endif  // PRELOADQUEUE_H

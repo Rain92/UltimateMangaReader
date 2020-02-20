@@ -1,8 +1,8 @@
 #ifndef DOWNLOADSTRINGJOB_H
 #define DOWNLOADSTRINGJOB_H
 
-#include <QtNetwork>
 #include <QTime>
+#include <QtNetwork>
 
 class DownloadStringJob : public QObject
 {
@@ -20,10 +20,10 @@ public:
     QTimer timeouttimer;
     int timeouttime;
 
-    DownloadStringJob(QObject *parent, QNetworkAccessManager *networkManager, const QString &url, int timeout = 3000);
+    DownloadStringJob(QObject *parent, QNetworkAccessManager *networkManager,
+                      const QString &url, int timeout = 3000);
 
     bool await(int timeout = 5000, bool retry = true);
-
 
 signals:
     void completed();
@@ -37,7 +37,6 @@ public slots:
     void onSslErrors(const QList<QSslError> &);
     void onError(QNetworkReply::NetworkError);
     void timeout();
-
 };
 
-#endif // DOWNLOADFILEJOB_H
+#endif  // DOWNLOADFILEJOB_H

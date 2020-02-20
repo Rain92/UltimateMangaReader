@@ -11,12 +11,10 @@ struct Favorite
     QString title;
     QString mangalink;
 
-
     Favorite();
 
-    Favorite(QString hostname,
-             QString title,
-             QString mangalink);
+    Favorite(const QString &hostname, const QString &title,
+             const QString &mangalink);
 
     QString mangaInfoPath() const;
     QString mangaProgressPath() const;
@@ -29,11 +27,8 @@ struct Favorite
     }
 };
 
-
-
 QDataStream &operator<<(QDataStream &str, const Favorite &m);
 
 QDataStream &operator>>(QDataStream &str, Favorite &m);
 
-
-#endif // READINGSTATE_H
+#endif  // READINGSTATE_H

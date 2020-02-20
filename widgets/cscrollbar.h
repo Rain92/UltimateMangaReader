@@ -2,6 +2,7 @@
 #define CSCROLLBAR_H
 
 #include <QScrollBar>
+
 #include "qstyle.h"
 #include "qstyleoption.h"
 
@@ -28,11 +29,15 @@ protected:
 private:
     int extent;
 
-    QRect subControlRect(QStyle::ComplexControl cc, const QStyleOptionComplex *opt, QStyle::SubControl sc, /*const*/ QWidget *widget);
+    QRect subControlRect(QStyle::ComplexControl cc,
+                         const QStyleOptionComplex *opt, QStyle::SubControl sc,
+                         /*const*/ QWidget *widget);
 
-    QRect visualRect(Qt::LayoutDirection direction, const QRect &boundingRect, const QRect &logicalRect);
+    QRect visualRect(Qt::LayoutDirection direction, const QRect &boundingRect,
+                     const QRect &logicalRect);
 
-    int sliderPositionFromValue(int min, int max, int logicalValue, int span, bool upsideDown);
+    int sliderPositionFromValue(int min, int max, int logicalValue, int span,
+                                bool upsideDown);
 
 private:
     int sliderlength;
@@ -40,5 +45,4 @@ private:
     QPoint clickoffset;
 };
 
-
-#endif // CSCROLLBAR_H
+#endif  // CSCROLLBAR_H

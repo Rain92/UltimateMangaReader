@@ -1,20 +1,22 @@
 #include "gotodialog.h"
-#include "ui_gotodialog.h"
+
 #include "configs.h"
 #include "numpadwidget.h"
+#include "ui_gotodialog.h"
 
-GotoDialog::GotoDialog(QWidget *parent) :
-    QDialog(parent, Qt::FramelessWindowHint | Qt::Dialog),
-    selectedindex(-1, -1, true),
-    currentindex(-1, -1, true),
-    ui(new Ui::GotoDialog)
+GotoDialog::GotoDialog(QWidget *parent)
+    : QDialog(parent, Qt::FramelessWindowHint | Qt::Dialog),
+      selectedindex(-1, -1, true),
+      currentindex(-1, -1, true),
+      ui(new Ui::GotoDialog)
 
 {
     ui->setupUi(this);
-    QString ss = "QDialog{                  "
-                 "border: 2px solid black;  "
-                 "background: white;        "
-                 "}                         ";
+    QString ss =
+        "QDialog{                  "
+        "border: 2px solid black;  "
+        "background: white;        "
+        "}                         ";
     setWindowModality(Qt::WindowModal);
     setStyleSheet(ss);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
@@ -29,14 +31,10 @@ GotoDialog::GotoDialog(QWidget *parent) :
     ui->spinBoxChapter->installEventFilter(this);
     ui->spinBoxPage->installEventFilter(this);
 
-//    this->setMinimumSize(QSize(mm_to_px(50), mm_to_px(40)));
-
+    //    this->setMinimumSize(QSize(mm_to_px(50), mm_to_px(40)));
 }
 
-GotoDialog::~GotoDialog()
-{
-    delete ui;
-}
+GotoDialog::~GotoDialog() { delete ui; }
 
 void GotoDialog::setup(int maxchapter, int maxpage, MangaIndex currentindex)
 {
@@ -47,15 +45,14 @@ void GotoDialog::setup(int maxchapter, int maxpage, MangaIndex currentindex)
     ui->spinBoxChapter->setValue(currentindex.chapter + 1);
 
     ui->spinBoxPage->setMaximum(maxpage);
-    ui->spinBoxPage->setValue(currentindex. page + 1);
+    ui->spinBoxPage->setValue(currentindex.page + 1);
 
+    ui->spinBoxChapter->setCorrectionMode(
+        QAbstractSpinBox::CorrectToNearestValue);
 
-    ui->spinBoxChapter->setCorrectionMode(QAbstractSpinBox::CorrectToNearestValue);
-
-    this->setMinimumSize(this->parentWidget()->width() * 0.8, this->parentWidget()->height() * 0.6);
-
+    this->setMinimumSize(this->parentWidget()->width() * 0.8,
+                         this->parentWidget()->height() * 0.6);
 }
-
 
 bool GotoDialog::eventFilter(QObject *obj, QEvent *event)
 {
@@ -73,12 +70,10 @@ bool GotoDialog::eventFilter(QObject *obj, QEvent *event)
         else if (event->type() == QEvent::KeyPress)
         {
             QKeyEvent *key = static_cast<QKeyEvent *>(event);
-            if ( (key->key() == Qt::Key_Enter) || (key->key() == Qt::Key_Return) )
+            if ((key->key() == Qt::Key_Enter) || (key->key() == Qt::Key_Return))
             {
-                if (obj == ui->spinBoxChapter)
-                    on_pushButtonGoChapter_clicked();
-                if (obj == ui->spinBoxPage)
-                    on_pushButtonGoPage_clicked();
+                if (obj == ui->spinBoxChapter) on_pushButtonGoChapter_clicked();
+                if (obj == ui->spinBoxPage) on_pushButtonGoPage_clicked();
 
                 return true;
             }
@@ -104,8 +99,10 @@ void GotoDialog::moveCursorRight(int steps)
 
     for (int i = 0; i < steps; i++)
     {
-        QKeyEvent *pressEvent = new QKeyEvent(QEvent::KeyPress, Qt::Key_Right, Qt::NoModifier);
-        QKeyEvent *releaseEvent = new QKeyEvent(QEvent::KeyRelease, Qt::Key_Right, Qt::NoModifier);
+        QKeyEvent *pressEvent =
+            new QKeyEvent(QEvent::KeyPress, Qt::Key_Right, Qt::NoModifier);
+        QKeyEvent *releaseEvent =
+            new QKeyEvent(QEvent::KeyRelease, Qt::Key_Right, Qt::NoModifier);
 
         qApp->postEvent(target, pressEvent);
         qApp->postEvent(target, releaseEvent);
@@ -120,6 +117,7 @@ void GotoDialog::on_pushButtonGoChapter_clicked()
 
 void GotoDialog::on_pushButtonGoPage_clicked()
 {
-    this->selectedindex = MangaIndex(currentindex.chapter, ui->spinBoxPage->value() - 1);
+    this->selectedindex =
+        MangaIndex(currentindex.chapter, ui->spinBoxPage->value() - 1);
     this->accept();
 }

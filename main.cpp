@@ -1,6 +1,7 @@
 #include <QApplication>
-#include <QScreen>
 #include <QQuickView>
+#include <QScreen>
+
 #include "mainwidget.h"
 
 int main(int argc, char *argv[])
