@@ -60,6 +60,19 @@ QSharedPointer<DownloadStringJob> DownloadManager::downloadAsString(
     return job;
 }
 
+QSharedPointer<DownloadStringJob> DownloadManager::downloadAsStringPost(
+    const QString &url, QByteArray *postdata, int timeout)
+{
+    qDebug() << "downloading:" << url;
+
+    auto job = QSharedPointer<DownloadStringJob>(
+        new DownloadStringJob(this, networkmanager, url, timeout, postdata),
+        &QObject::deleteLater);
+
+    job->start();
+    return job;
+}
+
 QSharedPointer<DownloadFileJob> DownloadManager::downloadAsFile(
     const QString &url, const QString &localPath)
 {

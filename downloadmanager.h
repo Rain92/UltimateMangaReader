@@ -34,6 +34,9 @@ public:
 
     QSharedPointer<DownloadStringJob> downloadAsString(const QString &url,
                                                        int timeout = 4000);
+    QSharedPointer<DownloadStringJob> downloadAsStringPost(const QString &url,
+                                                           QByteArray *postdata,
+                                                           int timeout = 4000);
     QSharedPointer<DownloadFileJob> downloadAsFile(const QString &url,
                                                    const QString &localPath);
     QSharedPointer<DownloadFileJob> downloadAsScaledImage(

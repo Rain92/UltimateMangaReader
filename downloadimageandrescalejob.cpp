@@ -1,7 +1,6 @@
 #include "downloadimageandrescalejob.h"
 
 #include <QImage>
-#include <QtConcurrent/QtConcurrent>
 
 #include "configs.h"
 #include "downloadmanager.h"

@@ -19,9 +19,11 @@ public:
     QString buffer;
     QTimer timeouttimer;
     int timeouttime;
+    QByteArray *postdata;
 
     DownloadStringJob(QObject *parent, QNetworkAccessManager *networkManager,
-                      const QString &url, int timeout = 3000);
+                      const QString &url, int timeout = 3000,
+                      QByteArray *postdata = nullptr);
 
     bool await(int timeout = 5000, bool retry = true);
 

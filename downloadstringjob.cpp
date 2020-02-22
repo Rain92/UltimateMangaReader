@@ -8,7 +8,8 @@
 
 DownloadStringJob::DownloadStringJob(QObject *parent,
                                      QNetworkAccessManager *networkManager,
-                                     const QString &url, int timeout)
+                                     const QString &url, int timeout,
+                                     QByteArray *postdata)
     : QObject(parent),
       networkManager(networkManager),
       reply(),
@@ -16,14 +17,22 @@ DownloadStringJob::DownloadStringJob(QObject *parent,
       isCompleted(false),
       errorString(""),
       buffer(""),
-      timeouttime(timeout)
+      timeouttime(timeout),
+      postdata(postdata)
 {
 }
 
 void DownloadStringJob::start()
 {
     QNetworkRequest request(url);
-    reply.reset(networkManager->get(request));
+    if (!postdata)
+        reply.reset(networkManager->get(request));
+    else
+    {
+        request.setHeader(QNetworkRequest::ContentTypeHeader,
+                          "application/x-www-form-urlencoded");
+        reply.reset(networkManager->post(request, *postdata));
+    }
 
     //    QObject::connect(reply.get(), SIGNAL(readyRead()), this,
     //                     SLOT(downloadStringReadyRead()));

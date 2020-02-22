@@ -10,6 +10,10 @@ JaiminisBox::JaiminisBox(QObject *parent, DownloadManager *dm)
 {
     name = "JaiminisBox";
     baseurl = "https://jaiminisbox.com/";
+
+    QUrlQuery postdata;
+    postdata.addQueryItem("adult", "true");
+    postdatastr = postdata.query().toUtf8();
 }
 
 bool JaiminisBox::updateMangaList()
@@ -69,7 +73,7 @@ bool JaiminisBox::updateMangaList()
 QSharedPointer<MangaInfo> JaiminisBox::getMangaInfo(const QString &mangalink)
 {
     //    qDebug() << mangalink;
-    auto job = downloadmanager->downloadAsString(mangalink);
+    auto job = downloadmanager->downloadAsStringPost(mangalink, &postdatastr);
 
     auto info = QSharedPointer<MangaInfo>(new MangaInfo(this, this));
     info->mangasource = this;
@@ -188,7 +192,8 @@ void JaiminisBox::updateMangaInfoFinishedLoading(
 
 QStringList JaiminisBox::getPageList(const QString &chapterlink)
 {
-    auto job = downloadmanager->downloadAsString(chapterlink, -1);
+    auto job =
+        downloadmanager->downloadAsStringPost(chapterlink, &postdatastr, -1);
     QStringList pageLinks;
 
     if (!job->await(4000))

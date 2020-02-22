@@ -17,6 +17,9 @@ public:
 
     void updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
                                         QSharedPointer<MangaInfo> info);
+
+private:
+    QByteArray postdatastr;
 };
 
 #endif  // JAIMINISBOX_H

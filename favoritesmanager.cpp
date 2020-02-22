@@ -10,7 +10,8 @@ FavoritesManager::FavoritesManager(
 void FavoritesManager::deserialize()
 {
     QFile file(QString(cachedir) + "favorites.dat");
-    if (!file.open(QIODevice::ReadOnly)) return;
+    if (!file.open(QIODevice::ReadOnly))
+        return;
 
     QDataStream in(&file);
     in >> favorites;
@@ -24,7 +25,8 @@ void FavoritesManager::serialize()
     //    qDebug() << "serialize";
 
     QFile file(QString(cachedir) + "favorites.dat");
-    if (!file.open(QIODevice::WriteOnly)) return;
+    if (!file.open(QIODevice::WriteOnly))
+        return;
 
     QDataStream out(&file);
     out << favorites;
@@ -36,7 +38,8 @@ bool FavoritesManager::isFavorite(MangaInfo *info)
     QString key = info->hostname + info->title;
     foreach (const Favorite &f, favorites)
     {
-        if (f.hostname + f.title == key) return true;
+        if (f.hostname + f.title == key)
+            return true;
     }
     return false;
 }
@@ -83,7 +86,8 @@ void FavoritesManager::loadInfos()
     {
         foreach (AbstractMangaSource *s, mangasources)
         {
-            if (s->name != fav.hostname) continue;
+            if (s->name != fav.hostname)
+                continue;
 
             QSharedPointer<MangaInfo> mi =
                 s->loadMangaInfo(fav.mangalink, fav.title, false);
@@ -99,8 +103,6 @@ void FavoritesManager::updateInfos()
         foreach (AbstractMangaSource *s, mangasources)
             if (s->name == info->hostname)
             {
-                if (s->name != info->hostname) continue;
-
                 s->updateMangaInfo(info);
                 break;
             }
