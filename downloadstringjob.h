@@ -10,7 +10,7 @@ class DownloadStringJob : public QObject
 
 protected:
     QNetworkAccessManager *networkManager;
-    QNetworkReply *reply;
+    QScopedPointer<QNetworkReply> reply;
 
 public:
     QUrl url;

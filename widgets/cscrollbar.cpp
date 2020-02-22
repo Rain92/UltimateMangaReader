@@ -140,7 +140,8 @@ void CScrollBar::mousePressEvent(QMouseEvent *e)
 
 void CScrollBar::mouseMoveEvent(QMouseEvent *e)
 {
-    if (!mousedownonslider) return;
+    if (!mousedownonslider)
+        return;
 
     QPoint click = e->pos();
 
@@ -202,7 +203,8 @@ QRect CScrollBar::visualRect(Qt::LayoutDirection direction,
                              const QRect &boundingRect,
                              const QRect &logicalRect)
 {
-    if (direction == Qt::LeftToRight) return logicalRect;
+    if (direction == Qt::LeftToRight)
+        return logicalRect;
     QRect rect = logicalRect;
     rect.translate(2 * (boundingRect.right() - logicalRect.right()) +
                        logicalRect.width() - boundingRect.width(),
@@ -213,8 +215,10 @@ QRect CScrollBar::visualRect(Qt::LayoutDirection direction,
 int CScrollBar::sliderPositionFromValue(int min, int max, int logicalValue,
                                         int span, bool upsideDown)
 {
-    if (span <= 0 || logicalValue < min || max <= min) return 0;
-    if (logicalValue > max) return upsideDown ? span : min;
+    if (span <= 0 || logicalValue < min || max <= min)
+        return 0;
+    if (logicalValue > max)
+        return upsideDown ? span : min;
 
     uint range = max - min;
     uint p = upsideDown ? max - logicalValue : logicalValue - min;

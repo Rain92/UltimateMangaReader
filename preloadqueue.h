@@ -18,6 +18,7 @@ struct DownloadImageInfo
     QString title;
     int chapter;
     int page;
+    QSharedPointer<DownloadFileJob> job;
 };
 
 class PreloadQueue : public QObject
@@ -30,7 +31,7 @@ public:
     void addJob(DownloadImageInfo info);
     void clearQuene();
 
-    DownloadScaledImageJob *currentJob();
+    QSharedPointer<DownloadFileJob> currentJob();
 
 signals:
     void completedDownload(const QString &path);
@@ -45,7 +46,7 @@ private slots:
 private:
     AbstractMangaSource *source;
     QQueue<DownloadImageInfo> queue;
-    DownloadScaledImageJob *job;
+    QSharedPointer<DownloadFileJob> job;
     QTimer *resettimer;
     bool running;
 };

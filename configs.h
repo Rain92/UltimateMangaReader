@@ -60,7 +60,7 @@
 
 #define imagecachesize 6
 
-#define maxparalleldownloads 1
+#define maxparalleldownloads 10
 
 QString makePathLegal(QString filename);
 

@@ -4,12 +4,10 @@
 #include "configs.h"
 
 MangaTown::MangaTown(QObject *parent, DownloadManager *dm)
-    : AbstractMangaSource(parent)
+    : AbstractMangaSource(parent, dm)
 {
-    AbstractMangaSource::nummangas = 0;
     AbstractMangaSource::name = "MangaTown";
     AbstractMangaSource::baseurl = "https://www.mangatown.com";
-    AbstractMangaSource::downloadmanager = dm;
 }
 
 bool MangaTown::updateMangaList()
@@ -21,9 +19,8 @@ bool MangaTown::updateMangaList()
         AbstractMangaSource::baseurl + "/directory/0-0-0-0-0-0/";
     QString basedictsuffix = ".htm?name.az";
 
-    DownloadStringJob *job =
-        AbstractMangaSource::downloadmanager->downloadAsString(
-            basedictlink + "1" + basedictsuffix, -1);
+    auto job = AbstractMangaSource::downloadmanager->downloadAsString(
+        basedictlink + "1" + basedictsuffix, -1);
 
     if (!job->await(6000))
     {
@@ -45,7 +42,7 @@ bool MangaTown::updateMangaList()
 
     //    qDebug() << pages;
 
-    QVector<DownloadStringJob *> jobs = QVector<DownloadStringJob *>(pages);
+    auto jobs = QVector<QSharedPointer<DownloadStringJob>>(pages);
     jobs[0] = job;
 
     QRegExp rx("<P class=\"title\">[^\"]*\"([^\"]*)\" title=\"([^\"]*)");
@@ -84,7 +81,6 @@ bool MangaTown::updateMangaList()
             }
 
             qDebug() << "rx" << rxi << "time:" << timer.elapsed();
-            delete jobs[rxi];
         }
         emit updateProgress(100 * rxi / pages);
     }
@@ -94,14 +90,14 @@ bool MangaTown::updateMangaList()
     return true;
 }
 
-MangaInfo *MangaTown::getMangaInfo(QString mangalink)
+QSharedPointer<MangaInfo> MangaTown::getMangaInfo(const QString &mangalink)
 {
-    if (mangalink.left(5) != "https")
-        mangalink = AbstractMangaSource::baseurl + mangalink;
-    DownloadStringJob *job =
+    //    if (mangalink.left(5) != "https")
+    //        mangalink = AbstractMangaSource::baseurl + mangalink;
+    auto job =
         AbstractMangaSource::downloadmanager->downloadAsString(mangalink);
 
-    MangaInfo *info = new MangaInfo(this, this);
+    auto info = QSharedPointer<MangaInfo>(new MangaInfo(this, this));
     info->mangasource = this;
     info->hostname = AbstractMangaSource::name;
 
@@ -149,21 +145,22 @@ MangaInfo *MangaTown::getMangaInfo(QString mangalink)
     QRegExp coverrx("<div class=\"detail_info clearfix\">[^\"]*\"([^\"]*)");
 
     QString coverlink;
-    if (coverrx.indexIn(job->buffer, spos) != -1) coverlink = coverrx.cap(1);
+    if (coverrx.indexIn(job->buffer, spos) != -1)
+        coverlink = coverrx.cap(1);
 
     info->coverlink = coverlink;
 
     int ind = coverlink.indexOf('?');
-    if (ind == -1) ind = coverlink.length();
+    if (ind == -1)
+        ind = coverlink.length();
     QString filetype = coverlink.mid(ind - 4, 4);
     info->coverpath = mangainfodir(name, info->title) + "cover" + filetype;
 
     //    qDebug() << coverlink << filetype;
     //    qDebug() << info->coverpath;
 
-    DownloadFileJob *coverjob =
-        AbstractMangaSource::downloadmanager->downloadAsFile(coverlink,
-                                                             info->coverpath);
+    auto coverjob = AbstractMangaSource::downloadmanager->downloadAsFile(
+        coverlink, info->coverpath);
 
     QRegExp rx("<a href=\"([^\"]*)\">\\s+([^<]*)[^>]*>\\s*");
     QRegExp rx2("(.*)<span class");
@@ -198,15 +195,14 @@ MangaInfo *MangaTown::getMangaInfo(QString mangalink)
     {
         //        info->coverpath = "";
     }
-    delete job;
 
     info->serialize();
 
     return info;
 }
 
-void MangaTown::updateMangaInfoFinishedLoading(DownloadStringJob *job,
-                                               MangaInfo *info)
+void MangaTown::updateMangaInfoFinishedLoading(
+    QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info)
 {
     int spos = job->buffer.indexOf("<div class=\"chapter_content\">");
     int epos = job->buffer.indexOf("</div>", spos);
@@ -231,7 +227,8 @@ void MangaTown::updateMangaInfoFinishedLoading(DownloadStringJob *job,
 
     QRegExp statusrx("Status\\(s\\):</b>([^<&]*)");
 
-    if (statusrx.indexIn(job->buffer, 0) != -1) info->status = statusrx.cap(1);
+    if (statusrx.indexIn(job->buffer, 0) != -1)
+        info->status = statusrx.cap(1);
 
     QRegExp rx("<a href=\"([^\"]*)\">\\s+([^<]*)[^>]*>\\s*");
     QRegExp rx2("(.*)<span class");
@@ -263,15 +260,17 @@ void MangaTown::updateMangaInfoFinishedLoading(DownloadStringJob *job,
 
 QStringList MangaTown::getPageList(const QString &chapterlink)
 {
-    DownloadStringJob *job =
+    auto job =
         AbstractMangaSource::downloadmanager->downloadAsString(chapterlink);
     QStringList pageLinks;
 
-    if (!job->await(3000)) return pageLinks;
+    if (!job->await(3000))
+        return pageLinks;
 
     QRegExp rx("var total_pages\\s*=\\s*(\\d*)");
 
-    if (rx.indexIn(job->buffer, 0) == -1) return pageLinks;
+    if (rx.indexIn(job->buffer, 0) == -1)
+        return pageLinks;
 
     int numpages = rx.cap(1).toInt();
 
@@ -283,18 +282,17 @@ QStringList MangaTown::getPageList(const QString &chapterlink)
         pageLinks.append(chapterlink + QString::number(i) + ".html");
     }
 
-    delete job;
     return pageLinks;
 }
 
 QString MangaTown::getImageLink(const QString &pagelink)
 {
-    DownloadStringJob *job =
-        AbstractMangaSource::downloadmanager->downloadAsString(pagelink);
+    auto job = AbstractMangaSource::downloadmanager->downloadAsString(pagelink);
 
     //    qDebug() << pagelink;
 
-    if (!job->await(3000)) return "";
+    if (!job->await(3000))
+        return "";
 
     QRegExp rx("<img src=\"([^\"]*)\"[^>]*id=\"image\"");
 

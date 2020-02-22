@@ -4,6 +4,7 @@
 #include <qframe.h>
 
 #include <QMouseEvent>
+#include <QPainter>
 
 class MangaImageContainer : public QFrame
 {
@@ -13,16 +14,15 @@ public:
     MangaImageContainer(QWidget *parent);
 
     void setImage(const QString &path);
-    void setImage(const QPixmap &img);
+    void setImage(QSharedPointer<QPixmap> img);
 
 protected:
-    void mousePressEvent(QMouseEvent *event);
+    //    void mousePressEvent(QMouseEvent *event);
 
     virtual void paintEvent(QPaintEvent *);
 
 private:
-    QPixmap pixmap;
-    int imgwidth, imgheight;
+    QSharedPointer<QPixmap> pixmap;
 
 signals:
     void clicked(QPoint);

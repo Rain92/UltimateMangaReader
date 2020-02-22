@@ -131,7 +131,8 @@ void MangaInfoWidget::setFavoriteButtonState(bool state)
 
 void MangaInfoWidget::on_pushButtonMangaInfoAddFavorites_clicked()
 {
-    if (!currentmanga.isNull()) emit toggleFavoriteClicked(currentmanga);
+    if (!currentmanga.isNull())
+        emit toggleFavoriteClicked(currentmanga);
 }
 
 void MangaInfoWidget::on_listViewChapters_clicked(const QModelIndex &index)

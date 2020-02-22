@@ -12,14 +12,14 @@ class DownloadFileJob : public QObject
 protected:
     QNetworkAccessManager *networkManager;
     QFile file;
-    QNetworkReply *reply;
+    QScopedPointer<QNetworkReply> reply;
 
 public:
     DownloadFileJob(QObject *parent, QNetworkAccessManager *networkManager,
                     const QString &url, const QString &localFilePath);
     ~DownloadFileJob();
 
-    QUrl url;
+    QString url;
     QString filepath;
     bool isCompleted;
     QString errorString;

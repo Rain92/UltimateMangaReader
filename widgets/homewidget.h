@@ -61,7 +61,7 @@ private:
     void adjustSizes();
     void setupClearCacheDialog();
 
-    QList<QStandardItem *> *listViewItemfromMangaSource(
+    QList<QStandardItem *> listViewItemfromMangaSource(
         AbstractMangaSource *source);
     QProgressBar *updateProgressBar;
     UpdateDialog *updatedialog;

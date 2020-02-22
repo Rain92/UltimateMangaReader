@@ -11,8 +11,7 @@ MangaReaderWidget::MangaReaderWidget(QWidget *parent)
     : QWidget(parent),
       ui(new Ui::MangaReaderWidget),
       pagechanging(false),
-      imgcache(),
-      imgcachepaths()
+      imgcache()
 {
     ui->setupUi(this);
     adjustSizes();
@@ -253,18 +252,18 @@ void MangaReaderWidget::showImage(const QString &path)
 
     if (path != "")
     {
-        int i = imgcachepaths.indexOf(path);
+        int i = searchCache(path);
 
         if (i != -1)
         {
             qDebug() << "Cachehit:" << i;
-            ui->mangaImageContainer->setImage(*imgcache[i]);
+            ui->mangaImageContainer->setImage(imgcache[i].first);
         }
         else
         {
             qDebug() << "No cachehit.";
             addImageToCache(path);
-            ui->mangaImageContainer->setImage(*imgcache[0]);
+            ui->mangaImageContainer->setImage(imgcache[0].first);
         }
     }
     pagechanging = false;
@@ -272,24 +271,27 @@ void MangaReaderWidget::showImage(const QString &path)
 
 void MangaReaderWidget::addImageToCache(const QString &path)
 {
-    int i = imgcachepaths.indexOf(path);
+    int i = searchCache(path);
     if (i != -1)
     {
-        imgcachepaths.move(i, 0);
         imgcache.move(i, 0);
     }
     else
     {
-        imgcachepaths.insert(0, path);
-        imgcache.insert(0, new QPixmap(path));
+        imgcache.insert(0, {QSharedPointer<QPixmap>(new QPixmap(path)), path});
 
         if (imgcache.count() > imagecachesize)
-        {
-            imgcachepaths.removeLast();
-            delete imgcache.last();
             imgcache.removeLast();
-        }
     }
+}
+
+int MangaReaderWidget::searchCache(const QString &path) const
+{
+    for (int i = 0; i < imgcache.size(); i++)
+        if (imgcache[i].second == path)
+            return i;
+
+    return -1;
 }
 
 void MangaReaderWidget::setFrontLightPanelState(int lightmin, int lightmax,

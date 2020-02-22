@@ -1,5 +1,5 @@
-#ifndef WIFI_H
-#define WIFI_H
+#ifndef DOWNLOADMANAGER_H
+#define DOWNLOADMANAGER_H
 
 #include <QList>
 #include <QNetworkReply>
@@ -30,36 +30,35 @@ class DownloadManager : public QObject
 public:
     DownloadManager(QObject *parent);
 
-    bool connected();
+    QNetworkAccessManager *networkAccessManager();
 
-    QMap<QString, DownloadFileJob *> *fileDownloads;
-
-    DownloadStringJob *downloadAsString(const QString &url, int timeout = 4000);
-    DownloadFileJob *downloadAsFile(const QString &url,
-                                    const QString &localPath,
-                                    bool usedownloadmap = true);
-    DownloadFileJob *downloadAsScaledImage(const QString &url,
-                                           const QString &localPath);
-
-    bool awaitAllFileDownloads(int timeout);
+    QSharedPointer<DownloadStringJob> downloadAsString(const QString &url,
+                                                       int timeout = 4000);
+    QSharedPointer<DownloadFileJob> downloadAsFile(const QString &url,
+                                                   const QString &localPath);
+    QSharedPointer<DownloadFileJob> downloadAsScaledImage(
+        const QString &url, const QString &localPath);
 
     void setImageRescaleSize(QSize size);
 
     void addCookie(const QString &domain, const char *key, const char *value);
 
-    static void loadCertificates(const QString &certsPath);
+    bool connected();
+    bool connect();
 
-    QNetworkAccessManager *networkmanager;
+    static void loadCertificates(const QString &certsPath);
 
 signals:
 
 public slots:
-    bool connect();
 
 private:
-    CCookieJar *cookies;
+    QNetworkAccessManager *networkmanager;
+    CCookieJar cookies;
 
     QSize imageRescaleSize;
+
+    QMap<QString, QWeakPointer<DownloadFileJob>> fileDownloads;
 };
 
-#endif  // WIFI_H
+#endif  // DOWNLOADMANAGER_H

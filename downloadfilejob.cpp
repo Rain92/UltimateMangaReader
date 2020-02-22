@@ -9,7 +9,7 @@ DownloadFileJob::DownloadFileJob(QObject *parent,
                                  const QString &localFilePath)
     : QObject(parent),
       networkManager(networkManager),
-      reply(nullptr),
+      reply(),
       url(url),
       filepath(localFilePath),
       isCompleted(false),
@@ -29,16 +29,18 @@ DownloadFileJob::DownloadFileJob(QObject *parent,
         if (file.open(QIODevice::WriteOnly | QIODevice::Truncate))
         {
             QNetworkRequest request(url);
-            reply = networkManager->get(request);
+            reply.reset(networkManager->get(request));
 
-            QObject::connect(reply, SIGNAL(readyRead()), this,
+            QObject::connect(reply.get(), SIGNAL(readyRead()), this,
                              SLOT(downloadFileReadyRead()));
-            QObject::connect(reply, SIGNAL(finished()), this,
+            QObject::connect(reply.get(), SIGNAL(finished()), this,
                              SLOT(downloadFileFinished()));
-            QObject::connect(reply, SIGNAL(error(QNetworkReply::NetworkError)),
-                             this, SLOT(onError(QNetworkReply::NetworkError)));
-            QObject::connect(reply, SIGNAL(sslErrors(const QList<QSslError> &)),
-                             this, SLOT(onSslErrors(const QList<QSslError> &)));
+            QObject::connect(reply.get(),
+                             SIGNAL(error(QNetworkReply::NetworkError)), this,
+                             SLOT(onError(QNetworkReply::NetworkError)));
+            QObject::connect(reply.get(),
+                             SIGNAL(sslErrors(const QList<QSslError> &)), this,
+                             SLOT(onSslErrors(const QList<QSslError> &)));
         }
         else
         {
@@ -48,28 +50,17 @@ DownloadFileJob::DownloadFileJob(QObject *parent,
     }
 }
 
-DownloadFileJob::~DownloadFileJob()
-{
-    if (reply != nullptr) reply->deleteLater();
-    reply = nullptr;
-}
+DownloadFileJob::~DownloadFileJob() {}
 
-void DownloadFileJob::downloadFileReadyRead()
-{
-    //    qDebug() << "downloadFileReadyRead:" << file.fileName();
-    file.write(reply->readAll());
-}
+void DownloadFileJob::downloadFileReadyRead() { file.write(reply->readAll()); }
 
 void DownloadFileJob::downloadFileFinished()
 {
-    //    qDebug() << "download finished:" << file.fileName();
     if (file.isOpen())
     {
         file.flush();
         file.close();
     }
-
-    if (reply == nullptr) return;
 
     if (reply->error() != QNetworkReply::NoError)
     {
@@ -82,21 +73,18 @@ void DownloadFileJob::downloadFileFinished()
 
         file.rename(filepath);
 
-        if (reply != nullptr) reply->deleteLater();
-        reply = nullptr;
         emit completed();
     }
 }
 
 void DownloadFileJob::onSslErrors(const QList<QSslError> &errors)
 {
-    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    if (reply != nullptr)
-    {
-        foreach (const QSslError &ssle, errors)
-            qDebug() << "SSL Error" << ssle.errorString();
+    foreach (const QSslError &ssle, errors)
+        qDebug() << "SSL Error" << ssle.errorString();
+
+    auto *reply = qobject_cast<QNetworkReply *>(sender());
+    if (reply)
         reply->ignoreSslErrors();
-    }
 }
 
 void DownloadFileJob::onError(QNetworkReply::NetworkError)
@@ -109,22 +97,17 @@ void DownloadFileJob::onError(QNetworkReply::NetworkError)
 
     file.remove();
 
-    if (reply != nullptr)
-        errorString = reply->errorString();
-    else if (errorString == "")
-        errorString = "error";
+    errorString = reply->errorString();
 
     qDebug() << errorString;
-
-    if (reply != nullptr) reply->deleteLater();
-    reply = nullptr;
 
     emit downloadError();
 }
 
 bool DownloadFileJob::await(int timeout)
 {
-    if (isCompleted) return true;
+    if (isCompleted)
+        return true;
 
     QEventLoop loop;
     connect(this, SIGNAL(completed()), &loop, SLOT(quit()));
@@ -134,9 +117,11 @@ bool DownloadFileJob::await(int timeout)
     connect(&timer, SIGNAL(timeout()), &loop, SLOT(quit()));
     timer.start(timeout);
 
-    if (errorString != "") return false;
+    if (errorString != "")
+        return false;
 
-    if (isCompleted) return true;
+    if (isCompleted)
+        return true;
 
     loop.exec();
 

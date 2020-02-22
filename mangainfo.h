@@ -13,9 +13,8 @@ public:
     MangaInfo(QObject *parent, AbstractMangaSource *mangasource);
     ~MangaInfo();
 
-    static MangaInfo *deserialize(QObject *parent,
-                                  AbstractMangaSource *mangasource,
-                                  const QString &path);
+    static QSharedPointer<MangaInfo> deserialize(
+        QObject *parent, AbstractMangaSource *mangasource, const QString &path);
 
     void serialize();
     void serializeProgress();

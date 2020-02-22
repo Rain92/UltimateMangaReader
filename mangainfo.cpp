@@ -164,11 +164,10 @@ void MangaInfo::completedImagePreload(const QString &path)
     emit completedImagePreloadSignal(path);
 }
 
-MangaInfo *MangaInfo::deserialize(QObject *parent,
-                                  AbstractMangaSource *mangasource,
-                                  const QString &path)
+QSharedPointer<MangaInfo> MangaInfo::deserialize(
+    QObject *parent, AbstractMangaSource *mangasource, const QString &path)
 {
-    MangaInfo *mi = new MangaInfo(parent, mangasource);
+    auto mi = QSharedPointer<MangaInfo>(new MangaInfo(parent, mangasource));
 
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) return mi;

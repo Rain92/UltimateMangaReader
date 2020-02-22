@@ -27,16 +27,18 @@ public:
     MangaList mangalist;
     int nummangas;
 
-    AbstractMangaSource(QObject *parent);
+    AbstractMangaSource(QObject *parent, DownloadManager *downloadmanager);
 
     virtual void initialize() {}
 
     virtual bool updateMangaList() = 0;
 
-    virtual void updateMangaInfoFinishedLoading(DownloadStringJob *job,
-                                                MangaInfo *mangainfo) = 0;
+    virtual void updateMangaInfoFinishedLoading(
+        QSharedPointer<DownloadStringJob> job,
+        QSharedPointer<MangaInfo> mangainfo) = 0;
 
-    virtual MangaInfo *getMangaInfo(QString mangalink) = 0;
+    virtual QSharedPointer<MangaInfo> getMangaInfo(
+        const QString &mangalink) = 0;
 
     virtual QStringList getPageList(const QString &chapterlink) = 0;
     virtual QString getImageLink(const QString &pagelink) = 0;
@@ -48,23 +50,18 @@ public:
     bool serializeMangaList();
     bool deserializeMangaList();
 
-    DownloadFileJob *downloadImage(const QString &imagelink,
-                                   const QString &mangatitle,
-                                   const int &chapternum, const int &pagenum);
+    QSharedPointer<DownloadFileJob> downloadImage(const QString &imagelink,
+                                                  const QString &mangatitle,
+                                                  const int &chapternum,
+                                                  const int &pagenum);
     QString downloadAwaitImage(const QString &imagelink,
                                const QString &mangatitle, const int &chapternum,
                                const int &pagenum);
-
-    //    static QList<AbstractMangaSource *> sources;
-    //    static AbstractMangaSource *getSourceByName(const QString &name);
 
     QString htmlToPlainText(const QString &str);
 
 public slots:
     void updateMangaInfo(QSharedPointer<MangaInfo> mangainfo);
-
-private slots:
-    void updateMangaInfoReady(bool downladsccessfull);
 
 signals:
     void updateProgress(int);
@@ -73,46 +70,6 @@ signals:
 protected:
     DownloadManager *downloadmanager;
     QTextDocument htmlconverter;
-};
-
-class BindingClass : public QObject
-{
-    Q_OBJECT
-public:
-    BindingClass(AbstractMangaSource *mangasource,
-                 QSharedPointer<MangaInfo> mangainfo, DownloadStringJob *job)
-        : mangasource(mangasource), mangainfo(mangainfo), job(job)
-    {
-        QObject::connect(job, SIGNAL(completed()), this,
-                         SLOT(updateFinishedLoading()));
-        QObject::connect(job, SIGNAL(downloadError()), this, SLOT(error()));
-    }
-    ~BindingClass() { delete job; }
-
-public slots:
-    void updateFinishedLoading()
-    {
-        emit completed(true);
-        //        mangasource->updateMangaInfoFinishedLoading(job,
-        //        mangainfo.data()); mangainfo.clear(); job->deleteLater();
-        //        this->deleteLater();
-    }
-private slots:
-    void error()
-    {
-        qDebug() << "binding class: download error";
-        //        delete job;
-        //        this->deleteLater();
-        emit completed(false);
-    }
-
-signals:
-    void completed(bool);
-
-public:
-    AbstractMangaSource *mangasource;
-    QSharedPointer<MangaInfo> mangainfo;
-    DownloadStringJob *job;
 };
 
 #endif  // ABSTRACTMANGASOURCE_H

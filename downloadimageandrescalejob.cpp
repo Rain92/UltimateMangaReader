@@ -9,7 +9,7 @@
 DownloadScaledImageJob::DownloadScaledImageJob(
     QObject *parent, QNetworkAccessManager *networkManager, const QString &url,
     const QString &path, QSize size)
-    : DownloadFileJob(parent, networkManager, url, path), size(size), array()
+    : DownloadFileJob(parent, networkManager, url, path), size(size)
 {
 }
 
@@ -28,52 +28,36 @@ void DownloadScaledImageJob::downloadFileFinished()
         file.remove();
     }
 
-    if (reply == nullptr)
-    {
-        errorString += " reply is nullptr";
-        emit downloadError();
-        return;
-    }
     if (reply->error() != QNetworkReply::NoError)
     {
         onError(QNetworkReply::NetworkError());
     }
     else
     {
-        file.close();
-        //        connect(&watcher, SIGNAL(finished()), this,
-        //        SLOT(rescaleImageFinised()));
-
-        array = reply->readAll();
-        if (array.length() > 0)
+        if (rescaleImage(reply->readAll()))
         {
-            //            QFuture<void> conc = QtConcurrent::run(this,
-            //            &DownloadScaledImageJob::rescaleImage, array,
-            //            filepath); watcher.setFuture(conc);
-            rescaleImage(array, filepath);
-            rescaleImageFinised();
+            isCompleted = true;
+            emit completed();
         }
-        if (reply != nullptr) reply->deleteLater();
-        reply = nullptr;
+        else
+        {
+            QFile::remove(filepath);
+            emit downloadError();
+        }
     }
 }
 
-void DownloadScaledImageJob::rescaleImageFinised()
-{
-    array.clear();
-    isCompleted = true;
-    emit completed();
-}
-
-void DownloadScaledImageJob::rescaleImage(const QByteArray &array,
-                                          const QString &filename)
+bool DownloadScaledImageJob::rescaleImage(const QByteArray &array)
 {
     QImage img;
-    img.loadFromData(array);
+    if (!img.loadFromData(array))
+        return false;
     img = img.scaled(size.width(), size.height(), Qt::KeepAspectRatio,
                      Qt::SmoothTransformation);
     img = img.convertToFormat(QImage::Format_Grayscale8);
     //    img.save(filename, "PNG");
-    img.save(filename);
-    //    qDebug() << "rescaled!";
+    if (!img.save(filepath))
+        return false;
+
+    return true;
 }

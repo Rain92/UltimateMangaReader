@@ -11,12 +11,12 @@ public:
     MangaPanda(QObject *parent, DownloadManager *dm);
 
     bool updateMangaList();
-    MangaInfo *getMangaInfo(QString mangalink);
+    QSharedPointer<MangaInfo> getMangaInfo(const QString &mangalink);
     QStringList getPageList(const QString &chapterlink);
     QString getImageLink(const QString &pagelink);
 
-    void updateMangaInfoFinishedLoading(DownloadStringJob *job,
-                                        MangaInfo *info);
+    void updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
+                                        QSharedPointer<MangaInfo> info);
 };
 
 #endif  // MANGAPANDA_H

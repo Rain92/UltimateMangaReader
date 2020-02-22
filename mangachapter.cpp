@@ -22,17 +22,6 @@ MangaChapter::MangaChapter(const QString &link, AbstractMangaSource *source)
 {
 }
 
-MangaChapter::MangaChapter(const MangaChapter &origin)
-    : chapterlink(origin.chapterlink),
-      pagesloaded(origin.pagesloaded),
-      numpages(origin.numpages),
-      pagelinks(origin.pagelinks),
-      imagelinks(origin.imagelinks),
-      source(origin.source)
-{
-    //    qDebug() << "copyconstuctor";
-}
-
 void MangaChapter::loadPages()
 {
     if (pagesloaded) return;

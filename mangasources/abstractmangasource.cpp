@@ -1,22 +1,25 @@
 #include "abstractmangasource.h"
 
-#include <qdatetime.h>
-#include <qstringlist.h>
-
-#include <QtCore>
+#include <QDateTime>
+#include <QtConcurrent/QtConcurrent>
 
 #include "configs.h"
 #include "mangainfo.h"
 
-AbstractMangaSource::AbstractMangaSource(QObject *parent)
-    : QObject(parent), nummangas(0), htmlconverter()
+AbstractMangaSource::AbstractMangaSource(QObject *parent,
+                                         DownloadManager *downloadmanager)
+    : QObject(parent),
+      nummangas(0),
+      downloadmanager(downloadmanager),
+      htmlconverter()
 {
 }
 
 bool AbstractMangaSource::serializeMangaList()
 {
     QFile file(mangalistdir + name + "_mangalist.dat");
-    if (!file.open(QIODevice::WriteOnly)) return false;
+    if (!file.open(QIODevice::WriteOnly))
+        return false;
     QDataStream out(&file);
     out << mangalist.titles;
     out << mangalist.links;
@@ -33,7 +36,8 @@ bool AbstractMangaSource::deserializeMangaList()
     mangalist.titles.clear();
 
     QFile file(mangalistdir + name + "_mangalist.dat");
-    if (!file.open(QIODevice::ReadOnly)) return false;
+    if (!file.open(QIODevice::ReadOnly))
+        return false;
     QDataStream in(&file);
     in >> mangalist.titles;
     in >> mangalist.links;
@@ -44,22 +48,19 @@ bool AbstractMangaSource::deserializeMangaList()
     return true;
 }
 
-DownloadFileJob *AbstractMangaSource::downloadImage(const QString &imagelink,
-                                                    const QString &mangatitle,
-                                                    const int &chapternum,
-                                                    const int &pagenum)
+QSharedPointer<DownloadFileJob> AbstractMangaSource::downloadImage(
+    const QString &imagelink, const QString &mangatitle, const int &chapternum,
+    const int &pagenum)
 {
     int ind = imagelink.indexOf('?');
-    if (ind == -1) ind = imagelink.length();
+    if (ind == -1)
+        ind = imagelink.length();
     QString filetype = imagelink.mid(ind - 4, 4);
     QString path = mangaimagesdir(name, mangatitle) +
                    QString::number(chapternum) + "_" +
                    QString::number(pagenum) + filetype;
 
-    DownloadFileJob *job =
-        downloadmanager->downloadAsScaledImage(imagelink, path);
-
-    return job;
+    return downloadmanager->downloadAsScaledImage(imagelink, path);
 }
 
 QString AbstractMangaSource::downloadAwaitImage(const QString &imagelink,
@@ -68,29 +69,19 @@ QString AbstractMangaSource::downloadAwaitImage(const QString &imagelink,
                                                 const int &pagenum)
 {
     int ind = imagelink.indexOf('?');
-    if (ind == -1) ind = imagelink.length();
+    if (ind == -1)
+        ind = imagelink.length();
     QString filetype = imagelink.mid(ind - 4, 4);
     QString path = mangaimagesdir(name, mangatitle) +
                    QString::number(chapternum) + "_" +
                    QString::number(pagenum) + filetype;
 
-    if (QFile::exists(path)) return path;
-
-    DownloadFileJob *job =
-        downloadmanager->downloadAsScaledImage(imagelink, path);
-
-    if (job->await(5000))
-    {
-        downloadmanager->fileDownloads->remove(imagelink);
-        delete job;
+    if (QFile::exists(path))
         return path;
-    }
-    else
-    {
-        downloadmanager->fileDownloads->remove(imagelink);
-        delete job;
-        return "";
-    }
+
+    auto job = downloadmanager->downloadAsScaledImage(imagelink, path);
+
+    return job->await(5000) ? path : "";
 }
 
 QSharedPointer<MangaInfo> AbstractMangaSource::loadMangaInfo(
@@ -101,7 +92,8 @@ QSharedPointer<MangaInfo> AbstractMangaSource::loadMangaInfo(
     {
         QSharedPointer<MangaInfo> mi(
             MangaInfo::deserialize(this->parent(), this, infofile.filePath()));
-        if (update) mi->mangasource->updateMangaInfo(mi);
+        if (update)
+            mi->mangasource->updateMangaInfo(mi);
         return mi;
     }
 
@@ -112,41 +104,34 @@ QSharedPointer<MangaInfo> AbstractMangaSource::loadMangaInfo(
 
 void AbstractMangaSource::updateMangaInfo(QSharedPointer<MangaInfo> info)
 {
-    if (info.isNull() || info->updating) return;
+    if (info.isNull() || info->updating)
+        return;
 
     info->updating = true;
 
     //    qDebug() << "updating" << info->title;
 
+    QSharedPointer<DownloadFileJob> cjob(nullptr);
+
     if (!QFileInfo::exists(info->coverpath))
     {
-        DownloadFileJob *cjob =
-            AbstractMangaSource::downloadmanager->downloadAsFile(
-                info->coverlink, info->coverpath, false);
-        QObject::connect(cjob, SIGNAL(completed()), info.data(),
+        cjob = AbstractMangaSource::downloadmanager->downloadAsFile(
+            info->coverlink, info->coverpath);
+
+        QObject::connect(cjob.get(), SIGNAL(completed()), info.get(),
                          SLOT(sendCoverLoaded()));
     }
 
-    DownloadStringJob *job = downloadmanager->downloadAsString(info->link);
+    auto job = downloadmanager->downloadAsString(info->link);
 
-    // synchronously to prevent crashes
-    //    job->await();
-    //    updateMangaInfoFinishedLoading(job, info.data());
-    //    BindingClass(this, info, job).updateFinishedLoading();
-    BindingClass *b = new BindingClass(this, info, job);
+    QtConcurrent::run([info, job, cjob, this]() {
+        job->await(2000, true);
 
-    QObject::connect(b, SIGNAL(completed(bool)), this,
-                     SLOT(updateMangaInfoReady(bool)));
-}
+        if (cjob)
+            cjob->await(2000);
 
-void AbstractMangaSource::updateMangaInfoReady(bool downladsccessfull)
-{
-    BindingClass *b = static_cast<BindingClass *>(sender());
-
-    if (downladsccessfull)
-        updateMangaInfoFinishedLoading(b->job, b->mangainfo.data());
-    b->mangainfo->updating = false;
-    b->deleteLater();
+        updateMangaInfoFinishedLoading(job, info);
+    });
 }
 
 QString AbstractMangaSource::htmlToPlainText(const QString &str)
@@ -154,13 +139,3 @@ QString AbstractMangaSource::htmlToPlainText(const QString &str)
     htmlconverter.setHtml(str);
     return htmlconverter.toPlainText();
 }
-
-// AbstractMangaSource *AbstractMangaSource::getSourceByName(const QString
-// &name)
-//{
-//    foreach (AbstractMangaSource *s, sources)
-//        if (s->name == name)
-//            return s;
-//    return nullptr;
-
-//}

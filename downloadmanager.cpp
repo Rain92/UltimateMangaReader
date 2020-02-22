@@ -6,21 +6,26 @@
 #include <QNetworkRequest>
 #include <QTime>
 #include <QUrl>
-#include <QtCore>
 
 #ifdef KOBO
 #include "../koboplatformintegrationplugin/koboplatformfunctions.h"
 #endif
 
-DownloadManager::DownloadManager(QObject *parent) : QObject(parent)
+DownloadManager::DownloadManager(QObject *parent)
+    : QObject(parent),
+      networkmanager(new QNetworkAccessManager(this)),
+      cookies(),
+      fileDownloads()
 {
-    networkmanager = new QNetworkAccessManager(parent);
-    fileDownloads = new QMap<QString, DownloadFileJob *>();
-    cookies = new CCookieJar();
-    networkmanager->setCookieJar(cookies);
+    networkmanager->setCookieJar(&cookies);
 #ifdef KOBO
     loadCertificates("/mnt/onboard/.adds/qt-5.14.1-kobo/lib/ssl_certs");
 #endif
+}
+
+QNetworkAccessManager *DownloadManager::networkAccessManager()
+{
+    return this->networkmanager;
 }
 
 bool DownloadManager::connect()
@@ -42,55 +47,59 @@ bool DownloadManager::connected()
     return true;
 }
 
-DownloadStringJob *DownloadManager::downloadAsString(const QString &url,
-                                                     int timeout)
+QSharedPointer<DownloadStringJob> DownloadManager::downloadAsString(
+    const QString &url, int timeout)
 {
-    if (!connected()) connect();
-
     qDebug() << "downloading:" << url;
-    DownloadStringJob *job =
-        new DownloadStringJob(this, networkmanager, url, timeout);
+
+    auto job = QSharedPointer<DownloadStringJob>(
+        new DownloadStringJob(this, networkmanager, url, timeout),
+        &QObject::deleteLater);
 
     job->start();
     return job;
 }
 
-DownloadFileJob *DownloadManager::downloadAsFile(const QString &url,
-                                                 const QString &localPath,
-                                                 bool usedownloadmap)
+QSharedPointer<DownloadFileJob> DownloadManager::downloadAsFile(
+    const QString &url, const QString &localPath)
 {
-    if (!connected()) connect();
-
-    if (usedownloadmap && fileDownloads->contains(url))
+    if (fileDownloads.contains(url))
     {
-        return fileDownloads->value(url);
+        return fileDownloads.value(url).toStrongRef();
     }
     else
     {
-        DownloadFileJob *job =
-            new DownloadFileJob(this, networkmanager, url, localPath);
+        auto job = QSharedPointer<DownloadFileJob>(
+            new DownloadFileJob(this, networkmanager, url, localPath),
+            [this](DownloadFileJob *j) {
+                this->fileDownloads.remove(j->url);
+                j->deleteLater();
+            });
 
-        if (usedownloadmap) fileDownloads->insert(url, job);
+        fileDownloads.insert(url, job.toWeakRef());
 
         return job;
     }
 }
 
-DownloadFileJob *DownloadManager::downloadAsScaledImage(
+QSharedPointer<DownloadFileJob> DownloadManager::downloadAsScaledImage(
     const QString &url, const QString &localPath)
 {
-    if (!connected()) connect();
-
-    if (fileDownloads->contains(url))
+    if (fileDownloads.contains(url))
     {
-        return fileDownloads->value(url);
+        return fileDownloads.value(url).toStrongRef();
     }
     else
     {
-        DownloadFileJob *job = new DownloadScaledImageJob(
-            this, networkmanager, url, localPath, imageRescaleSize);
+        auto job = QSharedPointer<DownloadFileJob>(
+            new DownloadScaledImageJob(this, networkmanager, url, localPath,
+                                       imageRescaleSize),
+            [this](DownloadFileJob *j) {
+                this->fileDownloads.remove(j->url);
+                j->deleteLater();
+            });
 
-        fileDownloads->insert(url, job);
+        fileDownloads.insert(url, job.toWeakRef());
 
         return job;
     }
@@ -101,33 +110,18 @@ void DownloadManager::setImageRescaleSize(QSize size)
     imageRescaleSize = size;
 }
 
-bool DownloadManager::awaitAllFileDownloads(int timeout)
-{
-    QElapsedTimer timer;
-    timer.start();
-
-    foreach (DownloadFileJob *job, *fileDownloads)
-    {
-        int remaining = timeout - timer.elapsed();
-        if (remaining < 0 || !job->await(remaining)) return false;
-
-        delete job;
-    }
-    return true;
-}
-
 void DownloadManager::addCookie(const QString &domain, const char *key,
                                 const char *value)
 {
-    for (int i = 0; i < cookies->cookies.count(); i++)
-        if (cookies->cookies[i].name() == QByteArray(key) &&
-            cookies->cookies[i].domain() == domain)
+    for (int i = 0; i < cookies.cookies.count(); i++)
+        if (cookies.cookies[i].name() == QByteArray(key) &&
+            cookies.cookies[i].domain() == domain)
         {
-            cookies->cookies.removeAt(i);
+            cookies.cookies.removeAt(i);
             break;
         }
 
-    cookies->addCookie(domain, key, value);
+    cookies.addCookie(domain, key, value);
 }
 
 void DownloadManager::loadCertificates(const QString &certsPath)

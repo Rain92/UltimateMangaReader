@@ -65,7 +65,7 @@ void HomeWidget::setupSourcesList()
     QStandardItemModel *model = new QStandardItemModel(this);
 
     foreach (AbstractMangaSource *ms, *mangasources)
-        model->appendRow(*listViewItemfromMangaSource(ms));
+        model->appendRow(listViewItemfromMangaSource(ms));
 
     ui->listViewSources->setIconSize(
         QSize(mangasourceiconsize, mangasourceiconsize));
@@ -116,7 +116,8 @@ void HomeWidget::on_pushButtonUpdate_clicked()
     foreach (AbstractMangaSource *ms, *mangasources)
     {
         updatedialog->setLabelText("Updating " + ms->name);
-        if (!ms->updateMangaList()) return;
+        if (!ms->updateMangaList())
+            return;
 
         if (ms->nummangas != ms->mangalist.links.count())
             updateError("Number of mangas does not match.\n" +
@@ -127,15 +128,15 @@ void HomeWidget::on_pushButtonUpdate_clicked()
     }
 }
 
-QList<QStandardItem *> *HomeWidget::listViewItemfromMangaSource(
+QList<QStandardItem *> HomeWidget::listViewItemfromMangaSource(
     AbstractMangaSource *source)
 {
-    QList<QStandardItem *> *items = new QList<QStandardItem *>();
+    QList<QStandardItem *> items;
     QStandardItem *item = new QStandardItem(source->name);
     item->setIcon(QIcon(QPixmap(":/resources/images/mangahostlogos/" +
                                 source->name.toLower() + ".png")));
     item->setSizeHint(QSize(mangasourceitemwidth, mangasourceitemheight));
-    items->append(item);
+    items.append(item);
 
     return items;
 }
@@ -215,7 +216,8 @@ void HomeWidget::on_pushButtonClearCache_clicked()
 
 void HomeWidget::on_listViewSources_clicked(const QModelIndex &index)
 {
-    if (ui->lineEditFilter->text() != "") ui->lineEditFilter->clear();
+    if (ui->lineEditFilter->text() != "")
+        ui->lineEditFilter->clear();
 
     filteredmangalinks.clear();
     filteredmangatitles.clear();
@@ -228,7 +230,8 @@ void HomeWidget::on_listViewSources_clicked(const QModelIndex &index)
 
 void HomeWidget::on_pushButtonFilter_clicked()
 {
-    if (currentsource == nullptr || currentsource->nummangas == 0) return;
+    if (currentsource == nullptr || currentsource->nummangas == 0)
+        return;
 
     QString ss = ui->lineEditFilter->text();
 
@@ -254,7 +257,8 @@ void HomeWidget::on_pushButtonFilter_clicked()
 
 void HomeWidget::on_pushButtonFilterClear_clicked()
 {
-    if (ui->lineEditFilter->text() != "") ui->lineEditFilter->clear();
+    if (ui->lineEditFilter->text() != "")
+        ui->lineEditFilter->clear();
 
     filteredmangalinks.clear();
     filteredmangatitles.clear();
@@ -264,7 +268,8 @@ void HomeWidget::on_pushButtonFilterClear_clicked()
 
 void HomeWidget::refreshMangaListView()
 {
-    if (currentsource == nullptr) return;
+    if (currentsource == nullptr)
+        return;
 
     QStringListModel *model = new QStringListModel(this);
 

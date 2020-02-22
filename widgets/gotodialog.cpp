@@ -72,8 +72,10 @@ bool GotoDialog::eventFilter(QObject *obj, QEvent *event)
             QKeyEvent *key = static_cast<QKeyEvent *>(event);
             if ((key->key() == Qt::Key_Enter) || (key->key() == Qt::Key_Return))
             {
-                if (obj == ui->spinBoxChapter) on_pushButtonGoChapter_clicked();
-                if (obj == ui->spinBoxPage) on_pushButtonGoPage_clicked();
+                if (obj == ui->spinBoxChapter)
+                    on_pushButtonGoChapter_clicked();
+                if (obj == ui->spinBoxPage)
+                    on_pushButtonGoPage_clicked();
 
                 return true;
             }

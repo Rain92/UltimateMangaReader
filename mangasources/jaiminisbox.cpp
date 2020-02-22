@@ -6,12 +6,10 @@
 #include "configs.h"
 
 JaiminisBox::JaiminisBox(QObject *parent, DownloadManager *dm)
-    : AbstractMangaSource(parent)
+    : AbstractMangaSource(parent, dm)
 {
-    nummangas = 0;
     name = "JaiminisBox";
     baseurl = "https://jaiminisbox.com/";
-    downloadmanager = dm;
 }
 
 bool JaiminisBox::updateMangaList()
@@ -34,8 +32,7 @@ bool JaiminisBox::updateMangaList()
 
     do
     {
-        DownloadStringJob *job =
-            downloadmanager->downloadAsString(nextlink, -1);
+        auto job = downloadmanager->downloadAsString(nextlink, -1);
         if (!job->await(5000))
         {
             emit updateError(job->errorString);
@@ -60,7 +57,6 @@ bool JaiminisBox::updateMangaList()
 
         rem = rem / 2;
         emit updateProgress(100 - rem);
-        delete job;
     } while (nextlink != "");
 
     qDebug() << nummangas;
@@ -70,12 +66,12 @@ bool JaiminisBox::updateMangaList()
     return true;
 }
 
-MangaInfo *JaiminisBox::getMangaInfo(QString mangalink)
+QSharedPointer<MangaInfo> JaiminisBox::getMangaInfo(const QString &mangalink)
 {
     //    qDebug() << mangalink;
-    DownloadStringJob *job = downloadmanager->downloadAsString(mangalink);
+    auto job = downloadmanager->downloadAsString(mangalink);
 
-    MangaInfo *info = new MangaInfo(this, this);
+    auto info = QSharedPointer<MangaInfo>(new MangaInfo(this, this));
     info->mangasource = this;
     info->hostname = name;
 
@@ -113,7 +109,8 @@ MangaInfo *JaiminisBox::getMangaInfo(QString mangalink)
     //    coverrx.setMinimal(true);
 
     QString coverlink;
-    if (coverrx.indexIn(job->buffer, spos) != -1) coverlink = coverrx.cap(1);
+    if (coverrx.indexIn(job->buffer, spos) != -1)
+        coverlink = coverrx.cap(1);
 
     //    qDebug() << coverlink;
 
@@ -121,12 +118,12 @@ MangaInfo *JaiminisBox::getMangaInfo(QString mangalink)
     info->coverlink = coverlink;
 
     int ind = coverlink.indexOf('?');
-    if (ind == -1) ind = coverlink.length();
+    if (ind == -1)
+        ind = coverlink.length();
     QString filetype = coverlink.mid(ind - 4, 4);
     info->coverpath = mangainfodir(name, info->title) + "cover" + filetype;
 
-    DownloadFileJob *coverjob =
-        downloadmanager->downloadAsFile(coverlink, info->coverpath);
+    auto coverjob = downloadmanager->downloadAsFile(coverlink, info->coverpath);
 
     QRegExp rx("<div class=\"title\"><a href=\"([^\"]*)\"\\s+title=\"([^\"]*)");
 
@@ -150,15 +147,13 @@ MangaInfo *JaiminisBox::getMangaInfo(QString mangalink)
         //        info->coverpath = "";
     }
 
-    delete job;
-
     info->serialize();
 
     return info;
 }
 
-void JaiminisBox::updateMangaInfoFinishedLoading(DownloadStringJob *job,
-                                                 MangaInfo *info)
+void JaiminisBox::updateMangaInfoFinishedLoading(
+    QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info)
 {
     int numchapters = job->buffer.count("<div class=\"title\"><a");
 
@@ -193,7 +188,7 @@ void JaiminisBox::updateMangaInfoFinishedLoading(DownloadStringJob *job,
 
 QStringList JaiminisBox::getPageList(const QString &chapterlink)
 {
-    DownloadStringJob *job = downloadmanager->downloadAsString(chapterlink, -1);
+    auto job = downloadmanager->downloadAsString(chapterlink, -1);
     QStringList pageLinks;
 
     if (!job->await(4000))
@@ -206,7 +201,8 @@ QStringList JaiminisBox::getPageList(const QString &chapterlink)
 
     QRegExp rx(R"(JSON.parse\(atob\("([^"]*))");
 
-    if (rx.indexIn(job->buffer, 0) == -1) return pageLinks;
+    if (rx.indexIn(job->buffer, 0) == -1)
+        return pageLinks;
 
     QByteArray decoded = QByteArray::fromBase64(rx.cap(1).toLatin1());
     QString decodedstr(decoded);
@@ -224,7 +220,6 @@ QStringList JaiminisBox::getPageList(const QString &chapterlink)
         //        qDebug() << pagerx.cap(1).replace("\\/", "/");
     }
 
-    delete job;
     return pageLinks;
 }
 

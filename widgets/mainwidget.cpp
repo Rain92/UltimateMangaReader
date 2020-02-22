@@ -125,9 +125,11 @@ void MainWidget::adjustSizes()
 void MainWidget::setupDirs()
 {
     qDebug() << mangalistdir;
-    if (!QDir(cachedir).exists()) QDir().mkpath(cachedir);
+    if (!QDir(cachedir).exists())
+        QDir().mkpath(cachedir);
 
-    if (!QDir(mangalistdir).exists()) QDir().mkpath(mangalistdir);
+    if (!QDir(mangalistdir).exists())
+        QDir().mkpath(mangalistdir);
 }
 
 void MainWidget::enableVirtualKeyboard(bool enabled)
@@ -192,9 +194,11 @@ void MainWidget::setWidgetTab(int page)
 
     //    qDebug() << "setWidgetTab" << page;
 
-    if (page == ui->stackedWidget->currentIndex()) return;
+    if (page == ui->stackedWidget->currentIndex())
+        return;
 
-    if (!currentmanga.isNull()) currentmanga->cancelAllPreloads();
+    if (!currentmanga.isNull())
+        currentmanga->cancelAllPreloads();
 
     if (page == 3)
     {
@@ -221,7 +225,8 @@ void MainWidget::setWidgetTab(int page)
 void MainWidget::viewFavorite(QSharedPointer<MangaInfo> info, bool current)
 {
     foreach (AbstractMangaSource *source, mangasources)
-        if (info->hostname == source->name) currentsource = source;
+        if (info->hostname == source->name)
+            currentsource = source;
 
     if (current)
     {
@@ -299,9 +304,11 @@ void MainWidget::readerGoBack() { setWidgetTab(lastTab); }
 
 void MainWidget::viewMangaImage(const MangaIndex &index)
 {
-    if (currentmanga->numchapters == 0) return;
+    if (currentmanga->numchapters == 0)
+        return;
 
-    if (index.illegal) return readerGoBack();
+    if (index.illegal)
+        return readerGoBack();
 
     ui->mangaReaderWidget->showImage(currentmanga->goChapterPage(index));
     ui->mangaReaderWidget->updateReaderLabels(currentmanga);

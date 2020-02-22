@@ -64,21 +64,21 @@ private:
 
     bool pagechanging;
 
-    void adjustSizes();
-
-    void setBatteryIcon();
-    QPair<int, bool> getBatteryState();
-
-    void showMenuBar(bool show);
-
-    QList<QPixmap *> imgcache;
-    QList<QString> imgcachepaths;
+    QQueue<QPair<QSharedPointer<QPixmap>, QString>> imgcache;
 
     QSharedPointer<MangaInfo> currentmanga;
 
     QPixmap batteryicons[4];
 
     GotoDialog *gotodialog;
+
+    void adjustSizes();
+
+    void setBatteryIcon();
+    QPair<int, bool> getBatteryState();
+    int searchCache(const QString &path) const;
+
+    void showMenuBar(bool show);
 };
 
 #endif  // MANGAREADERWIDGET_H
