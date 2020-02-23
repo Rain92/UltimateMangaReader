@@ -46,13 +46,9 @@ void NumpadWidget::setupButtons()
 
 void NumpadWidget::numButtonPressed(QAbstractButton *button)
 {
-    //    qDebug() << button->text().trimmed();
-
     Qt::Key key = (Qt::Key)button->property("key").toInt();
 
     QString repr = QKeySequence(key).toString();
-
-    //    qDebug() << repr;
 
     QWidget *target = qApp->focusWidget();
 

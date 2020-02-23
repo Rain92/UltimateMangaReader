@@ -21,7 +21,8 @@ MangaInfo::~MangaInfo() = default;
 
 QString MangaInfo::getCoverpathScaled() const
 {
-    if (coverpath == "") return "";
+    if (coverpath == "")
+        return "";
 
     QString scpath = coverpath;
     scpath.insert(scpath.length() - 4, "_scaled");
@@ -41,18 +42,14 @@ QString MangaInfo::getCoverpathScaled() const
 
 QString MangaInfo::getImageLink(MangaIndex index)
 {
-    //    qDebug() << "chapters:" << numchapters << chapters.count();
-    if (index.chapter < 0 || index.chapter >= numchapters) return "";
+    if (index.chapter < 0 || index.chapter >= numchapters)
+        return "";
 
     if (!chapters[index.chapter].pagesloaded)
     {
         chapters[index.chapter].loadPages();
         serialize();
     }
-
-    //    qDebug() << "chapter" << index.chapter << "page" << index.page << "of"
-    //    << chapters[index.chapter].pagelinks->count(); qDebug() <<
-    //    chapters.count();
 
     if (index.chapter >= numchapters ||
         chapters[index.chapter].imagelinks.count() <= index.page)
@@ -77,7 +74,8 @@ QString MangaInfo::getCurrentImage()
 QString MangaInfo::goChapterPage(MangaIndex index)
 {
     QString imagelink = getImageLink(index);
-    if (imagelink == "") return "";
+    if (imagelink == "")
+        return "";
 
     currentindex = index;
 
@@ -88,7 +86,8 @@ QString MangaInfo::goChapterPage(MangaIndex index)
 QString MangaInfo::goNextPage()
 {
     MangaIndex nextpage = currentindex.nextPageIndex(&chapters);
-    if (nextpage.illegal) return "";
+    if (nextpage.illegal)
+        return "";
 
     currentindex = nextpage;
 
@@ -98,7 +97,8 @@ QString MangaInfo::goNextPage()
 QString MangaInfo::goPrevPage()
 {
     MangaIndex prevpage = currentindex.prevPageIndex(&chapters);
-    if (prevpage.illegal) return "";
+    if (prevpage.illegal)
+        return "";
 
     currentindex = prevpage;
 
@@ -133,7 +133,8 @@ void MangaInfo::preloadImage(MangaIndex index)
 
 void MangaInfo::preloadPopular()
 {
-    if (numchapters == 0) return;
+    if (numchapters == 0)
+        return;
     preloadImage(currentindex);
     if (numchapters > 1 && currentindex.chapter != numchapters - 1)
         preloadImage(MangaIndex(numchapters - 1, 0));
@@ -143,16 +144,19 @@ void MangaInfo::preloadNeighbours(int distance)
 {
     MangaIndex ind = currentindex;
     ind = ind.nextPageIndex(&chapters);
-    if (!ind.illegal) preloadImage(ind);
+    if (!ind.illegal)
+        preloadImage(ind);
 
     ind = currentindex.prevPageIndex(&chapters);
-    if (!ind.illegal) preloadImage(ind);
+    if (!ind.illegal)
+        preloadImage(ind);
 
     ind = currentindex.nextPageIndex(&chapters);
     for (int i = 1; i < distance; i++)
     {
         ind = ind.nextPageIndex(&chapters);
-        if (ind.illegal) break;
+        if (ind.illegal)
+            break;
         preloadImage(ind);
     }
 }
@@ -170,7 +174,8 @@ QSharedPointer<MangaInfo> MangaInfo::deserialize(
     auto mi = QSharedPointer<MangaInfo>(new MangaInfo(parent, mangasource));
 
     QFile file(path);
-    if (!file.open(QIODevice::ReadOnly)) return mi;
+    if (!file.open(QIODevice::ReadOnly))
+        return mi;
 
     QDataStream in(&file);
     in >> mi->hostname >> mi->title >> mi->link >> mi->author >> mi->artist >>
@@ -195,7 +200,8 @@ QSharedPointer<MangaInfo> MangaInfo::deserialize(
 void MangaInfo::serialize()
 {
     QFile file(mangainfodir(hostname, title) + "mangainfo.dat");
-    if (!file.open(QIODevice::WriteOnly)) return;
+    if (!file.open(QIODevice::WriteOnly))
+        return;
 
     QDataStream out(&file);
     out << hostname << title << link << author << artist << releaseyear
@@ -212,7 +218,8 @@ void MangaInfo::serialize()
 void MangaInfo::serializeProgress()
 {
     QFile file(mangainfodir(hostname, title) + "progress.dat");
-    if (!file.open(QIODevice::WriteOnly)) return;
+    if (!file.open(QIODevice::WriteOnly))
+        return;
 
     QDataStream out(&file);
     out << currentindex << (qint32)numchapters;
@@ -224,7 +231,8 @@ void MangaInfo::deserializeProgress()
 {
     QFile file(mangainfodir(hostname, title) + "progress.dat");
 
-    if (!file.open(QIODevice::ReadOnly)) return;
+    if (!file.open(QIODevice::ReadOnly))
+        return;
 
     QDataStream in2(&file);
     in2 >> this->currentindex;

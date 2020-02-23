@@ -18,11 +18,10 @@ void PreloadQueue::resetQueue() { running = false; }
 
 void PreloadQueue::addJob(DownloadImageInfo info)
 {
-    if (info.imagelink == "") return;
+    if (info.imagelink == "")
+        return;
 
-    //    qDebug() << info.page;
     queue.enqueue(info);
-    //    if(queue.count() == 1)
     if (!running)
     {
         running = true;
@@ -34,7 +33,8 @@ void PreloadQueue::clearQuene() { queue.clear(); }
 
 QSharedPointer<DownloadFileJob> PreloadQueue::PreloadQueue::currentJob()
 {
-    if (running) return job;
+    if (running)
+        return job;
 
     return nullptr;
 }

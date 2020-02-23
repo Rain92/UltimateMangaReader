@@ -11,14 +11,19 @@ DownloadFileJob::DownloadFileJob(QObject *parent,
       networkManager(networkManager),
       reply(),
       url(url),
+      originalUrl(url),
       filepath(localFilePath),
       isCompleted(false),
       errorString("")
 {
-    QString dirname = QFileInfo(localFilePath).path();
+}
+
+void DownloadFileJob::start()
+{
+    QString dirname = QFileInfo(filepath).path();
     QDir().mkpath(dirname);
 
-    file.setFileName(localFilePath + ".part");
+    file.setFileName(filepath + ".part");
 
     if (QFile::exists(filepath))
     {
@@ -53,6 +58,14 @@ DownloadFileJob::DownloadFileJob(QObject *parent,
 
 DownloadFileJob::~DownloadFileJob() {}
 
+void DownloadFileJob::restart()
+{
+    isCompleted = false;
+    errorString = "";
+    reply.reset();
+    start();
+}
+
 void DownloadFileJob::downloadFileReadyRead() { file.write(reply->readAll()); }
 
 void DownloadFileJob::downloadFileFinished()
@@ -61,6 +74,15 @@ void DownloadFileJob::downloadFileFinished()
     {
         file.flush();
         file.close();
+    }
+
+    QUrl redirect =
+        reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
+    if (redirect.isValid() && reply->url() != redirect)
+    {
+        this->url = redirect.toString();
+        this->restart();
+        return;
     }
 
     if (reply->error() != QNetworkReply::NoError)

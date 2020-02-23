@@ -37,6 +37,8 @@ bool MangaTown::updateMangaList()
     int cpos = job->buffer.indexOf("<div class=\"next-page\">");
     chsrx.indexIn(job->buffer, cpos);
     int pages = chsrx.cap(1).toInt();
+    if (pages == 0)
+        return false;
 
     //    pages = 1;
 

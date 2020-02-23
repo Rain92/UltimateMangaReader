@@ -13,12 +13,12 @@ DownloadStringJob::DownloadStringJob(QObject *parent,
     : QObject(parent),
       networkManager(networkManager),
       reply(),
+      timeouttime(timeout),
+      postdata(postdata),
       url(url),
       isCompleted(false),
       errorString(""),
-      buffer(""),
-      timeouttime(timeout),
-      postdata(postdata)
+      buffer("")
 {
 }
 
@@ -70,6 +70,24 @@ void DownloadStringJob::downloadStringReadyRead()
 void DownloadStringJob::downloadStringFinished()
 {
     timeouttimer.stop();
+
+    QUrl redirect =
+        reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
+    if (redirect.isValid() && reply->url() != redirect)
+    {
+        if (redirect.host() != "")
+        {
+            this->url = redirect.toString();
+        }
+        else
+        {
+            QUrl base(this->url);
+            base.setPath(redirect.path());
+            this->url = base.toString();
+        }
+        this->restart();
+        return;
+    }
 
     if (errorString != "" || (reply->error() != QNetworkReply::NoError))
     {
@@ -142,11 +160,11 @@ bool DownloadStringJob::await(int timeout, bool retry)
     int rem = timeout - time.elapsed();
     if (errorString != "")
     {
-        qDebug() << "url" << url;
+        //        qDebug() << "url" << url;
         if (!retry)
             return false;
 
-        qDebug() << url << rem;
+        //        qDebug() << url << rem;
         if (rem > 0)
         {
             restart();
@@ -157,4 +175,10 @@ bool DownloadStringJob::await(int timeout, bool retry)
         errorString += "Download timeout.";
 
     return isCompleted;
+}
+
+QList<QNetworkCookie> DownloadStringJob::getCookies()
+{
+    return reply->header(QNetworkRequest::SetCookieHeader)
+        .value<QList<QNetworkCookie>>();
 }

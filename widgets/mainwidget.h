@@ -14,7 +14,6 @@
 #include "mangapanda.h"
 #include "mangareaderwidget.h"
 #include "mangatown.h"
-#include "mangawindow.h"
 #include "settings.h"
 
 namespace Ui

@@ -10,15 +10,15 @@ class MangaDex : public AbstractMangaSource
 public:
     MangaDex(QObject *parent, DownloadManager *dm);
 
-    void initialize();
+    void initialize() override;
 
-    bool updateMangaList();
-    QSharedPointer<MangaInfo> getMangaInfo(const QString &mangalink);
-    QStringList getPageList(const QString &chapterlink);
-    QString getImageLink(const QString &pagelink);
-
-    void updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
-                                        QSharedPointer<MangaInfo> info);
+    bool updateMangaList() override;
+    QSharedPointer<MangaInfo> getMangaInfo(const QString &mangalink) override;
+    void updateMangaInfoFinishedLoading(
+        QSharedPointer<DownloadStringJob> job,
+        QSharedPointer<MangaInfo> info) override;
+    QStringList getPageList(const QString &chapterlink) override;
+    QString getImageLink(const QString &pagelink) override;
 
 private:
     void login();

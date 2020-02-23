@@ -58,9 +58,9 @@
 #define frontlightsliderhandlewidth mm_to_px(7)
 #define frontlightsliderhandleheight mm_to_px(6)
 
-#define imagecachesize 6
+#define imagecachesize 10
 
-#define maxparalleldownloads 10
+#define maxparalleldownloads 5
 
 QString makePathLegal(QString filename);
 

@@ -22,8 +22,6 @@ void FavoritesManager::deserialize()
 
 void FavoritesManager::serialize()
 {
-    //    qDebug() << "serialize";
-
     QFile file(QString(cachedir) + "favorites.dat");
     if (!file.open(QIODevice::WriteOnly))
         return;
@@ -47,8 +45,6 @@ bool FavoritesManager::isFavorite(MangaInfo *info)
 bool FavoritesManager::toggleFavorite(QSharedPointer<MangaInfo> info)
 {
     QString key = info->hostname + info->title;
-
-    //    qDebug() << key;
 
     QMutableListIterator<Favorite> iterator(favorites);
     while (iterator.hasNext())

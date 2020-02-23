@@ -10,13 +10,13 @@ class MangaPanda : public AbstractMangaSource
 public:
     MangaPanda(QObject *parent, DownloadManager *dm);
 
-    bool updateMangaList();
-    QSharedPointer<MangaInfo> getMangaInfo(const QString &mangalink);
-    QStringList getPageList(const QString &chapterlink);
-    QString getImageLink(const QString &pagelink);
-
-    void updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
-                                        QSharedPointer<MangaInfo> info);
+    bool updateMangaList() override;
+    QSharedPointer<MangaInfo> getMangaInfo(const QString &mangalink) override;
+    void updateMangaInfoFinishedLoading(
+        QSharedPointer<DownloadStringJob> job,
+        QSharedPointer<MangaInfo> info) override;
+    QStringList getPageList(const QString &chapterlink) override;
+    QString getImageLink(const QString &pagelink) override;
 };
 
 #endif  // MANGAPANDA_H

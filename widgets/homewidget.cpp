@@ -146,10 +146,8 @@ bool removeDir(const QString &dirName, const QString &ignore = "")
     bool result = true;
     QDir dir(dirName);
 
-    //    qDebug() << dir.absoluteFilePath(dirName);
     if (dir.exists())
     {
-        //        qDebug() << dirName;
         foreach (
             QFileInfo info,
             dir.entryInfoList(QDir::NoDotAndDotDot | QDir::System |
@@ -244,7 +242,7 @@ void HomeWidget::on_pushButtonFilter_clicked()
         return;
     }
 
-    for (int i = 0; i < currentsource->nummangas; i++)
+    for (int i = 0; i < currentsource->mangalist.titles.size(); i++)
         if (currentsource->mangalist.titles[i].contains(ss,
                                                         Qt::CaseInsensitive))
         {

@@ -22,9 +22,17 @@ void DownloadScaledImageJob::downloadFileFinished()
 {
     if (file.isOpen())
     {
-        file.flush();
         file.close();
         file.remove();
+    }
+
+    QUrl redirect =
+        reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
+    if (redirect.isValid() && reply->url() != redirect)
+    {
+        this->url = redirect.toString();
+        this->restart();
+        return;
     }
 
     if (reply->error() != QNetworkReply::NoError)

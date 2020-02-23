@@ -69,7 +69,7 @@ void MangaReaderWidget::adjustSizes()
     ui->labelLessComfLight->setMaximumSize(
         QSize(resourceiconsize, resourceiconsize));
 
-    QPixmap p3(":/resources/images/icons/sun.png");
+    QPixmap p3(":/resources/images/icons/moon.png");
     ui->labelLessComfLight->setPixmap(
         p3.scaledToHeight(resourceiconsize, Qt::SmoothTransformation));
 
@@ -78,7 +78,7 @@ void MangaReaderWidget::adjustSizes()
     ui->labelMoreComfLight->setMaximumSize(
         QSize(resourceiconsize, resourceiconsize));
 
-    QPixmap p4(":/resources/images/icons/moon.png");
+    QPixmap p4(":/resources/images/icons/sun.png");
     ui->labelMoreComfLight->setPixmap(
         p4.scaledToHeight(resourceiconsize, Qt::SmoothTransformation));
 
@@ -142,64 +142,59 @@ bool MangaReaderWidget::gestureEvent(QGestureEvent *event)
 {
     if (QGesture *gesture = event->gesture(Qt::SwipeGesture))
     {
+        if (gesture->state() != Qt::GestureFinished || pagechanging)
+            return true;
+
         auto swipe = static_cast<QSwipeGesture *>(gesture);
-        if (swipe->state() == Qt::GestureFinished)
+
+        auto pos = this->mapFromGlobal(gesture->hotSpot().toPoint());
+        auto angle = swipe->swipeAngle();
+
+        if (ui->readerNavigationBar->isVisible())
         {
-            auto angle = swipe->swipeAngle();
-            if (!pagechanging && angle > 155 && angle < 205)
-            {
-                pagechanging = true;
-                emit advancPageClicked(true);
-            }
-            else if (!pagechanging && (angle > 335 || angle < 25))
-            {
-                pagechanging = true;
-                emit advancPageClicked(false);
-            }
-            else if (!pagechanging &&
-                     swipe->hotSpot().y() <
-                         this->height() * readerbottommenuethreshold &&
-                     angle > 245 && angle < 295)
-            {
-                showMenuBar(true);
-            }
+            if (pos.y() > this->height() * readerbottommenuethreshold * 2)
+                showMenuBar(false);
+        }
+        else if (angle > 155 && angle < 205)
+        {
+            pagechanging = true;
+            emit advancPageClicked(true);
+        }
+        else if (angle > 335 || angle < 25)
+        {
+            pagechanging = true;
+            emit advancPageClicked(false);
+        }
+        else if (swipe->hotSpot().y() <
+                     this->height() * readerbottommenuethreshold &&
+                 angle > 245 && angle < 295)
+        {
+            showMenuBar(true);
         }
     }
     else if (QGesture *gesture = event->gesture(Qt::TapGesture))
     {
-        auto pos = gesture->hotSpot().toPoint();
+        auto pos = this->mapFromGlobal(gesture->hotSpot().toPoint());
 
-#ifdef DESKTOP
-        pos = this->mapFromGlobal(pos);
-#endif
+        if (gesture->state() != Qt::GestureFinished || pagechanging)
+            return true;
 
-        if (gesture->state() == Qt::GestureFinished)
+        if (ui->readerNavigationBar->isVisible())
         {
-            if (ui->readerNavigationBar->isVisible())
-            {
-                if (pos.y() > this->height() * readerbottommenuethreshold * 2)
-                {
-                    showMenuBar(false);
-                }
-            }
-            else if (pos.y() < this->height() * readerbottommenuethreshold ||
-                     pos.y() >
-                         this->height() * (1.0 - readerbottommenuethreshold))
-            {
-                showMenuBar(true);
-            }
-            else if (!pagechanging)
-            {
-                pagechanging = true;
-                if (pos.x() > this->width() * readerpreviouspagethreshold)
-                {
-                    emit advancPageClicked(true);
-                }
-                else
-                {
-                    emit advancPageClicked(false);
-                }
-            }
+            if (pos.y() > this->height() * readerbottommenuethreshold * 2)
+                showMenuBar(false);
+        }
+        else if (pos.y() < this->height() * readerbottommenuethreshold ||
+                 pos.y() > this->height() * (1.0 - readerbottommenuethreshold))
+        {
+            showMenuBar(true);
+        }
+        else
+        {
+            pagechanging = true;
+            bool direction =
+                pos.x() > this->width() * readerpreviouspagethreshold;
+            emit advancPageClicked(direction);
         }
     }
 
@@ -256,17 +251,18 @@ void MangaReaderWidget::showImage(const QString &path)
 
         if (i != -1)
         {
-            qDebug() << "Cachehit:" << i;
+            //            qDebug() << "Cachehit:" << i;
             ui->mangaImageContainer->setImage(imgcache[i].first);
         }
         else
         {
-            qDebug() << "No cachehit.";
+            //            qDebug() << "No cachehit.";
             addImageToCache(path);
             ui->mangaImageContainer->setImage(imgcache[0].first);
         }
     }
-    pagechanging = false;
+
+    QTimer::singleShot(200, [=]() { pagechanging = false; });
 }
 
 void MangaReaderWidget::addImageToCache(const QString &path)

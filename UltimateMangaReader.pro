@@ -63,7 +63,7 @@ HEADERS += \
     favorite.h \
     favoritesmanager.h \
     mangasources/jaiminisbox.h \
-    mangasources/mangawindow.h \
+#    mangasources/mangawindow.h \
     widgets/gotodialog.h \
     widgets/updatedialog.h \
     settings.h \
@@ -96,7 +96,7 @@ SOURCES += \
     favorite.cpp \
     favoritesmanager.cpp \
     mangasources/jaiminisbox.cpp \
-    mangasources/mangawindow.cpp \
+#    mangasources/mangawindow.cpp \
     widgets/gotodialog.cpp \
     widgets/updatedialog.cpp \
     settings.cpp \

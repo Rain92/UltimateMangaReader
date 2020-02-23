@@ -20,6 +20,7 @@ public:
     ~DownloadFileJob();
 
     QString url;
+    QString originalUrl;
     QString filepath;
     bool isCompleted;
     QString errorString;
@@ -31,6 +32,8 @@ signals:
     void downloadError();
 
 public slots:
+    void start();
+    void restart();
     virtual void downloadFileReadyRead();
     virtual void downloadFileFinished();
     virtual void onSslErrors(const QList<QSslError> &errors);

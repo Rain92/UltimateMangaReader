@@ -6,7 +6,7 @@ MangaPanda::MangaPanda(QObject *parent, DownloadManager *dm)
     : AbstractMangaSource(parent, dm)
 {
     name = "MangaPanda";
-    baseurl = "https://www.mangapanda.com";
+    baseurl = "http://www.mangapanda.com";
 }
 
 bool MangaPanda::updateMangaList()
@@ -98,7 +98,7 @@ QSharedPointer<MangaInfo> MangaPanda::getMangaInfo(const QString &mangalink)
     if (coverrx.indexIn(job->buffer, 0) != -1)
         coverlink = coverrx.cap(1);
 
-    coverlink = coverlink.replace("http:", "https:");
+    //    coverlink = coverlink.replace("http:", "https:");
     info->coverlink = coverlink;
 
     int ind = coverlink.indexOf('?');

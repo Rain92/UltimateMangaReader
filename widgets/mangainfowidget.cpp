@@ -93,7 +93,6 @@ void MangaInfoWidget::setManga(QSharedPointer<MangaInfo> manga)
     ui->labelMangaInfoLabelGenresContent->setText(currentmanga->genres);
     ui->labelMangaInfoLabelStausContent->setText(currentmanga->status);
     ui->labelMangaInfoLabelSummaryContent->setText(currentmanga->summary);
-    //    ui->labelMangaInfoLabelYearContent->setText(currentmanga->releaseyear);
 
     ui->scrollAreaMangaInfoSummary->verticalScrollBar()->setValue(0);
     ui->listViewChapters->verticalScrollBar()->setValue(0);

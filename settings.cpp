@@ -16,27 +16,21 @@ Settings::Settings() : timer()
 void Settings::deserialize()
 {
     QFile file(QString(cachedir) + "/settings.dat");
-    if (!file.open(QIODevice::ReadOnly)) return;
+    if (!file.open(QIODevice::ReadOnly))
+        return;
 
     QDataStream in(&file);
     in >> *this;
     file.close();
 }
 
-void Settings::scheduleSerialize()
-{
-    //    if (timer.isActive())
-    //        timer.stop();
-
-    timer.start(2000);
-}
+void Settings::scheduleSerialize() { timer.start(2000); }
 
 void Settings::serialize()
 {
-    //    qDebug() << "saving";
-
     QFile file(QString(cachedir) + "/settings.dat");
-    if (!file.open(QIODevice::WriteOnly)) return;
+    if (!file.open(QIODevice::WriteOnly))
+        return;
 
     QDataStream out(&file);
     out << *this;

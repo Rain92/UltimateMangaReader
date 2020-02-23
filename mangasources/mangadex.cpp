@@ -18,37 +18,20 @@ void MangaDex::login()
     postData.addQueryItem("login_username", "UMRBot2");
     postData.addQueryItem("login_password", "umrbot123");
     postData.addQueryItem("remember_me", "1");
+    auto query = postData.query().toUtf8();
 
-    QNetworkRequest request(QString(
-        "https://mangadex.org/ajax/actions.ajax.php?function=login&nojs=1"));
-    request.setHeader(QNetworkRequest::ContentTypeHeader,
-                      "application/x-www-form-urlencoded");
+    QString loginurl(
+        "https://mangadex.org/ajax/actions.ajax.php?function=login&nojs=1");
 
-    QNetworkReply *reply = downloadmanager->networkAccessManager()->post(
-        request, postData.query().toUtf8());
+    auto job = downloadmanager->downloadAsStringPost(loginurl, &query);
 
-    QEventLoop loop;
-    connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
-    connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), &loop,
-            SLOT(quit()));
+    job->await(1000);
 
-    QTimer *timer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), &loop, SLOT(quit()));
-    timer->start(10000);
-
-    loop.exec();
-    timer->stop();
-
-    QList<QNetworkCookie> ncookies =
-        reply->header(QNetworkRequest::SetCookieHeader)
-            .value<QList<QNetworkCookie>>();
-    if (ncookies.count() != 0)
+    auto ncookies = job->getCookies();
+    foreach (QNetworkCookie c, ncookies)
     {
-        foreach (QNetworkCookie c, ncookies)
-        {
-            qDebug() << "Added cookie" << c.name() << c.value();
-            downloadmanager->addCookie(".mangadex.org", c.name(), c.value());
-        }
+        qDebug() << "Added cookie" << c.name() << c.value();
+        downloadmanager->addCookie(".mangadex.org", c.name(), c.value());
     }
 }
 
@@ -155,9 +138,7 @@ QSharedPointer<MangaInfo> MangaDex::getMangaInfo(const QString &mangalink)
 
     info->link = mangalink;
 
-    QRegExp titlerx(
-        "<span class='fas fa-book fa-fw ' aria-hidden='true'></span> <span "
-        "class=\"mx-1\">([^<]*)<");
+    QRegExp titlerx("class=\"mx-1\">([^<]*)<");
     titlerx.setMinimal(true);
 
     QRegExp authorrx("Author:</div>[^>]*>[^>]*>([^<]*)");
@@ -204,9 +185,8 @@ QSharedPointer<MangaInfo> MangaDex::getMangaInfo(const QString &mangalink)
 
     QString coverlink;
     if (coverrx.indexIn(job->buffer, spos) != -1)
-        coverlink = baseurl + coverrx.cap(1);
+        coverlink = coverrx.cap(1);
 
-    coverlink = coverlink.replace("http:", "https:");
     info->coverlink = coverlink;
     //    qDebug() << coverlink ;
 
@@ -217,6 +197,7 @@ QSharedPointer<MangaInfo> MangaDex::getMangaInfo(const QString &mangalink)
     info->coverpath = mangainfodir(name, info->title) + "cover" + filetype;
 
     auto coverjob = downloadmanager->downloadAsFile(coverlink, info->coverpath);
+    qDebug() << info->coverpath;
 
     QRegExp rx("<a href='(/chapter/[^']*)'[^>]*>([^<]*)</a>");
 

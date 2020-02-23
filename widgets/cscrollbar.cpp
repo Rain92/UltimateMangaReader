@@ -94,18 +94,11 @@ void CScrollBar::paintEvent(QPaintEvent *)
     }
 }
 
-void CScrollBar::setSliderLength(int length)
-{
-    sliderlength = length;
-    //    qDebug() << length << minimum() << value() << maximum();
-}
+void CScrollBar::setSliderLength(int length) { sliderlength = length; }
 
 void CScrollBar::adjustLength()
 {
     int maxlen = (orientation() == Qt::Horizontal) ? width() : height();
-
-    //    qDebug() << maxlen << sliderlength << minimum() << value() <<
-    //    maximum();
 
     if (maxlen - sliderlength > maximum() - minimum())
         setSliderLength(-maximum() + minimum() + maxlen);
@@ -128,13 +121,11 @@ void CScrollBar::mousePressEvent(QMouseEvent *e)
     else if (cpos > sliderstart + sliderlength)
     {
         setValue(value() + pageStep());
-        //        qDebug() << value() << maximum();
     }
     else
     {
         mousedownonslider = true;
         clickoffset = click;
-        //        qDebug() << "clicked";
     }
 }
 

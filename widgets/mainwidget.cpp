@@ -25,11 +25,10 @@ MainWidget::MainWidget(QWidget *parent)
     downloadmanager = new DownloadManager(this);
     downloadmanager->connect();
 
-    //    mangasources.append(new MangaDex(this, downloadmanager));
-    //    mangasources.append(new MangaPanda(this, downloadmanager));
-    //    mangasources.append(new MangaTown(this, downloadmanager));
-    //    mangasources.append(new MangaWindow(this, downloadmanager));
     mangasources.append(new JaiminisBox(this, downloadmanager));
+    mangasources.append(new MangaPanda(this, downloadmanager));
+    mangasources.append(new MangaDex(this, downloadmanager));
+    //    mangasources.append(new MangaTown(this, downloadmanager));
 
     ui->homeWidget->setMangaSources(&mangasources);
     currentsource = mangasources[0];
@@ -115,7 +114,6 @@ void MainWidget::adjustSizes()
 
 void MainWidget::setupDirs()
 {
-    qDebug() << mangalistdir;
     if (!QDir(cachedir).exists())
         QDir().mkpath(cachedir);
 
@@ -182,8 +180,6 @@ void MainWidget::setWidgetTab(int page)
     // TODO
 //    getVirtualKeyboard()->hide();
 #endif
-
-    //    qDebug() << "setWidgetTab" << page;
 
     if (page == ui->stackedWidget->currentIndex())
         return;

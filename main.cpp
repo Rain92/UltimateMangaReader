@@ -2,17 +2,20 @@
 #include <QQuickView>
 #include <QScreen>
 
+#include "../koboplatformintegrationplugin/koboplatformfunctions.h"
 #include "mainwidget.h"
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
+    MainWidget mainwidget;
+
 #ifdef KOBO
     qputenv("QT_IM_MODULE", QByteArray("qtvirtualkeyboard"));
+    auto dev = KoboPlatformFunctions::getKoboDeviceDescriptor();
+    mainwidget.resize(dev.width, dev.height);
 #endif
-
-    MainWidget mainwidget;
 
     QFile stylesheetFile(":/resources/eink.qss");
     stylesheetFile.open(QFile::ReadOnly);

@@ -18,7 +18,6 @@ struct DownloadImageInfo
     QString title;
     int chapter;
     int page;
-    QSharedPointer<DownloadFileJob> job;
 };
 
 class PreloadQueue : public QObject

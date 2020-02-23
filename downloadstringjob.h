@@ -11,21 +11,23 @@ class DownloadStringJob : public QObject
 protected:
     QNetworkAccessManager *networkManager;
     QScopedPointer<QNetworkReply> reply;
+    QTimer timeouttimer;
+    int timeouttime;
+    QByteArray *postdata;
 
 public:
     QUrl url;
     bool isCompleted;
     QString errorString;
     QString buffer;
-    QTimer timeouttimer;
-    int timeouttime;
-    QByteArray *postdata;
 
     DownloadStringJob(QObject *parent, QNetworkAccessManager *networkManager,
                       const QString &url, int timeout = 3000,
                       QByteArray *postdata = nullptr);
 
     bool await(int timeout = 5000, bool retry = true);
+
+    QList<QNetworkCookie> getCookies();
 
 signals:
     void completed();

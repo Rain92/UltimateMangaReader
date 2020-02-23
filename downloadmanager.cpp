@@ -18,6 +18,8 @@ DownloadManager::DownloadManager(QObject *parent)
       fileDownloads()
 {
     networkmanager->setCookieJar(&cookies);
+//    networkmanager->setRedirectPolicy(
+//        QNetworkRequest::RedirectPolicy::UserVerifiedRedirectPolicy);
 #ifdef KOBO
     loadCertificates("/mnt/onboard/.adds/qt-5.14.1-kobo/lib/ssl_certs");
 #endif
@@ -78,21 +80,25 @@ QSharedPointer<DownloadFileJob> DownloadManager::downloadAsFile(
 {
     if (fileDownloads.contains(url))
     {
-        return fileDownloads.value(url).toStrongRef();
+        auto job = fileDownloads.value(url).toStrongRef();
+        if (job)
+            return job;
+        else
+            fileDownloads.remove(url);
     }
-    else
-    {
-        auto job = QSharedPointer<DownloadFileJob>(
-            new DownloadFileJob(this, networkmanager, url, localPath),
-            [this](DownloadFileJob *j) {
-                this->fileDownloads.remove(j->url);
-                j->deleteLater();
-            });
 
-        fileDownloads.insert(url, job.toWeakRef());
+    auto job = QSharedPointer<DownloadFileJob>(
+        new DownloadFileJob(this, networkmanager, url, localPath),
+        [this](DownloadFileJob *j) {
+            this->fileDownloads.remove(j->originalUrl);
+            j->deleteLater();
+        });
 
-        return job;
-    }
+    job->start();
+
+    fileDownloads.insert(url, job.toWeakRef());
+
+    return job;
 }
 
 QSharedPointer<DownloadFileJob> DownloadManager::downloadAsScaledImage(
@@ -100,22 +106,25 @@ QSharedPointer<DownloadFileJob> DownloadManager::downloadAsScaledImage(
 {
     if (fileDownloads.contains(url))
     {
-        return fileDownloads.value(url).toStrongRef();
+        auto job = fileDownloads.value(url).toStrongRef();
+        if (job)
+            return job;
+        else
+            fileDownloads.remove(url);
     }
-    else
-    {
-        auto job = QSharedPointer<DownloadFileJob>(
-            new DownloadScaledImageJob(this, networkmanager, url, localPath,
-                                       imageRescaleSize),
-            [this](DownloadFileJob *j) {
-                this->fileDownloads.remove(j->url);
-                j->deleteLater();
-            });
+    auto job = QSharedPointer<DownloadFileJob>(
+        new DownloadScaledImageJob(this, networkmanager, url, localPath,
+                                   imageRescaleSize),
+        [this](DownloadFileJob *j) {
+            this->fileDownloads.remove(j->originalUrl);
+            j->deleteLater();
+        });
 
-        fileDownloads.insert(url, job.toWeakRef());
+    job->start();
 
-        return job;
-    }
+    fileDownloads.insert(url, job.toWeakRef());
+
+    return job;
 }
 
 void DownloadManager::setImageRescaleSize(QSize size)
