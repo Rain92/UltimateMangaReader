@@ -33,6 +33,7 @@ void DownloadStringJob::start()
                           "application/x-www-form-urlencoded");
         reply.reset(networkManager->post(request, *postdata));
     }
+    reply->setParent(this);
 
     //    QObject::connect(reply.get(), SIGNAL(readyRead()), this,
     //                     SLOT(downloadStringReadyRead()));
@@ -117,7 +118,8 @@ void DownloadStringJob::timeout()
 
 bool DownloadStringJob::await(int timeout, bool retry)
 {
-    timeouttimer.stop();
+    QMetaObject::invokeMethod(&timeouttimer, "stop", Qt::AutoConnection);
+    //    timeouttimer.stop();
 
     if (isCompleted)
         return true;

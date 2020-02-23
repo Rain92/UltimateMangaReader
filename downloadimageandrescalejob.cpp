@@ -40,7 +40,7 @@ void DownloadScaledImageJob::downloadFileFinished()
         }
         else
         {
-            QFile::remove(filepath);
+            //            QFile::remove(filepath);
             emit downloadError();
         }
     }
@@ -51,12 +51,11 @@ bool DownloadScaledImageJob::rescaleImage(const QByteArray &array)
     QImage img;
     if (!img.loadFromData(array))
         return false;
+    img = img.convertToFormat(QImage::Format_Grayscale8);
     img = img.scaled(size.width(), size.height(), Qt::KeepAspectRatio,
                      Qt::SmoothTransformation);
-    img = img.convertToFormat(QImage::Format_Grayscale8);
-    //    img.save(filename, "PNG");
     if (!img.save(filepath))
-        return false;
+        return QFileInfo(filepath).size() > 0;
 
     return true;
 }

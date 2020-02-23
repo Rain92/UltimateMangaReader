@@ -54,8 +54,6 @@ private slots:
     void on_pushButtonClose_clicked();
     void on_pushButtonFavorites_clicked();
 
-    void resetCloseCounter();
-
     void restoreFrontLight();
 
 protected:
@@ -85,8 +83,6 @@ private:
 
     int lastTab;
 
-    int closecounter;
-    QTimer closecounterresettimer;
     QTimer restorefrontlighttimer;
 };
 

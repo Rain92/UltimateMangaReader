@@ -29,9 +29,12 @@ void MangaImageContainer::setImage(QSharedPointer<QPixmap> img)
 
 void MangaImageContainer::paintEvent(QPaintEvent *)
 {
-    QPainter painter(this);
-    int x = (this->size().width() - pixmap->width()) / 2;
-    int y = (this->size().height() - pixmap->height()) / 2;
+    if (pixmap)
+    {
+        QPainter painter(this);
+        int x = (this->size().width() - pixmap->width()) / 2;
+        int y = (this->size().height() - pixmap->height()) / 2;
 
-    painter.drawPixmap(x, y, pixmap->width(), pixmap->height(), *pixmap);
+        painter.drawPixmap(x, y, pixmap->width(), pixmap->height(), *pixmap);
+    }
 }

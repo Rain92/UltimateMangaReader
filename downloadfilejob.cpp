@@ -30,6 +30,7 @@ DownloadFileJob::DownloadFileJob(QObject *parent,
         {
             QNetworkRequest request(url);
             reply.reset(networkManager->get(request));
+            reply->setParent(this);
 
             QObject::connect(reply.get(), SIGNAL(readyRead()), this,
                              SLOT(downloadFileReadyRead()));

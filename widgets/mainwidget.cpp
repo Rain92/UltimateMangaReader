@@ -15,8 +15,6 @@ MainWidget::MainWidget(QWidget *parent)
       favoritesmanager(mangasources),
       settings(),
       lastTab(0),
-      closecounter(0),
-      closecounterresettimer(),
       restorefrontlighttimer()
 {
     ui->setupUi(this);
@@ -50,9 +48,6 @@ MainWidget::MainWidget(QWidget *parent)
 
     setupUI();
     setupFrontLight();
-
-    //    if (!downloadmanager->connected())
-    //        downloadmanager->connect();
 
     QObject::connect(ui->homeWidget,
                      SIGNAL(mangaSourceClicked(AbstractMangaSource *)), this,
@@ -88,10 +83,6 @@ MainWidget::MainWidget(QWidget *parent)
                      SLOT(viewMangaImage(MangaIndex)));
     QObject::connect(ui->mangaReaderWidget, SIGNAL(enableVirtualKeyboard(bool)),
                      this, SLOT(enableVirtualKeyboard(bool)));
-
-    closecounterresettimer.setSingleShot(true);
-    QObject::connect(&closecounterresettimer, SIGNAL(timeout()), this,
-                     SLOT(resetCloseCounter()));
 
     restorefrontlighttimer.setSingleShot(true);
     QObject::connect(&restorefrontlighttimer, SIGNAL(timeout()), this,
@@ -197,7 +188,7 @@ void MainWidget::setWidgetTab(int page)
     if (page == ui->stackedWidget->currentIndex())
         return;
 
-    if (!currentmanga.isNull())
+    if (currentmanga)
         currentmanga->cancelAllPreloads();
 
     if (page == 3)
@@ -230,11 +221,11 @@ void MainWidget::viewFavorite(QSharedPointer<MangaInfo> info, bool current)
 
     if (current)
     {
-        if (currentmanga.data() != info.data())
+        if (currentmanga.get() != info.get())
         {
             currentmanga.clear();
             currentmanga = info;
-            QObject::connect(currentmanga.data(),
+            QObject::connect(currentmanga.get(),
                              SIGNAL(completedImagePreloadSignal(QString)),
                              ui->mangaReaderWidget,
                              SLOT(addImageToCache(QString)));
@@ -242,7 +233,7 @@ void MainWidget::viewFavorite(QSharedPointer<MangaInfo> info, bool current)
 
         ui->mangaInfoWidget->setManga(currentmanga);
         ui->mangaInfoWidget->setFavoriteButtonState(
-            favoritesmanager.isFavorite(currentmanga.data()));
+            favoritesmanager.isFavorite(currentmanga.get()));
 
         viewMangaImage(info->currentindex);
     }
@@ -323,5 +314,3 @@ void MainWidget::restoreFrontLight()
 {
     setFrontLight(settings.lightvalue, settings.comflightvalue);
 }
-
-void MainWidget::resetCloseCounter() { closecounter = 0; }
