@@ -1,5 +1,7 @@
 #include "mangadex.h"
 
+#include <QFile>
+
 #include "QTime"
 #include "configs.h"
 
@@ -75,16 +77,13 @@ bool MangaDex::updateMangaList()
 
     int pages = (nummangas + 99) / 100;
 
-    //    pages = 10;
-
     qDebug() << "pages" << pages;
 
     auto jobs = QVector<QSharedPointer<DownloadStringJob>>(pages);
     jobs[0] = job;
 
     QRegExp rx(
-        "<a title=['\"]([^'\"]*)['\"] href=['\"]([^'\"]*)['\"] "
-        "class=['\"][^'\"]*title[^'\"]*['\"]");
+        R"lit(<a title=['"]([^'"]*)['"][^<]*href=['"]([^'"]*)['"][^<]*class=")lit");
     rx.setMinimal(true);
 
     for (int batch = 0, dli = 1, rxi = 0;
@@ -105,17 +104,21 @@ bool MangaDex::updateMangaList()
                 return false;
             }
 
+            int matches = 0;
             for (int pos = 0; (pos = rx.indexIn(jobs[rxi]->buffer, pos)) != -1;
                  pos += rx.matchedLength())
             {
                 mangalist.links.append(rx.cap(2));
                 mangalist.titles.append(
                     htmlToPlainText(htmlToPlainText(rx.cap(1))));
-                qDebug() << mangalist.links.last();
-                qDebug() << mangalist.titles.last();
+                matches++;
+                //                qDebug() << mangalist.links.last();
+                //                qDebug() << mangalist.titles.last();
             }
 
-            qDebug() << "rx" << rxi << "time:" << timer.elapsed();
+            qDebug() << "rx" << rxi << "time:" << timer.elapsed()
+                     << "matches:" << matches;
+            jobs[rxi].clear();
         }
         emit updateProgress(100 * rxi / pages);
     }
@@ -158,7 +161,7 @@ QSharedPointer<MangaInfo> MangaDex::getMangaInfo(const QString &mangalink)
         return info;
     }
 
-    int spos = job->buffer.indexOf("<div class=\"container\" role=\"main\"");
+    int spos = job->buffer.indexOf(R"(<div class="container" role="main")");
 
     if (titlerx.indexIn(job->buffer, spos) != -1)
         info->title = htmlToPlainText(titlerx.cap(1)).trimmed();
