@@ -2,6 +2,7 @@
 #define UPDATEDIALOG_H
 
 #include <QDialog>
+#include <QResizeEvent>
 
 namespace Ui
 {
@@ -33,6 +34,7 @@ private slots:
 
 private:
     Ui::UpdateDialog *ui;
+    void resizeEvent(QResizeEvent *e);
 };
 
 #endif  // UPDATEDIALOG_H

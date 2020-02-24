@@ -20,6 +20,7 @@ UpdateDialog::UpdateDialog(QWidget *parent)
     ui->pushButtonOk->setMinimumHeight(buttonsize);
     ui->pushButtonRetry->setMinimumHeight(buttonsize);
     ui->progressBar->setMinimumHeight(buttonsize);
+    this->setMaximumWidth(parent->width());
 }
 
 UpdateDialog::~UpdateDialog() { delete ui; }
@@ -62,3 +63,10 @@ void UpdateDialog::updateProgress(int i)
 void UpdateDialog::on_pushButtonRetry_clicked() { emit retry(); }
 
 void UpdateDialog::on_pushButtonOk_clicked() { this->close(); }
+
+void UpdateDialog::resizeEvent(QResizeEvent *e)
+{
+    QDialog::resizeEvent(e);
+    auto sd = parentWidget()->size() - e->size();
+    this->move(sd.width() / 2, sd.height() / 2);
+}
