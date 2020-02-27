@@ -140,24 +140,25 @@ void MangaInfo::preloadPopular()
         preloadImage(MangaIndex(numchapters - 1, 0));
 }
 
-void MangaInfo::preloadNeighbours(int distance)
+void MangaInfo::preloadNeighbours(int forward, int backward)
 {
-    MangaIndex ind = currentindex;
-    ind = ind.nextPageIndex(&chapters);
-    if (!ind.illegal)
-        preloadImage(ind);
+    MangaIndex forwardindex = currentindex;
+    MangaIndex backwardindex = currentindex;
 
-    ind = currentindex.prevPageIndex(&chapters);
-    if (!ind.illegal)
-        preloadImage(ind);
-
-    ind = currentindex.nextPageIndex(&chapters);
-    for (int i = 1; i < distance; i++)
+    for (int i = 0; i < qMax(forward, backward); i++)
     {
-        ind = ind.nextPageIndex(&chapters);
-        if (ind.illegal)
-            break;
-        preloadImage(ind);
+        if (i < forward)
+        {
+            forwardindex = forwardindex.nextPageIndex(&chapters);
+            if (!forwardindex.illegal)
+                preloadImage(forwardindex);
+        }
+        if (i < backward)
+        {
+            backwardindex = backwardindex.nextPageIndex(&chapters);
+            if (!backwardindex.illegal)
+                preloadImage(backwardindex);
+        }
     }
 }
 

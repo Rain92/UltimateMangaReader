@@ -41,9 +41,10 @@ FORMS += \
 HEADERS += \
     customgesturerecognizer.h \
     mangasources/abstractmangasource.h \
+    mangasources/mangakakalot.h \
     mangasources/mangapanda.h \
     mangasources/mangadex.h \
-    mangasources/mangatown.h \
+    mangasources/jaiminisbox.h \
     widgets/favoriteswidget.h \
     widgets/mainwidget.h \
     widgets/mangaimagecontainer.h \
@@ -62,8 +63,6 @@ HEADERS += \
     widgets/cscrollbar.h \
     favorite.h \
     favoritesmanager.h \
-    mangasources/jaiminisbox.h \
-#    mangasources/mangawindow.h \
     widgets/gotodialog.h \
     widgets/updatedialog.h \
     settings.h \
@@ -73,9 +72,10 @@ HEADERS += \
 SOURCES += \
     customgesturerecognizer.cpp \
     mangasources/abstractmangasource.cpp \
+    mangasources/mangakakalot.cpp \
     mangasources/mangapanda.cpp \
     mangasources/mangadex.cpp \
-    mangasources/mangatown.cpp \
+    mangasources/jaiminisbox.cpp \
     widgets/favoriteswidget.cpp \
     widgets/mainwidget.cpp \
     widgets/mangaimagecontainer.cpp \
@@ -95,8 +95,6 @@ SOURCES += \
     widgets/cscrollbar.cpp \
     favorite.cpp \
     favoritesmanager.cpp \
-    mangasources/jaiminisbox.cpp \
-#    mangasources/mangawindow.cpp \
     widgets/gotodialog.cpp \
     widgets/updatedialog.cpp \
     settings.cpp \

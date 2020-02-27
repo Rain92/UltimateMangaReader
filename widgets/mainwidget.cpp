@@ -25,10 +25,10 @@ MainWidget::MainWidget(QWidget *parent)
     downloadmanager = new DownloadManager(this);
     downloadmanager->connect();
 
-    mangasources.append(new JaiminisBox(this, downloadmanager));
-    mangasources.append(new MangaDex(this, downloadmanager));
+    //    mangasources.append(new JaiminisBox(this, downloadmanager));
+    //    mangasources.append(new MangaDex(this, downloadmanager));
     mangasources.append(new MangaPanda(this, downloadmanager));
-    //    mangasources.append(new MangaTown(this, downloadmanager));
+    //    mangasources.append(new Mangakakalot(this, downloadmanager));
 
     ui->homeWidget->setMangaSources(&mangasources);
     currentsource = mangasources[0];
@@ -302,7 +302,7 @@ void MainWidget::viewMangaImage(const MangaIndex &index)
 
     setWidgetTab(3);
 
-    currentmanga->preloadNeighbours();
+    currentmanga->preloadNeighbours(forwardpreloads, backwardpreloads);
     currentmanga->serializeProgress();
 }
 

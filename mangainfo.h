@@ -60,7 +60,7 @@ public:
     QString goLastChapter();
     QString goFirstChapter();
 
-    void preloadNeighbours(int distance = 3);
+    void preloadNeighbours(int forward, int backward);
     void preloadChapter();
     void preloadImage(MangaIndex index);
 

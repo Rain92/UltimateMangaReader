@@ -11,9 +11,9 @@
 #include "jaiminisbox.h"
 #include "mangadex.h"
 #include "mangainfowidget.h"
+#include "mangakakalot.h"
 #include "mangapanda.h"
 #include "mangareaderwidget.h"
-#include "mangatown.h"
 #include "settings.h"
 
 namespace Ui

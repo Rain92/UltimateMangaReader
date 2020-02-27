@@ -3,8 +3,8 @@
 #include <qdatetime.h>
 #include <qstringlist.h>
 
+#include <QRegularExpression>
 #include <QTextDocument>
-#include <QtCore>
 
 #include "downloadmanager.h"
 
@@ -14,6 +14,15 @@ struct MangaList
 {
     QStringList titles;
     QStringList links;
+    bool isAbsoluteUrl = false;
+    int nominalSize = 0;
+    int actualSize = 0;
+
+    void sort()
+    {
+        qSort(links.begin(), links.end(), qGreater<int>());
+        titles.sort
+    }
 };
 
 class AbstractMangaSource : public QObject
@@ -31,7 +40,7 @@ public:
 
     virtual void initialize() {}
 
-    virtual bool updateMangaList() = 0;
+    virtual MangaList updateMangaList() = 0;
 
     virtual void updateMangaInfoFinishedLoading(
         QSharedPointer<DownloadStringJob> job,

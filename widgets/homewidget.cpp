@@ -35,8 +35,6 @@ void HomeWidget::setMangaSources(QList<AbstractMangaSource *> *sources)
     mangasources = sources;
 
     setupSourcesList();
-
-    //    currentsource = sources->at(0);
 }
 
 void HomeWidget::adjustSizes()
@@ -284,21 +282,17 @@ void HomeWidget::refreshMangaListView()
 
 void HomeWidget::on_listViewMangas_clicked(const QModelIndex &index)
 {
-    QString mangalink;
-    QString mangatitle;
+    bool filteractive = filteredmangalinks.count() > 0;
+    int idx = index.row();
 
-    if (filteredmangalinks.count() == 0)
-    {
-        mangalink = currentsource->baseurl +
-                    currentsource->mangalist.links[index.row()];
-        mangatitle = currentsource->mangalist.titles[index.row()];
-    }
-    else
-    {
-        mangalink = currentsource->baseurl + filteredmangalinks[index.row()];
-        mangatitle = filteredmangatitles[index.row()];
-    }
+    QString mangalink = filteractive ? filteredmangalinks[idx]
+                                     : currentsource->mangalist.links[idx];
+
+    if (!currentsource->mangalist.isAbsoluteUrl)
+        mangalink.prepend(currentsource->baseurl);
+
+    QString mangatitle = filteractive ? filteredmangatitles[idx]
+                                      : currentsource->mangalist.titles[idx];
 
     emit mangaClicked(mangalink, mangatitle);
-    //    currentmanga = currentsource->getMangaInfo(mangalink);
 }
