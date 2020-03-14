@@ -1,6 +1,6 @@
 #include "mangakakalot.h"
 
-#include "configs.h"
+#include "defines.h"
 
 Mangakakalot::Mangakakalot(QObject *parent, DownloadManager *dm)
     : AbstractMangaSource(parent, dm)
@@ -11,34 +11,33 @@ Mangakakalot::Mangakakalot(QObject *parent, DownloadManager *dm)
         "https://mangakakalot.com/"
         "manga_list?type=topview&category=all&state=all&page=";
 
-    mangalist.isAbsoluteUrl = true;
+    mangalist.absoluteUrls = true;
 }
 
-bool Mangakakalot::updateMangaList()
+MangaList Mangakakalot::getMangaList()
 {
-    QElapsedTimer timer;
-    timer.start();
+    MangaList mangas;
 
     auto job = downloadmanager->downloadAsString(dicturl + "1");
 
     if (!job->await(2000))
     {
         emit updateError(job->errorString);
-        return false;
+        return mangas;
     }
 
     emit updateProgress(30);
 
-    mangalist.links.clear();
-    mangalist.titles.clear();
+    QElapsedTimer timer;
+    timer.start();
 
-    QRegExp rxstart(R"(<div class="main-wrapper">)");
-    QRegExp rxend(R"(<div class="panel_page_number">)");
-    QRegExp rx(
+    QRegularExpression rxstart(R"(<div class="main-wrapper">)");
+    QRegularExpression rxend(R"(<div class="panel_page_number">)");
+    QRegularExpression rx(
         R"lit(<h3>\s*<a(?: rel="nofollow")? href="([^"]*)"\s*title="([^"]*)")lit");
 
-    QRegExp rxnummangas("Total: ([0-9,]+)");
-    QRegExp rxnumpages(R"(Last\(([0-9]+)\))");
+    QRegularExpression rxnummangas("Total: ([0-9,]+)");
+    QRegularExpression rxnumpages(R"(Last\(([0-9]+)\))");
 
     rxnummangas.indexIn(job->buffer, 0);
     rxnumpages.indexIn(job->buffer, 0);
@@ -64,7 +63,7 @@ bool Mangakakalot::updateMangaList()
             if (!jobs[rxi]->await(10000, true))
             {
                 emit updateError(jobs[rxi]->errorString);
-                return false;
+                return mangas;
             }
 
             int spos =
@@ -76,8 +75,8 @@ bool Mangakakalot::updateMangaList()
                  (pos = rx.indexIn(jobs[rxi]->buffer, pos)) != -1 && pos < epos;
                  pos += rx.matchedLength())
             {
-                mangalist.links.append(rx.cap(1));
-                mangalist.titles.append(
+                mangas.links.append(rx.cap(1));
+                mangas.titles.append(
                     htmlToPlainText(htmlToPlainText(rx.cap(2))));
                 matches++;
             }
@@ -93,7 +92,7 @@ bool Mangakakalot::updateMangaList()
 
     emit updateProgress(100);
 
-    return true;
+    return mangas;
 }
 
 QSharedPointer<MangaInfo> Mangakakalot::getMangaInfo(const QString &mangalink)
@@ -106,13 +105,13 @@ QSharedPointer<MangaInfo> Mangakakalot::getMangaInfo(const QString &mangalink)
 
     info->link = mangalink;
 
-    QRegExp titlerx(R"("story-info-right">[^>]*>([^<]*)<)");
-    QRegExp authorrx(R"(Author\(s\) :[^>]*>[^>]*>[^>]*>([^<]*)<)");
-    QRegExp statusrx("info-status[^>]*>[^>]*>[^>]*>[^>]*>([^<]*)<");
+    QRegularExpression titlerx(R"("story-info-right">[^>]*>([^<]*)<)");
+    QRegularExpression authorrx(R"(Author\(s\) :[^>]*>[^>]*>[^>]*>([^<]*)<)");
+    QRegularExpression statusrx("info-status[^>]*>[^>]*>[^>]*>[^>]*>([^<]*)<");
     QRegularExpression genresrx(R"(Genres :[^>]*>[^>]*>(.*?)</td>)",
                                 QRegularExpression::DotMatchesEverythingOption);
 
-    QRegExp summaryrx(
+    QRegularExpression summaryrx(
         R"lit(class="panel-story-info-description"[^>]*>[^>]*>[^>]*>([^<]*)<)lit");
 
     if (!job->await(3000))
@@ -134,7 +133,8 @@ QSharedPointer<MangaInfo> Mangakakalot::getMangaInfo(const QString &mangalink)
     info->artist = "-";
     info->releaseyear = "-";
 
-    QRegExp coverrx(R"lit(<meta name="twitter:image" content="([^"]*)")lit");
+    QRegularExpression coverrx(
+        R"lit(<meta name="twitter:image" content="([^"]*)")lit");
 
     QString coverlink;
     if (coverrx.indexIn(job->buffer, 0) != -1)
@@ -150,7 +150,8 @@ QSharedPointer<MangaInfo> Mangakakalot::getMangaInfo(const QString &mangalink)
 
     auto coverjob = downloadmanager->downloadAsFile(coverlink, info->coverpath);
 
-    QRegExp rx(R"lit("chapter-name[^>]*href="([^"]*)"[^>]*title="([^"]*)")lit");
+    QRegularExpression rx(
+        R"lit("chapter-name[^>]*href="([^"]*)"[^>]*title="([^"]*)")lit");
     rx.setMinimal(true);
 
     int spos = job->buffer.indexOf("Chapter name");
@@ -184,11 +185,11 @@ void Mangakakalot::updateMangaInfoFinishedLoading(
     int spos = job->buffer.indexOf("LATEST CHAPTERS");
     if (spos == -1)
     {
-        info->sendUpdated(false);
+        info->updateCompeted(false);
         return;
     }
 
-    QRegExp chrx("(\\d+)\">");
+    QRegularExpression chrx("(\\d+)\">");
 
     int oldnumchapters = info->numchapters;
     int numchapters = info->numchapters;
@@ -198,16 +199,16 @@ void Mangakakalot::updateMangaInfoFinishedLoading(
 
     if (numchapters == 0 || numchapters == info->numchapters)
     {
-        info->sendUpdated(false);
+        info->updateCompeted(false);
         return;
     }
 
-    QRegExp statusrx("Status:</td>[^>]*>([^<]*)");
+    QRegularExpression statusrx("Status:</td>[^>]*>([^<]*)");
 
     if (statusrx.indexIn(job->buffer, 0) != -1)
         info->status = statusrx.cap(1);
 
-    QRegExp rx("<a href=\"([^\"]*)\"[^>]*>([^<]*)</a>([^<]*)");
+    QRegularExpression rx("<a href=\"([^\"]*)\"[^>]*>([^<]*)</a>([^<]*)");
 
     spos = job->buffer.indexOf("<div id=\"chapterlist\">");
     int epos = job->buffer.indexOf("<div id=\"adfooter\">", spos);
@@ -231,13 +232,13 @@ void Mangakakalot::updateMangaInfoFinishedLoading(
 
     if (oldnumchapters == info->numchapters)
     {
-        info->sendUpdated(false);
+        info->updateCompeted(false);
         return;
     }
 
     info->serialize();
 
-    info->sendUpdated(true);
+    info->updateCompeted(true);
 }
 
 QStringList Mangakakalot::getPageList(const QString &chapterlink)
@@ -248,7 +249,7 @@ QStringList Mangakakalot::getPageList(const QString &chapterlink)
     if (!job->await(3000))
         return pageLinks;
 
-    QRegExp rx("<option value=\"([^\"]*)\"");
+    QRegularExpression rx("<option value=\"([^\"]*)\"");
 
     int spos =
         job->buffer.indexOf("<select id=\"pageMenu\" name=\"pageMenu\">");
@@ -269,7 +270,7 @@ QString Mangakakalot::getImageLink(const QString &pagelink)
     auto job = downloadmanager->downloadAsString(pagelink);
     QString imageLink;
 
-    QRegExp rx("src=\"([^\"]*)\"");
+    QRegularExpression rx("src=\"([^\"]*)\"");
 
     if (!job->await(3000))
         return imageLink;

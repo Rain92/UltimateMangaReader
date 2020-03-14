@@ -1,14 +1,12 @@
-#ifndef CONFIGS_H
-#define CONFIGS_H
-
-#include <QRegExp>
+#ifndef DEFINES_H
+#define DEFINES_H
 
 // dirstructure:
 //               /cache/      -> favorites.dat
 //               /cache/mangalists/ -> hostname_mangalist.dat
 //               /cache/hostname/manganame/ -> mangainfo.dat progress.dat
 //               /cache/hostname/manganame/images/ ->
-//               manganame_chapter_page.jpg/png
+//               manganame_chapter_page.jpg|png
 
 #define cachedir QCoreApplication::applicationDirPath() + "/cache/"
 #define mangalistdir cachedir + "mangalists/"
@@ -65,6 +63,4 @@
 #define forwardpreloads 6
 #define backwardpreloads 1
 
-QString makePathLegal(QString filename);
-
-#endif  // CONFIGSS_H
+#endif  // DEFINES_H

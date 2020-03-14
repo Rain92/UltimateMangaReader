@@ -3,21 +3,16 @@
 #include <QElapsedTimer>
 #include <QSslError>
 
-#include "configs.h"
+#include "defines.h"
 #include "downloadmanager.h"
 
 DownloadStringJob::DownloadStringJob(QObject *parent,
                                      QNetworkAccessManager *networkManager,
                                      const QString &url, int timeout,
                                      QByteArray *postdata)
-    : QObject(parent),
-      networkManager(networkManager),
-      reply(),
+    : DownloadJobBase(parent, networkManager, url),
       timeouttime(timeout),
       postdata(postdata),
-      url(url),
-      isCompleted(false),
-      errorString(""),
       buffer("")
 {
 }
@@ -35,8 +30,6 @@ void DownloadStringJob::start()
     }
     reply->setParent(this);
 
-    //    QObject::connect(reply.get(), SIGNAL(readyRead()), this,
-    //                     SLOT(downloadStringReadyRead()));
     QObject::connect(reply.get(), SIGNAL(finished()), this,
                      SLOT(downloadStringFinished()));
     QObject::connect(reply.get(), SIGNAL(error(QNetworkReply::NetworkError)),
@@ -103,16 +96,6 @@ void DownloadStringJob::downloadStringFinished()
     }
 }
 
-void DownloadStringJob::onSslErrors(const QList<QSslError> &errors)
-{
-    foreach (const QSslError &ssle, errors)
-        qDebug() << "SSL Error" << ssle.errorString();
-
-    auto *reply = qobject_cast<QNetworkReply *>(sender());
-    if (reply)
-        reply->ignoreSslErrors();
-}
-
 void DownloadStringJob::onError(QNetworkReply::NetworkError)
 {
     timeouttimer.stop();
@@ -175,10 +158,4 @@ bool DownloadStringJob::await(int timeout, bool retry)
         errorString += "Download timeout.";
 
     return isCompleted;
-}
-
-QList<QNetworkCookie> DownloadStringJob::getCookies()
-{
-    return reply->header(QNetworkRequest::SetCookieHeader)
-        .value<QList<QNetworkCookie>>();
 }

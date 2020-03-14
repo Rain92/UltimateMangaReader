@@ -1,6 +1,6 @@
 #include "gotodialog.h"
 
-#include "configs.h"
+#include "defines.h"
 #include "numpadwidget.h"
 #include "ui_gotodialog.h"
 

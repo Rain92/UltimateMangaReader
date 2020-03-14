@@ -3,7 +3,7 @@
 #include <QPainter>
 
 #include "../koboplatformintegrationplugin/koboplatformfunctions.h"
-#include "configs.h"
+#include "defines.h"
 #include "customgesturerecognizer.h"
 #include "ui_mangareaderwidget.h"
 
@@ -212,7 +212,7 @@ void MangaReaderWidget::updateTime()
 
 void MangaReaderWidget::updateReaderLabels(QSharedPointer<MangaInfo> info)
 {
-    if (this->currentmanga.data() != info.data())
+    if (this->currentmanga.get() != info.get())
     {
         this->currentmanga.clear();
         this->currentmanga = info;

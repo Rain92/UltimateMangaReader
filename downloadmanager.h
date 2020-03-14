@@ -28,7 +28,7 @@ class DownloadManager : public QObject
     Q_OBJECT
 
 public:
-    DownloadManager(QObject *parent);
+    explicit DownloadManager(QObject *parent);
 
     QNetworkAccessManager *networkAccessManager();
 

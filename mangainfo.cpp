@@ -2,16 +2,16 @@
 
 #include <QImage>
 
-#include "configs.h"
+#include "defines.h"
 
-MangaInfo::MangaInfo(QObject *parent, AbstractMangaSource *mangasource)
-    : QObject(parent),
+MangaInfo::MangaInfo(AbstractMangaSource *mangasource)
+    : QObject(),
       updated(false),
       currentindex(0, 0),
       numchapters(0),
       mangasource(mangasource),
       updating(false),
-      preloadqueue(parent, mangasource)
+      preloadqueue(mangasource)
 {
     QObject::connect(&preloadqueue, SIGNAL(completedDownload(QString)), this,
                      SLOT(completedImagePreload(QString)));
@@ -21,15 +21,15 @@ MangaInfo::~MangaInfo() = default;
 
 QString MangaInfo::getCoverpathScaled() const
 {
-    if (coverpath == "")
+    if (coverpath == "" || coverpath.length() < 4)
         return "";
 
     QString scpath = coverpath;
     scpath.insert(scpath.length() - 4, "_scaled");
 
-    QFileInfo scaledcover(scpath);
-    if (!scaledcover.exists())
+    if (!QFile::exists(scpath))
     {
+        qDebug() << "generating scaled:" << title;
         QImage img;
         img.load(coverpath);
         img = img.scaled(favoritecoverwidth, favoritecoverheight,
@@ -170,9 +170,9 @@ void MangaInfo::completedImagePreload(const QString &path)
 }
 
 QSharedPointer<MangaInfo> MangaInfo::deserialize(
-    QObject *parent, AbstractMangaSource *mangasource, const QString &path)
+    AbstractMangaSource *mangasource, const QString &path)
 {
-    auto mi = QSharedPointer<MangaInfo>(new MangaInfo(parent, mangasource));
+    auto mi = QSharedPointer<MangaInfo>(new MangaInfo(mangasource));
 
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly))
@@ -241,7 +241,7 @@ void MangaInfo::deserializeProgress()
     file.close();
 }
 
-void MangaInfo::sendUpdated(bool changed)
+void MangaInfo::updateCompeted(bool changed)
 {
     updating = false;
 
@@ -250,8 +250,6 @@ void MangaInfo::sendUpdated(bool changed)
         updated = true;
         emit updatedSignal();
     }
-    else
-        emit updatedNoChanges();
 }
 
 void MangaInfo::sendCoverLoaded() { emit coverLoaded(); }

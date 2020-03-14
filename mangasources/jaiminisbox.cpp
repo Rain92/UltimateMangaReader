@@ -3,7 +3,7 @@
 #include <QElapsedTimer>
 #include <QMessageBox>
 
-#include "configs.h"
+#include "defines.h"
 
 JaiminisBox::JaiminisBox(QObject *parent, DownloadManager *dm)
     : AbstractMangaSource(parent, dm)
@@ -16,19 +16,23 @@ JaiminisBox::JaiminisBox(QObject *parent, DownloadManager *dm)
     postdatastr = postdata.query().toUtf8();
 }
 
-bool JaiminisBox::updateMangaList()
+MangaList JaiminisBox::getMangaList()
 {
-    QElapsedTimer timer;
-    timer.start();
+    MangaList mangas;
 
     QString nextlink = baseurl + "/reader/directory/";
 
     emit updateProgress(30);
 
+    QElapsedTimer timer;
+    timer.start();
+
     int rem = 70;
 
-    QRegExp rx(R"lit(<div class="title"><a href="([^"]*)"[^"]*"([^"]*)")lit");
-    QRegExp nextrx("<a class=\"gbutton fright\" href=\"([^\"]*)\">Next");
+    QRegularExpression rx(
+        R"lit(<div class="title"><a href="([^"]*)"[^"]*"([^"]*)")lit");
+    QRegularExpression nextrx(
+        "<a class=\"gbutton fright\" href=\"([^\"]*)\">Next");
 
     mangalist.links.clear();
     mangalist.titles.clear();
@@ -40,15 +44,15 @@ bool JaiminisBox::updateMangaList()
         if (!job->await(5000))
         {
             emit updateError(job->errorString);
-            return false;
+            return mangas;
         }
 
         int pos = 0;
         while ((pos = rx.indexIn(job->buffer, pos)) != -1)
         {
             pos += rx.matchedLength();
-            mangalist.links.append(rx.cap(1).mid(baseurl.length()));
-            mangalist.titles.append(htmlToPlainText(rx.cap(2)));
+            mangas.links.append(rx.cap(1).mid(baseurl.length()));
+            mangas.titles.append(htmlToPlainText(rx.cap(2)));
 
             //            qDebug() << rx.cap(1) << htmlToPlainText(rx.cap(2));
             nummangas++;
@@ -67,7 +71,7 @@ bool JaiminisBox::updateMangaList()
 
     emit updateProgress(100);
 
-    return true;
+    return mangas;
 }
 
 QSharedPointer<MangaInfo> JaiminisBox::getMangaInfo(const QString &mangalink)
@@ -81,11 +85,11 @@ QSharedPointer<MangaInfo> JaiminisBox::getMangaInfo(const QString &mangalink)
 
     info->link = mangalink;
 
-    QRegExp titlerx(R"(<h1 class="title">\s+([^<]*))");
-    QRegExp authorrx("Author</b>:([^<]*)");
-    QRegExp artistrx("Artist</b>:([^<]*)");
+    QRegularExpression titlerx(R"(<h1 class="title">\s+([^<]*))");
+    QRegularExpression authorrx("Author</b>:([^<]*)");
+    QRegularExpression artistrx("Artist</b>:([^<]*)");
 
-    QRegExp summaryrx("Synopsis</b>:(.*)</div>");
+    QRegularExpression summaryrx("Synopsis</b>:(.*)</div>");
     summaryrx.setMinimal(true);
 
     if (!job->await(3000))
@@ -109,7 +113,7 @@ QSharedPointer<MangaInfo> JaiminisBox::getMangaInfo(const QString &mangalink)
     info->status = "-";
     info->releaseyear = "-";
 
-    QRegExp coverrx(R"(<div class="thumbnail">[^"]*"([^"]*))");
+    QRegularExpression coverrx(R"(<div class="thumbnail">[^"]*"([^"]*))");
     //    coverrx.setMinimal(true);
 
     QString coverlink;
@@ -129,7 +133,8 @@ QSharedPointer<MangaInfo> JaiminisBox::getMangaInfo(const QString &mangalink)
 
     auto coverjob = downloadmanager->downloadAsFile(coverlink, info->coverpath);
 
-    QRegExp rx("<div class=\"title\"><a href=\"([^\"]*)\"\\s+title=\"([^\"]*)");
+    QRegularExpression rx(
+        "<div class=\"title\"><a href=\"([^\"]*)\"\\s+title=\"([^\"]*)");
 
     info->numchapters = 0;
     int pos = 0;
@@ -163,11 +168,12 @@ void JaiminisBox::updateMangaInfoFinishedLoading(
 
     if (numchapters == 0 || numchapters == info->numchapters)
     {
-        info->sendUpdated(false);
+        info->updateCompeted(false);
         return;
     }
 
-    QRegExp rx("<div class=\"title\"><a href=\"([^\"]*)\"\\s+title=\"([^\"]*)");
+    QRegularExpression rx(
+        "<div class=\"title\"><a href=\"([^\"]*)\"\\s+title=\"([^\"]*)");
 
     info->chapters.clear();
     info->chapertitlesreversed.clear();
@@ -187,7 +193,7 @@ void JaiminisBox::updateMangaInfoFinishedLoading(
 
     info->serialize();
 
-    info->sendUpdated(true);
+    info->updateCompeted(true);
 }
 
 QStringList JaiminisBox::getPageList(const QString &chapterlink)
@@ -204,7 +210,7 @@ QStringList JaiminisBox::getPageList(const QString &chapterlink)
 
     //    qDebug() << chapterlink;
 
-    QRegExp rx(R"(JSON.parse\(atob\("([^"]*))");
+    QRegularExpression rx(R"(JSON.parse\(atob\("([^"]*))");
 
     if (rx.indexIn(job->buffer, 0) == -1)
         return pageLinks;
@@ -214,7 +220,7 @@ QStringList JaiminisBox::getPageList(const QString &chapterlink)
 
     //    qDebug() << decodedstr;
 
-    QRegExp pagerx(R"("url":"([^"]*))");
+    QRegularExpression pagerx(R"("url":"([^"]*))");
 
     int pos = 0;
     while ((pos = pagerx.indexIn(decodedstr, pos)) != -1)

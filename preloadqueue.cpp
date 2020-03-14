@@ -1,17 +1,17 @@
 #include "preloadqueue.h"
 
-#include "configs.h"
+#include "defines.h"
 
-PreloadQueue::PreloadQueue(QObject *parent, AbstractMangaSource *source)
-    : QObject(parent),
+PreloadQueue::PreloadQueue(AbstractMangaSource *source)
+    : QObject(),
       source(source),
       queue(),
       job(nullptr),
-      resettimer(new QTimer(this)),
+      resettimer(),
       running(false)
 {
-    resettimer->setSingleShot(true);
-    connect(resettimer, SIGNAL(timeout()), this, SLOT(resetQueue()));
+    resettimer.setSingleShot(true);
+    connect(&resettimer, SIGNAL(timeout()), this, SLOT(resetQueue()));
 }
 
 void PreloadQueue::resetQueue() { running = false; }
@@ -47,7 +47,7 @@ void PreloadQueue::processNext()
         return;
     }
     running = true;
-    resettimer->start(4000);
+    resettimer.start(4000);
 
     DownloadImageInfo info = queue.dequeue();
 

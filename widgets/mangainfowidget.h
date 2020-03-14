@@ -4,7 +4,7 @@
 #include <QIcon>
 #include <QWidget>
 
-#include "configs.h"
+#include "defines.h"
 #include "mangainfo.h"
 
 namespace Ui
@@ -28,8 +28,9 @@ signals:
     void readMangaClicked(MangaIndex index);
 
 public slots:
-
     void updateManga();
+    void updateCover();
+
 private slots:
     void on_pushButtonMangaInfoAddFavorites_clicked();
 

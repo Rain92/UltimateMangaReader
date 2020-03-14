@@ -1,6 +1,6 @@
 #include "updatedialog.h"
 
-#include "configs.h"
+#include "defines.h"
 #include "ui_updatedialog.h"
 
 UpdateDialog::UpdateDialog(QWidget *parent)

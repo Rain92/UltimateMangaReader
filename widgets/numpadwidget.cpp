@@ -3,7 +3,7 @@
 #include <QIcon>
 #include <QKeyEvent>
 
-#include "configs.h"
+#include "defines.h"
 #include "ui_numpadwidget.h"
 
 NumpadWidget::NumpadWidget(QWidget *parent)

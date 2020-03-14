@@ -4,7 +4,7 @@
 #include <QTimer>
 #include <QtCore>
 
-#include "configs.h"
+#include "defines.h"
 
 class Settings : QObject
 {

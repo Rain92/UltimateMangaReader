@@ -4,8 +4,8 @@
 
 #include <QFileInfo>
 
-#include "configs.h"
 #include "cscrollbar.h"
+#include "defines.h"
 #include "ui_favoriteswidget.h"
 
 FavoritesWidget::FavoritesWidget(QWidget *parent)
@@ -44,37 +44,19 @@ void FavoritesWidget::showFavoritesList()
 {
     favoritesmanager->updateInfos();
 
-    bool same = false;
-    //    bool same = favoritesmanager->favoriteinfos.count() ==
-    //    ui->tableWidget->rowCount();
+    ui->tableWidget->clearContents();
+    while (ui->tableWidget->model()->rowCount() > 0)
+        ui->tableWidget->removeRow(0);
 
-    //    for (int i = 0; same && i < favoritesmanager->favoriteinfos.count();
-    //    i++)
-    //    {
-    //        same = favoritesmanager->favoriteinfos[i]->title ==
-    //        ui->tableWidget->cellWidget(i, 0)->property("ptext") &&
-    //               favoritesmanager->favoriteinfos[i]->hostname ==
-    //               ui->tableWidget->item(i, 1)->text();
-    //    }
-
-    //    qDebug() << "same: " << same;
-
-    if (!same)
+    for (int r = 0; r < favoritesmanager->favoriteinfos.count(); r++)
     {
-        ui->tableWidget->clearContents();
-        while (ui->tableWidget->model()->rowCount() > 0)
-            ui->tableWidget->removeRow(0);
-
-        for (int r = 0; r < favoritesmanager->favoriteinfos.count(); r++)
-        {
-            insertRow(favoritesmanager->favoriteinfos[r], r);
-            QObject::connect(favoritesmanager->favoriteinfos[r].data(),
-                             SIGNAL(updatedSignal()), this,
-                             SLOT(mangaUpdated()));
-            QObject::connect(favoritesmanager->favoriteinfos[r].data(),
-                             SIGNAL(coverLoaded()), this, SLOT(coverLoaded()));
-        }
+        insertRow(favoritesmanager->favoriteinfos[r], r);
+        QObject::connect(favoritesmanager->favoriteinfos[r].get(),
+                         SIGNAL(updatedSignal()), this, SLOT(mangaUpdated()));
+        QObject::connect(favoritesmanager->favoriteinfos[r].get(),
+                         SIGNAL(coverLoaded()), this, SLOT(coverLoaded()));
     }
+
     ui->tableWidget->verticalScrollBar()->setValue(0);
 }
 
@@ -125,9 +107,7 @@ void FavoritesWidget::mangaUpdated()
            favoritesmanager->favoriteinfos.at(i)->title != mi->title)
         i++;
 
-    //    favoritesmanager->moveFavoriteToFront(i);
     moveFavoriteToFront(i);
-    //    emit(mangaListUpdated());
 }
 
 void FavoritesWidget::coverLoaded()
@@ -139,8 +119,11 @@ void FavoritesWidget::coverLoaded()
            favoritesmanager->favoriteinfos.at(i)->title != mi->title)
         i++;
 
-    ui->tableWidget->removeRow(i);
-    insertRow(favoritesmanager->favoriteinfos.at(i), i);
+    QWidget *titlewidget = makeIconTextWidget(
+        favoritesmanager->favoriteinfos.at(i)->getCoverpathScaled(),
+        favoritesmanager->favoriteinfos.at(i)->title,
+        QSize(favoritecoverheight, favoritecoverheight));
+    ui->tableWidget->setCellWidget(i, 0, titlewidget);
 }
 
 QWidget *FavoritesWidget::makeIconTextWidget(const QString &path,

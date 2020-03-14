@@ -2,8 +2,8 @@
 
 #include <QLabel>
 
-#include "configs.h"
 #include "cscrollbar.h"
+#include "defines.h"
 #include "ui_homewidget.h"
 
 HomeWidget::HomeWidget(QWidget *parent)
@@ -114,15 +114,18 @@ void HomeWidget::on_pushButtonUpdate_clicked()
     foreach (AbstractMangaSource *ms, *mangasources)
     {
         updatedialog->setLabelText("Updating " + ms->name);
-        if (!ms->updateMangaList())
-            return;
-
-        if (ms->nummangas != ms->mangalist.links.count())
+        auto mangalist = ms->getMangaList();
+        if (mangalist.nominalSize != mangalist.actualSize)
+        {
             updateError("Number of mangas does not match.\n" +
-                        QString::number(ms->nummangas) + " vs " +
-                        QString::number(ms->mangalist.links.count()));
-
-        ms->serializeMangaList();
+                        QString::number(mangalist.actualSize) + " vs " +
+                        QString::number(mangalist.nominalSize));
+        }
+        else
+        {
+            ms->mangalist = mangalist;
+            ms->serializeMangaList();
+        }
     }
 }
 
@@ -226,7 +229,7 @@ void HomeWidget::on_listViewSources_clicked(const QModelIndex &index)
 
 void HomeWidget::on_pushButtonFilter_clicked()
 {
-    if (currentsource == nullptr || currentsource->nummangas == 0)
+    if (currentsource == nullptr || currentsource->mangalist.actualSize == 0)
         return;
 
     QString ss = ui->lineEditFilter->text();
@@ -288,7 +291,7 @@ void HomeWidget::on_listViewMangas_clicked(const QModelIndex &index)
     QString mangalink = filteractive ? filteredmangalinks[idx]
                                      : currentsource->mangalist.links[idx];
 
-    if (!currentsource->mangalist.isAbsoluteUrl)
+    if (!currentsource->mangalist.absoluteUrls)
         mangalink.prepend(currentsource->baseurl);
 
     QString mangatitle = filteractive ? filteredmangatitles[idx]

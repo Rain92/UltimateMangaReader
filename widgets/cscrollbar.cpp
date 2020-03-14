@@ -8,7 +8,7 @@
 #include <QPainter>
 #include <QScrollBar>
 
-#include "configs.h"
+#include "defines.h"
 #include "qapplication.h"
 #include "qcursor.h"
 #include "qevent.h"

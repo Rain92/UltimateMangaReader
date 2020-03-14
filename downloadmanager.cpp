@@ -18,8 +18,6 @@ DownloadManager::DownloadManager(QObject *parent)
       fileDownloads()
 {
     networkmanager->setCookieJar(&cookies);
-//    networkmanager->setRedirectPolicy(
-//        QNetworkRequest::RedirectPolicy::UserVerifiedRedirectPolicy);
 #ifdef KOBO
     loadCertificates("/mnt/onboard/.adds/qt-5.14.1-kobo/lib/ssl_certs");
 #endif

@@ -3,15 +3,12 @@
 #include <QDateTime>
 #include <QtConcurrent/QtConcurrent>
 
-#include "configs.h"
+#include "defines.h"
 #include "mangainfo.h"
 
 AbstractMangaSource::AbstractMangaSource(QObject *parent,
                                          DownloadManager *downloadmanager)
-    : QObject(parent),
-      nummangas(0),
-      downloadmanager(downloadmanager),
-      htmlconverter()
+    : QObject(parent), downloadmanager(downloadmanager), htmlconverter()
 {
 }
 
@@ -23,7 +20,9 @@ bool AbstractMangaSource::serializeMangaList()
     QDataStream out(&file);
     out << mangalist.titles;
     out << mangalist.links;
-    out << (qint32)nummangas;
+    out << mangalist.absoluteUrls;
+    out << mangalist.nominalSize;
+    out << mangalist.actualSize;
 
     file.close();
 
@@ -41,7 +40,9 @@ bool AbstractMangaSource::deserializeMangaList()
     QDataStream in(&file);
     in >> mangalist.titles;
     in >> mangalist.links;
-    in >> nummangas;
+    in >> mangalist.absoluteUrls;
+    in >> mangalist.nominalSize;
+    in >> mangalist.actualSize;
 
     file.close();
 
@@ -91,47 +92,71 @@ QSharedPointer<MangaInfo> AbstractMangaSource::loadMangaInfo(
     if (infofile.exists())
     {
         QSharedPointer<MangaInfo> mi(
-            MangaInfo::deserialize(this->parent(), this, infofile.filePath()));
+            MangaInfo::deserialize(this, infofile.filePath()));
         if (update)
             mi->mangasource->updateMangaInfo(mi);
         return mi;
     }
+    else
+    {
+        QSharedPointer<MangaInfo> mi(getMangaInfo(mangalink));
+        mi->deserializeProgress();
+        mi->serialize();
 
-    QSharedPointer<MangaInfo> mi(getMangaInfo(mangalink));
-    mi->deserializeProgress();
-    return mi;
+        return mi;
+    }
 }
 
 void AbstractMangaSource::updateMangaInfo(QSharedPointer<MangaInfo> info)
 {
-    if (info.isNull() || info->updating)
+    if (info->updating)
         return;
 
     info->updating = true;
 
-    //    qDebug() << "updating" << info->title;
-
-    QSharedPointer<DownloadFileJob> cjob(nullptr);
-
-    if (!QFileInfo::exists(info->coverpath))
-    {
-        cjob = AbstractMangaSource::downloadmanager->downloadAsFile(
-            info->coverlink, info->coverpath);
-
-        QObject::connect(cjob.get(), SIGNAL(completed()), info.get(),
-                         SLOT(sendCoverLoaded()));
-    }
+    int oldnumchapters = info->chapters.count();
 
     auto job = downloadmanager->downloadAsString(info->link);
 
-    QtConcurrent::run([info, job, cjob, this]() {
-        job->await(2000, true);
+    auto lambda = [oldnumchapters, info, this] {
+        bool newchapters = info->numchapters > oldnumchapters;
+        info->updateCompeted(newchapters);
+        downloadCover(info);
+        info->serialize();
+    };
 
-        if (cjob)
-            cjob->await(2000);
+    //    job->await(3000);
+    //    lambda();
 
-        updateMangaInfoFinishedLoading(job, info);
-    });
+    executeOnJobCompletion(job, lambda);
+}
+
+void AbstractMangaSource::downloadCover(QSharedPointer<MangaInfo> mangainfo)
+{
+    if (mangainfo->coverlink == "")
+    {
+        return;
+    }
+
+    if (mangainfo->coverpath == "")
+    {
+        int ind = mangainfo->coverlink.indexOf('?');
+        if (ind == -1)
+            ind = mangainfo->coverlink.length();
+        QString filetype = mangainfo->coverlink.mid(ind - 4, 4);
+        mangainfo->coverpath =
+            mangainfodir(name, mangainfo->title) + "cover" + filetype;
+    }
+
+    auto coverjob = downloadmanager->downloadAsFile(mangainfo->coverlink,
+                                                    mangainfo->coverpath);
+
+    auto lambda = [mangainfo]() { mangainfo->sendCoverLoaded(); };
+
+    //    coverjob->await(1000);
+    //    lambda();
+
+    executeOnJobCompletion(coverjob, lambda);
 }
 
 QString AbstractMangaSource::htmlToPlainText(const QString &str)

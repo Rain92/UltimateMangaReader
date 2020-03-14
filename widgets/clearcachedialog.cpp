@@ -2,7 +2,7 @@
 
 #include <QDir>
 
-#include "configs.h"
+#include "defines.h"
 #include "ui_clearcachedialog.h"
 
 ClearCacheDialog::ClearCacheDialog(QWidget *parent)
@@ -42,6 +42,7 @@ long dirSize(QString dirPath)
     // add size of child directories recursively
     QDir::Filters dirFilters =
         QDir::Dirs | QDir::NoDotAndDotDot | QDir::System | QDir::Hidden;
+
     foreach (QString childDirPath, dir.entryList(dirFilters))
         size += dirSize(dirPath + QDir::separator() + childDirPath);
     return size;

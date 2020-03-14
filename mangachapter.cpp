@@ -1,6 +1,6 @@
 #include "mangachapter.h"
 
-#include "configs.h"
+#include "defines.h"
 
 MangaChapter::MangaChapter()
     : chapterlink(),

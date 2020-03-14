@@ -1,29 +1,15 @@
 #ifndef ABSTRACTMANGASOURCE_H
 #define ABSTRACTMANGASOURCE_H
-#include <qdatetime.h>
-#include <qstringlist.h>
-
+#include <QDateTime>
 #include <QRegularExpression>
 #include <QTextDocument>
 
 #include "downloadmanager.h"
+//#include "mangainfo.h"
+#include "mangalist.h"
+#include "utils.h"
 
 class MangaInfo;
-
-struct MangaList
-{
-    QStringList titles;
-    QStringList links;
-    bool isAbsoluteUrl = false;
-    int nominalSize = 0;
-    int actualSize = 0;
-
-    void sort()
-    {
-        qSort(links.begin(), links.end(), qGreater<int>());
-        titles.sort
-    }
-};
 
 class AbstractMangaSource : public QObject
 {
@@ -34,13 +20,12 @@ public:
     QString baseurl;
 
     MangaList mangalist;
-    int nummangas;
 
     AbstractMangaSource(QObject *parent, DownloadManager *downloadmanager);
 
     virtual void initialize() {}
 
-    virtual MangaList updateMangaList() = 0;
+    virtual MangaList getMangaList() = 0;
 
     virtual void updateMangaInfoFinishedLoading(
         QSharedPointer<DownloadStringJob> job,
@@ -70,7 +55,8 @@ public:
     QString htmlToPlainText(const QString &str);
 
 public slots:
-    void updateMangaInfo(QSharedPointer<MangaInfo> mangainfo);
+    virtual void updateMangaInfo(QSharedPointer<MangaInfo> mangainfo);
+    virtual void downloadCover(QSharedPointer<MangaInfo> mangainfo);
 
 signals:
     void updateProgress(int);

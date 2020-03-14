@@ -1,20 +1,13 @@
 #include "downloadfilejob.h"
 
-#include "configs.h"
+#include "defines.h"
 #include "downloadmanager.h"
 
 DownloadFileJob::DownloadFileJob(QObject *parent,
                                  QNetworkAccessManager *networkManager,
                                  const QString &url,
                                  const QString &localFilePath)
-    : QObject(parent),
-      networkManager(networkManager),
-      reply(),
-      url(url),
-      originalUrl(url),
-      filepath(localFilePath),
-      isCompleted(false),
-      errorString("")
+    : DownloadJobBase(parent, networkManager, url), filepath(localFilePath)
 {
 }
 
@@ -98,16 +91,6 @@ void DownloadFileJob::downloadFileFinished()
 
         emit completed();
     }
-}
-
-void DownloadFileJob::onSslErrors(const QList<QSslError> &errors)
-{
-    foreach (const QSslError &ssle, errors)
-        qDebug() << "SSL Error" << ssle.errorString();
-
-    auto *reply = qobject_cast<QNetworkReply *>(sender());
-    if (reply)
-        reply->ignoreSslErrors();
 }
 
 void DownloadFileJob::onError(QNetworkReply::NetworkError)

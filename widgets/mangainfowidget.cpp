@@ -73,9 +73,18 @@ void MangaInfoWidget::adjustSizes()
 #endif
 }
 
+inline void updateLabel(QLabel *caption, QLabel *content, const QString &text)
+{
+    bool hide = text.length() <= 1;
+    caption->setHidden(hide);
+    content->setHidden(hide);
+
+    content->setText(text);
+}
+
 void MangaInfoWidget::setManga(QSharedPointer<MangaInfo> manga)
 {
-    if (currentmanga.data() != manga.data())
+    if (currentmanga.get() != manga.get())
     {
         currentmanga.clear();
         currentmanga = manga;
@@ -88,10 +97,20 @@ void MangaInfoWidget::setManga(QSharedPointer<MangaInfo> manga)
 
     ui->labelMangaInfoTitle->setText(currentmanga->title);
 
-    ui->labelMangaInfoLabelAuthorContent->setText(currentmanga->author);
-    ui->labelMangaInfoLabelArtistContent->setText(currentmanga->artist);
-    ui->labelMangaInfoLabelGenresContent->setText(currentmanga->genres);
-    ui->labelMangaInfoLabelStausContent->setText(currentmanga->status);
+    //    ui->labelMangaInfoLabelAuthorContent->setText(currentmanga->author);
+    //    ui->labelMangaInfoLabelArtistContent->setText(currentmanga->artist);
+    //    ui->labelMangaInfoLabelGenresContent->setText(currentmanga->genres);
+    //    ui->labelMangaInfoLabelStausContent->setText(currentmanga->status);
+
+    updateLabel(ui->labelMangaInfoLabelAuthor,
+                ui->labelMangaInfoLabelAuthorContent, currentmanga->author);
+    updateLabel(ui->labelMangaInfoLabelArtist,
+                ui->labelMangaInfoLabelArtistContent, currentmanga->artist);
+    updateLabel(ui->labelMangaInfoLabelGenres,
+                ui->labelMangaInfoLabelGenresContent, currentmanga->genres);
+    updateLabel(ui->labelMangaInfoLabelStaus,
+                ui->labelMangaInfoLabelStausContent, currentmanga->status);
+
     ui->labelMangaInfoLabelSummaryContent->setText(currentmanga->summary);
 
     ui->scrollAreaMangaInfoSummary->verticalScrollBar()->setValue(0);
@@ -103,13 +122,13 @@ void MangaInfoWidget::setManga(QSharedPointer<MangaInfo> manga)
     ui->pushButtonReadFirst->setEnabled(enable);
     ui->pushButtonReadLatest->setEnabled(enable);
 
-    QPixmap img;
-    img.load(currentmanga->coverpath);
-    ui->labelMangaInfoCover->setPixmap(img.scaled(
-        coversize, coversize, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    updateCover();
 
-    QObject::connect(currentmanga.data(), SIGNAL(updatedSignal()), this,
+    QObject::connect(currentmanga.get(), SIGNAL(updatedSignal()), this,
                      SLOT(updateManga()));
+
+    QObject::connect(currentmanga.get(), SIGNAL(coverLoaded()), this,
+                     SLOT(updateCover()));
 }
 
 void MangaInfoWidget::updateManga()
@@ -118,6 +137,22 @@ void MangaInfoWidget::updateManga()
     ui->labelMangaInfoLabelStaus->setText(currentmanga->status);
     static_cast<QStringListModel *>(ui->listViewChapters->model())
         ->setStringList(currentmanga->chapertitlesreversed);
+}
+
+void MangaInfoWidget::updateCover()
+{
+    if (!QFile::exists(currentmanga->coverpath))
+    {
+        ui->labelMangaInfoCover->clear();
+    }
+    else
+    {
+        QPixmap img;
+        img.load(currentmanga->coverpath);
+        ui->labelMangaInfoCover->setPixmap(
+            img.scaled(coversize, coversize, Qt::KeepAspectRatio,
+                       Qt::SmoothTransformation));
+    }
 }
 
 void MangaInfoWidget::setFavoriteButtonState(bool state)

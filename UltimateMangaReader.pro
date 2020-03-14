@@ -40,15 +40,18 @@ FORMS += \
 
 HEADERS += \
     customgesturerecognizer.h \
+    defines.h \
+    downloadjobbase.h \
+    mangalist.h \
     mangasources/abstractmangasource.h \
-    mangasources/mangakakalot.h \
     mangasources/mangapanda.h \
-    mangasources/mangadex.h \
-    mangasources/jaiminisbox.h \
+#    mangasources/mangakakalot.h \
+#    mangasources/mangadex.h \
+#    mangasources/jaiminisbox.h \
+    utils.h \
     widgets/favoriteswidget.h \
     widgets/mainwidget.h \
     widgets/mangaimagecontainer.h \
-    configs.h \
     downloadfilejob.h \
     downloadimageandrescalejob.h \
     downloadmanager.h \
@@ -71,15 +74,16 @@ HEADERS += \
 
 SOURCES += \
     customgesturerecognizer.cpp \
+    downloadjobbase.cpp \
     mangasources/abstractmangasource.cpp \
-    mangasources/mangakakalot.cpp \
     mangasources/mangapanda.cpp \
-    mangasources/mangadex.cpp \
-    mangasources/jaiminisbox.cpp \
+#    mangasources/mangakakalot.cpp \
+#    mangasources/mangadex.cpp \
+#    mangasources/jaiminisbox.cpp \
+    utils.cpp \
     widgets/favoriteswidget.cpp \
     widgets/mainwidget.cpp \
     widgets/mangaimagecontainer.cpp \
-    configs.cpp \
     downloadfilejob.cpp \
     downloadimageandrescalejob.cpp \
     downloadmanager.cpp \

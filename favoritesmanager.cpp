@@ -34,6 +34,7 @@ void FavoritesManager::serialize()
 bool FavoritesManager::isFavorite(MangaInfo *info)
 {
     QString key = info->hostname + info->title;
+
     foreach (const Favorite &f, favorites)
     {
         if (f.hostname + f.title == key)
@@ -61,7 +62,7 @@ bool FavoritesManager::toggleFavorite(QSharedPointer<MangaInfo> info)
         }
     }
 
-    favorites.append(Favorite::fromMangaInfo(info.data()));
+    favorites.append(Favorite::fromMangaInfo(info.get()));
     favoriteinfos.append(info);
     serialize();
     return true;
@@ -102,8 +103,6 @@ void FavoritesManager::updateInfos()
                 s->updateMangaInfo(info);
                 break;
             }
-
-    //    serialize();
 }
 
 void FavoritesManager::clearFavorites()

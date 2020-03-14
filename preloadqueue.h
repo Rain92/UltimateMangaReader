@@ -9,7 +9,8 @@
 
 struct DownloadImageInfo
 {
-    DownloadImageInfo(QString imagelink, QString title, int chapter, int page)
+    DownloadImageInfo(const QString &imagelink, const QString &title,
+                      int chapter, int page)
         : imagelink(imagelink), title(title), chapter(chapter), page(page)
     {
     }
@@ -25,7 +26,7 @@ class PreloadQueue : public QObject
     Q_OBJECT
 
 public:
-    PreloadQueue(QObject *parent, AbstractMangaSource *source);
+    explicit PreloadQueue(AbstractMangaSource *source);
 
     void addJob(DownloadImageInfo info);
     void clearQuene();
@@ -46,7 +47,7 @@ private:
     AbstractMangaSource *source;
     QQueue<DownloadImageInfo> queue;
     QSharedPointer<DownloadFileJob> job;
-    QTimer *resettimer;
+    QTimer resettimer;
     bool running;
 };
 

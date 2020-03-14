@@ -10,11 +10,11 @@ class MangaInfo : public QObject
     Q_OBJECT
 
 public:
-    MangaInfo(QObject *parent, AbstractMangaSource *mangasource);
+    explicit MangaInfo(AbstractMangaSource *mangasource);
     ~MangaInfo();
 
     static QSharedPointer<MangaInfo> deserialize(
-        QObject *parent, AbstractMangaSource *mangasource, const QString &path);
+        AbstractMangaSource *mangasource, const QString &path);
 
     void serialize();
     void serializeProgress();
@@ -67,19 +67,18 @@ public:
     void preloadPopular();
     void cancelAllPreloads();
 
-    void sendUpdated(bool changed);
+    void updateCompeted(bool changed);
 
 signals:
     void completedImagePreloadSignal(const QString &path);
     void updatedSignal();
-    void updatedNoChanges();
     void coverLoaded();
-
-private slots:
-    void completedImagePreload(const QString &path);
 
 public slots:
     void sendCoverLoaded();
+
+private slots:
+    void completedImagePreload(const QString &path);
 
 private:
     PreloadQueue preloadqueue;

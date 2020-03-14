@@ -1,7 +1,7 @@
 #ifndef READINGSTATE_H
 #define READINGSTATE_H
 
-#include "configs.h"
+#include "defines.h"
 #include "mangaindex.h"
 #include "mangainfo.h"
 

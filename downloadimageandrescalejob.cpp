@@ -2,7 +2,7 @@
 
 #include <QImage>
 
-#include "configs.h"
+#include "defines.h"
 #include "downloadmanager.h"
 
 DownloadScaledImageJob::DownloadScaledImageJob(

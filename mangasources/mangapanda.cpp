@@ -1,6 +1,6 @@
 #include "mangapanda.h"
 
-#include "configs.h"
+#include "defines.h"
 
 MangaPanda::MangaPanda(QObject *parent, DownloadManager *dm)
     : AbstractMangaSource(parent, dm)
@@ -9,20 +9,21 @@ MangaPanda::MangaPanda(QObject *parent, DownloadManager *dm)
     baseurl = "http://www.mangapanda.com";
 }
 
-bool MangaPanda::updateMangaList()
+MangaList MangaPanda::getMangaList()
 {
+    QRegularExpression rx(R"lit(<li><a href="([^"]*)"[^>]*>([^<]*))lit");
+
+    MangaList mangas;
+
     auto job = downloadmanager->downloadAsString(baseurl + "/alphabetical");
 
     if (!job->await(8000))
     {
         emit updateError(job->errorString);
-        return false;
+        return mangas;
     }
 
     emit updateProgress(30);
-
-    mangalist.links.clear();
-    mangalist.titles.clear();
 
     QElapsedTimer timer;
     timer.start();
@@ -30,109 +31,40 @@ bool MangaPanda::updateMangaList()
     int spos = job->buffer.indexOf(R"(<div class="series_col">)");
     int epos = job->buffer.indexOf(R"(<div id="adfooter">)");
 
-    QRegularExpression rx(R"lit(<li><a href="([^"]*)"[^>]*>([^<]*))lit");
-
-    QRegularExpressionMatchIterator rxit = rx.globalMatch(job->buffer, spos);
-
-    nummangas = 0;
-    for (auto rxmatch = rxit.next();
-         rxit.isValid() && rxmatch.capturedStart() < epos;
-         rxmatch = rxit.next())
+    for (auto &match : getAllRxMatches(rx, job->buffer, spos, epos))
     {
-        mangalist.links.append(rxmatch.captured(1));
-        mangalist.titles.append(htmlToPlainText(rxmatch.captured(2)));
-        nummangas++;
+        mangas.links.append(match.captured(1));
+        mangas.titles.append(htmlToPlainText(match.captured(2)));
+        mangas.actualSize++;
     }
+    mangas.nominalSize = mangas.actualSize;
 
     auto time = timer.nsecsElapsed() / 1000;
 
-    qDebug() << nummangas << "time:" << time;
+    qDebug() << mangas.actualSize << "time:" << time;
 
     emit updateProgress(100);
 
-    return true;
+    return mangas;
 }
 
 QSharedPointer<MangaInfo> MangaPanda::getMangaInfo(const QString &mangalink)
 {
     auto job = downloadmanager->downloadAsString(mangalink);
 
-    auto info = QSharedPointer<MangaInfo>(new MangaInfo(this, this));
+    auto info = QSharedPointer<MangaInfo>(new MangaInfo(this));
+
     info->mangasource = this;
     info->hostname = name;
 
     info->link = mangalink;
 
-    QRegExp titlerx(R"(<h2 class="aname">([^<]*))");
-    QRegExp authorrx("Author:</td>[^>]*>([^<]*)");
-    QRegExp artistrx("Artist:</td>[^>]*>([^<]*)");
-    QRegExp statusrx("Status:</td>[^>]*>([^<]*)");
-    QRegExp yearrx("Year of Release:</td>[^>]*>([^<]*)");
-    QRegExp genresrx("Genre:</td>(.*)</td>");
-    genresrx.setMinimal(true);
-
-    QRegExp summaryrx(R"(<div id="readmangasum">.*<p>([^<]*)</p>)");
-    summaryrx.setMinimal(true);
-
     if (!job->await(3000))
         return info;
 
-    if (titlerx.indexIn(job->buffer, 0) != -1)
-        info->title = htmlToPlainText(titlerx.cap(1));
-    if (yearrx.indexIn(job->buffer, 0) != -1)
-        info->releaseyear = yearrx.cap(1);
-    if (statusrx.indexIn(job->buffer, 0) != -1)
-        info->status = statusrx.cap(1);
-    if (artistrx.indexIn(job->buffer, 0) != -1)
-        info->artist = htmlToPlainText(artistrx.cap(1));
-    if (authorrx.indexIn(job->buffer, 0) != -1)
-        info->author = htmlToPlainText(authorrx.cap(1));
-    if (summaryrx.indexIn(job->buffer, 0) != -1)
-        info->summary = htmlToPlainText(summaryrx.cap(1));
-    if (genresrx.indexIn(job->buffer, 0) != -1)
-        info->genres = htmlToPlainText(genresrx.cap(1)).trimmed();
+    updateMangaInfoFinishedLoading(job, info);
 
-    QRegExp coverrx(R"(<div id="mangaimg"><img src="([^"]*))");
-
-    QString coverlink;
-    if (coverrx.indexIn(job->buffer, 0) != -1)
-        coverlink = coverrx.cap(1);
-
-    info->coverlink = coverlink;
-
-    int ind = coverlink.indexOf('?');
-    if (ind == -1)
-        ind = coverlink.length();
-    QString filetype = coverlink.mid(ind - 4, 4);
-    info->coverpath = mangainfodir(name, info->title) + "cover" + filetype;
-
-    auto coverjob = downloadmanager->downloadAsFile(coverlink, info->coverpath);
-
-    QRegExp rx(R"lit(<a href="([^"]*)"[^>]*>([^<]*)</a>([^<]*))lit");
-
-    int spos = job->buffer.indexOf(R"(<div id="chapterlist">)");
-    int epos = job->buffer.indexOf(R"(<div id="adfooter">)", spos);
-
-    info->numchapters = 0;
-    for (int pos = spos;
-         (pos = rx.indexIn(job->buffer, pos)) != -1 && pos < epos;
-         pos += rx.matchedLength())
-    {
-        info->chapters.append(MangaChapter(baseurl + rx.cap(1), this));
-
-        QString ctitle = rx.cap(2);
-        if (rx.cap(3) != " : ")
-            ctitle += rx.cap(3);
-        info->chapertitlesreversed.insert(0, ctitle);
-        info->numchapters++;
-    }
-
-    if (coverlink != "" && !coverjob->await(3000))
-    {
-        //        info->coverpath = "";
-    }
-
-    info->serialize();
+    downloadCover(info);
 
     return info;
 }
@@ -140,63 +72,59 @@ QSharedPointer<MangaInfo> MangaPanda::getMangaInfo(const QString &mangalink)
 void MangaPanda::updateMangaInfoFinishedLoading(
     QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info)
 {
-    int spos = job->buffer.indexOf("LATEST CHAPTERS");
-    if (spos == -1)
-    {
-        info->sendUpdated(false);
-        return;
-    }
+    QRegularExpression titlerx(R"(<h2 class="aname">([^<]*))");
+    QRegularExpression authorrx("Author:</td>[^>]*>([^<]*)");
+    QRegularExpression artistrx("Artist:</td>[^>]*>([^<]*)");
+    QRegularExpression statusrx("Status:</td>[^>]*>([^<]*)");
+    QRegularExpression yearrx("Year of Release:</td>[^>]*>([^<]*)");
+    QRegularExpression genresrx("Genre:</td>(.*)</td>");
+    QRegularExpression summaryrx(R"(<div id="readmangasum">.*<p>([^<]*)</p>)");
+    QRegularExpression coverrx(R"(<div id="mangaimg"><img src="([^"]*))");
 
-    QRegExp chrx(R"lit((\d+)">)lit");
+    QRegularExpression chapterrx(
+        R"lit(<a href="([^"]*)"[^>]*>([^<]*)</a>([^<]*))lit");
 
-    int oldnumchapters = info->numchapters;
-    int numchapters = info->numchapters;
+    auto titlerxmatch = titlerx.match(job->buffer);
+    auto authorrxmatch = authorrx.match(job->buffer);
+    auto artistrxmatch = artistrx.match(job->buffer);
+    auto statusrxmatch = statusrx.match(job->buffer);
+    auto yearrxmatch = yearrx.match(job->buffer);
+    auto genresrxmatch = genresrx.match(job->buffer);
+    auto summaryrxmatch = summaryrx.match(job->buffer);
+    auto coverrxmatch = coverrx.match(job->buffer);
 
-    if (chrx.indexIn(job->buffer, 0) != -1)
-        numchapters = chrx.cap(1).toInt();
+    if (titlerxmatch.hasMatch())
+        info->title = htmlToPlainText(titlerxmatch.captured(1));
+    if (authorrxmatch.hasMatch())
+        info->author = authorrxmatch.captured(1);
+    if (artistrxmatch.hasMatch())
+        info->artist = artistrxmatch.captured(1);
+    if (statusrxmatch.hasMatch())
+        info->status = htmlToPlainText(statusrxmatch.captured(1));
+    if (yearrxmatch.hasMatch())
+        info->releaseyear = htmlToPlainText(yearrxmatch.captured(1));
+    if (genresrxmatch.hasMatch())
+        info->genres = htmlToPlainText(genresrxmatch.captured(1)).trimmed();
+    if (summaryrxmatch.hasMatch())
+        info->summary = htmlToPlainText(summaryrxmatch.captured(1));
+    if (coverrxmatch.hasMatch())
+        info->coverlink = coverrxmatch.captured(1);
 
-    if (numchapters == 0 || numchapters == info->numchapters)
-    {
-        info->sendUpdated(false);
-        return;
-    }
-
-    QRegExp statusrx("Status:</td>[^>]*>([^<]*)");
-
-    if (statusrx.indexIn(job->buffer, 0) != -1)
-        info->status = statusrx.cap(1);
-
-    QRegExp rx(R"lit(<a href="([^"]*)"[^>]*>([^<]*)</a>([^<]*))lit");
-
-    spos = job->buffer.indexOf(R"(<div id="chapterlist">)");
+    int spos = job->buffer.indexOf(R"(<div id="chapterlist">)");
     int epos = job->buffer.indexOf(R"(<div id="adfooter">)", spos);
 
-    for (int pos = spos, c = 0;
-         (pos = rx.indexIn(job->buffer, pos)) != -1 && pos < epos;
-         pos += rx.matchedLength(), c++)
+    for (auto &chapterrxmatch :
+         getAllRxMatches(chapterrx, job->buffer, spos, epos))
     {
-        if (c < info->numchapters)
-            continue;
+        info->chapters.append(
+            MangaChapter(baseurl + chapterrxmatch.captured(1), this));
 
-        info->chapters.append(MangaChapter(baseurl + rx.cap(1), this));
-
-        QString ctitle = rx.cap(2);
-        if (rx.cap(3) != " : ")
-            ctitle += rx.cap(3);
+        QString ctitle = chapterrxmatch.captured(2);
+        if (chapterrxmatch.captured(3) != " : ")
+            ctitle += chapterrxmatch.captured(3);
         info->chapertitlesreversed.insert(0, ctitle);
-
         info->numchapters++;
     }
-
-    if (oldnumchapters == info->numchapters)
-    {
-        info->sendUpdated(false);
-        return;
-    }
-
-    info->serialize();
-
-    info->sendUpdated(true);
 }
 
 QStringList MangaPanda::getPageList(const QString &chapterlink)
@@ -207,16 +135,14 @@ QStringList MangaPanda::getPageList(const QString &chapterlink)
     if (!job->await(3000))
         return pageLinks;
 
-    QRegExp rx(R"lit(<option value="([^"]*)")lit");
+    QRegularExpression pagerx(R"lit(<option value="([^"]*)")lit");
 
     int spos = job->buffer.indexOf(R"(<select id="pageMenu" name="pageMenu">)");
     int epos = job->buffer.indexOf("</select>", spos);
 
-    for (int pos = spos;
-         (pos = rx.indexIn(job->buffer, pos)) != -1 && pos < epos;
-         pos += rx.matchedLength())
+    for (auto &match : getAllRxMatches(pagerx, job->buffer, spos, epos))
     {
-        pageLinks.append(baseurl + rx.cap(1));
+        pageLinks.append(baseurl + match.captured(1));
     }
 
     return pageLinks;
@@ -227,20 +153,15 @@ QString MangaPanda::getImageLink(const QString &pagelink)
     auto job = downloadmanager->downloadAsString(pagelink);
     QString imageLink;
 
-    QRegExp rx(R"lit(src="([^"]*)")lit");
+    QRegularExpression imagerx(R"lit(<img id="img"[^>]*src="([^"]*)")lit");
 
     if (!job->await(3000))
         return imageLink;
 
-    int spos = job->buffer.indexOf(R"(<img id="img")");
-    int epos = job->buffer.indexOf("/>", spos);
+    auto match = imagerx.match(job->buffer);
 
-    for (int pos = spos;
-         (pos = rx.indexIn(job->buffer, pos)) != -1 && pos < epos;
-         pos += rx.matchedLength())
-    {
-        imageLink = rx.cap(1);
-    }
+    if (match.hasMatch())
+        imageLink = match.captured(1);
 
     return imageLink;
 }

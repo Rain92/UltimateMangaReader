@@ -3,7 +3,7 @@
 #include <QFile>
 
 #include "QTime"
-#include "configs.h"
+#include "defines.h"
 
 MangaDex::MangaDex(QObject *parent, DownloadManager *dm)
     : AbstractMangaSource(parent, dm)
@@ -49,10 +49,9 @@ void MangaDex::initialize()
     login();
 }
 
-bool MangaDex::updateMangaList()
+MangaList MangaDex::getMangaList()
 {
-    QElapsedTimer timer;
-    timer.start();
+    MangaList mangas;
 
     QString basedictlink = baseurl + "/titles/2/";
 
@@ -61,16 +60,14 @@ bool MangaDex::updateMangaList()
     if (!job->await(5000))
     {
         emit updateError(job->errorString);
-        return false;
+        return mangas;
     }
 
-    mangalist.links.clear();
-    mangalist.titles.clear();
+    QElapsedTimer timer;
+    timer.start();
 
-    //    qDebug() << "time" << timer.elapsed();
-
-    QRegExp chsstart("<p class=[^>]*>Showing");
-    QRegExp chsrx(" of (\\d{2,3},\\d{3})");
+    QRegularExpression chsstart("<p class=[^>]*>Showing");
+    QRegularExpression chsrx(" of (\\d{2,3},\\d{3})");
     int cpos = chsstart.indexIn(job->buffer, 0) + chsrx.matchedLength() + 1;
     chsrx.indexIn(job->buffer, cpos);
     nummangas = chsrx.cap(1).remove(',').toInt();
@@ -82,7 +79,7 @@ bool MangaDex::updateMangaList()
     auto jobs = QVector<QSharedPointer<DownloadStringJob>>(pages);
     jobs[0] = job;
 
-    QRegExp rx(
+    QRegularExpression rx(
         R"lit(<a title=['"]([^'"]*)['"][^<]*href=['"]([^'"]*)['"][^<]*class=")lit");
     rx.setMinimal(true);
 
@@ -101,15 +98,15 @@ bool MangaDex::updateMangaList()
             if (!jobs[rxi]->await(10000, true))
             {
                 emit updateError(jobs[rxi]->errorString);
-                return false;
+                return mangas;
             }
 
             int matches = 0;
             for (int pos = 0; (pos = rx.indexIn(jobs[rxi]->buffer, pos)) != -1;
                  pos += rx.matchedLength())
             {
-                mangalist.links.append(rx.cap(2));
-                mangalist.titles.append(
+                mangas.links.append(rx.cap(2));
+                mangas.titles.append(
                     htmlToPlainText(htmlToPlainText(rx.cap(1))));
                 matches++;
                 //                qDebug() << mangalist.links.last();
@@ -127,7 +124,7 @@ bool MangaDex::updateMangaList()
 
     emit updateProgress(100);
     //    qDebug() << "time" << timer.elapsed();
-    return true;
+    return mangas;
 }
 
 QSharedPointer<MangaInfo> MangaDex::getMangaInfo(const QString &mangalink)
@@ -141,18 +138,19 @@ QSharedPointer<MangaInfo> MangaDex::getMangaInfo(const QString &mangalink)
 
     info->link = mangalink;
 
-    QRegExp titlerx("class=\"mx-1\">([^<]*)<");
+    QRegularExpression titlerx("class=\"mx-1\">([^<]*)<");
     titlerx.setMinimal(true);
 
-    QRegExp authorrx("Author:</div>[^>]*>[^>]*>([^<]*)");
-    QRegExp artistrx("Artist:</div>[^>]*>[^>]*>([^<]*)");
-    QRegExp statusrx("Pub. status:</div>[^>]*>([^<]*)");
-    QRegExp demographicrx("Demographic:</div>[^>]*>[^>]*>[^>]*>([^<]*)<");
-    QRegExp genresrx("Genre:</div>[^>]*>[^>]*>([^<]*)<");
+    QRegularExpression authorrx("Author:</div>[^>]*>[^>]*>([^<]*)");
+    QRegularExpression artistrx("Artist:</div>[^>]*>[^>]*>([^<]*)");
+    QRegularExpression statusrx("Pub. status:</div>[^>]*>([^<]*)");
+    QRegularExpression demographicrx(
+        "Demographic:</div>[^>]*>[^>]*>[^>]*>([^<]*)<");
+    QRegularExpression genresrx("Genre:</div>[^>]*>[^>]*>([^<]*)<");
     demographicrx.setMinimal(true);
     genresrx.setMinimal(true);
 
-    QRegExp summaryrx("Description:</div>[^>]*>(.*)</div>");
+    QRegularExpression summaryrx("Description:</div>[^>]*>(.*)</div>");
     summaryrx.setMinimal(true);
 
     if (!job->await(3000))
@@ -184,7 +182,8 @@ QSharedPointer<MangaInfo> MangaDex::getMangaInfo(const QString &mangalink)
 
     info->releaseyear = "-";
 
-    QRegExp coverrx("<img class=\"rounded\" width=\"100%\" src=\"([^\"]*)\"");
+    QRegularExpression coverrx(
+        "<img class=\"rounded\" width=\"100%\" src=\"([^\"]*)\"");
 
     QString coverlink;
     if (coverrx.indexIn(job->buffer, spos) != -1)
@@ -202,11 +201,12 @@ QSharedPointer<MangaInfo> MangaDex::getMangaInfo(const QString &mangalink)
     auto coverjob = downloadmanager->downloadAsFile(coverlink, info->coverpath);
     qDebug() << info->coverpath;
 
-    QRegExp rx("<a href='(/chapter/[^']*)'[^>]*>([^<]*)</a>");
+    QRegularExpression rx("<a href='(/chapter/[^']*)'[^>]*>([^<]*)</a>");
 
     info->numchapters = 0;
 
-    QRegExp multipagerx("<p class='text-center'>Showing 1 to 100 of (\\S+)");
+    QRegularExpression multipagerx(
+        "<p class='text-center'>Showing 1 to 100 of (\\S+)");
 
     int pages = 1;
 
@@ -268,7 +268,7 @@ QSharedPointer<MangaInfo> MangaDex::getMangaInfo(const QString &mangalink)
 void MangaDex::updateMangaInfoFinishedLoading(
     QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info)
 {
-    QRegExp multipagerx(">Showing 1 to 100 of (\\S+)");
+    QRegularExpression multipagerx(">Showing 1 to 100 of (\\S+)");
 
     int oldnumchapters = info->numchapters;
     int numchapters = info->numchapters;
@@ -287,15 +287,15 @@ void MangaDex::updateMangaInfoFinishedLoading(
 
     if (numchapters == oldnumchapters)
     {
-        info->sendUpdated(false);
+        info->updateCompeted(false);
         return;
     }
 
-    QRegExp statusrx("Pub. status:</div>[^>]*>([^<]*)");
+    QRegularExpression statusrx("Pub. status:</div>[^>]*>([^<]*)");
     if (statusrx.indexIn(job->buffer, spos) != -1)
         info->status = statusrx.cap(1);
 
-    QRegExp rx(
+    QRegularExpression rx(
         "data-chapter-name=\"[^\"]*\" href=\"(/chapter/[^\"]*)\">([^<]*)</a>");
 
     int chapterstoadd = numchapters - oldnumchapters;
@@ -323,7 +323,7 @@ void MangaDex::updateMangaInfoFinishedLoading(
         {
             if (!jobs[rxi]->await(6000, true))
             {
-                info->sendUpdated(false);
+                info->updateCompeted(false);
                 return;
             }
 
@@ -343,7 +343,7 @@ void MangaDex::updateMangaInfoFinishedLoading(
 
     info->serialize();
 
-    info->sendUpdated(true);
+    info->updateCompeted(true);
 }
 
 QStringList MangaDex::getPageList(const QString &chapterlink)
@@ -355,16 +355,16 @@ QStringList MangaDex::getPageList(const QString &chapterlink)
     if (!job->await(3000))
         return pageLinks;
 
-    QRegExp rx("<script");
+    QRegularExpression rx("<script");
     rx.setMinimal(true);
 
     int spos = rx.indexIn(job->buffer, 0);
     if (spos == -1)
         return pageLinks;
 
-    QRegExp baserx(R"(server\s+=\s+'([^']*)')");
-    QRegExp datarx("var dataurl = '([^']*)'");
-    QRegExp pagesrx("var page_array = \\[([^\\]]*)");
+    QRegularExpression baserx(R"(server\s+=\s+'([^']*)')");
+    QRegularExpression datarx("var dataurl = '([^']*)'");
+    QRegularExpression pagesrx("var page_array = \\[([^\\]]*)");
 
     if (baserx.indexIn(job->buffer, spos) == -1)
         return pageLinks;

@@ -3,7 +3,7 @@
 #include <QFileInfo>
 #include <QImage>
 
-#include "configs.h"
+#include "defines.h"
 
 Favorite::Favorite() = default;
 

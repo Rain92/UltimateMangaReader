@@ -4,7 +4,7 @@
 #include <QMap>
 
 #include "abstractmangasource.h"
-#include "configs.h"
+#include "defines.h"
 #include "downloadmanager.h"
 #include "favorite.h"
 

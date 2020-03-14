@@ -4,7 +4,7 @@
 #include <QStringListModel>
 
 #include "../koboplatformintegrationplugin/koboplatformfunctions.h"
-#include "configs.h"
+#include "defines.h"
 #include "ui_mainwidget.h"
 
 MainWidget::MainWidget(QWidget *parent)
@@ -246,18 +246,18 @@ void MainWidget::setCurrentSource(AbstractMangaSource *source)
 
 void MainWidget::viewMangaInfo(QSharedPointer<MangaInfo> info)
 {
-    if (currentmanga.data() != info.data())
+    if (currentmanga.get() != info.get())
     {
         currentmanga.clear();
         currentmanga = info;
-        QObject::connect(currentmanga.data(),
+        QObject::connect(currentmanga.get(),
                          SIGNAL(completedImagePreloadSignal(QString)),
                          ui->mangaReaderWidget, SLOT(addImageToCache(QString)));
     }
 
     ui->mangaInfoWidget->setManga(currentmanga);
     ui->mangaInfoWidget->setFavoriteButtonState(
-        favoritesmanager.isFavorite(currentmanga.data()));
+        favoritesmanager.isFavorite(currentmanga.get()));
 
     setWidgetTab(1);
 

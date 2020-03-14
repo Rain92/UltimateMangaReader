@@ -5,7 +5,7 @@
 #include <QPair>
 #include <QWidget>
 
-#include "configs.h"
+#include "defines.h"
 #include "gotodialog.h"
 #include "mangainfo.h"
 
