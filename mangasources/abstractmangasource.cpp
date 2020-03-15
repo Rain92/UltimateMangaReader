@@ -107,6 +107,28 @@ QSharedPointer<MangaInfo> AbstractMangaSource::loadMangaInfo(
     }
 }
 
+QSharedPointer<MangaInfo> AbstractMangaSource::getMangaInfo(
+    const QString &mangalink)
+{
+    auto job = downloadmanager->downloadAsString(mangalink);
+
+    auto info = QSharedPointer<MangaInfo>(new MangaInfo(this));
+
+    info->mangasource = this;
+    info->hostname = name;
+
+    info->link = mangalink;
+
+    if (!job->await(3000))
+        return info;
+
+    updateMangaInfoFinishedLoading(job, info);
+
+    downloadCover(info);
+
+    return info;
+}
+
 void AbstractMangaSource::updateMangaInfo(QSharedPointer<MangaInfo> info)
 {
     if (info->updating)
@@ -163,4 +185,38 @@ QString AbstractMangaSource::htmlToPlainText(const QString &str)
 {
     htmlconverter.setHtml(str);
     return htmlconverter.toPlainText();
+}
+
+void AbstractMangaSource::fillMangaInfo(
+    QSharedPointer<MangaInfo> info, const QString &buffer,
+    const QRegularExpression &titlerx, const QRegularExpression &authorrx,
+    const QRegularExpression &artistrx, const QRegularExpression &statusrx,
+    const QRegularExpression &yearrx, const QRegularExpression &genresrx,
+    const QRegularExpression &summaryrx, const QRegularExpression &coverrx)
+{
+    auto titlerxmatch = titlerx.match(buffer);
+    auto authorrxmatch = authorrx.match(buffer);
+    auto artistrxmatch = artistrx.match(buffer);
+    auto statusrxmatch = statusrx.match(buffer);
+    auto yearrxmatch = yearrx.match(buffer);
+    auto genresrxmatch = genresrx.match(buffer);
+    auto summaryrxmatch = summaryrx.match(buffer);
+    auto coverrxmatch = coverrx.match(buffer);
+
+    if (titlerxmatch.hasMatch())
+        info->title = htmlToPlainText(titlerxmatch.captured(1));
+    if (authorrxmatch.hasMatch())
+        info->author = authorrxmatch.captured(1);
+    if (artistrxmatch.hasMatch())
+        info->artist = artistrxmatch.captured(1);
+    if (statusrxmatch.hasMatch())
+        info->status = htmlToPlainText(statusrxmatch.captured(1));
+    if (yearrxmatch.hasMatch())
+        info->releaseyear = htmlToPlainText(yearrxmatch.captured(1));
+    if (genresrxmatch.hasMatch())
+        info->genres = htmlToPlainText(genresrxmatch.captured(1)).trimmed();
+    if (summaryrxmatch.hasMatch())
+        info->summary = htmlToPlainText(summaryrxmatch.captured(1));
+    if (coverrxmatch.hasMatch())
+        info->coverlink = coverrxmatch.captured(1);
 }

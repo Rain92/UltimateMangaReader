@@ -5,7 +5,6 @@
 #include <QTextDocument>
 
 #include "downloadmanager.h"
-//#include "mangainfo.h"
 #include "mangalist.h"
 #include "utils.h"
 
@@ -31,8 +30,7 @@ public:
         QSharedPointer<DownloadStringJob> job,
         QSharedPointer<MangaInfo> mangainfo) = 0;
 
-    virtual QSharedPointer<MangaInfo> getMangaInfo(
-        const QString &mangalink) = 0;
+    virtual QSharedPointer<MangaInfo> getMangaInfo(const QString &mangalink);
 
     virtual QStringList getPageList(const QString &chapterlink) = 0;
     virtual QString getImageLink(const QString &pagelink) = 0;
@@ -65,6 +63,13 @@ signals:
 protected:
     DownloadManager *downloadmanager;
     QTextDocument htmlconverter;
+
+    void fillMangaInfo(
+        QSharedPointer<MangaInfo> info, const QString &buffer,
+        const QRegularExpression &titlerx, const QRegularExpression &authorrx,
+        const QRegularExpression &artistrx, const QRegularExpression &statusrx,
+        const QRegularExpression &yearrx, const QRegularExpression &genresrx,
+        const QRegularExpression &summaryrx, const QRegularExpression &coverrx);
 };
 
 #endif  // ABSTRACTMANGASOURCE_H

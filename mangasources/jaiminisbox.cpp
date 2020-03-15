@@ -18,6 +18,11 @@ JaiminisBox::JaiminisBox(QObject *parent, DownloadManager *dm)
 
 MangaList JaiminisBox::getMangaList()
 {
+    QRegularExpression mangarx(
+        R"lit(<div class="title"><a href="([^"]*)"[^"]*"([^"]*)")lit");
+    QRegularExpression nextpagerx(
+        "<a class=\"gbutton fright\" href=\"([^\"]*)\">Next");
+
     MangaList mangas;
 
     QString nextlink = baseurl + "/reader/directory/";
@@ -29,37 +34,26 @@ MangaList JaiminisBox::getMangaList()
 
     int rem = 70;
 
-    QRegularExpression rx(
-        R"lit(<div class="title"><a href="([^"]*)"[^"]*"([^"]*)")lit");
-    QRegularExpression nextrx(
-        "<a class=\"gbutton fright\" href=\"([^\"]*)\">Next");
-
-    mangalist.links.clear();
-    mangalist.titles.clear();
-    nummangas = 0;
-
     do
     {
-        auto job = downloadmanager->downloadAsString(nextlink, -1);
+        auto job = downloadmanager->downloadAsString(nextlink);
         if (!job->await(5000))
         {
             emit updateError(job->errorString);
             return mangas;
         }
 
-        int pos = 0;
-        while ((pos = rx.indexIn(job->buffer, pos)) != -1)
+        for (auto &match : getAllRxMatches(mangarx, job->buffer))
         {
-            pos += rx.matchedLength();
-            mangas.links.append(rx.cap(1).mid(baseurl.length()));
-            mangas.titles.append(htmlToPlainText(rx.cap(2)));
-
-            //            qDebug() << rx.cap(1) << htmlToPlainText(rx.cap(2));
-            nummangas++;
+            mangas.links.append(match.captured(1));
+            mangas.titles.append(htmlToPlainText(match.captured(2)));
+            mangas.actualSize++;
         }
 
-        if (nextrx.indexIn(job->buffer, 0) != -1)
-            nextlink = nextrx.cap(1);
+        auto nextpagematch = nextpagerx.match(job->buffer);
+
+        if (nextpagematch.hasMatch())
+            nextlink = nextpagematch.captured(1);
         else
             nextlink = "";
 
@@ -67,7 +61,11 @@ MangaList JaiminisBox::getMangaList()
         emit updateProgress(100 - rem);
     } while (nextlink != "");
 
-    qDebug() << nummangas;
+    mangas.nominalSize = mangas.actualSize;
+    mangas.absoluteUrls = true;
+
+    qDebug() << "update completed. mangas:" << mangas.actualSize
+             << "time:" << timer.elapsed();
 
     emit updateProgress(100);
 
@@ -76,87 +74,21 @@ MangaList JaiminisBox::getMangaList()
 
 QSharedPointer<MangaInfo> JaiminisBox::getMangaInfo(const QString &mangalink)
 {
-    //    qDebug() << mangalink;
     auto job = downloadmanager->downloadAsStringPost(mangalink, &postdatastr);
 
-    auto info = QSharedPointer<MangaInfo>(new MangaInfo(this, this));
+    auto info = QSharedPointer<MangaInfo>(new MangaInfo(this));
+
     info->mangasource = this;
     info->hostname = name;
 
     info->link = mangalink;
 
-    QRegularExpression titlerx(R"(<h1 class="title">\s+([^<]*))");
-    QRegularExpression authorrx("Author</b>:([^<]*)");
-    QRegularExpression artistrx("Artist</b>:([^<]*)");
-
-    QRegularExpression summaryrx("Synopsis</b>:(.*)</div>");
-    summaryrx.setMinimal(true);
-
     if (!job->await(3000))
-    {
-        qDebug() << job->errorString;
         return info;
-    }
 
-    int spos = 0;
+    updateMangaInfoFinishedLoading(job, info);
 
-    if (titlerx.indexIn(job->buffer, spos) != -1)
-        info->title = htmlToPlainText(titlerx.cap(1)).trimmed();
-    if (authorrx.indexIn(job->buffer, spos) != -1)
-        info->author = htmlToPlainText(authorrx.cap(1)).trimmed();
-    if (artistrx.indexIn(job->buffer, spos) != -1)
-        info->artist = htmlToPlainText(artistrx.cap(1)).trimmed();
-    if (summaryrx.indexIn(job->buffer, spos) != -1)
-        info->summary = htmlToPlainText(summaryrx.cap(1)).trimmed();
-
-    info->genres = "-";
-    info->status = "-";
-    info->releaseyear = "-";
-
-    QRegularExpression coverrx(R"(<div class="thumbnail">[^"]*"([^"]*))");
-    //    coverrx.setMinimal(true);
-
-    QString coverlink;
-    if (coverrx.indexIn(job->buffer, spos) != -1)
-        coverlink = coverrx.cap(1);
-
-    //    qDebug() << coverlink;
-
-    //    coverlink = coverlink.replace("http:", "https:");
-    info->coverlink = coverlink;
-
-    int ind = coverlink.indexOf('?');
-    if (ind == -1)
-        ind = coverlink.length();
-    QString filetype = coverlink.mid(ind - 4, 4);
-    info->coverpath = mangainfodir(name, info->title) + "cover" + filetype;
-
-    auto coverjob = downloadmanager->downloadAsFile(coverlink, info->coverpath);
-
-    QRegularExpression rx(
-        "<div class=\"title\"><a href=\"([^\"]*)\"\\s+title=\"([^\"]*)");
-
-    info->numchapters = 0;
-    int pos = 0;
-    while ((pos = rx.indexIn(job->buffer, pos)) != -1)
-    {
-        pos += rx.matchedLength();
-
-        info->chapters.insert(0, MangaChapter(rx.cap(1), this));
-
-        QString ctitle = rx.cap(2);
-        info->chapertitlesreversed.append(ctitle);
-        info->numchapters++;
-        //        qDebug() << info->chapters[0].chapterlink;
-        //        qDebug() << rx.cap(2);
-    }
-
-    if (coverlink != "" && !coverjob->await(3000))
-    {
-        //        info->coverpath = "";
-    }
-
-    info->serialize();
+    downloadCover(info);
 
     return info;
 }
@@ -164,74 +96,59 @@ QSharedPointer<MangaInfo> JaiminisBox::getMangaInfo(const QString &mangalink)
 void JaiminisBox::updateMangaInfoFinishedLoading(
     QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info)
 {
-    int numchapters = job->buffer.count("<div class=\"title\"><a");
+    QRegularExpression titlerx(R"(<h1 class="title">\s+([^<]*))");
+    QRegularExpression authorrx("Author</b>:([^<]*)");
+    QRegularExpression artistrx("Artist</b>:([^<]*)");
+    QRegularExpression statusrx;
+    QRegularExpression yearrx;
+    QRegularExpression genresrx;
+    QRegularExpression summaryrx("Synopsis</b>:(.*)</div>");
+    QRegularExpression coverrx(R"(<div class="thumbnail">[^"]*"([^"]*))");
 
-    if (numchapters == 0 || numchapters == info->numchapters)
-    {
-        info->updateCompeted(false);
-        return;
-    }
-
-    QRegularExpression rx(
+    QRegularExpression chapterrx(
         "<div class=\"title\"><a href=\"([^\"]*)\"\\s+title=\"([^\"]*)");
 
-    info->chapters.clear();
-    info->chapertitlesreversed.clear();
-    info->numchapters = 0;
+    fillMangaInfo(info, job->buffer, titlerx, authorrx, artistrx, statusrx,
+                  yearrx, genresrx, summaryrx, coverrx);
 
-    int pos = 0;
-    while ((pos = rx.indexIn(job->buffer, pos)) != -1)
+    for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->buffer))
     {
-        pos += rx.matchedLength();
-
-        info->chapters.insert(0, MangaChapter(rx.cap(1), this));
-
-        QString ctitle = rx.cap(2);
-        info->chapertitlesreversed.append(ctitle);
+        info->chapters.insert(0,
+                              MangaChapter(chapterrxmatch.captured(1), this));
+        info->chapertitlesreversed.append(chapterrxmatch.captured(2));
         info->numchapters++;
     }
-
-    info->serialize();
-
-    info->updateCompeted(true);
 }
 
 QStringList JaiminisBox::getPageList(const QString &chapterlink)
 {
+    QRegularExpression encodedrx(R"(JSON.parse\(atob\("([^"]*))");
+    QRegularExpression imagelinksrx(R"("url":"([^"]*))");
+
     auto job =
         downloadmanager->downloadAsStringPost(chapterlink, &postdatastr, -1);
-    QStringList pageLinks;
+    QStringList imagelinks;
 
     if (!job->await(4000))
-    {
-        qDebug() << "getPageList: download error.";
-        return pageLinks;
-    }
+        return imagelinks;
 
-    //    qDebug() << chapterlink;
+    auto rxmatch = encodedrx.match(job->buffer);
+    if (!rxmatch.hasMatch())
+        return imagelinks;
 
-    QRegularExpression rx(R"(JSON.parse\(atob\("([^"]*))");
-
-    if (rx.indexIn(job->buffer, 0) == -1)
-        return pageLinks;
-
-    QByteArray decoded = QByteArray::fromBase64(rx.cap(1).toLatin1());
+    QByteArray decoded = QByteArray::fromBase64(rxmatch.captured(1).toLatin1());
     QString decodedstr(decoded);
 
-    //    qDebug() << decodedstr;
-
-    QRegularExpression pagerx(R"("url":"([^"]*))");
-
-    int pos = 0;
-    while ((pos = pagerx.indexIn(decodedstr, pos)) != -1)
+    for (auto &match : getAllRxMatches(imagelinksrx, decodedstr))
     {
-        pos += pagerx.matchedLength();
-
-        pageLinks.append(pagerx.cap(1).replace("\\/", "/"));
-        //        qDebug() << pagerx.cap(1).replace("\\/", "/");
+        imagelinks.append(match.captured(1).replace("\\/", "/"));
     }
 
-    return pageLinks;
+    return imagelinks;
 }
 
-QString JaiminisBox::getImageLink(const QString &pagelink) { return pagelink; }
+QString JaiminisBox::getImageLink(const QString &pagelink)
+{
+    // pagelinks are actually already imagelinks
+    return pagelink;
+}

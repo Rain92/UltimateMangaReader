@@ -11,7 +11,9 @@ public:
     JaiminisBox(QObject *parent, DownloadManager *dm);
 
     MangaList getMangaList() override;
+
     QSharedPointer<MangaInfo> getMangaInfo(const QString &mangalink) override;
+
     void updateMangaInfoFinishedLoading(
         QSharedPointer<DownloadStringJob> job,
         QSharedPointer<MangaInfo> info) override;

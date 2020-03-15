@@ -47,7 +47,7 @@ HEADERS += \
     mangasources/mangapanda.h \
 #    mangasources/mangakakalot.h \
 #    mangasources/mangadex.h \
-#    mangasources/jaiminisbox.h \
+    mangasources/jaiminisbox.h \
     utils.h \
     widgets/favoriteswidget.h \
     widgets/mainwidget.h \
@@ -79,7 +79,7 @@ SOURCES += \
     mangasources/mangapanda.cpp \
 #    mangasources/mangakakalot.cpp \
 #    mangasources/mangadex.cpp \
-#    mangasources/jaiminisbox.cpp \
+    mangasources/jaiminisbox.cpp \
     utils.cpp \
     widgets/favoriteswidget.cpp \
     widgets/mainwidget.cpp \
