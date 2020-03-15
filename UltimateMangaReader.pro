@@ -42,6 +42,7 @@ HEADERS += \
     customgesturerecognizer.h \
     defines.h \
     downloadjobbase.h \
+    downloadqueue.h \
     mangalist.h \
     mangasources/abstractmangasource.h \
     mangasources/mangapanda.h \
@@ -75,6 +76,7 @@ HEADERS += \
 SOURCES += \
     customgesturerecognizer.cpp \
     downloadjobbase.cpp \
+    downloadqueue.cpp \
     mangasources/abstractmangasource.cpp \
     mangasources/mangapanda.cpp \
     mangasources/mangakakalot.cpp \

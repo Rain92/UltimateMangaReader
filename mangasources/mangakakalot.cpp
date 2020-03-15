@@ -1,6 +1,7 @@
 #include "mangakakalot.h"
 
 #include "defines.h"
+#include "downloadqueue.h"
 
 Mangakakalot::Mangakakalot(QObject *parent, DownloadManager *dm)
     : AbstractMangaSource(parent, dm)
@@ -48,29 +49,13 @@ MangaList Mangakakalot::getMangaList()
     if (rxnummangasmatch.hasMatch())
         pages = rxnumpagesmatch.captured(1).toInt();
 
-    auto jobs = QVector<QSharedPointer<DownloadStringJob>>(pages);
-    jobs[0] = job;
+    QList<QString> urls;
+    for (int i = 0; i < pages; i++) urls.append(dicturl + QString::number(i));
 
-    for (int batch = 0, dli = 1, rxi = 0;
-         batch < (pages + maxparalleldownloads - 1) / maxparalleldownloads;
-         batch++)
-    {
-        for (; dli < (batch + 1) * maxparalleldownloads && dli < pages; dli++)
-        {
-            jobs[dli] = downloadmanager->downloadAsString(
-                dicturl + QString::number(dli + 1), -1);
-            qDebug() << "dl" << dli << "time:" << timer.elapsed();
-        }
-        for (; rxi < (batch + 1) * maxparalleldownloads && rxi < pages; rxi++)
-        {
-            if (!jobs[rxi]->await(10000, true))
-            {
-                emit updateError(jobs[rxi]->errorString);
-                return mangas;
-            }
-
-            int spos = jobs[rxi]->buffer.indexOf(rxstart);
-            int epos = jobs[rxi]->buffer.indexOf(rxend);
+    DownloadQueue queue(
+        downloadmanager, urls, 8, [&](QSharedPointer<DownloadStringJob> job) {
+            int spos = job->buffer.indexOf(rxstart);
+            int epos = job->buffer.indexOf(rxend);
 
             int matches = 0;
             for (auto &match :
@@ -83,15 +68,15 @@ MangaList Mangakakalot::getMangaList()
             }
             mangas.actualSize += matches;
 
-            qDebug() << "rx" << rxi << "time:" << timer.elapsed()
-                     << "matches:" << matches;
-            jobs[rxi].clear();
-        }
-        emit updateProgress(100 * rxi / pages);
-    }
+            qDebug() << "matches:" << matches;
+        });
+
+    queue.start();
+    awaitSignal(&queue, {SIGNAL(allCompleted())}, 1000000);
+
     mangalist.absoluteUrls = true;
 
-    qDebug() << "nummangas" << mangalist.links.count();
+    qDebug() << "mangas:" << mangas.actualSize << "time:" << timer.elapsed();
 
     emit updateProgress(100);
 
