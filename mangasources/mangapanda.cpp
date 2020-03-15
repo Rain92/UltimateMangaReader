@@ -54,8 +54,11 @@ void MangaPanda::updateMangaInfoFinishedLoading(
     QRegularExpression artistrx("Artist:</td>[^>]*>([^<]*)");
     QRegularExpression statusrx("Status:</td>[^>]*>([^<]*)");
     QRegularExpression yearrx("Year of Release:</td>[^>]*>([^<]*)");
-    QRegularExpression genresrx("Genre:</td>(.*)</td>");
-    QRegularExpression summaryrx(R"(<div id="readmangasum">.*<p>([^<]*)</p>)");
+    QRegularExpression genresrx("Genre:</td>(.*?)</td>",
+                                QRegularExpression::DotMatchesEverythingOption);
+    QRegularExpression summaryrx(
+        R"(<div id="readmangasum">.*?<p>(.*?)</p>)",
+        QRegularExpression::DotMatchesEverythingOption);
     QRegularExpression coverrx(R"(<div id="mangaimg"><img src="([^"]*))");
 
     QRegularExpression chapterrx(
