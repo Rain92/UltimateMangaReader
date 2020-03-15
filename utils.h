@@ -1,6 +1,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <QObject>
 #include <QRegularExpression>
 #include <QSharedPointer>
 
@@ -11,6 +12,24 @@ QList<QRegularExpressionMatch> getAllRxMatches(const QRegularExpression& rx,
                                                int spos = 0, int epos = -1);
 
 QString makePathLegal(QString filename);
+
+inline bool awaitSignal(QObject* object,
+                        const QVector<const char*>& completionSignals,
+                        int timeout)
+{
+    QEventLoop loop;
+
+    for (const auto& signal : completionSignals)
+        QObject::connect(object, signal, &loop, SLOT(quit()));
+
+    QTimer timer;
+    QObject::connect(&timer, SIGNAL(timeout()), &loop, SLOT(quit()));
+    timer.start(timeout);
+
+    loop.exec();
+
+    return timer.isActive();
+}
 
 class BindingClass : public QObject
 {

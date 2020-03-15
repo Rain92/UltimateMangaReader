@@ -27,8 +27,8 @@ MainWidget::MainWidget(QWidget *parent)
 
     mangasources.append(new MangaPanda(this, downloadmanager));
     mangasources.append(new JaiminisBox(this, downloadmanager));
+    mangasources.append(new Mangakakalot(this, downloadmanager));
     //    mangasources.append(new MangaDex(this, downloadmanager));
-    //    mangasources.append(new Mangakakalot(this, downloadmanager));
 
     ui->homeWidget->setMangaSources(&mangasources);
     currentsource = mangasources[0];

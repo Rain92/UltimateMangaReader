@@ -115,21 +115,10 @@ bool DownloadFileJob::await(int timeout)
     if (isCompleted)
         return true;
 
-    QEventLoop loop;
-    connect(this, SIGNAL(completed()), &loop, SLOT(quit()));
-    connect(this, SIGNAL(downloadError()), &loop, SLOT(quit()));
-
-    QTimer timer;
-    connect(&timer, SIGNAL(timeout()), &loop, SLOT(quit()));
-    timer.start(timeout);
+    awaitSignal(this, {SIGNAL(completed()), SIGNAL(downloadError())}, timeout);
 
     if (errorString != "")
         return false;
-
-    if (isCompleted)
-        return true;
-
-    loop.exec();
 
     return isCompleted;
 }

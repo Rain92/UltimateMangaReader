@@ -126,19 +126,9 @@ bool DownloadStringJob::await(int timeout, bool retry)
         return true;
 
     QElapsedTimer time;
-    QEventLoop loop;
     time.start();
 
-    connect(reply.get(), SIGNAL(finished()), &loop, SLOT(quit()));
-    connect(this, SIGNAL(downloadError()), &loop, SLOT(quit()));
-
-    QTimer timer;
-    timer.setSingleShot(true);
-    connect(&timer, SIGNAL(timeout()), &loop, SLOT(quit()));
-    timer.start(timeout);
-
-    if (errorString == "" && !isCompleted)
-        loop.exec();
+    awaitSignal(this, {SIGNAL(completed()), SIGNAL(downloadError())}, timeout);
 
     int rem = timeout - time.elapsed();
     if (errorString != "")

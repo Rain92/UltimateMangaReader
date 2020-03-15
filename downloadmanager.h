@@ -7,6 +7,7 @@
 #include "downloadfilejob.h"
 #include "downloadimageandrescalejob.h"
 #include "downloadstringjob.h"
+#include "utils.h"
 
 class CCookieJar : public QNetworkCookieJar
 {

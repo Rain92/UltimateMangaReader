@@ -45,7 +45,7 @@ HEADERS += \
     mangalist.h \
     mangasources/abstractmangasource.h \
     mangasources/mangapanda.h \
-#    mangasources/mangakakalot.h \
+    mangasources/mangakakalot.h \
 #    mangasources/mangadex.h \
     mangasources/jaiminisbox.h \
     utils.h \
@@ -77,7 +77,7 @@ SOURCES += \
     downloadjobbase.cpp \
     mangasources/abstractmangasource.cpp \
     mangasources/mangapanda.cpp \
-#    mangasources/mangakakalot.cpp \
+    mangasources/mangakakalot.cpp \
 #    mangasources/mangadex.cpp \
     mangasources/jaiminisbox.cpp \
     utils.cpp \

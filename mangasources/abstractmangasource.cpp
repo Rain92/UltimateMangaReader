@@ -206,15 +206,18 @@ void AbstractMangaSource::fillMangaInfo(
     if (titlerxmatch.hasMatch())
         info->title = htmlToPlainText(titlerxmatch.captured(1));
     if (authorrxmatch.hasMatch())
-        info->author = authorrxmatch.captured(1);
+        info->author = htmlToPlainText(authorrxmatch.captured(1)).remove('\n');
     if (artistrxmatch.hasMatch())
-        info->artist = artistrxmatch.captured(1);
+        info->artist = htmlToPlainText(artistrxmatch.captured(1)).remove('\n');
     if (statusrxmatch.hasMatch())
         info->status = htmlToPlainText(statusrxmatch.captured(1));
     if (yearrxmatch.hasMatch())
         info->releaseyear = htmlToPlainText(yearrxmatch.captured(1));
     if (genresrxmatch.hasMatch())
-        info->genres = htmlToPlainText(genresrxmatch.captured(1)).trimmed();
+        info->genres = htmlToPlainText(genresrxmatch.captured(1))
+                           .trimmed()
+                           .remove('\n')
+                           .remove(',');
     if (summaryrxmatch.hasMatch())
         info->summary = htmlToPlainText(summaryrxmatch.captured(1));
     if (coverrxmatch.hasMatch())
