@@ -131,10 +131,10 @@ void MangaInfo::preloadImage(MangaIndex index)
     auto link = getImageLink(index);
     DownloadImageDescriptor imageinfo(link, title, index.chapter, index.page);
 
-    if (!QFile::exists(mangasource->getImagePath(imageinfo)))
+    if (QFile::exists(mangasource->getImagePath(imageinfo)))
         return;
 
-    qDebug() << "preload page" << index.page;
+    //    qDebug() << "preload page" << index.page;
 
     preloadqueue.addJob(imageinfo);
 }
