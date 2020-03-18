@@ -1,5 +1,4 @@
 #include <QApplication>
-#include <QQuickView>
 #include <QScreen>
 
 #include "../koboplatformintegrationplugin/koboplatformfunctions.h"

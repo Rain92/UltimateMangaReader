@@ -84,7 +84,7 @@ MangaList MangaDex::getMangaList()
         int matches = 0;
         for (auto &match : getAllRxMatches(mangarx, job->buffer))
         {
-            mangas.links.append(match.captured(2));
+            mangas.links.append(match.captured(2) + "/chapters/");
             mangas.titles.append(
                 htmlToPlainText(htmlToPlainText(match.captured(1))));
             matches++;
@@ -160,31 +160,36 @@ void MangaDex::updateMangaInfoFinishedLoading(
     int pages = 1;
 
     auto pagerxmatch = pagerx.match(job->buffer);
+    auto lambda = [&](QSharedPointer<DownloadStringJob> job) {
+        for (auto &match : getAllRxMatches(chapterrx, job->buffer))
+        {
+            info->chapters.insert(
+                0, MangaChapter(baseurl + match.captured(1), this));
+
+            info->chapertitlesreversed.append(match.captured(2));
+            info->numchapters++;
+        }
+
+        //            qDebug() << "rx" << rxi ;
+    };
+
+    lambda(job);
 
     if (pagerxmatch.hasMatch())
     {
         int chapters = pagerxmatch.captured(1).remove(',').toInt();
         pages = (chapters + 99) / 100;
+
+        QList<QString> urls;
+        for (int i = 2; i <= pages; i++)
+            urls.append(info->link + QString::number(i));
+
+        DownloadQueue queue(downloadmanager, urls, maxparalleldownloads,
+                            lambda);
+
+        queue.start();
+        awaitSignal(&queue, {SIGNAL(allCompleted())}, 1000000);
     }
-
-    QList<QString> urls;
-    for (int i = 0; i < pages; i++)
-        urls.append(info->link + "/chapters/" + QString::number(i + 1));
-
-    DownloadQueue queue(
-        downloadmanager, urls, maxparalleldownloads,
-        [&](QSharedPointer<DownloadStringJob> job) {
-            for (auto &match : getAllRxMatches(chapterrx, job->buffer))
-            {
-                info->chapters.insert(
-                    0, MangaChapter(baseurl + match.captured(1), this));
-
-                info->chapertitlesreversed.append(match.captured(2));
-                info->numchapters++;
-            }
-
-            //            qDebug() << "rx" << rxi ;
-        });
 }
 
 QStringList MangaDex::getPageList(const QString &chapterlink)
