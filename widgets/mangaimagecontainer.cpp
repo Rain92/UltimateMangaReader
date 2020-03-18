@@ -13,8 +13,7 @@ MangaImageContainer::MangaImageContainer(QWidget *parent) : QFrame(parent) {}
 
 void MangaImageContainer::setImage(const QString &path)
 {
-    QFileInfo fi(path);
-    if (fi.exists())
+    if (QFile::exists(path))
     {
         pixmap.reset(new QPixmap(path));
         update();

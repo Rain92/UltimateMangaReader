@@ -297,8 +297,11 @@ void MainWidget::viewMangaImage(const MangaIndex &index)
 
     setWidgetTab(3);
 
-    currentmanga->preloadNeighbours(forwardpreloads, backwardpreloads);
     currentmanga->serializeProgress();
+
+    QTimer::singleShot(50, [this]() {
+        currentmanga->preloadNeighbours(forwardpreloads, backwardpreloads);
+    });
 }
 
 void MainWidget::restoreFrontLight()

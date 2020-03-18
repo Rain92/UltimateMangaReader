@@ -6,20 +6,7 @@
 
 #include "abstractmangasource.h"
 #include "downloadimageandrescalejob.h"
-
-struct DownloadImageInfo
-{
-    DownloadImageInfo(const QString &imagelink, const QString &title,
-                      int chapter, int page)
-        : imagelink(imagelink), title(title), chapter(chapter), page(page)
-    {
-    }
-
-    QString imagelink;
-    QString title;
-    int chapter;
-    int page;
-};
+#include "downloadimagedescriptor.h"
 
 class PreloadQueue : public QObject
 {
@@ -28,7 +15,7 @@ class PreloadQueue : public QObject
 public:
     explicit PreloadQueue(AbstractMangaSource *source);
 
-    void addJob(DownloadImageInfo info);
+    void addJob(const DownloadImageDescriptor &info);
     void clearQuene();
 
     QSharedPointer<DownloadFileJob> currentJob();
@@ -45,7 +32,7 @@ private slots:
 
 private:
     AbstractMangaSource *source;
-    QQueue<DownloadImageInfo> queue;
+    QQueue<DownloadImageDescriptor> queue;
     QSharedPointer<DownloadFileJob> job;
     QTimer resettimer;
     bool running;

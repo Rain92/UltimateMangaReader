@@ -67,8 +67,10 @@ QString MangaInfo::getCurrentImage()
 {
     QString imagelink = getImageLink(currentindex);
 
-    return mangasource->downloadAwaitImage(
-        imagelink, title, currentindex.chapter, currentindex.page);
+    qDebug() << "getCurrentImage()";
+
+    return mangasource->downloadAwaitImage(DownloadImageDescriptor(
+        imagelink, title, currentindex.chapter, currentindex.page));
 }
 
 QString MangaInfo::goChapterPage(MangaIndex index)
@@ -79,8 +81,8 @@ QString MangaInfo::goChapterPage(MangaIndex index)
 
     currentindex = index;
 
-    return mangasource->downloadAwaitImage(
-        imagelink, title, currentindex.chapter, currentindex.page);
+    return mangasource->downloadAwaitImage(DownloadImageDescriptor(
+        imagelink, title, currentindex.chapter, currentindex.page));
 }
 
 QString MangaInfo::goNextPage()
@@ -126,9 +128,15 @@ void MangaInfo::preloadImage(MangaIndex index)
         qDebug() << "illegal imagepath";
         return;
     }
+    auto link = getImageLink(index);
+    DownloadImageDescriptor imageinfo(link, title, index.chapter, index.page);
 
-    preloadqueue.addJob(DownloadImageInfo(getImageLink(index), title,
-                                          index.chapter, index.page));
+    if (!QFile::exists(mangasource->getImagePath(imageinfo)))
+        return;
+
+    qDebug() << "preload page" << index.page;
+
+    preloadqueue.addJob(imageinfo);
 }
 
 void MangaInfo::preloadPopular()

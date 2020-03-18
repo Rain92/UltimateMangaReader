@@ -41,6 +41,7 @@ FORMS += \
 HEADERS += \
     customgesturerecognizer.h \
     defines.h \
+    downloadimagedescriptor.h \
     downloadjobbase.h \
     downloadqueue.h \
     mangalist.h \

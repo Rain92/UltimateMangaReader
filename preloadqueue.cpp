@@ -2,7 +2,7 @@
 
 #include "defines.h"
 
-PreloadQueue::PreloadQueue(AbstractMangaSource *source)
+PreloadQueue::PreloadQueue(AbstractMangaSource* source)
     : QObject(),
       source(source),
       queue(),
@@ -16,7 +16,7 @@ PreloadQueue::PreloadQueue(AbstractMangaSource *source)
 
 void PreloadQueue::resetQueue() { running = false; }
 
-void PreloadQueue::addJob(DownloadImageInfo info)
+void PreloadQueue::addJob(const DownloadImageDescriptor& info)
 {
     if (info.imagelink == "")
         return;
@@ -49,10 +49,9 @@ void PreloadQueue::processNext()
     running = true;
     resettimer.start(4000);
 
-    DownloadImageInfo info = queue.dequeue();
+    DownloadImageDescriptor info = queue.dequeue();
 
-    job = source->downloadImage(info.imagelink, info.title, info.chapter,
-                                info.page);
+    job = source->downloadImage(info);
 
     if (!job->isCompleted)
     {

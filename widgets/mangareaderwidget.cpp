@@ -3,8 +3,8 @@
 #include <QPainter>
 
 #include "../koboplatformintegrationplugin/koboplatformfunctions.h"
-#include "defines.h"
 #include "customgesturerecognizer.h"
+#include "defines.h"
 #include "ui_mangareaderwidget.h"
 
 MangaReaderWidget::MangaReaderWidget(QWidget *parent)
@@ -251,18 +251,21 @@ void MangaReaderWidget::showImage(const QString &path)
 
         if (i != -1)
         {
-            //            qDebug() << "Cachehit:" << i;
+            qDebug() << "Cachehit:" << i;
             ui->mangaImageContainer->setImage(imgcache[i].first);
         }
         else
         {
             //            qDebug() << "No cachehit.";
             addImageToCache(path);
-            ui->mangaImageContainer->setImage(imgcache[0].first);
+            i = searchCache(path);
+            ui->mangaImageContainer->setImage(imgcache[i].first);
         }
     }
 
-    QTimer::singleShot(200, [=]() { pagechanging = false; });
+    pagechanging = false;
+
+    //    QTimer::singleShot(50, [this]() { pagechanging = false; });
 }
 
 void MangaReaderWidget::addImageToCache(const QString &path)

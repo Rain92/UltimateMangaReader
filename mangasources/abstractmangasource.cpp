@@ -1,7 +1,6 @@
 #include "abstractmangasource.h"
 
 #include <QDateTime>
-#include <QtConcurrent/QtConcurrent>
 
 #include "defines.h"
 #include "mangainfo.h"
@@ -49,38 +48,38 @@ bool AbstractMangaSource::deserializeMangaList()
     return true;
 }
 
-QSharedPointer<DownloadFileJob> AbstractMangaSource::downloadImage(
-    const QString &imagelink, const QString &mangatitle, const int &chapternum,
-    const int &pagenum)
+QString AbstractMangaSource::getImagePath(
+    const DownloadImageDescriptor &mangainfo)
 {
-    int ind = imagelink.indexOf('?');
+    int ind = mangainfo.imagelink.indexOf('?');
     if (ind == -1)
-        ind = imagelink.length();
-    QString filetype = imagelink.mid(ind - 4, 4);
-    QString path = mangaimagesdir(name, mangatitle) +
-                   QString::number(chapternum) + "_" +
-                   QString::number(pagenum) + filetype;
+        ind = mangainfo.imagelink.length();
+    QString filetype = mangainfo.imagelink.mid(ind - 4, 4);
+    QString path = mangaimagesdir(name, mangainfo.title) +
+                   QString::number(mangainfo.chapter) + "_" +
+                   QString::number(mangainfo.page) + filetype;
 
-    return downloadmanager->downloadAsScaledImage(imagelink, path);
+    return path;
 }
 
-QString AbstractMangaSource::downloadAwaitImage(const QString &imagelink,
-                                                const QString &mangatitle,
-                                                const int &chapternum,
-                                                const int &pagenum)
+QSharedPointer<DownloadFileJob> AbstractMangaSource::downloadImage(
+    const DownloadImageDescriptor &mangainfo)
 {
-    int ind = imagelink.indexOf('?');
-    if (ind == -1)
-        ind = imagelink.length();
-    QString filetype = imagelink.mid(ind - 4, 4);
-    QString path = mangaimagesdir(name, mangatitle) +
-                   QString::number(chapternum) + "_" +
-                   QString::number(pagenum) + filetype;
+    QString path = getImagePath(mangainfo);
+
+    return downloadmanager->downloadAsScaledImage(mangainfo.imagelink, path);
+}
+
+QString AbstractMangaSource::downloadAwaitImage(
+    const DownloadImageDescriptor &mangainfo)
+{
+    QString path = getImagePath(mangainfo);
 
     if (QFile::exists(path))
         return path;
 
-    auto job = downloadmanager->downloadAsScaledImage(imagelink, path);
+    auto job =
+        downloadmanager->downloadAsScaledImage(mangainfo.imagelink, path);
 
     return job->await(5000) ? path : "";
 }

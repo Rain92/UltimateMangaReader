@@ -4,6 +4,7 @@
 #include <QRegularExpression>
 #include <QTextDocument>
 
+#include "downloadimagedescriptor.h"
 #include "downloadmanager.h"
 #include "mangalist.h"
 #include "utils.h"
@@ -40,13 +41,12 @@ public:
     bool serializeMangaList();
     bool deserializeMangaList();
 
-    QSharedPointer<DownloadFileJob> downloadImage(const QString &imagelink,
-                                                  const QString &mangatitle,
-                                                  const int &chapternum,
-                                                  const int &pagenum);
-    QString downloadAwaitImage(const QString &imagelink,
-                               const QString &mangatitle, const int &chapternum,
-                               const int &pagenum);
+    QString getImagePath(const DownloadImageDescriptor &mangainfo);
+
+    QSharedPointer<DownloadFileJob> downloadImage(
+        const DownloadImageDescriptor &mangainfo);
+
+    QString downloadAwaitImage(const DownloadImageDescriptor &mangainfo);
 
     QString htmlToPlainText(const QString &str);
 

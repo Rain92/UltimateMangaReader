@@ -1,6 +1,7 @@
 #ifndef MANGAINFO_H
 #define MANGAINFO_H
 
+#include "downloadimagedescriptor.h"
 #include "mangachapter.h"
 #include "mangaindex.h"
 #include "preloadqueue.h"
