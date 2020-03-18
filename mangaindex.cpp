@@ -12,7 +12,8 @@ MangaIndex::MangaIndex(int chapter, int page, bool illegal)
 
 MangaIndex MangaIndex::nextPageIndex(QList<MangaChapter> *chapters)
 {
-    if (illegal) return MangaIndex(-1, -1, true);
+    if (illegal)
+        return MangaIndex(-1, -1, true);
 
     if (page < chapters->at(chapter).numpages - 1)
     {
@@ -29,7 +30,8 @@ MangaIndex MangaIndex::nextPageIndex(QList<MangaChapter> *chapters)
 }
 MangaIndex MangaIndex::prevPageIndex(QList<MangaChapter> *chapters)
 {
-    if (illegal) return MangaIndex(-1, -1, true);
+    if (illegal)
+        return MangaIndex(-1, -1, true);
 
     if (page > 0)
     {

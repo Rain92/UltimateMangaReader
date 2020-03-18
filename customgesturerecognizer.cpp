@@ -74,7 +74,8 @@ QGestureRecognizer::Result SwipeGestureRecognizer::recognize(QGesture *state,
                 const int distance =
                     xDistance >= yDistance ? xDistance : yDistance;
                 int elapsedTime = this->time.restart();
-                if (!elapsedTime) elapsedTime = 1;
+                if (!elapsedTime)
+                    elapsedTime = 1;
                 this->velocityValue =
                     0.9 * this->velocityValue + (qreal)distance / elapsedTime;
                 this->swipeAngle =

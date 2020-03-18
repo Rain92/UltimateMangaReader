@@ -22,8 +22,6 @@ public:
 
     AbstractMangaSource(QObject *parent, DownloadManager *downloadmanager);
 
-    virtual void initialize() {}
-
     virtual MangaList getMangaList() = 0;
 
     virtual void updateMangaInfoFinishedLoading(

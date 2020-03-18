@@ -58,7 +58,7 @@
 
 #define imagecachesize 10
 
-#define maxparalleldownloads 8
+#define maxparalleldownloads 4
 
 #define forwardpreloads 6
 #define backwardpreloads 1

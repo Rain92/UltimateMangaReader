@@ -97,8 +97,7 @@ void HomeWidget::updateProgress(int p)
     sourcesprogress[sind] = p;
 
     int sum = 0;
-    foreach (int sp, sourcesprogress)
-        sum += sp;
+    for (const int &sp : sourcesprogress) sum += sp;
 
     updatedialog->updateProgress(sum);
 }
@@ -115,16 +114,17 @@ void HomeWidget::on_pushButtonUpdate_clicked()
     {
         updatedialog->setLabelText("Updating " + ms->name);
         auto mangalist = ms->getMangaList();
-        if (mangalist.nominalSize != mangalist.actualSize)
+        if (mangalist.nominalSize == mangalist.actualSize)
+        {
+            mangalist.sortAndFilter();
+            ms->mangalist = mangalist;
+            ms->serializeMangaList();
+        }
+        else
         {
             updateError("Number of mangas does not match.\n" +
                         QString::number(mangalist.actualSize) + " vs " +
                         QString::number(mangalist.nominalSize));
-        }
-        else
-        {
-            ms->mangalist = mangalist;
-            ms->serializeMangaList();
         }
     }
 }

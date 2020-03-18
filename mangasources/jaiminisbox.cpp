@@ -4,6 +4,7 @@
 #include <QMessageBox>
 
 #include "defines.h"
+#include "downloadqueue.h"
 
 JaiminisBox::JaiminisBox(QObject *parent, DownloadManager *dm)
     : AbstractMangaSource(parent, dm)
@@ -20,52 +21,65 @@ MangaList JaiminisBox::getMangaList()
 {
     QRegularExpression mangarx(
         R"lit(<div class="title"><a href="([^"]*)"[^"]*"([^"]*)")lit");
-    QRegularExpression nextpagerx(
-        "<a class=\"gbutton fright\" href=\"([^\"]*)\">Next");
+
+    QRegularExpression numpagesrx(R"(/directory/(\d+)/">Last)");
 
     MangaList mangas;
 
-    QString nextlink = baseurl + "/reader/directory/";
+    QString readerlink = baseurl + "reader/directory/";
 
-    emit updateProgress(30);
+    auto job = downloadmanager->downloadAsString(readerlink + "1", -1);
+
+    if (!job->await(5000))
+    {
+        emit updateError(job->errorString);
+        return mangas;
+    }
+
+    emit updateProgress(10);
 
     QElapsedTimer timer;
     timer.start();
 
-    int rem = 70;
+    auto numpagesrxmatch = numpagesrx.match(job->buffer);
 
-    do
-    {
-        auto job = downloadmanager->downloadAsString(nextlink);
-        if (!job->await(5000))
-        {
-            emit updateError(job->errorString);
-            return mangas;
-        }
+    int pages = 1;
+    if (numpagesrxmatch.hasMatch())
+        pages = numpagesrxmatch.captured(1).toInt();
 
+    qDebug() << "pages" << pages;
+
+    auto lambda = [&](QSharedPointer<DownloadStringJob> job) {
+        int matches = 0;
         for (auto &match : getAllRxMatches(mangarx, job->buffer))
         {
             mangas.links.append(match.captured(1));
             mangas.titles.append(htmlToPlainText(match.captured(2)));
-            mangas.actualSize++;
+            matches++;
         }
+        mangas.actualSize += matches;
 
-        auto nextpagematch = nextpagerx.match(job->buffer);
+        emit updateProgress(10 + 90 * (mangas.actualSize / 25) / pages);
 
-        if (nextpagematch.hasMatch())
-            nextlink = nextpagematch.captured(1);
-        else
-            nextlink = "";
+        qDebug() << "matches:" << matches;
+    };
 
-        rem = rem / 2;
-        emit updateProgress(100 - rem);
-    } while (nextlink != "");
+    lambda(job);
+
+    QList<QString> urls;
+    for (int i = 2; i <= pages; i++)
+        urls.append(readerlink + QString::number(i));
+
+    DownloadQueue queue(downloadmanager, urls, maxparalleldownloads, lambda);
+
+    queue.start();
+
+    awaitSignal(&queue, {SIGNAL(allCompleted())}, 1000000);
 
     mangas.nominalSize = mangas.actualSize;
     mangas.absoluteUrls = true;
 
-    qDebug() << "update completed. mangas:" << mangas.actualSize
-             << "time:" << timer.elapsed();
+    qDebug() << "mangas:" << mangas.actualSize << "time:" << timer.elapsed();
 
     emit updateProgress(100);
 

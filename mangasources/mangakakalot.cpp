@@ -20,8 +20,8 @@ MangaList Mangakakalot::getMangaList()
     QRegularExpression mangarx(
         R"lit(<h3>\s*<a(?: rel="nofollow")? href="([^"]*)"\s*title="([^"]*)")lit");
 
-    QRegularExpression rxnummangas("Total: ([0-9,]+)");
-    QRegularExpression rxnumpages(R"(Last\(([0-9]+)\))");
+    QRegularExpression nummangasrx("Total: ([0-9,]+)");
+    QRegularExpression numpagesrx(R"(Last\(([0-9]+)\))");
 
     MangaList mangas;
 
@@ -38,38 +38,39 @@ MangaList Mangakakalot::getMangaList()
     QElapsedTimer timer;
     timer.start();
 
-    auto rxnummangasmatch = rxnummangas.match(job->buffer);
-    auto rxnumpagesmatch = rxnumpages.match(job->buffer);
+    auto nummangasrxmatch = nummangasrx.match(job->buffer);
+    auto numpagesrxmatch = numpagesrx.match(job->buffer);
 
     mangas.nominalSize = 0;
-    if (rxnummangasmatch.hasMatch())
-        mangas.nominalSize = rxnummangasmatch.captured(1).remove(',').toInt();
+    if (nummangasrxmatch.hasMatch())
+        mangas.nominalSize = nummangasrxmatch.captured(1).remove(',').toInt();
 
     int pages = 1;
-    if (rxnummangasmatch.hasMatch())
-        pages = rxnumpagesmatch.captured(1).toInt();
+    if (nummangasrxmatch.hasMatch())
+        pages = numpagesrxmatch.captured(1).toInt();
 
     QList<QString> urls;
     for (int i = 0; i < pages; i++) urls.append(dicturl + QString::number(i));
 
-    DownloadQueue queue(
-        downloadmanager, urls, 8, [&](QSharedPointer<DownloadStringJob> job) {
-            int spos = job->buffer.indexOf(rxstart);
-            int epos = job->buffer.indexOf(rxend);
+    DownloadQueue queue(downloadmanager, urls, maxparalleldownloads,
+                        [&](QSharedPointer<DownloadStringJob> job) {
+                            int spos = job->buffer.indexOf(rxstart);
+                            int epos = job->buffer.indexOf(rxend);
 
-            int matches = 0;
-            for (auto &match :
-                 getAllRxMatches(mangarx, job->buffer, spos, epos))
-            {
-                mangas.links.append(match.captured(1));
-                mangas.titles.append(
-                    htmlToPlainText(htmlToPlainText(match.captured(2))));
-                matches++;
-            }
-            mangas.actualSize += matches;
+                            int matches = 0;
+                            for (auto &match : getAllRxMatches(
+                                     mangarx, job->buffer, spos, epos))
+                            {
+                                mangas.links.append(match.captured(1));
+                                mangas.titles.append(htmlToPlainText(
+                                    htmlToPlainText(match.captured(2))));
+                                matches++;
+                            }
+                            mangas.actualSize += matches;
 
-            qDebug() << "matches:" << matches;
-        });
+                            emit updateProgress(100 * matches / pages);
+                            qDebug() << "matches:" << matches;
+                        });
 
     queue.start();
     awaitSignal(&queue, {SIGNAL(allCompleted())}, 1000000);
@@ -125,6 +126,7 @@ QStringList Mangakakalot::getPageList(const QString &chapterlink)
     QRegularExpression pagerx(R"lit(<img src="([^"]*)")lit");
 
     auto job = downloadmanager->downloadAsString(chapterlink);
+
     QStringList pageLinks;
 
     if (!job->await(3000))

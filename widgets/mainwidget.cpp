@@ -25,10 +25,10 @@ MainWidget::MainWidget(QWidget *parent)
     downloadmanager = new DownloadManager(this);
     downloadmanager->connect();
 
-    //    mangasources.append(new MangaPanda(this, downloadmanager));
-    //    mangasources.append(new JaiminisBox(this, downloadmanager));
-    mangasources.append(new Mangakakalot(this, downloadmanager));
-    //    mangasources.append(new MangaDex(this, downloadmanager));
+    mangasources.append(new MangaPanda(this, downloadmanager));
+    mangasources.append(new JaiminisBox(this, downloadmanager));
+    mangasources.append(new MangaDex(this, downloadmanager));
+    //    mangasources.append(new Mangakakalot(this, downloadmanager));
 
     ui->homeWidget->setMangaSources(&mangasources);
     currentsource = mangasources[0];
@@ -37,11 +37,6 @@ MainWidget::MainWidget(QWidget *parent)
 
     foreach (AbstractMangaSource *ms, mangasources)
         ms->deserializeMangaList();
-
-    //    foreach (AbstractMangaSource *ms, mangasources)
-    //        if (ms->nummangas != ms->mangalist.links.count())
-    //            qDebug() << ms->name << " nummangas wrong:" << ms->nummangas
-    //            << ms->mangalist.links.count();
 
     ui->favoritesWidget->favoritesmanager = &favoritesmanager;
 

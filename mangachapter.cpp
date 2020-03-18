@@ -24,7 +24,8 @@ MangaChapter::MangaChapter(const QString &link, AbstractMangaSource *source)
 
 void MangaChapter::loadPages()
 {
-    if (pagesloaded) return;
+    if (pagesloaded)
+        return;
 
     qDebug() << "getPageList start:" << chapterlink;
 
@@ -39,7 +40,8 @@ void MangaChapter::loadPages()
     }
     numpages = pagelinks.count();
     imagelinks = QStringList();
-    for (int i = 0; i < pagelinks.count(); i++) imagelinks.append("");
+    for (int i = 0; i < pagelinks.count(); i++)
+        imagelinks.append("");
     pagesloaded = true;
 }
 

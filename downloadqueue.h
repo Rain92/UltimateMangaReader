@@ -13,17 +13,17 @@ public:
         std::function<void(QSharedPointer<DownloadStringJob>)> lambda);
 
     void start();
+    int completed;
+    int errors;
 
 signals:
-    void singleDownloadCompleted(QSharedPointer<DownloadJobBase> job);
-    void singleDownloadFailed(QSharedPointer<DownloadJobBase> job);
+    void singleDownloadCompleted();
+    void singleDownloadFailed();
     void allCompleted();
 
 private:
     DownloadManager *downloadmanager;
 
-    QAtomicInt completed;
-    QAtomicInt errors;
     int parallelDownloads;
     QQueue<QString> urls;
     int totaljobs;

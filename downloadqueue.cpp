@@ -5,9 +5,9 @@ DownloadQueue::DownloadQueue(
     int parallelDownloads,
     std::function<void(QSharedPointer<DownloadStringJob>)> lambda)
     : QObject(),
-      downloadmanager(downloadmanager),
       completed(0),
       errors(0),
+      downloadmanager(downloadmanager),
       parallelDownloads(parallelDownloads),
       urls(),
       lambda(lambda),
@@ -19,7 +19,8 @@ DownloadQueue::DownloadQueue(
 
 void DownloadQueue::start()
 {
-    for (int i = 0; i < parallelDownloads; i++) startSingle();
+    for (int i = 0; i < parallelDownloads; i++)
+        startSingle();
 }
 
 void DownloadQueue::startSingle()
@@ -29,7 +30,7 @@ void DownloadQueue::startSingle()
 
     auto url = urls.dequeue();
 
-    auto job = downloadmanager->downloadAsString(url);
+    auto job = downloadmanager->downloadAsString(url, 8000);
     jobs.append(job);
 
     if (!job->isCompleted)
@@ -37,7 +38,7 @@ void DownloadQueue::startSingle()
         QObject::connect(job.get(), &DownloadJobBase::completed,
                          [this, job]() { downloadFinished(job, true); });
         QObject::connect(job.get(), &DownloadJobBase::downloadError,
-                         [this, job]() { downloadFinished(job, true); });
+                         [this, job]() { downloadFinished(job, false); });
     }
     else
     {
@@ -52,16 +53,18 @@ void DownloadQueue::downloadFinished(QSharedPointer<DownloadStringJob> job,
     if (success)
     {
         lambda(job);
-        emit singleDownloadCompleted(job);
+        emit singleDownloadCompleted();
     }
     else
     {
-        emit singleDownloadFailed(job);
+        emit singleDownloadFailed();
         errors++;
     }
 
     if (completed == totaljobs)
+    {
         emit allCompleted();
+    }
     else
         startSingle();
 }

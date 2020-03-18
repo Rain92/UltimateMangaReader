@@ -11,21 +11,42 @@ struct MangaList
     int nominalSize = 0;
     int actualSize = 0;
 
-    void sortByTitle()
+    void sortAndFilter()
     {
-        QVector<int> indices(actualSize);
-        for (int i = 0; i < actualSize; ++i) indices[i] = i;
+        Q_ASSERT(titles.size() == links.size() && actualSize == titles.size());
 
-        std::sort(indices.begin(), indices.end(), [&](auto a, auto b) {
-            return QString::compare(titles[a], titles[b], Qt::CaseInsensitive);
+        for (int i = 0; i < actualSize; ++i)
+        {
+            if (titles[i] == "")
+            {
+                titles.removeAt(i);
+                links.removeAt(i);
+                nominalSize--;
+                actualSize--;
+            }
+        }
+
+        QVector<int> indices(actualSize);
+        QVector<int> indicesInv(actualSize);
+        for (int i = 0; i < actualSize; ++i)
+            indices[i] = i;
+
+        std::sort(indices.begin(), indices.end(), [this](int a, int b) {
+            return QString::compare(this->titles[a], this->titles[b],
+                                    Qt::CaseInsensitive) < 0;
         });
 
+        for (int i = 0; i < actualSize; ++i)
+            indicesInv[indices[i]] = i;
+
         for (int i = 0; i < actualSize; i++)
-            while (indices[i] != i)
+            while (i != indicesInv[i])
             {
-                titles.swapItemsAt(i, indices[i]);
-                links.swapItemsAt(i, indices[i]);
-                indices.swapItemsAt(i, indices[i]);
+                int j = indicesInv[i];
+
+                titles.swapItemsAt(i, j);
+                links.swapItemsAt(i, j);
+                indicesInv.swapItemsAt(i, j);
             }
     }
 };

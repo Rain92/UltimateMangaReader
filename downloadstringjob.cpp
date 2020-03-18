@@ -84,7 +84,7 @@ void DownloadStringJob::downloadStringFinished()
 
     if (errorString != "" || (reply->error() != QNetworkReply::NoError))
     {
-        emit downloadError();
+        //        emit downloadError();
     }
     else
     {
@@ -100,9 +100,8 @@ void DownloadStringJob::onError(QNetworkReply::NetworkError)
 {
     timeouttimer.stop();
 
-    errorString = "Download error: ";
-
-    errorString += reply->errorString();
+    if (errorString != "")
+        errorString = "Download error: " + reply->errorString();
 
     qDebug() << errorString;
     emit downloadError();
@@ -111,10 +110,9 @@ void DownloadStringJob::onError(QNetworkReply::NetworkError)
 void DownloadStringJob::timeout()
 {
     errorString = "Download error: timeout";
+    reply->abort();
 
-    qDebug() << errorString;
-
-    emit downloadError();
+    //    emit downloadError();
 }
 
 bool DownloadStringJob::await(int timeout, bool retry)
@@ -145,7 +143,7 @@ bool DownloadStringJob::await(int timeout, bool retry)
         }
     }
     if (rem <= 20)
-        errorString += "Download timeout.";
+        errorString = "Retry limit reached: " + errorString;
 
     return isCompleted;
 }
