@@ -48,6 +48,7 @@ MangaList JaiminisBox::getMangaList()
         pages = numpagesrxmatch.captured(1).toInt();
 
     qDebug() << "pages" << pages;
+    const int matchesPerPage = 36;
 
     auto lambda = [&](QSharedPointer<DownloadStringJob> job) {
         int matches = 0;
@@ -59,7 +60,8 @@ MangaList JaiminisBox::getMangaList()
         }
         mangas.actualSize += matches;
 
-        emit updateProgress(10 + 90 * (mangas.actualSize / 25) / pages);
+        emit updateProgress(10 +
+                            90 * (mangas.actualSize / matchesPerPage) / pages);
 
         qDebug() << "matches:" << matches;
     };

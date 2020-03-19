@@ -51,6 +51,7 @@ public:
     bool connect();
 
     static void loadCertificates(const QString &certsPath);
+    bool urlExists(const QString &url_string);
 
 signals:
 

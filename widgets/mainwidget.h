@@ -10,6 +10,7 @@
 #include "homewidget.h"
 #include "jaiminisbox.h"
 #include "mangadex.h"
+#include "mangahub.h"
 #include "mangakakalot.h"
 #include "mangaowl.h"
 #include "mangapanda.h"

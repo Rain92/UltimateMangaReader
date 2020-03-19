@@ -166,3 +166,23 @@ void DownloadManager::loadCertificates(const QString &certsPath)
     sslConfig.setCaCertificates(certs);
     QSslConfiguration::setDefaultConfiguration(sslConfig);
 }
+
+bool DownloadManager::urlExists(const QString &url)
+{
+    QNetworkRequest request(url);
+
+    auto reply = networkmanager->head(request);
+
+    awaitSignal(reply, {SIGNAL(finished())}, 2000);
+
+    bool result = false;
+    int status =
+        reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+
+    if (status == 200)
+        result = true;
+
+    reply->deleteLater();
+
+    return result;
+}

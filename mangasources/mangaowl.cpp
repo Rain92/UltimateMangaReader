@@ -14,7 +14,7 @@ MangaList MangaOwl::getMangaList()
         R"(>(\d+)</a>\s*</li>\s*<li>\s*<a[^>]*?rel="next")");
 
     QRegularExpression mangarx(
-        R"lit(<a href="(https://mangaowl.com/single[^"]+)">.*?</td>.*?<td>([^<]+)</td>)lit",
+        R"lit(<a href="(https://mangaowl.com/single/[^"]+)">.*?</td>.*?<td>([^<]+)</td>)lit",
         QRegularExpression::DotMatchesEverythingOption);
 
     MangaList mangas;
@@ -40,6 +40,8 @@ MangaList MangaOwl::getMangaList()
 
     qDebug() << "pages:" << pages;
 
+    const int matchesPerPage = 36;
+
     auto lambda = [&](QSharedPointer<DownloadStringJob> job) {
         int matches = 0;
         for (auto &match : getAllRxMatches(mangarx, job->buffer))
@@ -51,7 +53,8 @@ MangaList MangaOwl::getMangaList()
         }
         mangas.actualSize += matches;
 
-        emit updateProgress(10 + 90 * (mangas.actualSize / 36) / pages);
+        emit updateProgress(10 +
+                            90 * (mangas.actualSize / matchesPerPage) / pages);
 
         qDebug() << "matches:" << matches;
     };
@@ -62,7 +65,7 @@ MangaList MangaOwl::getMangaList()
     for (int i = 2; i <= pages; i++)
         urls.append(dicturl + QString::number(i));
 
-    DownloadQueue queue(downloadmanager, urls, maxparalleldownloads, lambda);
+    DownloadQueue queue(downloadmanager, urls, 8, lambda);
 
     queue.start();
     awaitSignal(&queue, {SIGNAL(allCompleted())}, 1000000);
