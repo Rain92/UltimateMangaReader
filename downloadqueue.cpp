@@ -10,8 +10,7 @@ DownloadQueue::DownloadQueue(
       downloadmanager(downloadmanager),
       parallelDownloads(parallelDownloads),
       urls(),
-      lambda(lambda),
-      jobs()
+      lambda(lambda)
 {
     this->urls.append(urls);
     totaljobs = urls.size();
@@ -31,7 +30,6 @@ void DownloadQueue::startSingle()
     auto url = urls.dequeue();
 
     auto job = downloadmanager->downloadAsString(url, 8000);
-    jobs.append(job);
 
     if (!job->isCompleted)
     {
@@ -60,6 +58,8 @@ void DownloadQueue::downloadFinished(QSharedPointer<DownloadStringJob> job,
         emit singleDownloadFailed();
         errors++;
     }
+
+    job->disconnect();
 
     if (completed == totaljobs)
     {

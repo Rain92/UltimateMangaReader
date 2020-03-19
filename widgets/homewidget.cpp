@@ -1,7 +1,5 @@
 #include "homewidget.h"
 
-#include <QLabel>
-
 #include "cscrollbar.h"
 #include "defines.h"
 #include "ui_homewidget.h"
@@ -97,7 +95,8 @@ void HomeWidget::updateProgress(int p)
     sourcesprogress[sind] = p;
 
     int sum = 0;
-    for (const int &sp : sourcesprogress) sum += sp;
+    for (const int &sp : sourcesprogress)
+        sum += sp;
 
     updatedialog->updateProgress(sum);
 }

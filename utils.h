@@ -60,6 +60,7 @@ private:
     void action()
     {
         lambda();
+        job.get()->disconnect();
         job.clear();
         deleteLater();
     }

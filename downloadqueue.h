@@ -28,7 +28,6 @@ private:
     QQueue<QString> urls;
     int totaljobs;
     std::function<void(QSharedPointer<DownloadStringJob>)> lambda;
-    QList<QSharedPointer<DownloadStringJob>> jobs;
 
     void startSingle();
     void downloadFinished(QSharedPointer<DownloadStringJob> job, bool success);
