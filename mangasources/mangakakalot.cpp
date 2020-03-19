@@ -1,6 +1,5 @@
 #include "mangakakalot.h"
 
-#include "defines.h"
 #include "downloadqueue.h"
 
 Mangakakalot::Mangakakalot(QObject *parent, DownloadManager *dm)
@@ -46,36 +45,39 @@ MangaList Mangakakalot::getMangaList()
         mangas.nominalSize = nummangasrxmatch.captured(1).remove(',').toInt();
 
     int pages = 1;
-    if (nummangasrxmatch.hasMatch())
+    if (numpagesrxmatch.hasMatch())
         pages = numpagesrxmatch.captured(1).toInt();
 
+    auto lambda = [&](QSharedPointer<DownloadStringJob> job) {
+        int spos = job->buffer.indexOf(rxstart);
+        int epos = job->buffer.indexOf(rxend);
+
+        int matches = 0;
+        for (auto &match : getAllRxMatches(mangarx, job->buffer, spos, epos))
+        {
+            mangas.links.append(match.captured(1));
+            mangas.titles.append(
+                htmlToPlainText(htmlToPlainText(match.captured(2))));
+            matches++;
+        }
+        mangas.actualSize += matches;
+
+        emit updateProgress(10 + 90 * (mangas.actualSize / 100) / pages);
+        qDebug() << "matches:" << matches;
+    };
+
+    lambda(job);
+
     QList<QString> urls;
-    for (int i = 0; i < pages; i++) urls.append(dicturl + QString::number(i));
+    for (int i = 2; i <= pages; i++)
+        urls.append(dicturl + QString::number(i));
 
-    DownloadQueue queue(downloadmanager, urls, maxparalleldownloads,
-                        [&](QSharedPointer<DownloadStringJob> job) {
-                            int spos = job->buffer.indexOf(rxstart);
-                            int epos = job->buffer.indexOf(rxend);
-
-                            int matches = 0;
-                            for (auto &match : getAllRxMatches(
-                                     mangarx, job->buffer, spos, epos))
-                            {
-                                mangas.links.append(match.captured(1));
-                                mangas.titles.append(htmlToPlainText(
-                                    htmlToPlainText(match.captured(2))));
-                                matches++;
-                            }
-                            mangas.actualSize += matches;
-
-                            emit updateProgress(100 * matches / pages);
-                            qDebug() << "matches:" << matches;
-                        });
+    DownloadQueue queue(downloadmanager, urls, maxparalleldownloads, lambda);
 
     queue.start();
     awaitSignal(&queue, {SIGNAL(allCompleted())}, 1000000);
 
-    mangalist.absoluteUrls = true;
+    mangas.absoluteUrls = true;
 
     qDebug() << "mangas:" << mangas.actualSize << "time:" << timer.elapsed();
 

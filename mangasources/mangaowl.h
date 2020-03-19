@@ -1,15 +1,16 @@
-#ifndef MANGAKALOT_H
-#define MANGAKALOT_H
+#ifndef MANGAOWL_H
+#define MANGAOWL_H
 
 #include "abstractmangasource.h"
 #include "defines.h"
+#include "downloadqueue.h"
 #include "mangachapter.h"
 #include "mangainfo.h"
 
-class Mangakakalot : public AbstractMangaSource
+class MangaOwl : public AbstractMangaSource
 {
 public:
-    Mangakakalot(QObject *parent, DownloadManager *dm);
+    MangaOwl(QObject *parent, DownloadManager *dm);
 
     MangaList getMangaList() override;
     void updateMangaInfoFinishedLoading(
@@ -22,4 +23,4 @@ private:
     QString dicturl;
 };
 
-#endif  // MANGAKALOT_H
+#endif  // MANGAOWL_H

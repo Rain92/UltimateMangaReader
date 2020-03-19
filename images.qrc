@@ -16,6 +16,7 @@
         <file>images/icons/batteryempty.png</file>
         <file>images/icons/batteryfull.png</file>
         <file>images/mangahostlogos/mangahub.png</file>
+        <file>images/mangahostlogos/mangaowl.png</file>
     </qresource>
     <qresource prefix="/"/>
 </RCC>

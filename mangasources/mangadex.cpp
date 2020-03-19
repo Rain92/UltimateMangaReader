@@ -1,11 +1,5 @@
 #include "mangadex.h"
 
-#include <QFile>
-
-#include "QTime"
-#include "defines.h"
-#include "downloadqueue.h"
-
 MangaDex::MangaDex(QObject *parent, DownloadManager *dm)
     : AbstractMangaSource(parent, dm)
 {

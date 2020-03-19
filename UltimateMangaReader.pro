@@ -46,6 +46,8 @@ HEADERS += \
     downloadqueue.h \
     mangalist.h \
     mangasources/abstractmangasource.h \
+    mangasources/mangahub.h \
+    mangasources/mangaowl.h \
     mangasources/mangapanda.h \
     mangasources/mangakakalot.h \
     mangasources/mangadex.h \
@@ -79,6 +81,8 @@ SOURCES += \
     downloadjobbase.cpp \
     downloadqueue.cpp \
     mangasources/abstractmangasource.cpp \
+    mangasources/mangahub.cpp \
+    mangasources/mangaowl.cpp \
     mangasources/mangapanda.cpp \
     mangasources/mangakakalot.cpp \
     mangasources/mangadex.cpp \
