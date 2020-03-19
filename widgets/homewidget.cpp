@@ -9,7 +9,8 @@ HomeWidget::HomeWidget(QWidget *parent)
       ui(new Ui::HomeWidget),
       currentsource(nullptr),
       filteredmangatitles(),
-      filteredmangalinks()
+      filteredmangalinks(),
+      filteractive(false)
 {
     ui->setupUi(this);
     adjustSizes();
@@ -94,9 +95,8 @@ void HomeWidget::updateProgress(int p)
 
     sourcesprogress[sind] = p;
 
-    int sum = 0;
-    for (const int &sp : sourcesprogress)
-        sum += sp;
+    int sum =
+        std::accumulate(sourcesprogress.begin(), sourcesprogress.end(), 0);
 
     updatedialog->updateProgress(sum);
 }
@@ -214,16 +214,13 @@ void HomeWidget::on_pushButtonClearCache_clicked()
 
 void HomeWidget::on_listViewSources_clicked(const QModelIndex &index)
 {
-    if (ui->lineEditFilter->text() != "")
-        ui->lineEditFilter->clear();
-
-    filteredmangalinks.clear();
-    filteredmangatitles.clear();
-
     currentsource = mangasources->at(index.row());
     refreshMangaListView();
 
     emit mangaSourceClicked(currentsource);
+
+    if (ui->lineEditFilter->text() != "")
+        on_pushButtonFilter_clicked();
 }
 
 void HomeWidget::on_pushButtonFilter_clicked()
@@ -238,6 +235,7 @@ void HomeWidget::on_pushButtonFilter_clicked()
 
     if (ss == "")
     {
+        filteractive = false;
         refreshMangaListView();
         return;
     }
@@ -250,6 +248,7 @@ void HomeWidget::on_pushButtonFilter_clicked()
             filteredmangalinks.append(currentsource->mangalist.links[i]);
         }
 
+    filteractive = true;
     refreshMangaListView();
 }
 
@@ -261,6 +260,7 @@ void HomeWidget::on_pushButtonFilterClear_clicked()
     filteredmangalinks.clear();
     filteredmangatitles.clear();
 
+    filteractive = false;
     refreshMangaListView();
 }
 
@@ -271,20 +271,19 @@ void HomeWidget::refreshMangaListView()
 
     QStringListModel *model = new QStringListModel(this);
 
-    if (filteredmangatitles.empty())
+    if (!filteractive)
         model->setStringList(currentsource->mangalist.titles);
     else
         model->setStringList(filteredmangatitles);
 
     if (ui->listViewMangas->model() != nullptr)
-        ui->listViewMangas->model()->removeRows(
-            0, ui->listViewMangas->model()->rowCount());
+        ui->listViewMangas->model()->deleteLater();
+
     ui->listViewMangas->setModel(model);
 }
 
 void HomeWidget::on_listViewMangas_clicked(const QModelIndex &index)
 {
-    bool filteractive = filteredmangalinks.count() > 0;
     int idx = index.row();
 
     QString mangalink = filteractive ? filteredmangalinks[idx]

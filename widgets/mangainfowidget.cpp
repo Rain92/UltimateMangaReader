@@ -93,14 +93,12 @@ void MangaInfoWidget::setManga(QSharedPointer<MangaInfo> manga)
     QStringListModel *model = new QStringListModel(this);
     model->setStringList(currentmanga->chapertitlesreversed);
 
+    if (ui->listViewChapters->model() != nullptr)
+        ui->listViewChapters->model()->deleteLater();
+
     ui->listViewChapters->setModel(model);
 
     ui->labelMangaInfoTitle->setText(currentmanga->title);
-
-    //    ui->labelMangaInfoLabelAuthorContent->setText(currentmanga->author);
-    //    ui->labelMangaInfoLabelArtistContent->setText(currentmanga->artist);
-    //    ui->labelMangaInfoLabelGenresContent->setText(currentmanga->genres);
-    //    ui->labelMangaInfoLabelStausContent->setText(currentmanga->status);
 
     updateLabel(ui->labelMangaInfoLabelAuthor,
                 ui->labelMangaInfoLabelAuthorContent, currentmanga->author);

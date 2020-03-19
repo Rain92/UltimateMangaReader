@@ -55,6 +55,7 @@ private:
 
     QStringList filteredmangatitles;
     QStringList filteredmangalinks;
+    bool filteractive;
 
     void refreshMangaListView();
     void setupSourcesList();
