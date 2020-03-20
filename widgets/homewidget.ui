@@ -99,7 +99,7 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_4">
      <item>
-      <widget class="QLineEdit" name="lineEditFilter"/>
+      <widget class="CLineEdit" name="lineEditFilter"/>
      </item>
      <item>
       <widget class="QPushButton" name="pushButtonFilterClear">
@@ -135,6 +135,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>CLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>clineedit.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

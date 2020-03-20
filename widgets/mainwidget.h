@@ -4,6 +4,7 @@
 #include <QStandardItemModel>
 #include <QWidget>
 
+#include "VirtualKeyboard.h"
 #include "downloadmanager.h"
 #include "favoritesmanager.h"
 #include "favoriteswidget.h"
@@ -57,7 +58,8 @@ private slots:
     void restoreFrontLight();
 
 protected:
-    void resizeEvent(QResizeEvent *event);
+    void resizeEvent(QResizeEvent *event) override;
+    bool eventFilter(QObject *obj, QEvent *ev) override;
 
 private:
     void setupUI();
@@ -84,6 +86,7 @@ private:
     int lastTab;
 
     QTimer restorefrontlighttimer;
+    VirtualKeyboard *virtualKeyboard;
 };
 
 #endif  // MAINWIDGET_H

@@ -15,7 +15,8 @@ MainWidget::MainWidget(QWidget *parent)
       favoritesmanager(mangasources),
       settings(),
       lastTab(0),
-      restorefrontlighttimer()
+      restorefrontlighttimer(),
+      virtualKeyboard(new VirtualKeyboard(this))
 {
     ui->setupUi(this);
     setupDirs();
@@ -23,6 +24,7 @@ MainWidget::MainWidget(QWidget *parent)
     settings.deserialize();
 
     downloadmanager = new DownloadManager(this);
+    downloadmanager->setImageRescaleSize(this->size());
     downloadmanager->connect();
 
     mangasources.append(new MangaPanda(this, downloadmanager));
@@ -77,9 +79,6 @@ MainWidget::MainWidget(QWidget *parent)
                      this, SLOT(setFrontLight(int, int)));
     QObject::connect(ui->mangaReaderWidget, SIGNAL(gotoIndex(MangaIndex)), this,
                      SLOT(viewMangaImage(MangaIndex)));
-    QObject::connect(ui->mangaReaderWidget, SIGNAL(enableVirtualKeyboard(bool)),
-                     this, SLOT(enableVirtualKeyboard(bool)));
-
     restorefrontlighttimer.setSingleShot(true);
     QObject::connect(&restorefrontlighttimer, SIGNAL(timeout()), this,
                      SLOT(restoreFrontLight()));
@@ -89,15 +88,10 @@ MainWidget::~MainWidget() { delete ui; }
 
 void MainWidget::setupUI()
 {
-#ifdef KOBO
-    // TODO
-//    VirtualKeyboard *vk = getVirtualKeyboard();
-//    ui->verticalLayoutKeyboardContainer->insertWidget(0, vk);
+    virtualKeyboard->hide();
+    ui->verticalLayoutKeyboardContainer->insertWidget(0, virtualKeyboard);
 
-//    enableVirtualKeyboard(true);
-#endif
-
-    downloadmanager->setImageRescaleSize(this->size());
+    ui->homeWidget->installEventFilter(this);
 
     adjustSizes();
 }
@@ -121,18 +115,13 @@ void MainWidget::setupDirs()
 void MainWidget::enableVirtualKeyboard(bool enabled)
 {
 #ifdef KOBO
-    // TODO
-//    VirtualKeyboard *vk = getVirtualKeyboard();
-
-//    vk->hide();
-
-//    if (enabled)
-//        ui->frameKeyboardContainer->show();
-//    else
-//        ui->frameKeyboardContainer->hide();
+    if (enabled)
+        virtualKeyboard->show();
+    else
+        virtualKeyboard->hide();
 #else
+    Q_UNUSED(enabled)
 #endif
-    Q_UNUSED(enabled);
 }
 
 void MainWidget::setupFrontLight()
@@ -173,10 +162,9 @@ void MainWidget::resizeEvent(QResizeEvent *event)
 
 void MainWidget::setWidgetTab(int page)
 {
-#ifdef KOBO
-    // TODO
-//    getVirtualKeyboard()->hide();
-#endif
+    //#ifdef KOBO
+    enableVirtualKeyboard(false);
+    //#endif
 
     if (page == ui->stackedWidget->currentIndex())
         return;
@@ -309,4 +297,21 @@ void MainWidget::viewMangaImage(const MangaIndex &index)
 void MainWidget::restoreFrontLight()
 {
     setFrontLight(settings.lightvalue, settings.comflightvalue);
+}
+
+bool MainWidget::eventFilter(QObject *obj, QEvent *ev)
+{
+    if (ev->type() == QEvent::RequestSoftwareInputPanel + 1000)
+    {
+        enableVirtualKeyboard(true);
+        return true;
+    }
+    else if (ev->type() == QEvent::CloseSoftwareInputPanel + 1000)
+    {
+        enableVirtualKeyboard(false);
+        return true;
+    }
+    return false;
+
+    Q_UNUSED(obj)
 }

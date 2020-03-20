@@ -41,7 +41,6 @@ signals:
     void back();
     void frontlightchanged(int light, int comflight);
     void gotoIndex(MangaIndex index);
-    void enableVirtualKeyboard(bool enable);
 
 private slots:
     void on_pushButtonReaderHome_clicked();

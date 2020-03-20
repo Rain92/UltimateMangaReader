@@ -6,9 +6,6 @@
 
 int main(int argc, char *argv[])
 {
-#ifdef KOBO
-    qputenv("QT_IM_MODULE", QByteArray("qtvirtualkeyboard"));
-#endif
     QApplication app(argc, argv);
 
     MainWidget mainwidget;

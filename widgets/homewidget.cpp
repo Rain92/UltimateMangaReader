@@ -1,5 +1,6 @@
 #include "homewidget.h"
 
+#include "clineedit.h"
 #include "cscrollbar.h"
 #include "defines.h"
 #include "ui_homewidget.h"

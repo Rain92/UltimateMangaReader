@@ -338,7 +338,6 @@ void MangaReaderWidget::on_pushButtonReaderGoto_clicked()
         currentmanga->chapters[currentmanga->currentindex.chapter].numpages,
         currentmanga->currentindex);
 
-    emit enableVirtualKeyboard(false);
     if (gotodialog->exec() == QDialog::Accepted &&
         !gotodialog->selectedindex.illegal)
     {
@@ -346,7 +345,6 @@ void MangaReaderWidget::on_pushButtonReaderGoto_clicked()
 
         emit gotoIndex(gotodialog->selectedindex);
     }
-    emit enableVirtualKeyboard(true);
 }
 
 void MangaReaderWidget::setBatteryIcon()

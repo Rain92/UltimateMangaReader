@@ -15,7 +15,7 @@ kobo {
     INSTALLS += target
 }
 
-QT       += core gui widgets network virtualkeyboard
+QT       += core gui widgets network svg
 
 TARGET = UltimateMangaReader
 
@@ -53,6 +53,8 @@ HEADERS += \
     mangasources/mangadex.h \
     mangasources/jaiminisbox.h \
     utils.h \
+    widgets/VirtualKeyboard.h \
+    widgets/clineedit.h \
     widgets/favoriteswidget.h \
     widgets/mainwidget.h \
     widgets/mangaimagecontainer.h \
@@ -88,6 +90,8 @@ SOURCES += \
     mangasources/mangadex.cpp \
     mangasources/jaiminisbox.cpp \
     utils.cpp \
+    widgets/VirtualKeyboard.cpp \
+    widgets/clineedit.cpp \
     widgets/favoriteswidget.cpp \
     widgets/mainwidget.cpp \
     widgets/mangaimagecontainer.cpp \
