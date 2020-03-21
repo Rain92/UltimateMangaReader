@@ -17,7 +17,7 @@ MangaList MangaHub::getMangaList()
 
     MangaList mangas;
 
-    auto job = downloadmanager->downloadAsString(dicturl + "1");
+    auto job = downloadManager->downloadAsString(dicturl + "1");
 
     if (!job->await(2000))
     {
@@ -66,7 +66,7 @@ MangaList MangaHub::getMangaList()
         for (int i = oldPages + 1; i <= pages; i++)
             urls.append(dicturl + QString::number(i));
 
-        DownloadQueue queue(downloadmanager, urls, 8, lambda);
+        DownloadQueue queue(downloadManager, urls, 8, lambda);
         queue.start();
         awaitSignal(&queue, {SIGNAL(allCompleted())}, 1000000);
 
@@ -102,7 +102,7 @@ void MangaHub::updateMangaInfoFinishedLoading(
         R"lit(<a href="(https://mangahub.io/chapter/[^"]+)"[^>]*>(.*?)</span></span>)lit");
 
     for (auto &c : job->getCookies())
-        downloadmanager->addCookie(c.domain(), c.name(), c.value());
+        downloadManager->addCookie(c.domain(), c.name(), c.value());
 
     fillMangaInfo(info, job->buffer, titlerx, authorrx, artistrx, statusrx,
                   yearrx, genresrx, summaryrx, coverrx);
@@ -127,8 +127,8 @@ void MangaHub::updateMangaInfoFinishedLoading(
                               MangaChapter(chapterrxmatch.captured(1), this));
 
         QString ctitle = htmlToPlainText(chapterrxmatch.captured(2));
-        info->chapertitlesreversed.append(ctitle);
-        info->numchapters++;
+        info->chaperTitleListDescending.append(ctitle);
+        info->numChapters++;
     }
 }
 
@@ -139,7 +139,7 @@ int MangaHub::binarySearchNumPages(const QRegularExpressionMatch &imagerxmatch,
     if (!upperChecked)
     {
         bool valid =
-            downloadmanager->urlExists(buildImgUrl(imagerxmatch, upperBound));
+            downloadManager->urlExists(buildImgUrl(imagerxmatch, upperBound));
         if (valid)
             return binarySearchNumPages(imagerxmatch, lowerBound,
                                         upperBound * 2, false);
@@ -150,7 +150,7 @@ int MangaHub::binarySearchNumPages(const QRegularExpressionMatch &imagerxmatch,
 
     int mid = (lowerBound + upperBound + 1) / 2;
 
-    bool valid = downloadmanager->urlExists(buildImgUrl(imagerxmatch, mid));
+    bool valid = downloadManager->urlExists(buildImgUrl(imagerxmatch, mid));
     if (valid)
         return binarySearchNumPages(imagerxmatch, mid, upperBound, true);
     else
@@ -163,7 +163,7 @@ QStringList MangaHub::getPageList(const QString &chapterlink)
 
     QRegularExpression numimagesrx(R"lit(>1/(\d+)<)lit");
 
-    auto job = downloadmanager->downloadAsString(chapterlink);
+    auto job = downloadManager->downloadAsString(chapterlink);
 
     QStringList pageLinks;
 

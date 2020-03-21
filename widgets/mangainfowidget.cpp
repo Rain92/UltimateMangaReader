@@ -91,7 +91,7 @@ void MangaInfoWidget::setManga(QSharedPointer<MangaInfo> manga)
     }
 
     QStringListModel *model = new QStringListModel(this);
-    model->setStringList(currentmanga->chapertitlesreversed);
+    model->setStringList(currentmanga->chaperTitleListDescending);
 
     if (ui->listViewChapters->model() != nullptr)
         ui->listViewChapters->model()->deleteLater();
@@ -114,7 +114,7 @@ void MangaInfoWidget::setManga(QSharedPointer<MangaInfo> manga)
     ui->scrollAreaMangaInfoSummary->verticalScrollBar()->setValue(0);
     ui->listViewChapters->verticalScrollBar()->setValue(0);
 
-    bool enable = currentmanga->numchapters > 0;
+    bool enable = currentmanga->numChapters > 0;
 
     ui->pushButtonReadContinue->setEnabled(enable);
     ui->pushButtonReadFirst->setEnabled(enable);
@@ -134,19 +134,19 @@ void MangaInfoWidget::updateManga()
     qDebug() << "update";
     ui->labelMangaInfoLabelStaus->setText(currentmanga->status);
     static_cast<QStringListModel *>(ui->listViewChapters->model())
-        ->setStringList(currentmanga->chapertitlesreversed);
+        ->setStringList(currentmanga->chaperTitleListDescending);
 }
 
 void MangaInfoWidget::updateCover()
 {
-    if (!QFile::exists(currentmanga->coverpath))
+    if (!QFile::exists(currentmanga->coverPath))
     {
         ui->labelMangaInfoCover->clear();
     }
     else
     {
         QPixmap img;
-        img.load(currentmanga->coverpath);
+        img.load(currentmanga->coverPath);
         ui->labelMangaInfoCover->setPixmap(
             img.scaled(coversize, coversize, Qt::KeepAspectRatio,
                        Qt::SmoothTransformation));
@@ -170,17 +170,17 @@ void MangaInfoWidget::on_pushButtonMangaInfoAddFavorites_clicked()
 void MangaInfoWidget::on_listViewChapters_clicked(const QModelIndex &index)
 {
     emit readMangaClicked(
-        MangaIndex(currentmanga->numchapters - 1 - index.row(), 0));
+        MangaIndex(currentmanga->numChapters - 1 - index.row(), 0));
 }
 
 void MangaInfoWidget::on_pushButtonReadLatest_clicked()
 {
-    emit readMangaClicked(MangaIndex(currentmanga->numchapters - 1, 0));
+    emit readMangaClicked(MangaIndex(currentmanga->numChapters - 1, 0));
 }
 
 void MangaInfoWidget::on_pushButtonReadContinue_clicked()
 {
-    emit readMangaClicked(currentmanga->currentindex);
+    emit readMangaClicked(currentmanga->currentIndex);
 }
 
 void MangaInfoWidget::on_pushButtonReadFirst_clicked()

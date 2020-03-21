@@ -15,7 +15,7 @@ MangaIndex MangaIndex::nextPageIndex(QList<MangaChapter> *chapters)
     if (illegal)
         return MangaIndex(-1, -1, true);
 
-    if (page < chapters->at(chapter).numpages - 1)
+    if (page < chapters->at(chapter).numPages - 1)
     {
         return MangaIndex(chapter, page + 1);
     }
@@ -39,10 +39,10 @@ MangaIndex MangaIndex::prevPageIndex(QList<MangaChapter> *chapters)
     }
     else if (chapter > 0)
     {
-        if (!chapters->at(chapter - 1).pagesloaded)
+        if (!chapters->at(chapter - 1).pagesLoaded)
             (*chapters)[chapter - 1].loadPages();
 
-        return MangaIndex(chapter - 1, chapters->at(chapter - 1).numpages - 1);
+        return MangaIndex(chapter - 1, chapters->at(chapter - 1).numPages - 1);
     }
     else
     {
@@ -69,8 +69,8 @@ MangaIndex MangaIndex::deltaPageIndex(QList<MangaChapter> *chapters, int delta)
 bool MangaIndex::checkLegal(QList<MangaChapter> *chapters)
 {
     return chapter >= 0 && page >= 0 && chapters->length() > chapter &&
-           (!chapters->at(chapter).pagesloaded ||
-            chapters->at(chapter).numpages > page);
+           (!chapters->at(chapter).pagesLoaded ||
+            chapters->at(chapter).numPages > page);
 }
 
 QDataStream &operator<<(QDataStream &str, const MangaIndex &m)

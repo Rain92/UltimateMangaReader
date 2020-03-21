@@ -39,7 +39,8 @@ FORMS += \
     widgets/clearcachedialog.ui
 
 HEADERS += \
-    customgesturerecognizer.h \
+    ulitimatemangareadercore.h \
+    widgets/customgesturerecognizer.h \
     defines.h \
     downloadimagedescriptor.h \
     downloadjobbase.h \
@@ -79,7 +80,8 @@ HEADERS += \
     widgets/clearcachedialog.h
 
 SOURCES += \
-    customgesturerecognizer.cpp \
+    ulitimatemangareadercore.cpp \
+    widgets/customgesturerecognizer.cpp \
     downloadjobbase.cpp \
     downloadqueue.cpp \
     mangasources/abstractmangasource.cpp \

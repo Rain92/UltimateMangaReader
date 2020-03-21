@@ -8,11 +8,11 @@ class MangaChapter
 public:
     QString chapterlink;
 
-    bool pagesloaded;
-    int numpages;
+    bool pagesLoaded;
+    int numPages;
 
-    QStringList pagelinks;
-    QStringList imagelinks;
+    QStringList pagelinkList;
+    QStringList imagelinkList;
 
     MangaChapter(const QString &link, AbstractMangaSource *source);
     MangaChapter();

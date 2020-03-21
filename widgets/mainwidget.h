@@ -5,6 +5,7 @@
 #include <QWidget>
 
 #include "VirtualKeyboard.h"
+#include "defines.h"
 #include "downloadmanager.h"
 #include "favoritesmanager.h"
 #include "favoriteswidget.h"
@@ -72,8 +73,9 @@ private:
 
     void readerShowImage(const QString &path);
 
-    DownloadManager *downloadmanager;
     Ui::MainWidget *ui;
+
+    DownloadManager downloadmanager;
 
     QList<AbstractMangaSource *> mangasources;
 

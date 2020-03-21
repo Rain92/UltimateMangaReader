@@ -19,9 +19,9 @@ public:
 
     QString baseurl;
 
-    MangaList mangalist;
+    MangaList mangaList;
 
-    AbstractMangaSource(QObject *parent, DownloadManager *downloadmanager);
+    AbstractMangaSource(QObject *parent, DownloadManager *downloadManager);
 
     virtual MangaList getMangaList() = 0;
 
@@ -59,8 +59,8 @@ signals:
     void updateError(QString);
 
 protected:
-    DownloadManager *downloadmanager;
-    QTextDocument htmlconverter;
+    DownloadManager *downloadManager;
+    QTextDocument htmlConverter;
 
     void fillMangaInfo(
         QSharedPointer<MangaInfo> info, const QString &buffer,

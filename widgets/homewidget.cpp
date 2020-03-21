@@ -113,18 +113,18 @@ void HomeWidget::on_pushButtonUpdate_clicked()
     foreach (AbstractMangaSource *ms, *mangasources)
     {
         updatedialog->setLabelText("Updating " + ms->name);
-        auto mangalist = ms->getMangaList();
-        if (mangalist.nominalSize == mangalist.actualSize)
+        auto mangaList = ms->getMangaList();
+        if (mangaList.nominalSize == mangaList.actualSize)
         {
-            mangalist.sortAndFilter();
-            ms->mangalist = mangalist;
+            mangaList.sortAndFilter();
+            ms->mangaList = mangaList;
             ms->serializeMangaList();
         }
         else
         {
             updateError("Number of mangas does not match.\n" +
-                        QString::number(mangalist.actualSize) + " vs " +
-                        QString::number(mangalist.nominalSize));
+                        QString::number(mangaList.actualSize) + " vs " +
+                        QString::number(mangaList.nominalSize));
         }
     }
 }
@@ -198,7 +198,7 @@ void HomeWidget::clearCacheDialogButtonClicked(int level)
             break;
 
         case 3:
-            removeDir(cachedir, "mangalist.dat");
+            removeDir(cachedir, "mangaList.dat");
             emit favoritesCleared();
             break;
 
@@ -226,7 +226,7 @@ void HomeWidget::on_listViewSources_clicked(const QModelIndex &index)
 
 void HomeWidget::on_pushButtonFilter_clicked()
 {
-    if (currentsource == nullptr || currentsource->mangalist.actualSize == 0)
+    if (currentsource == nullptr || currentsource->mangaList.actualSize == 0)
         return;
 
     QString ss = ui->lineEditFilter->text();
@@ -241,12 +241,12 @@ void HomeWidget::on_pushButtonFilter_clicked()
         return;
     }
 
-    for (int i = 0; i < currentsource->mangalist.titles.size(); i++)
-        if (currentsource->mangalist.titles[i].contains(ss,
+    for (int i = 0; i < currentsource->mangaList.titles.size(); i++)
+        if (currentsource->mangaList.titles[i].contains(ss,
                                                         Qt::CaseInsensitive))
         {
-            filteredmangatitles.append(currentsource->mangalist.titles[i]);
-            filteredmangalinks.append(currentsource->mangalist.links[i]);
+            filteredmangatitles.append(currentsource->mangaList.titles[i]);
+            filteredmangalinks.append(currentsource->mangaList.links[i]);
         }
 
     filteractive = true;
@@ -273,7 +273,7 @@ void HomeWidget::refreshMangaListView()
     QStringListModel *model = new QStringListModel(this);
 
     if (!filteractive)
-        model->setStringList(currentsource->mangalist.titles);
+        model->setStringList(currentsource->mangaList.titles);
     else
         model->setStringList(filteredmangatitles);
 
@@ -288,13 +288,13 @@ void HomeWidget::on_listViewMangas_clicked(const QModelIndex &index)
     int idx = index.row();
 
     QString mangalink = filteractive ? filteredmangalinks[idx]
-                                     : currentsource->mangalist.links[idx];
+                                     : currentsource->mangaList.links[idx];
 
-    if (!currentsource->mangalist.absoluteUrls)
+    if (!currentsource->mangaList.absoluteUrls)
         mangalink.prepend(currentsource->baseurl);
 
     QString mangatitle = filteractive ? filteredmangatitles[idx]
-                                      : currentsource->mangalist.titles[idx];
+                                      : currentsource->mangaList.titles[idx];
 
     emit mangaClicked(mangalink, mangatitle);
 }

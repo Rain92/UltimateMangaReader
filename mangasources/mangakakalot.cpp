@@ -24,7 +24,7 @@ MangaList Mangakakalot::getMangaList()
 
     MangaList mangas;
 
-    auto job = downloadmanager->downloadAsString(dicturl + "1");
+    auto job = downloadManager->downloadAsString(dicturl + "1");
 
     if (!job->await(2000))
     {
@@ -72,7 +72,7 @@ MangaList Mangakakalot::getMangaList()
     for (int i = 2; i <= pages; i++)
         urls.append(dicturl + QString::number(i));
 
-    DownloadQueue queue(downloadmanager, urls, maxparalleldownloads, lambda);
+    DownloadQueue queue(downloadManager, urls, maxparalleldownloads, lambda);
 
     queue.start();
     awaitSignal(&queue, {SIGNAL(allCompleted())}, 1000000);
@@ -118,8 +118,8 @@ void Mangakakalot::updateMangaInfoFinishedLoading(
                               MangaChapter(chapterrxmatch.captured(1), this));
 
         QString ctitle = chapterrxmatch.captured(2);
-        info->chapertitlesreversed.append(ctitle);
-        info->numchapters++;
+        info->chaperTitleListDescending.append(ctitle);
+        info->numChapters++;
     }
 }
 
@@ -127,7 +127,7 @@ QStringList Mangakakalot::getPageList(const QString &chapterlink)
 {
     QRegularExpression pagerx(R"lit(<img src="([^"]*)")lit");
 
-    auto job = downloadmanager->downloadAsString(chapterlink);
+    auto job = downloadManager->downloadAsString(chapterlink);
 
     QStringList pageLinks;
 

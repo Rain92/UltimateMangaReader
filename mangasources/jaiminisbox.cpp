@@ -28,7 +28,7 @@ MangaList JaiminisBox::getMangaList()
 
     QString readerlink = baseurl + "reader/directory/";
 
-    auto job = downloadmanager->downloadAsString(readerlink + "1", -1);
+    auto job = downloadManager->downloadAsString(readerlink + "1", -1);
 
     if (!job->await(5000))
     {
@@ -72,7 +72,7 @@ MangaList JaiminisBox::getMangaList()
     for (int i = 2; i <= pages; i++)
         urls.append(readerlink + QString::number(i));
 
-    DownloadQueue queue(downloadmanager, urls, maxparalleldownloads, lambda);
+    DownloadQueue queue(downloadManager, urls, maxparalleldownloads, lambda);
 
     queue.start();
 
@@ -90,11 +90,11 @@ MangaList JaiminisBox::getMangaList()
 
 QSharedPointer<MangaInfo> JaiminisBox::getMangaInfo(const QString &mangalink)
 {
-    auto job = downloadmanager->downloadAsStringPost(mangalink, &postdatastr);
+    auto job = downloadManager->downloadAsStringPost(mangalink, &postdatastr);
 
     auto info = QSharedPointer<MangaInfo>(new MangaInfo(this));
 
-    info->mangasource = this;
+    info->mangaSource = this;
     info->hostname = name;
 
     info->link = mangalink;
@@ -131,8 +131,8 @@ void JaiminisBox::updateMangaInfoFinishedLoading(
     {
         info->chapters.insert(0,
                               MangaChapter(chapterrxmatch.captured(1), this));
-        info->chapertitlesreversed.append(chapterrxmatch.captured(2));
-        info->numchapters++;
+        info->chaperTitleListDescending.append(chapterrxmatch.captured(2));
+        info->numChapters++;
     }
 }
 
@@ -142,7 +142,7 @@ QStringList JaiminisBox::getPageList(const QString &chapterlink)
     QRegularExpression imagelinksrx(R"("url":"([^"]*))");
 
     auto job =
-        downloadmanager->downloadAsStringPost(chapterlink, &postdatastr, -1);
+        downloadManager->downloadAsStringPost(chapterlink, &postdatastr, -1);
     QStringList imagelinks;
 
     if (!job->await(4000))

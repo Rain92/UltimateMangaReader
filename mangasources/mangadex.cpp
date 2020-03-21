@@ -7,8 +7,8 @@ MangaDex::MangaDex(QObject *parent, DownloadManager *dm)
     baseurl = "https://mangadex.org";
 
     //    downloadmanager->addCookie(".mangadex.org", "mangadex_h_toggle", "1");
-    downloadmanager->addCookie(".mangadex.org", "mangadex_title_mode", "2");
-    downloadmanager->addCookie(".mangadex.org", "mangadex_filter_langs", "1");
+    downloadManager->addCookie(".mangadex.org", "mangadex_title_mode", "2");
+    downloadManager->addCookie(".mangadex.org", "mangadex_filter_langs", "1");
     //    downloadmanager->addCookie(".mangadex.org",
     //    "mangadex_rememberme_token",
     //    "ba07d6d335a2b433d4b57b396d99224cbfaf100cad243a50694161d681270c5a");
@@ -27,7 +27,7 @@ void MangaDex::login()
     QString loginurl(
         "https://mangadex.org/ajax/actions.ajax.php?function=login&nojs=1");
 
-    auto job = downloadmanager->downloadAsStringPost(loginurl, &query);
+    auto job = downloadManager->downloadAsStringPost(loginurl, &query);
 
     job->await(1000);
 
@@ -35,7 +35,7 @@ void MangaDex::login()
     foreach (QNetworkCookie c, ncookies)
     {
         qDebug() << "Added cookie" << c.name() << c.value();
-        downloadmanager->addCookie(".mangadex.org", c.name(), c.value());
+        downloadManager->addCookie(".mangadex.org", c.name(), c.value());
     }
 }
 
@@ -51,7 +51,7 @@ MangaList MangaDex::getMangaList()
 
     QString basedictlink = baseurl + "/titles/2/";
 
-    auto job = downloadmanager->downloadAsString(basedictlink + "1", -1);
+    auto job = downloadManager->downloadAsString(basedictlink + "1", -1);
 
     if (!job->await(5000))
     {
@@ -96,7 +96,7 @@ MangaList MangaDex::getMangaList()
     for (int i = 2; i <= pages; i++)
         urls.append(basedictlink + QString::number(i));
 
-    DownloadQueue queue(downloadmanager, urls, maxparalleldownloads, lambda);
+    DownloadQueue queue(downloadManager, urls, maxparalleldownloads, lambda);
 
     queue.start();
 
@@ -149,7 +149,7 @@ void MangaDex::updateMangaInfoFinishedLoading(
         info->genres = demo + info->genres;
     }
 
-    info->numchapters = 0;
+    info->numChapters = 0;
 
     int pages = 1;
 
@@ -160,8 +160,8 @@ void MangaDex::updateMangaInfoFinishedLoading(
             info->chapters.insert(
                 0, MangaChapter(baseurl + match.captured(1), this));
 
-            info->chapertitlesreversed.append(match.captured(2));
-            info->numchapters++;
+            info->chaperTitleListDescending.append(match.captured(2));
+            info->numChapters++;
         }
 
         //            qDebug() << "rx" << rxi ;
@@ -178,7 +178,7 @@ void MangaDex::updateMangaInfoFinishedLoading(
         for (int i = 2; i <= pages; i++)
             urls.append(info->link + QString::number(i));
 
-        DownloadQueue queue(downloadmanager, urls, maxparalleldownloads,
+        DownloadQueue queue(downloadManager, urls, maxparalleldownloads,
                             lambda);
 
         queue.start();
@@ -193,7 +193,7 @@ QStringList MangaDex::getPageList(const QString &chapterlink)
     QRegularExpression datarx("var dataurl = '([^']*)'");
     QRegularExpression pagesrx("var page_array = \\[([^\\]]*)");
 
-    auto job = downloadmanager->downloadAsString(chapterlink);
+    auto job = downloadManager->downloadAsString(chapterlink);
 
     QStringList pageLinks;
 

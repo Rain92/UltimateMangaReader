@@ -4,12 +4,12 @@
 #include <QStringListModel>
 
 #include "../koboplatformintegrationplugin/koboplatformfunctions.h"
-#include "defines.h"
 #include "ui_mainwidget.h"
 
 MainWidget::MainWidget(QWidget *parent)
     : QWidget(parent),
       ui(new Ui::MainWidget),
+      downloadmanager(this),
       mangasources(),
       currentmanga(),
       favoritesmanager(mangasources),
@@ -23,16 +23,15 @@ MainWidget::MainWidget(QWidget *parent)
 
     settings.deserialize();
 
-    downloadmanager = new DownloadManager(this);
-    downloadmanager->setImageRescaleSize(this->size());
-    downloadmanager->connect();
+    downloadmanager.setImageRescaleSize(this->size());
+    downloadmanager.connect();
 
-    mangasources.append(new MangaPanda(this, downloadmanager));
-    mangasources.append(new JaiminisBox(this, downloadmanager));
+    mangasources.append(new MangaPanda(this, &downloadmanager));
+    mangasources.append(new JaiminisBox(this, &downloadmanager));
     //    mangasources.append(new MangaDex(this, downloadmanager));
     //        mangasources.append(new Mangakakalot(this, downloadmanager));
-    mangasources.append(new MangaHub(this, downloadmanager));
-    mangasources.append(new MangaOwl(this, downloadmanager));
+    mangasources.append(new MangaHub(this, &downloadmanager));
+    mangasources.append(new MangaOwl(this, &downloadmanager));
 
     ui->homeWidget->setMangaSources(&mangasources);
     currentsource = mangasources[0];
@@ -157,7 +156,7 @@ void MainWidget::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
 
-    downloadmanager->setImageRescaleSize(this->size());
+    downloadmanager.setImageRescaleSize(this->size());
 }
 
 void MainWidget::setWidgetTab(int page)
@@ -216,7 +215,7 @@ void MainWidget::viewFavorite(QSharedPointer<MangaInfo> info, bool current)
         ui->mangaInfoWidget->setFavoriteButtonState(
             favoritesmanager.isFavorite(currentmanga.get()));
 
-        viewMangaImage(info->currentindex);
+        viewMangaImage(info->currentIndex);
     }
     else
     {
@@ -266,17 +265,17 @@ void MainWidget::advanceMangaPage(bool direction)
 {
     if (direction)
         viewMangaImage(
-            currentmanga->currentindex.nextPageIndex(&currentmanga->chapters));
+            currentmanga->currentIndex.nextPageIndex(&currentmanga->chapters));
     else
         viewMangaImage(
-            currentmanga->currentindex.prevPageIndex(&currentmanga->chapters));
+            currentmanga->currentIndex.prevPageIndex(&currentmanga->chapters));
 }
 
 void MainWidget::readerGoBack() { setWidgetTab(lastTab); }
 
 void MainWidget::viewMangaImage(const MangaIndex &index)
 {
-    if (currentmanga->numchapters == 0)
+    if (currentmanga->numChapters == 0)
         return;
 
     if (index.illegal)

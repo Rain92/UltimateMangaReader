@@ -11,11 +11,11 @@ class MangaInfo : public QObject
     Q_OBJECT
 
 public:
-    explicit MangaInfo(AbstractMangaSource *mangasource);
+    explicit MangaInfo(AbstractMangaSource *mangaSource);
     ~MangaInfo();
 
     static QSharedPointer<MangaInfo> deserialize(
-        AbstractMangaSource *mangasource, const QString &path);
+        AbstractMangaSource *mangaSource, const QString &path);
 
     void serialize();
     void serializeProgress();
@@ -26,24 +26,24 @@ public:
 
     QString author;
     QString artist;
-    QString releaseyear;
+    QString releaseYear;
     QString genres;
     QString status;
     QString summary;
-    QString coverpath;
-    QString coverlink;
+    QString coverPath;
+    QString coverLink;
 
     QString hostname;
 
     bool updated;
 
-    MangaIndex currentindex;
+    MangaIndex currentIndex;
 
-    int numchapters;
+    int numChapters;
 
-    AbstractMangaSource *mangasource;
+    AbstractMangaSource *mangaSource;
 
-    QStringList chapertitlesreversed;
+    QStringList chaperTitleListDescending;
     QList<MangaChapter> chapters;
 
     bool updating;
@@ -82,7 +82,7 @@ private slots:
     void completedImagePreload(const QString &path);
 
 private:
-    PreloadQueue preloadqueue;
+    PreloadQueue preloadQueue;
 };
 
 #endif  // MANGAINFO_H

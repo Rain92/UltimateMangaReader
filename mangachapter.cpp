@@ -4,59 +4,59 @@
 
 MangaChapter::MangaChapter()
     : chapterlink(),
-      pagesloaded(false),
-      numpages(0),
-      pagelinks(),
-      imagelinks(),
+      pagesLoaded(false),
+      numPages(0),
+      pagelinkList(),
+      imagelinkList(),
       source(nullptr)
 {
 }
 
 MangaChapter::MangaChapter(const QString &link, AbstractMangaSource *source)
     : chapterlink(link),
-      pagesloaded(false),
-      numpages(0),
-      pagelinks(),
-      imagelinks(),
+      pagesLoaded(false),
+      numPages(0),
+      pagelinkList(),
+      imagelinkList(),
       source(source)
 {
 }
 
 void MangaChapter::loadPages()
 {
-    if (pagesloaded)
+    if (pagesLoaded)
         return;
 
     qDebug() << "getPageList start:" << chapterlink;
 
-    pagelinks = source->getPageList(chapterlink);
-    if (pagelinks.count() == 0)
+    pagelinkList = source->getPageList(chapterlink);
+    if (pagelinkList.count() == 0)
     {
         qDebug() << "pagelinks empty" << chapterlink;
-        numpages = 1;
-        pagelinks.clear();
-        pagelinks << "";
+        numPages = 1;
+        pagelinkList.clear();
+        pagelinkList << "";
         return;
     }
-    numpages = pagelinks.count();
-    imagelinks = QStringList();
-    for (int i = 0; i < pagelinks.count(); i++)
-        imagelinks.append("");
-    pagesloaded = true;
+    numPages = pagelinkList.count();
+    imagelinkList = QStringList();
+    for (int i = 0; i < pagelinkList.count(); i++)
+        imagelinkList.append("");
+    pagesLoaded = true;
 }
 
 QDataStream &operator<<(QDataStream &str, const MangaChapter &m)
 {
-    str << m.chapterlink << m.pagesloaded << (qint32)m.numpages << m.pagelinks
-        << m.imagelinks << (qint32)m.numpages << m.pagelinks << m.imagelinks;
+    str << m.chapterlink << m.pagesLoaded << (qint32)m.numPages << m.pagelinkList
+        << m.imagelinkList << (qint32)m.numPages << m.pagelinkList << m.imagelinkList;
 
     return str;
 }
 
 QDataStream &operator>>(QDataStream &str, MangaChapter &m)
 {
-    str >> m.chapterlink >> m.pagesloaded >> m.numpages >> m.pagelinks >>
-        m.imagelinks >> m.numpages >> m.pagelinks >> m.imagelinks;
+    str >> m.chapterlink >> m.pagesLoaded >> m.numPages >> m.pagelinkList >>
+        m.imagelinkList >> m.numPages >> m.pagelinkList >> m.imagelinkList;
     ;
 
     return str;

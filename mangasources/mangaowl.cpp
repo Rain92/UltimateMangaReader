@@ -4,8 +4,8 @@ MangaOwl::MangaOwl(QObject *parent, DownloadManager *dm)
     : AbstractMangaSource(parent, dm)
 {
     name = "MangaOwl";
-    baseurl = "https://mangaowl.com/";
-    dicturl = "https://mangaowl.com/list/";
+    baseurl = "https://mangaowl.net/";
+    dicturl = "https://mangaowl.net/list/";
 }
 
 MangaList MangaOwl::getMangaList()
@@ -19,7 +19,7 @@ MangaList MangaOwl::getMangaList()
 
     MangaList mangas;
 
-    auto job = downloadmanager->downloadAsString(dicturl + "1");
+    auto job = downloadManager->downloadAsString(dicturl + "1");
 
     if (!job->await(2000))
     {
@@ -65,7 +65,7 @@ MangaList MangaOwl::getMangaList()
     for (int i = 2; i <= pages; i++)
         urls.append(dicturl + QString::number(i));
 
-    DownloadQueue queue(downloadmanager, urls, 8, lambda);
+    DownloadQueue queue(downloadManager, urls, 8, lambda);
 
     queue.start();
     awaitSignal(&queue, {SIGNAL(allCompleted())}, 1000000);
@@ -113,8 +113,8 @@ void MangaOwl::updateMangaInfoFinishedLoading(
                               MangaChapter(chapterrxmatch.captured(1), this));
 
         QString ctitle = chapterrxmatch.captured(2);
-        info->chapertitlesreversed.append(ctitle);
-        info->numchapters++;
+        info->chaperTitleListDescending.append(ctitle);
+        info->numChapters++;
     }
 }
 
@@ -123,7 +123,7 @@ QStringList MangaOwl::getPageList(const QString &chapterlink)
     QRegularExpression pagerx(
         R"lit(<img[^>]*class="owl-lazy"[^>]*data-src="([^"]*)")lit");
 
-    auto job = downloadmanager->downloadAsString(chapterlink);
+    auto job = downloadManager->downloadAsString(chapterlink);
 
     QStringList pageLinks;
 

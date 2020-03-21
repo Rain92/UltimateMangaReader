@@ -7,21 +7,21 @@
 
 AbstractMangaSource::AbstractMangaSource(QObject *parent,
                                          DownloadManager *downloadmanager)
-    : QObject(parent), downloadmanager(downloadmanager), htmlconverter()
+    : QObject(parent), downloadManager(downloadmanager), htmlConverter()
 {
 }
 
 bool AbstractMangaSource::serializeMangaList()
 {
-    QFile file(mangalistdir + name + "_mangalist.dat");
+    QFile file(mangalistdir + name + "_mangaList.dat");
     if (!file.open(QIODevice::WriteOnly))
         return false;
     QDataStream out(&file);
-    out << mangalist.titles;
-    out << mangalist.links;
-    out << mangalist.absoluteUrls;
-    out << mangalist.nominalSize;
-    out << mangalist.actualSize;
+    out << mangaList.titles;
+    out << mangaList.links;
+    out << mangaList.absoluteUrls;
+    out << mangaList.nominalSize;
+    out << mangaList.actualSize;
 
     file.close();
 
@@ -30,18 +30,18 @@ bool AbstractMangaSource::serializeMangaList()
 
 bool AbstractMangaSource::deserializeMangaList()
 {
-    mangalist.links.clear();
-    mangalist.titles.clear();
+    mangaList.links.clear();
+    mangaList.titles.clear();
 
-    QFile file(mangalistdir + name + "_mangalist.dat");
+    QFile file(mangalistdir + name + "_mangaList.dat");
     if (!file.open(QIODevice::ReadOnly))
         return false;
     QDataStream in(&file);
-    in >> mangalist.titles;
-    in >> mangalist.links;
-    in >> mangalist.absoluteUrls;
-    in >> mangalist.nominalSize;
-    in >> mangalist.actualSize;
+    in >> mangaList.titles;
+    in >> mangaList.links;
+    in >> mangaList.absoluteUrls;
+    in >> mangaList.nominalSize;
+    in >> mangaList.actualSize;
 
     file.close();
 
@@ -67,7 +67,7 @@ QSharedPointer<DownloadFileJob> AbstractMangaSource::downloadImage(
 {
     QString path = getImagePath(mangainfo);
 
-    return downloadmanager->downloadAsScaledImage(mangainfo.imagelink, path);
+    return downloadManager->downloadAsScaledImage(mangainfo.imagelink, path);
 }
 
 QString AbstractMangaSource::downloadAwaitImage(
@@ -79,7 +79,7 @@ QString AbstractMangaSource::downloadAwaitImage(
         return path;
 
     auto job =
-        downloadmanager->downloadAsScaledImage(mangainfo.imagelink, path);
+        downloadManager->downloadAsScaledImage(mangainfo.imagelink, path);
 
     return job->await(5000) ? path : "";
 }
@@ -93,7 +93,7 @@ QSharedPointer<MangaInfo> AbstractMangaSource::loadMangaInfo(
         QSharedPointer<MangaInfo> mi(
             MangaInfo::deserialize(this, infofile.filePath()));
         if (update)
-            mi->mangasource->updateMangaInfo(mi);
+            mi->mangaSource->updateMangaInfo(mi);
         return mi;
     }
     else
@@ -109,11 +109,11 @@ QSharedPointer<MangaInfo> AbstractMangaSource::loadMangaInfo(
 QSharedPointer<MangaInfo> AbstractMangaSource::getMangaInfo(
     const QString &mangalink)
 {
-    auto job = downloadmanager->downloadAsString(mangalink);
+    auto job = downloadManager->downloadAsString(mangalink);
 
     auto info = QSharedPointer<MangaInfo>(new MangaInfo(this));
 
-    info->mangasource = this;
+    info->mangaSource = this;
     info->hostname = name;
 
     info->link = mangalink;
@@ -137,11 +137,22 @@ void AbstractMangaSource::updateMangaInfo(QSharedPointer<MangaInfo> info)
 
     int oldnumchapters = info->chapters.count();
 
-    auto job = downloadmanager->downloadAsString(info->link);
+    auto job = downloadManager->downloadAsString(info->link);
 
-    auto lambda = [oldnumchapters, info, this] {
-        bool newchapters = info->numchapters > oldnumchapters;
+    auto lambda = [oldnumchapters, info, job, this] {
+        bool newchapters = info->numChapters > oldnumchapters;
+
+        info->chapters.clear();
+        info->chaperTitleListDescending.clear();
+        info->numChapters = 0;
+
+        updateMangaInfoFinishedLoading(job, info);
+
         info->updateCompeted(newchapters);
+
+        if (newchapters)
+            qDebug() << "newchapters";
+
         downloadCover(info);
         info->serialize();
     };
@@ -154,23 +165,23 @@ void AbstractMangaSource::updateMangaInfo(QSharedPointer<MangaInfo> info)
 
 void AbstractMangaSource::downloadCover(QSharedPointer<MangaInfo> mangainfo)
 {
-    if (mangainfo->coverlink == "")
+    if (mangainfo->coverLink == "")
     {
         return;
     }
 
-    if (mangainfo->coverpath == "")
+    if (mangainfo->coverPath == "")
     {
-        int ind = mangainfo->coverlink.indexOf('?');
+        int ind = mangainfo->coverLink.indexOf('?');
         if (ind == -1)
-            ind = mangainfo->coverlink.length();
-        QString filetype = mangainfo->coverlink.mid(ind - 4, 4);
-        mangainfo->coverpath =
+            ind = mangainfo->coverLink.length();
+        QString filetype = mangainfo->coverLink.mid(ind - 4, 4);
+        mangainfo->coverPath =
             mangainfodir(name, mangainfo->title) + "cover" + filetype;
     }
 
-    auto coverjob = downloadmanager->downloadAsFile(mangainfo->coverlink,
-                                                    mangainfo->coverpath);
+    auto coverjob = downloadManager->downloadAsFile(mangainfo->coverLink,
+                                                    mangainfo->coverPath);
 
     auto lambda = [mangainfo]() { mangainfo->sendCoverLoaded(); };
 
@@ -182,8 +193,8 @@ void AbstractMangaSource::downloadCover(QSharedPointer<MangaInfo> mangainfo)
 
 QString AbstractMangaSource::htmlToPlainText(const QString &str)
 {
-    htmlconverter.setHtml(str);
-    return htmlconverter.toPlainText();
+    htmlConverter.setHtml(str);
+    return htmlConverter.toPlainText();
 }
 
 void AbstractMangaSource::fillMangaInfo(
@@ -211,7 +222,7 @@ void AbstractMangaSource::fillMangaInfo(
     if (statusrxmatch.hasMatch())
         info->status = htmlToPlainText(statusrxmatch.captured(1));
     if (yearrxmatch.hasMatch())
-        info->releaseyear = htmlToPlainText(yearrxmatch.captured(1));
+        info->releaseYear = htmlToPlainText(yearrxmatch.captured(1));
     if (genresrxmatch.hasMatch())
         info->genres = htmlToPlainText(genresrxmatch.captured(1))
                            .trimmed()
@@ -220,5 +231,5 @@ void AbstractMangaSource::fillMangaInfo(
     if (summaryrxmatch.hasMatch())
         info->summary = htmlToPlainText(summaryrxmatch.captured(1));
     if (coverrxmatch.hasMatch())
-        info->coverlink = coverrxmatch.captured(1);
+        info->coverLink = coverrxmatch.captured(1);
 }

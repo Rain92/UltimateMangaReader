@@ -219,12 +219,12 @@ void MangaReaderWidget::updateReaderLabels(QSharedPointer<MangaInfo> info)
     }
 
     ui->labelReaderChapter->setText(
-        "Chapter: " + QString::number(info->currentindex.chapter + 1) + "/" +
-        QString::number(info->numchapters));
+        "Chapter: " + QString::number(info->currentIndex.chapter + 1) + "/" +
+        QString::number(info->numChapters));
     ui->labelReaderPage->setText(
-        "Page: " + QString::number(info->currentindex.page + 1) + "/" +
+        "Page: " + QString::number(info->currentIndex.page + 1) + "/" +
         QString::number(
-            info->chapters.at(info->currentindex.chapter).numpages));
+            info->chapters.at(info->currentIndex.chapter).numPages));
 }
 
 void MangaReaderWidget::on_pushButtonReaderHome_clicked()
@@ -334,9 +334,9 @@ void MangaReaderWidget::on_horizontalSliderComfLight_valueChanged(int value)
 void MangaReaderWidget::on_pushButtonReaderGoto_clicked()
 {
     gotodialog->setup(
-        currentmanga->numchapters,
-        currentmanga->chapters[currentmanga->currentindex.chapter].numpages,
-        currentmanga->currentindex);
+        currentmanga->numChapters,
+        currentmanga->chapters[currentmanga->currentIndex.chapter].numPages,
+        currentmanga->currentIndex);
 
     if (gotodialog->exec() == QDialog::Accepted &&
         !gotodialog->selectedindex.illegal)
