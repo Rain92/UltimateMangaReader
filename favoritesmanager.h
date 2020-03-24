@@ -12,7 +12,8 @@ class FavoritesManager : public QObject
 {
     Q_OBJECT
 public:
-    FavoritesManager(const QList<AbstractMangaSource *> &mangasources);
+    explicit FavoritesManager(const QList<AbstractMangaSource *> &mangasources,
+                              QObject *parent = nullptr);
     void update(MangaInfo *info);
 
     Favorite *findOrInsert(MangaInfo *info);

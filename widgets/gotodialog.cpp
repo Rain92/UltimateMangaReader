@@ -6,8 +6,8 @@
 
 GotoDialog::GotoDialog(QWidget *parent)
     : QDialog(parent, Qt::FramelessWindowHint | Qt::Dialog),
-      selectedindex(-1, -1, true),
-      currentindex(-1, -1, true),
+      selectedindex(nullptr, 0, 0),
+      currentindex(nullptr, 0, 0),
       ui(new Ui::GotoDialog)
 
 {
@@ -39,7 +39,7 @@ GotoDialog::~GotoDialog() { delete ui; }
 void GotoDialog::setup(int maxchapter, int maxpage, MangaIndex currentindex)
 {
     this->currentindex = currentindex;
-    this->selectedindex = MangaIndex(-1, -1, true);
+    this->selectedindex = MangaIndex(currentindex);
 
     ui->spinBoxChapter->setMaximum(maxchapter);
     ui->spinBoxChapter->setValue(currentindex.chapter + 1);
@@ -113,13 +113,13 @@ void GotoDialog::moveCursorRight(int steps)
 
 void GotoDialog::on_pushButtonGoChapter_clicked()
 {
-    this->selectedindex = MangaIndex(ui->spinBoxChapter->value() - 1, 0);
+    this->selectedindex.chapter = ui->spinBoxChapter->value() - 1;
+    this->selectedindex.page = 0;
     this->accept();
 }
 
 void GotoDialog::on_pushButtonGoPage_clicked()
 {
-    this->selectedindex =
-        MangaIndex(currentindex.chapter, ui->spinBoxPage->value() - 1);
+    this->selectedindex.page = ui->spinBoxPage->value() - 1;
     this->accept();
 }

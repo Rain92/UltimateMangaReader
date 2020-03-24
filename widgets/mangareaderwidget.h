@@ -6,6 +6,7 @@
 #include <QWidget>
 
 #include "defines.h"
+#include "enums.h"
 #include "gotodialog.h"
 #include "mangainfo.h"
 
@@ -23,7 +24,8 @@ public:
     ~MangaReaderWidget();
 
     void showImage(const QString &path);
-    void updateReaderLabels(QSharedPointer<MangaInfo> info);
+    void updateReaderLabels(int chapter, int page, int numChapters,
+                            int numPages);
 
     void setFrontLightPanelState(int lightmin, int lightmax, int light,
                                  int comflightmin, int comflightmax,
@@ -35,12 +37,12 @@ public slots:
     void updateTime();
 
 signals:
-    void changeView(int page);
-    void advancPageClicked(bool direction);
+    void changeView(WidgetTab page);
+    void advancPageClicked(PageTurnDirection direction);
     void closeApp();
     void back();
     void frontlightchanged(int light, int comflight);
-    void gotoIndex(MangaIndex index);
+    void gotoIndex(int chapter, int page);
 
 private slots:
     void on_pushButtonReaderHome_clicked();
@@ -64,8 +66,6 @@ private:
     bool pagechanging;
 
     QQueue<QPair<QSharedPointer<QPixmap>, QString>> imgcache;
-
-    QSharedPointer<MangaInfo> currentmanga;
 
     QPixmap batteryicons[4];
 

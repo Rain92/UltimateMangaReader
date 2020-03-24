@@ -74,7 +74,7 @@ void MangaPanda::updateMangaInfoFinishedLoading(
          getAllRxMatches(chapterrx, job->buffer, spos, epos))
     {
         info->chapters.append(
-            MangaChapter(baseurl + chapterrxmatch.captured(1), this));
+            MangaChapter(baseurl + chapterrxmatch.captured(1)));
 
         QString ctitle = chapterrxmatch.captured(2);
         if (chapterrxmatch.captured(3) != " : ")

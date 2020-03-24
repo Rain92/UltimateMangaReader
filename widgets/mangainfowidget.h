@@ -25,10 +25,11 @@ public:
 
 signals:
     void toggleFavoriteClicked(QSharedPointer<MangaInfo> manga);
-    void readMangaClicked(MangaIndex index);
+    void readMangaClicked(int chapter, int page);
+    void readMangaContinueClicked();
 
 public slots:
-    void updateManga();
+    void updateManga(bool newchapters);
     void updateCover();
 
 private slots:

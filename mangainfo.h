@@ -1,6 +1,7 @@
 #ifndef MANGAINFO_H
 #define MANGAINFO_H
 
+#include "defines.h"
 #include "downloadimagedescriptor.h"
 #include "mangachapter.h"
 #include "mangaindex.h"
@@ -18,9 +19,6 @@ public:
         AbstractMangaSource *mangaSource, const QString &path);
 
     void serialize();
-    void serializeProgress();
-    void deserializeProgress();
-
     QString title;
     QString link;
 
@@ -37,8 +35,6 @@ public:
 
     bool updated;
 
-    MangaIndex currentIndex;
-
     int numChapters;
 
     AbstractMangaSource *mangaSource;
@@ -48,41 +44,15 @@ public:
 
     bool updating;
 
-    QString getCoverpathScaled() const;
-
-    QString getImageLink(MangaIndex index);
-
-    QString getCurrentImage();
-    QString goNextPage();
-    QString goPrevPage();
-    QString goChapterPage(MangaIndex index);
-    QString goNextChapter();
-    QString goPrevChapter();
-    QString goLastChapter();
-    QString goFirstChapter();
-
-    void preloadNeighbours(int forward, int backward);
-    void preloadChapter();
-    void preloadImage(MangaIndex index);
-
-    void preloadPopular();
-    void cancelAllPreloads();
-
-    void updateCompeted(bool changed);
+    void updateCompeted(bool newchapters);
+    QString coverThumbnailPath() const;
 
 signals:
-    void completedImagePreloadSignal(const QString &path);
-    void updatedSignal();
+    void updatedSignal(bool newchapters);
     void coverLoaded();
 
 public slots:
     void sendCoverLoaded();
-
-private slots:
-    void completedImagePreload(const QString &path);
-
-private:
-    PreloadQueue preloadQueue;
 };
 
 #endif  // MANGAINFO_H

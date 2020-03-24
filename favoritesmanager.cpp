@@ -1,8 +1,8 @@
 #include "favoritesmanager.h"
 
 FavoritesManager::FavoritesManager(
-    const QList<AbstractMangaSource *> &mangasources)
-    : favoriteinfos(), favorites(), mangasources(mangasources)
+    const QList<AbstractMangaSource *> &mangasources, QObject *parent)
+    : QObject(parent), favoriteinfos(), favorites(), mangasources(mangasources)
 {
     //    deserialize();
 }

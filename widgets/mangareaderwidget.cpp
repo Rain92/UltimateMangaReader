@@ -158,12 +158,12 @@ bool MangaReaderWidget::gestureEvent(QGestureEvent *event)
         else if (angle > 155 && angle < 205)
         {
             pagechanging = true;
-            emit advancPageClicked(true);
+            emit advancPageClicked(Forward);
         }
         else if (angle > 335 || angle < 25)
         {
             pagechanging = true;
-            emit advancPageClicked(false);
+            emit advancPageClicked(Backward);
         }
         else if (swipe->hotSpot().y() <
                      this->height() * readerbottommenuethreshold &&
@@ -192,8 +192,10 @@ bool MangaReaderWidget::gestureEvent(QGestureEvent *event)
         else
         {
             pagechanging = true;
-            bool direction =
-                pos.x() > this->width() * readerpreviouspagethreshold;
+            PageTurnDirection direction =
+                pos.x() > this->width() * readerpreviouspagethreshold
+                    ? Forward
+                    : Backward;
             emit advancPageClicked(direction);
         }
     }
@@ -210,27 +212,19 @@ void MangaReaderWidget::updateTime()
     QTimer::singleShot(msecsleft, this, SLOT(updateTime()));
 }
 
-void MangaReaderWidget::updateReaderLabels(QSharedPointer<MangaInfo> info)
+void MangaReaderWidget::updateReaderLabels(int chapter, int page,
+                                           int numChapters, int numPages)
 {
-    if (this->currentmanga.get() != info.get())
-    {
-        this->currentmanga.clear();
-        this->currentmanga = info;
-    }
-
-    ui->labelReaderChapter->setText(
-        "Chapter: " + QString::number(info->currentIndex.chapter + 1) + "/" +
-        QString::number(info->numChapters));
-    ui->labelReaderPage->setText(
-        "Page: " + QString::number(info->currentIndex.page + 1) + "/" +
-        QString::number(
-            info->chapters.at(info->currentIndex.chapter).numPages));
+    ui->labelReaderChapter->setText("Chapter: " + QString::number(chapter + 1) +
+                                    "/" + QString::number(numChapters));
+    ui->labelReaderPage->setText("Page: " + QString::number(page + 1) + "/" +
+                                 QString::number(numPages));
 }
 
 void MangaReaderWidget::on_pushButtonReaderHome_clicked()
 {
     pagechanging = false;
-    emit changeView(0);
+    emit changeView(HomeTab);
 }
 
 void MangaReaderWidget::on_pushButtonReaderBack_clicked()
@@ -333,18 +327,19 @@ void MangaReaderWidget::on_horizontalSliderComfLight_valueChanged(int value)
 
 void MangaReaderWidget::on_pushButtonReaderGoto_clicked()
 {
-    gotodialog->setup(
-        currentmanga->numChapters,
-        currentmanga->chapters[currentmanga->currentIndex.chapter].numPages,
-        currentmanga->currentIndex);
+    // TODO
+    //    gotodialog->setup(
+    //        currentmanga->numChapters,
+    //        currentmanga->chapters[currentmanga->currentIndex.chapter].numPages,
+    //        currentmanga->currentIndex);
 
-    if (gotodialog->exec() == QDialog::Accepted &&
-        !gotodialog->selectedindex.illegal)
-    {
-        showMenuBar(false);
+    //    if (gotodialog->exec() == QDialog::Accepted &&
+    //        !gotodialog->selectedindex.illegal)
+    //    {
+    //        showMenuBar(false);
 
-        emit gotoIndex(gotodialog->selectedindex);
-    }
+    //        emit gotoIndex(gotodialog->selectedindex);
+    //    }
 }
 
 void MangaReaderWidget::setBatteryIcon()

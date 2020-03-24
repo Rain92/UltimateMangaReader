@@ -2,26 +2,19 @@
 
 #include "defines.h"
 
-PreloadQueue::PreloadQueue(AbstractMangaSource* source)
-    : QObject(),
-      source(source),
-      queue(),
-      job(nullptr),
-      resettimer(),
-      running(false)
+PreloadQueue::PreloadQueue(DownloadManager* downloadManager)
+    : QObject(), downloadManager(downloadManager), queue(), running(false)
 {
-    resettimer.setSingleShot(true);
-    connect(&resettimer, SIGNAL(timeout()), this, SLOT(resetQueue()));
 }
 
 void PreloadQueue::resetQueue() { running = false; }
 
-void PreloadQueue::addJob(const DownloadImageDescriptor& info)
+void PreloadQueue::addJob(const FileDownloadDescriptor& descriptor)
 {
-    if (info.imagelink == "")
+    if (descriptor.url == "")
         return;
 
-    queue.enqueue(info);
+    queue.enqueue(descriptor);
     if (!running)
     {
         running = true;
@@ -31,14 +24,6 @@ void PreloadQueue::addJob(const DownloadImageDescriptor& info)
 
 void PreloadQueue::clearQuene() { queue.clear(); }
 
-QSharedPointer<DownloadFileJob> PreloadQueue::PreloadQueue::currentJob()
-{
-    if (running)
-        return job;
-
-    return nullptr;
-}
-
 void PreloadQueue::processNext()
 {
     if (queue.empty())
@@ -47,27 +32,28 @@ void PreloadQueue::processNext()
         return;
     }
     running = true;
-    resettimer.start(4000);
 
-    DownloadImageDescriptor info = queue.dequeue();
+    auto descriptor = queue.dequeue();
 
-    job = source->downloadImage(info);
+    auto job =
+        downloadManager->downloadAsScaledImage(descriptor.url, descriptor.path);
 
     if (!job->isCompleted)
     {
-        QObject::connect(job.get(), SIGNAL(completed()), this,
-                         SLOT(sendComletedSignal()));
-        QObject::connect(job.get(), SIGNAL(downloadError()), this,
-                         SLOT(processNext()));
+        QObject::connect(job.get(), &DownloadFileJob::completed,
+                         [job, this]() { sendComletedSignal(job); });
+        QObject::connect(job.get(), &DownloadFileJob::downloadError, this,
+                         &PreloadQueue::processNext);
     }
     else
     {
-        sendComletedSignal();
+        sendComletedSignal(job);
     }
 }
 
-void PreloadQueue::sendComletedSignal()
+void PreloadQueue::sendComletedSignal(QSharedPointer<DownloadFileJob> job)
 {
     emit completedDownload(job->filepath);
+    job->disconnect();
     processNext();
 }

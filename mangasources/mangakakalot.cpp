@@ -48,12 +48,14 @@ MangaList Mangakakalot::getMangaList()
     if (numpagesrxmatch.hasMatch())
         pages = numpagesrxmatch.captured(1).toInt();
 
-    auto lambda = [&](QSharedPointer<DownloadStringJob> job) {
-        int spos = job->buffer.indexOf(rxstart);
-        int epos = job->buffer.indexOf(rxend);
+    auto lambda = [&](QSharedPointer<DownloadJobBase> job) {
+        auto sjob = static_cast<DownloadStringJob *>(job.get());
+
+        int spos = sjob->buffer.indexOf(rxstart);
+        int epos = sjob->buffer.indexOf(rxend);
 
         int matches = 0;
-        for (auto &match : getAllRxMatches(mangarx, job->buffer, spos, epos))
+        for (auto &match : getAllRxMatches(mangarx, sjob->buffer, spos, epos))
         {
             mangas.links.append(match.captured(1));
             mangas.titles.append(
@@ -114,8 +116,7 @@ void Mangakakalot::updateMangaInfoFinishedLoading(
     for (auto &chapterrxmatch :
          getAllRxMatches(chapterrx, job->buffer, spos, epos))
     {
-        info->chapters.insert(0,
-                              MangaChapter(chapterrxmatch.captured(1), this));
+        info->chapters.insert(0, MangaChapter(chapterrxmatch.captured(1)));
 
         QString ctitle = chapterrxmatch.captured(2);
         info->chaperTitleListDescending.append(ctitle);

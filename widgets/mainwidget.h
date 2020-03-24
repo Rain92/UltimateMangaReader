@@ -5,19 +5,11 @@
 #include <QWidget>
 
 #include "VirtualKeyboard.h"
-#include "defines.h"
 #include "downloadmanager.h"
-#include "favoritesmanager.h"
 #include "favoriteswidget.h"
 #include "homewidget.h"
-#include "jaiminisbox.h"
-#include "mangadex.h"
-#include "mangahub.h"
-#include "mangakakalot.h"
-#include "mangaowl.h"
-#include "mangapanda.h"
 #include "mangareaderwidget.h"
-#include "settings.h"
+#include "ultimatemangareadercore.h"
 
 namespace Ui
 {
@@ -29,23 +21,16 @@ class MainWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit MainWidget(QWidget *parent = 0);
+    explicit MainWidget(QWidget *parent = nullptr);
     ~MainWidget();
 
 public slots:
 
     void viewFavorite(QSharedPointer<MangaInfo> info, bool current);
 
-    void setCurrentSource(AbstractMangaSource *source);
-    void viewMangaInfo(QSharedPointer<MangaInfo> info);
-    void viewMangaInfo(const QString &mangalink, const QString &mangatitle);
-    void toggleFavorite(QSharedPointer<MangaInfo> manga);
-
-    void viewMangaImage(const MangaIndex &index);
-    void advanceMangaPage(bool direction);
     void readerGoBack();
 
-    void setWidgetTab(int page);
+    void setWidgetTab(WidgetTab tab);
 
     void setFrontLight(int light, int comflight);
 
@@ -63,29 +48,15 @@ protected:
     bool eventFilter(QObject *obj, QEvent *ev) override;
 
 private:
-    void setupUI();
+    void setupVirtualKeyboard();
     void setupFrontLight();
     void adjustSizes();
-    void setupDirs();
-
-    void setAddFavoriteButtonState(bool state);
-    void updateReaderLabels();
-
-    void readerShowImage(const QString &path);
 
     Ui::MainWidget *ui;
 
-    DownloadManager downloadmanager;
+    UltimateMangaReaderCore *core;
 
-    QList<AbstractMangaSource *> mangasources;
-
-    AbstractMangaSource *currentsource;
-    QSharedPointer<MangaInfo> currentmanga;
-
-    FavoritesManager favoritesmanager;
-    Settings settings;
-
-    int lastTab;
+    WidgetTab lastTab;
 
     QTimer restorefrontlighttimer;
     VirtualKeyboard *virtualKeyboard;

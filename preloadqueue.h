@@ -8,14 +8,24 @@
 #include "downloadimageandrescalejob.h"
 #include "downloadimagedescriptor.h"
 
+struct FileDownloadDescriptor
+{
+    FileDownloadDescriptor(const QString &url, const QString &path)
+        : url(url), path(path)
+    {
+    }
+    QString url;
+    QString path;
+};
+
 class PreloadQueue : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit PreloadQueue(AbstractMangaSource *source);
+    explicit PreloadQueue(DownloadManager *downloadManager);
 
-    void addJob(const DownloadImageDescriptor &info);
+    void addJob(const FileDownloadDescriptor &job);
     void clearQuene();
 
     QSharedPointer<DownloadFileJob> currentJob();
@@ -27,14 +37,12 @@ public slots:
     void processNext();
 
 private slots:
-    void sendComletedSignal();
+    void sendComletedSignal(QSharedPointer<DownloadFileJob> job);
     void resetQueue();
 
 private:
-    AbstractMangaSource *source;
-    QQueue<DownloadImageDescriptor> queue;
-    QSharedPointer<DownloadFileJob> job;
-    QTimer resettimer;
+    DownloadManager *downloadManager;
+    QQueue<FileDownloadDescriptor> queue;
     bool running;
 };
 

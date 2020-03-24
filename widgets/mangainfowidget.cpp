@@ -122,14 +122,14 @@ void MangaInfoWidget::setManga(QSharedPointer<MangaInfo> manga)
 
     updateCover();
 
-    QObject::connect(currentmanga.get(), SIGNAL(updatedSignal()), this,
-                     SLOT(updateManga()));
+    QObject::connect(currentmanga.get(), &MangaInfo::updatedSignal, this,
+                     &MangaInfoWidget::updateManga);
 
-    QObject::connect(currentmanga.get(), SIGNAL(coverLoaded()), this,
-                     SLOT(updateCover()));
+    QObject::connect(currentmanga.get(), &MangaInfo::coverLoaded, this,
+                     &MangaInfoWidget::updateCover);
 }
 
-void MangaInfoWidget::updateManga()
+void MangaInfoWidget::updateManga(bool newchapters)
 {
     qDebug() << "update";
     ui->labelMangaInfoLabelStaus->setText(currentmanga->status);
@@ -169,21 +169,20 @@ void MangaInfoWidget::on_pushButtonMangaInfoAddFavorites_clicked()
 
 void MangaInfoWidget::on_listViewChapters_clicked(const QModelIndex &index)
 {
-    emit readMangaClicked(
-        MangaIndex(currentmanga->numChapters - 1 - index.row(), 0));
+    emit readMangaClicked(currentmanga->numChapters - 1 - index.row(), 0);
 }
 
 void MangaInfoWidget::on_pushButtonReadLatest_clicked()
 {
-    emit readMangaClicked(MangaIndex(currentmanga->numChapters - 1, 0));
+    emit readMangaClicked(currentmanga->numChapters - 1, 0);
 }
 
 void MangaInfoWidget::on_pushButtonReadContinue_clicked()
 {
-    emit readMangaClicked(currentmanga->currentIndex);
+    emit readMangaContinueClicked();
 }
 
 void MangaInfoWidget::on_pushButtonReadFirst_clicked()
 {
-    emit readMangaClicked(MangaIndex(0, 0));
+    emit readMangaClicked(0, 0);
 }

@@ -31,8 +31,9 @@ QNetworkAccessManager *DownloadManager::networkAccessManager()
 bool DownloadManager::connect()
 {
 #ifdef KOBO
-    KoboPlatformFunctions::enableWiFiConnection();
-    return KoboPlatformFunctions::testInternetConnection();
+    if (!KoboPlatformFunctions::testInternetConnection(1))
+        KoboPlatformFunctions::enableWiFiConnection();
+    return KoboPlatformFunctions::testInternetConnection(1);
 #endif
 
     return true;
@@ -125,7 +126,7 @@ QSharedPointer<DownloadFileJob> DownloadManager::downloadAsScaledImage(
     return job;
 }
 
-void DownloadManager::setImageRescaleSize(QSize size)
+void DownloadManager::setImageRescaleSize(const QSize &size)
 {
     imageRescaleSize = size;
 }

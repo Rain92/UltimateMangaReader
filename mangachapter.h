@@ -1,5 +1,6 @@
 #ifndef MANGACHAPTER_H
 #define MANGACHAPTER_H
+#include <QMutex>
 
 #include "abstractmangasource.h"
 
@@ -14,13 +15,8 @@ public:
     QStringList pagelinkList;
     QStringList imagelinkList;
 
-    MangaChapter(const QString &link, AbstractMangaSource *source);
+    MangaChapter(const QString &link);
     MangaChapter();
-
-    void loadPages();
-
-    // private:
-    AbstractMangaSource *source;
 };
 
 QDataStream &operator<<(QDataStream &str, const MangaChapter &m);

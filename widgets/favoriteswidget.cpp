@@ -63,7 +63,7 @@ void FavoritesWidget::showFavoritesList()
 void FavoritesWidget::insertRow(const QSharedPointer<MangaInfo> &fav, int row)
 {
     QWidget *titlewidget =
-        makeIconTextWidget(fav->getCoverpathScaled(), fav->title,
+        makeIconTextWidget(fav->coverThumbnailPath(), fav->title,
                            QSize(favoritecoverheight, favoritecoverheight));
 
     ui->tableWidget->insertRow(row);
@@ -76,16 +76,17 @@ void FavoritesWidget::insertRow(const QSharedPointer<MangaInfo> &fav, int row)
     QTableWidgetItem *chapters = new QTableWidgetItem(statusstring);
     chapters->setTextAlignment(Qt::AlignCenter);
 
-    QString progressstring =
-        "Chapter: " + QString::number(fav->currentIndex.chapter + 1) +
-        "\nPage: " + QString::number(fav->currentIndex.page + 1);
-    QTableWidgetItem *progress = new QTableWidgetItem(progressstring);
-    progress->setTextAlignment(Qt::AlignCenter);
+    // TODO
+    //    QString progressstring =
+    //        "Chapter: " + QString::number(fav->currentIndex.chapter + 1) +
+    //        "\nPage: " + QString::number(fav->currentIndex.page + 1);
+    //    QTableWidgetItem *progress = new QTableWidgetItem(progressstring);
+    //    progress->setTextAlignment(Qt::AlignCenter);
 
     ui->tableWidget->setCellWidget(row, 0, titlewidget);
     ui->tableWidget->setItem(row, 1, hostwidget);
     ui->tableWidget->setItem(row, 2, chapters);
-    ui->tableWidget->setItem(row, 3, progress);
+    //    ui->tableWidget->setItem(row, 3, progress);
 }
 
 void FavoritesWidget::moveFavoriteToFront(int i)
@@ -120,7 +121,7 @@ void FavoritesWidget::coverLoaded()
         i++;
 
     QWidget *titlewidget = makeIconTextWidget(
-        favoritesmanager->favoriteinfos.at(i)->getCoverpathScaled(),
+        favoritesmanager->favoriteinfos.at(i)->coverThumbnailPath(),
         favoritesmanager->favoriteinfos.at(i)->title,
         QSize(favoritecoverheight, favoritecoverheight));
     ui->tableWidget->setCellWidget(i, 0, titlewidget);

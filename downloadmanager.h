@@ -29,7 +29,7 @@ class DownloadManager : public QObject
     Q_OBJECT
 
 public:
-    explicit DownloadManager(QObject *parent);
+    explicit DownloadManager(QObject *parent = nullptr);
 
     QNetworkAccessManager *networkAccessManager();
 
@@ -43,7 +43,7 @@ public:
     QSharedPointer<DownloadFileJob> downloadAsScaledImage(
         const QString &url, const QString &localPath);
 
-    void setImageRescaleSize(QSize size);
+    void setImageRescaleSize(const QSize &size);
 
     void addCookie(const QString &domain, const char *key, const char *value);
 

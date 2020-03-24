@@ -2,24 +2,29 @@
 #define MANGAINDEX_H
 
 #include "mangachapter.h"
+#include "mangachaptercollection.h"
+#include "mangainfo.h"
 
 class MangaIndex
 {
 public:
     int chapter;
     int page;
-    bool illegal;
 
-    MangaIndex(int chapter, int page);
-    MangaIndex(int chapter, int page, bool illegal);
+    MangaIndex(QSharedPointer<MangaInfo> mangainfo, int chapter, int page);
+    MangaIndex(const MangaIndex &mangaIndex) = default;
 
-    MangaIndex nextPageIndex(QList<MangaChapter> *chapters);
+    bool increment();
 
-    MangaIndex prevPageIndex(QList<MangaChapter> *chapters);
+    bool decrement();
 
-    MangaIndex deltaPageIndex(QList<MangaChapter> *chapters, int delta);
+    bool setChecked(int chapter, int page);
 
-    bool checkLegal(QList<MangaChapter> *chapters);
+    bool operator==(const MangaIndex &b) const;
+    bool operator!=(const MangaIndex &b) const;
+
+private:
+    QSharedPointer<MangaInfo> mangainfo;
 };
 
 QDataStream &operator<<(QDataStream &str, const MangaIndex &m);

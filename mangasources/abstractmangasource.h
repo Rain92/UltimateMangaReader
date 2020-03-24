@@ -41,18 +41,20 @@ public:
     bool serializeMangaList();
     bool deserializeMangaList();
 
-    QString getImagePath(const DownloadImageDescriptor &mangainfo);
+    QString getImagePath(const DownloadImageDescriptor &descriptor);
 
     QSharedPointer<DownloadFileJob> downloadImage(
-        const DownloadImageDescriptor &mangainfo);
+        const DownloadImageDescriptor &descriptor);
 
-    QString downloadAwaitImage(const DownloadImageDescriptor &mangainfo);
+    QString downloadAwaitImage(const DownloadImageDescriptor &descriptor);
 
     QString htmlToPlainText(const QString &str);
 
 public slots:
+
     virtual void updateMangaInfo(QSharedPointer<MangaInfo> mangainfo);
-    virtual void downloadCover(QSharedPointer<MangaInfo> mangainfo);
+    void downloadCover(QSharedPointer<MangaInfo> mangainfo);
+    bool updatePageList(QSharedPointer<MangaInfo> info, int chapter);
 
 signals:
     void updateProgress(int);
@@ -62,6 +64,7 @@ protected:
     DownloadManager *downloadManager;
     QTextDocument htmlConverter;
 
+    void genrateCoverThumbnail(QSharedPointer<MangaInfo> mangainfo);
     void fillMangaInfo(
         QSharedPointer<MangaInfo> info, const QString &buffer,
         const QRegularExpression &titlerx, const QRegularExpression &authorrx,

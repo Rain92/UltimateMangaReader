@@ -24,7 +24,7 @@ void Settings::deserialize()
     file.close();
 }
 
-void Settings::scheduleSerialize() { timer.start(2000); }
+void Settings::scheduleSerialize() { timer.start(500); }
 
 void Settings::serialize()
 {

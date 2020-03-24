@@ -1,76 +1,82 @@
 #include "mangaindex.h"
 
-MangaIndex::MangaIndex(int chapter, int page)
-    : chapter(chapter), page(page), illegal(false)
+MangaIndex::MangaIndex(QSharedPointer<MangaInfo> mangainfo, int chapter,
+                       int page)
+    : chapter(chapter), page(page), mangainfo(mangainfo)
 {
 }
 
-MangaIndex::MangaIndex(int chapter, int page, bool illegal)
-    : chapter(chapter), page(page), illegal(illegal)
+bool MangaIndex::increment()
 {
-}
-
-MangaIndex MangaIndex::nextPageIndex(QList<MangaChapter> *chapters)
-{
-    if (illegal)
-        return MangaIndex(-1, -1, true);
-
-    if (page < chapters->at(chapter).numPages - 1)
+    if (page + 1 < mangainfo->chapters.at(chapter).numPages)
     {
-        return MangaIndex(chapter, page + 1);
+        page++;
+        return true;
     }
-    else if (chapter < chapters->count() - 1)
+    else if (chapter + 1 < mangainfo->chapters.count())
     {
-        return MangaIndex(chapter + 1, 0);
+        if (!mangainfo->chapters.at(chapter + 1).pagesLoaded)
+            mangainfo->mangaSource->updatePageList(mangainfo, chapter);
+
+        page = 0;
+        chapter++;
+        return true;
     }
     else
     {
-        return MangaIndex(-1, -1, true);
+        return false;
     }
 }
-MangaIndex MangaIndex::prevPageIndex(QList<MangaChapter> *chapters)
-{
-    if (illegal)
-        return MangaIndex(-1, -1, true);
 
+bool MangaIndex::decrement()
+{
     if (page > 0)
     {
-        return MangaIndex(chapter, page - 1);
+        page--;
+        return true;
     }
     else if (chapter > 0)
     {
-        if (!chapters->at(chapter - 1).pagesLoaded)
-            (*chapters)[chapter - 1].loadPages();
+        if (!mangainfo->chapters.at(chapter - 1).pagesLoaded)
+            mangainfo->mangaSource->updatePageList(mangainfo, chapter);
 
-        return MangaIndex(chapter - 1, chapters->at(chapter - 1).numPages - 1);
+        chapter--;
+        page = mangainfo->chapters.at(chapter).numPages - 1;
+
+        return true;
     }
     else
     {
-        return MangaIndex(-1, -1, true);
+        return false;
     }
 }
 
-MangaIndex MangaIndex::deltaPageIndex(QList<MangaChapter> *chapters, int delta)
+bool MangaIndex::setChecked(int chapter, int page)
 {
-    if (delta == 0)
-    {
-        return MangaIndex(chapter, page);
-    }
-    else if (delta > 0)
-    {
-        return nextPageIndex(chapters).deltaPageIndex(chapters, delta - 1);
-    }
-    else
-    {
-        return prevPageIndex(chapters).deltaPageIndex(chapters, delta + 1);
-    }
+    if (chapter < 0 || page < 0 || chapter >= mangainfo->chapters.count() ||
+        (chapter == this->chapter && page == this->page))
+        return false;
+
+    if (!mangainfo->chapters.at(chapter).pagesLoaded)
+        mangainfo->mangaSource->updatePageList(mangainfo, chapter);
+
+    if (page >= mangainfo->chapters.at(chapter).numPages)
+        return false;
+
+    this->chapter = chapter;
+    this->page = page;
+
+    return true;
 }
 
-bool MangaIndex::checkLegal(QList<MangaChapter> *chapters)
+bool MangaIndex::operator==(const MangaIndex &b) const
 {
-    return chapter >= 0 && page >= 0 && chapters->length() > chapter &&
-           (!chapters->at(chapter).pagesLoaded ||
-            chapters->at(chapter).numPages > page);
+    return page == b.page && chapter == b.chapter;
+}
+
+bool MangaIndex::operator!=(const MangaIndex &b) const
+{
+    return page == b.page || chapter != b.chapter;
 }
 
 QDataStream &operator<<(QDataStream &str, const MangaIndex &m)

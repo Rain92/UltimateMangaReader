@@ -68,3 +68,5 @@ void DownloadQueue::downloadFinished(QSharedPointer<DownloadStringJob> job,
     else
         startSingle();
 }
+
+void DownloadQueue::clearQuene() { urls.clear(); }

@@ -13,6 +13,7 @@ public:
         std::function<void(QSharedPointer<DownloadStringJob>)> lambda);
 
     void start();
+    void clearQuene();
     int completed;
     int errors;
 

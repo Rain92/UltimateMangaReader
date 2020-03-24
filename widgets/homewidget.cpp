@@ -30,7 +30,7 @@ HomeWidget::HomeWidget(QWidget *parent)
 
 HomeWidget::~HomeWidget() { delete ui; }
 
-void HomeWidget::setMangaSources(QList<AbstractMangaSource *> *sources)
+void HomeWidget::setMangaSources(const QList<AbstractMangaSource *> &sources)
 {
     mangasources = sources;
 
@@ -62,7 +62,7 @@ void HomeWidget::setupSourcesList()
     ui->listViewSources->setViewMode(QListView::IconMode);
     QStandardItemModel *model = new QStandardItemModel(this);
 
-    foreach (AbstractMangaSource *ms, *mangasources)
+    for (auto ms : mangasources)
         model->appendRow(listViewItemfromMangaSource(ms));
 
     ui->listViewSources->setIconSize(
@@ -72,11 +72,11 @@ void HomeWidget::setupSourcesList()
 
     ui->listViewSources->setModel(model);
 
-    foreach (AbstractMangaSource *src, *mangasources)
+    for (auto ms : mangasources)
     {
-        QObject::connect(src, SIGNAL(updateProgress(int)), this,
+        QObject::connect(ms, SIGNAL(updateProgress(int)), this,
                          SLOT(updateProgress(int)));
-        QObject::connect(src, SIGNAL(updateError(QString)), this,
+        QObject::connect(ms, SIGNAL(updateError(QString)), this,
                          SLOT(updateError(QString)));
     }
 }
@@ -92,7 +92,7 @@ void HomeWidget::updateError(const QString &error)
 
 void HomeWidget::updateProgress(int p)
 {
-    int sind = mangasources->indexOf((AbstractMangaSource *)sender());
+    int sind = mangasources.indexOf((AbstractMangaSource *)sender());
 
     sourcesprogress[sind] = p;
 
@@ -104,13 +104,13 @@ void HomeWidget::updateProgress(int p)
 
 void HomeWidget::on_pushButtonUpdate_clicked()
 {
-    sourcesprogress = QVector<int>(mangasources->count());
+    sourcesprogress = QVector<int>(mangasources.count());
 
-    updatedialog->setup(mangasources->count() * 100, "Updating Mangalists");
+    updatedialog->setup(mangasources.count() * 100, "Updating Mangalists");
 
     updatedialog->show();
 
-    foreach (AbstractMangaSource *ms, *mangasources)
+    for (auto ms : mangasources)
     {
         updatedialog->setLabelText("Updating " + ms->name);
         auto mangaList = ms->getMangaList();
@@ -180,11 +180,11 @@ void HomeWidget::clearCacheDialogButtonClicked(int level)
     switch (level)
     {
         case 1:
-            foreach (AbstractMangaSource *s, *mangasources)
+            for (auto ms : mangasources)
             {
                 foreach (
                     QFileInfo info,
-                    QDir(cachedir + s->name)
+                    QDir(cachedir + ms->name)
                         .entryInfoList(QDir::NoDotAndDotDot | QDir::System |
                                        QDir::Hidden | QDir::AllDirs))
                     removeDir(info.absoluteFilePath() + "/images");
@@ -192,8 +192,8 @@ void HomeWidget::clearCacheDialogButtonClicked(int level)
             break;
 
         case 2:
-            foreach (AbstractMangaSource *s, *mangasources)
-                removeDir(cachedir + s->name, "progress.dat");
+            for (auto ms : mangasources)
+                removeDir(cachedir + ms->name, "progress.dat");
 
             break;
 
@@ -215,7 +215,7 @@ void HomeWidget::on_pushButtonClearCache_clicked()
 
 void HomeWidget::on_listViewSources_clicked(const QModelIndex &index)
 {
-    currentsource = mangasources->at(index.row());
+    currentsource = mangasources.at(index.row());
     refreshMangaListView();
 
     emit mangaSourceClicked(currentsource);

@@ -35,9 +35,10 @@ MangaList MangaHub::getMangaList()
     const int matchesPerPage = 36;
     int noMatchCounter = 0;
 
-    auto lambda = [&](QSharedPointer<DownloadStringJob> job) {
+    auto lambda = [&](QSharedPointer<DownloadJobBase> job) {
+        auto sjob = static_cast<DownloadStringJob *>(job.get());
         int matches = 0;
-        for (auto &match : getAllRxMatches(mangarx, job->buffer))
+        for (auto &match : getAllRxMatches(mangarx, sjob->buffer))
         {
             mangas.links.append(match.captured(1));
             mangas.titles.append(
@@ -123,8 +124,7 @@ void MangaHub::updateMangaInfoFinishedLoading(
     for (auto &chapterrxmatch :
          getAllRxMatches(chapterrx, job->buffer, spos, epos))
     {
-        info->chapters.insert(0,
-                              MangaChapter(chapterrxmatch.captured(1), this));
+        info->chapters.insert(0, MangaChapter(chapterrxmatch.captured(1)));
 
         QString ctitle = htmlToPlainText(chapterrxmatch.captured(2));
         info->chaperTitleListDescending.append(ctitle);

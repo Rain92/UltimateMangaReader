@@ -55,7 +55,7 @@ MangaList JaiminisBox::getMangaList()
         for (auto &match : getAllRxMatches(mangarx, job->buffer))
         {
             mangas.links.append(match.captured(1));
-            mangas.titles.append(htmlToPlainText(match.captured(2)));
+            mangas.titles.append(htmlToPlainText(match.captured(2)).trimmed());
             matches++;
         }
         mangas.actualSize += matches;
@@ -129,8 +129,7 @@ void JaiminisBox::updateMangaInfoFinishedLoading(
 
     for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->buffer))
     {
-        info->chapters.insert(0,
-                              MangaChapter(chapterrxmatch.captured(1), this));
+        info->chapters.insert(0, MangaChapter(chapterrxmatch.captured(1)));
         info->chaperTitleListDescending.append(chapterrxmatch.captured(2));
         info->numChapters++;
     }

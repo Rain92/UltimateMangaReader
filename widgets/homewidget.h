@@ -27,7 +27,7 @@ public:
     explicit HomeWidget(QWidget *parent = 0);
     ~HomeWidget();
 
-    void setMangaSources(QList<AbstractMangaSource *> *sources);
+    void setMangaSources(const QList<AbstractMangaSource *> &sources);
 
 signals:
     void mangaSourceClicked(AbstractMangaSource *source);
@@ -50,7 +50,8 @@ private:
     Ui::HomeWidget *ui;
     QVector<int> sourcesprogress;
 
-    QList<AbstractMangaSource *> *mangasources;
+    // TODO?
+    QList<AbstractMangaSource *> mangasources;
     AbstractMangaSource *currentsource;
 
     QStringList filteredmangatitles;

@@ -1,6 +1,7 @@
 #include "abstractmangasource.h"
 
 #include <QDateTime>
+#include <QImage>
 
 #include "defines.h"
 #include "mangainfo.h"
@@ -49,37 +50,38 @@ bool AbstractMangaSource::deserializeMangaList()
 }
 
 QString AbstractMangaSource::getImagePath(
-    const DownloadImageDescriptor &mangainfo)
+    const DownloadImageDescriptor &descriptor)
 {
-    int ind = mangainfo.imagelink.indexOf('?');
+    int ind = descriptor.imagelink.indexOf('?');
     if (ind == -1)
-        ind = mangainfo.imagelink.length();
-    QString filetype = mangainfo.imagelink.mid(ind - 4, 4);
-    QString path = mangaimagesdir(name, mangainfo.title) +
-                   QString::number(mangainfo.chapter) + "_" +
-                   QString::number(mangainfo.page) + filetype;
+        ind = descriptor.imagelink.length();
+    QString filetype = descriptor.imagelink.mid(ind - 4, 4);
+
+    QString path = mangaimagesdir(name, descriptor.title) +
+                   QString::number(descriptor.chapter) + "_" +
+                   QString::number(descriptor.page) + filetype;
 
     return path;
 }
 
 QSharedPointer<DownloadFileJob> AbstractMangaSource::downloadImage(
-    const DownloadImageDescriptor &mangainfo)
+    const DownloadImageDescriptor &descriptor)
 {
-    QString path = getImagePath(mangainfo);
+    QString path = getImagePath(descriptor);
 
-    return downloadManager->downloadAsScaledImage(mangainfo.imagelink, path);
+    return downloadManager->downloadAsScaledImage(descriptor.imagelink, path);
 }
 
 QString AbstractMangaSource::downloadAwaitImage(
-    const DownloadImageDescriptor &mangainfo)
+    const DownloadImageDescriptor &descriptor)
 {
-    QString path = getImagePath(mangainfo);
+    QString path = getImagePath(descriptor);
 
     if (QFile::exists(path))
         return path;
 
     auto job =
-        downloadManager->downloadAsScaledImage(mangainfo.imagelink, path);
+        downloadManager->downloadAsScaledImage(descriptor.imagelink, path);
 
     return job->await(5000) ? path : "";
 }
@@ -87,19 +89,20 @@ QString AbstractMangaSource::downloadAwaitImage(
 QSharedPointer<MangaInfo> AbstractMangaSource::loadMangaInfo(
     const QString &mangalink, const QString &mangatitle, bool update)
 {
-    QFileInfo infofile(mangainfodir(name, mangatitle) + "mangainfo.dat");
-    if (infofile.exists())
+    QString path(mangainfodir(name, mangatitle) + "mangainfo.dat");
+    if (QFile::exists(path) && true)
     {
-        QSharedPointer<MangaInfo> mi(
-            MangaInfo::deserialize(this, infofile.filePath()));
+        QSharedPointer<MangaInfo> mi(MangaInfo::deserialize(this, path));
         if (update)
+        {
             mi->mangaSource->updateMangaInfo(mi);
+            mi->serialize();
+        }
         return mi;
     }
     else
     {
         QSharedPointer<MangaInfo> mi(getMangaInfo(mangalink));
-        mi->deserializeProgress();
         mi->serialize();
 
         return mi;
@@ -142,16 +145,13 @@ void AbstractMangaSource::updateMangaInfo(QSharedPointer<MangaInfo> info)
     auto lambda = [oldnumchapters, info, job, this] {
         bool newchapters = info->numChapters > oldnumchapters;
 
-        info->chapters.clear();
-        info->chaperTitleListDescending.clear();
-        info->numChapters = 0;
+        //        info->chapters.clear();
+        //        info->chaperTitleListDescending.clear();
+        //        info->numChapters = 0;
 
         updateMangaInfoFinishedLoading(job, info);
 
         info->updateCompeted(newchapters);
-
-        if (newchapters)
-            qDebug() << "newchapters";
 
         downloadCover(info);
         info->serialize();
@@ -161,6 +161,54 @@ void AbstractMangaSource::updateMangaInfo(QSharedPointer<MangaInfo> info)
     //    lambda();
 
     executeOnJobCompletion(job, lambda);
+}
+
+bool AbstractMangaSource::updatePageList(QSharedPointer<MangaInfo> info,
+                                         int chapter)
+{
+    if (chapter >= info->numChapters)
+        return false;
+
+    auto &ch = info->chapters[chapter];
+    if (ch.pagesLoaded)
+        return true;
+
+    //    qDebug() << "getPageList start:" << chapterlink;
+
+    auto newpagelist = getPageList(ch.chapterlink);
+    ch.pagelinkList = newpagelist;
+    if (ch.pagelinkList.count() == 0)
+    {
+        qDebug() << "pagelinks empty" << ch.chapterlink;
+        ch.numPages = 1;
+        ch.pagelinkList.clear();
+        ch.pagelinkList << "";
+        return false;
+    }
+    ch.numPages = ch.pagelinkList.count();
+    ch.imagelinkList = QStringList();
+    for (int i = 0; i < ch.pagelinkList.count(); i++)
+        ch.imagelinkList.append("");
+    ch.pagesLoaded = true;
+
+    qDebug() << "getPageList finished:" << ch.chapterlink;
+    return true;
+}
+
+void AbstractMangaSource::genrateCoverThumbnail(
+    QSharedPointer<MangaInfo> mangainfo)
+{
+    QString scpath = mangainfo->coverThumbnailPath();
+
+    if (!QFile::exists(scpath))
+    {
+        qDebug() << "generating scaled:" << mangainfo->title;
+        QImage img;
+        img.load(mangainfo->coverPath);
+        img = img.scaled(favoritecoverwidth, favoritecoverheight,
+                         Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        img.save(scpath);
+    }
 }
 
 void AbstractMangaSource::downloadCover(QSharedPointer<MangaInfo> mangainfo)
@@ -178,6 +226,8 @@ void AbstractMangaSource::downloadCover(QSharedPointer<MangaInfo> mangainfo)
         QString filetype = mangainfo->coverLink.mid(ind - 4, 4);
         mangainfo->coverPath =
             mangainfodir(name, mangainfo->title) + "cover" + filetype;
+
+        genrateCoverThumbnail(mangainfo);
     }
 
     auto coverjob = downloadManager->downloadAsFile(mangainfo->coverLink,
@@ -214,7 +264,7 @@ void AbstractMangaSource::fillMangaInfo(
     auto coverrxmatch = coverrx.match(buffer);
 
     if (titlerxmatch.hasMatch())
-        info->title = htmlToPlainText(titlerxmatch.captured(1));
+        info->title = htmlToPlainText(titlerxmatch.captured(1)).trimmed();
     if (authorrxmatch.hasMatch())
         info->author = htmlToPlainText(authorrxmatch.captured(1)).remove('\n');
     if (artistrxmatch.hasMatch())

@@ -74,9 +74,10 @@ MangaList MangaDex::getMangaList()
     //    pages = 5;
     qDebug() << "pages" << pages;
 
-    auto lambda = [&](QSharedPointer<DownloadStringJob> job) {
+    auto lambda = [&](QSharedPointer<DownloadJobBase> job) {
+        auto sjob = static_cast<DownloadStringJob *>(job.get());
         int matches = 0;
-        for (auto &match : getAllRxMatches(mangarx, job->buffer))
+        for (auto &match : getAllRxMatches(mangarx, sjob->buffer))
         {
             mangas.links.append(match.captured(2) + "/chapters/");
             mangas.titles.append(
@@ -154,11 +155,11 @@ void MangaDex::updateMangaInfoFinishedLoading(
     int pages = 1;
 
     auto pagerxmatch = pagerx.match(job->buffer);
-    auto lambda = [&](QSharedPointer<DownloadStringJob> job) {
-        for (auto &match : getAllRxMatches(chapterrx, job->buffer))
+    auto lambda = [&](QSharedPointer<DownloadJobBase> job) {
+        auto sjob = static_cast<DownloadStringJob *>(job.get());
+        for (auto &match : getAllRxMatches(chapterrx, sjob->buffer))
         {
-            info->chapters.insert(
-                0, MangaChapter(baseurl + match.captured(1), this));
+            info->chapters.insert(0, MangaChapter(baseurl + match.captured(1)));
 
             info->chaperTitleListDescending.append(match.captured(2));
             info->numChapters++;

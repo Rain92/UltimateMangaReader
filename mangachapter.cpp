@@ -7,48 +7,24 @@ MangaChapter::MangaChapter()
       pagesLoaded(false),
       numPages(0),
       pagelinkList(),
-      imagelinkList(),
-      source(nullptr)
+      imagelinkList()
 {
 }
 
-MangaChapter::MangaChapter(const QString &link, AbstractMangaSource *source)
+MangaChapter::MangaChapter(const QString &link)
     : chapterlink(link),
       pagesLoaded(false),
       numPages(0),
       pagelinkList(),
-      imagelinkList(),
-      source(source)
+      imagelinkList()
 {
-}
-
-void MangaChapter::loadPages()
-{
-    if (pagesLoaded)
-        return;
-
-    qDebug() << "getPageList start:" << chapterlink;
-
-    pagelinkList = source->getPageList(chapterlink);
-    if (pagelinkList.count() == 0)
-    {
-        qDebug() << "pagelinks empty" << chapterlink;
-        numPages = 1;
-        pagelinkList.clear();
-        pagelinkList << "";
-        return;
-    }
-    numPages = pagelinkList.count();
-    imagelinkList = QStringList();
-    for (int i = 0; i < pagelinkList.count(); i++)
-        imagelinkList.append("");
-    pagesLoaded = true;
 }
 
 QDataStream &operator<<(QDataStream &str, const MangaChapter &m)
 {
-    str << m.chapterlink << m.pagesLoaded << (qint32)m.numPages << m.pagelinkList
-        << m.imagelinkList << (qint32)m.numPages << m.pagelinkList << m.imagelinkList;
+    str << m.chapterlink << m.pagesLoaded << (qint32)m.numPages
+        << m.pagelinkList << m.imagelinkList << (qint32)m.numPages
+        << m.pagelinkList << m.imagelinkList;
 
     return str;
 }
