@@ -58,7 +58,6 @@ void UltimateMangaReaderCore::setCurrentMangaSource(
 void UltimateMangaReaderCore::setCurrentManga(const QString& mangalink,
                                               const QString& mangatitle)
 {
-    qDebug() << "setCurrentManga" << mangatitle;
     mangaController->setCurrentManga(QSharedPointer<MangaInfo>(
         currentMangaSource->loadMangaInfo(mangalink, mangatitle)));
 }

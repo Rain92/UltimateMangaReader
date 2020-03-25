@@ -1,6 +1,8 @@
 #ifndef MANGAINFO_H
 #define MANGAINFO_H
 
+#include <QMutex>
+
 #include "defines.h"
 #include "downloadimagedescriptor.h"
 #include "mangachapter.h"
@@ -43,6 +45,7 @@ public:
     QList<MangaChapter> chapters;
 
     bool updating;
+    QScopedPointer<QMutex> updateMutex;
 
     void updateCompeted(bool newchapters);
     QString coverThumbnailPath() const;

@@ -41,7 +41,7 @@ bool MangaIndex::decrement()
             mangainfo->mangaSource->updatePageList(mangainfo, chapter);
 
         chapter--;
-        page = mangainfo->chapters.at(chapter).numPages - 1;
+        page = qMax(0, mangainfo->chapters.at(chapter).numPages - 1);
 
         return true;
     }

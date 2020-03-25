@@ -5,7 +5,8 @@ MangaInfo::MangaInfo(AbstractMangaSource *mangasource)
       updated(false),
       numChapters(0),
       mangaSource(mangasource),
-      updating(false)
+      updating(false),
+      updateMutex(new QMutex())
 {
 }
 

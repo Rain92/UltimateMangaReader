@@ -71,7 +71,8 @@ MainWidget::MainWidget(QWidget *parent)
     QObject::connect(ui->mangaInfoWidget, &MangaInfoWidget::readMangaClicked,
                      [this]() { setWidgetTab(MangaReaderTab); });
 
-    QObject::connect(ui->mangaInfoWidget, &MangaInfoWidget::readMangaClicked,
+    QObject::connect(ui->mangaInfoWidget,
+                     &MangaInfoWidget::readMangaContinueClicked,
                      [this]() { setWidgetTab(MangaReaderTab); });
 
     // FavoritesWidget

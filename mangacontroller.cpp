@@ -3,10 +3,9 @@
 MangaController::MangaController(DownloadManager *downloadManager,
                                  QObject *parent)
     : QObject(parent),
-      currentIndex(nullptr, -1, -1),
+      currentIndex(nullptr, 0, 0),
       downloadManager(downloadManager),
-      preloadQueue(downloadManager),
-      test()
+      preloadQueue(downloadManager)
 {
     QObject::connect(&preloadQueue, SIGNAL(completedDownload(QString)), this,
                      SLOT(completedImagePreload(QString)));
@@ -17,13 +16,37 @@ void MangaController::setCurrentManga(QSharedPointer<MangaInfo> mangaInfo)
     cancelAllPreloads();
     currentManga.clear();
     currentManga = mangaInfo;
-    test.append(currentManga);
     currentIndex = MangaIndex(currentManga, 0, 0);
     deserializeProgress();
 
     emit currentMangaChanged(mangaInfo);
 
-    currentIndexChangedInternal(true);
+    if (assurePagesLoaded())
+        currentIndexChangedInternal(false);
+}
+
+bool MangaController::assurePagesLoaded()
+{
+    if (currentIndex.chapter > currentManga->numChapters)
+        currentIndex.chapter = qMax(0, currentManga->numChapters - 1);
+
+    if (currentIndex.chapter >= currentManga->numChapters)
+        return false;
+
+    if (!currentManga->chapters[currentIndex.chapter].pagesLoaded)
+    {
+        if (!currentManga->mangaSource->updatePageList(currentManga,
+                                                       currentIndex.chapter))
+            return false;
+
+        currentManga->serialize();
+    }
+
+    if (currentIndex.page >=
+        currentManga->chapters[currentIndex.chapter].numPages)
+        currentIndex.page = 0;
+
+    return true;
 }
 
 QString MangaController::getCoverpathScaled() const
@@ -82,6 +105,7 @@ void MangaController::currentIndexChangedInternal(bool preload)
     emit currentIndexChanged(
         currentIndex.chapter, currentIndex.page, currentManga->numChapters,
         currentManga->chapters[currentIndex.chapter].numPages);
+
     updateCurrentImage();
 
     serializeProgress();

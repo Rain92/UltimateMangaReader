@@ -40,7 +40,6 @@ FORMS += \
 
 HEADERS += \
     enums.h \
-    mangachaptercollection.h \
     mangacontroller.h \
     ultimatemangareadercore.h \
     widgets/customgesturerecognizer.h \
@@ -83,7 +82,6 @@ HEADERS += \
     widgets/clearcachedialog.h
 
 SOURCES += \
-    mangachaptercollection.cpp \
     mangacontroller.cpp \
     ultimatemangareadercore.cpp \
     widgets/customgesturerecognizer.cpp \

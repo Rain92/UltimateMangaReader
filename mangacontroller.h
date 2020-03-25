@@ -19,7 +19,6 @@ public:
     MangaController(DownloadManager *downloadManager,
                     QObject *parent = nullptr);
 
-    QList<QSharedPointer<MangaInfo>> test;
     QSharedPointer<MangaInfo> currentManga;
     MangaIndex currentIndex;
 
@@ -49,6 +48,7 @@ public slots:
 
 private slots:
     void completedImagePreload(const QString &path);
+    bool assurePagesLoaded();
 
 private:
     void currentIndexChangedInternal(bool preload);

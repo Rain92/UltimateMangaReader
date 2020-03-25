@@ -145,11 +145,14 @@ void AbstractMangaSource::updateMangaInfo(QSharedPointer<MangaInfo> info)
     auto lambda = [oldnumchapters, info, job, this] {
         bool newchapters = info->numChapters > oldnumchapters;
 
-        //        info->chapters.clear();
-        //        info->chaperTitleListDescending.clear();
-        //        info->numChapters = 0;
+        {
+            QMutexLocker locker(info->updateMutex.get());
+            info->chapters.clear();
+            info->chaperTitleListDescending.clear();
+            info->numChapters = 0;
 
-        updateMangaInfoFinishedLoading(job, info);
+            updateMangaInfoFinishedLoading(job, info);
+        }
 
         info->updateCompeted(newchapters);
 
@@ -169,14 +172,18 @@ bool AbstractMangaSource::updatePageList(QSharedPointer<MangaInfo> info,
     if (chapter >= info->numChapters)
         return false;
 
-    auto &ch = info->chapters[chapter];
-    if (ch.pagesLoaded)
+    if (info->chapters[chapter].pagesLoaded)
         return true;
 
-    //    qDebug() << "getPageList start:" << chapterlink;
+    auto newpagelist = getPageList(info->chapters[chapter].chapterlink);
+    QMutexLocker locker(info->updateMutex.get());
 
-    auto newpagelist = getPageList(ch.chapterlink);
+    if (chapter >= info->numChapters)
+        return false;
+    auto &ch = info->chapters[chapter];
+
     ch.pagelinkList = newpagelist;
+
     if (ch.pagelinkList.count() == 0)
     {
         qDebug() << "pagelinks empty" << ch.chapterlink;
@@ -191,7 +198,6 @@ bool AbstractMangaSource::updatePageList(QSharedPointer<MangaInfo> info,
         ch.imagelinkList.append("");
     ch.pagesLoaded = true;
 
-    qDebug() << "getPageList finished:" << ch.chapterlink;
     return true;
 }
 
@@ -202,7 +208,6 @@ void AbstractMangaSource::genrateCoverThumbnail(
 
     if (!QFile::exists(scpath))
     {
-        qDebug() << "generating scaled:" << mangainfo->title;
         QImage img;
         img.load(mangainfo->coverPath);
         img = img.scaled(favoritecoverwidth, favoritecoverheight,
