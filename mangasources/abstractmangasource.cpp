@@ -166,6 +166,23 @@ void AbstractMangaSource::updateMangaInfo(QSharedPointer<MangaInfo> info)
     executeOnJobCompletion(job, lambda);
 }
 
+void AbstractMangaSource::mergeChapters(
+    QSharedPointer<MangaInfo> mangainfo,
+    const QList<MangaChapter> &newChapterlist)
+{
+    if (mangainfo->numChapters == newChapterlist.size())
+    {
+        bool same = true;
+        for (int i = 0; i < mangainfo->numChapters; i++)
+            if (mangainfo->chapters[i].chapterUrl == newChapterlist)
+    }
+
+    for (auto &ch : mangainfo->chapters)
+    {
+        ch.
+    }
+}
+
 bool AbstractMangaSource::updatePageList(QSharedPointer<MangaInfo> info,
                                          int chapter)
 {
@@ -175,27 +192,27 @@ bool AbstractMangaSource::updatePageList(QSharedPointer<MangaInfo> info,
     if (info->chapters[chapter].pagesLoaded)
         return true;
 
-    auto newpagelist = getPageList(info->chapters[chapter].chapterlink);
+    auto newpagelist = getPageList(info->chapters[chapter].chapterUrl);
     QMutexLocker locker(info->updateMutex.get());
 
     if (chapter >= info->numChapters)
         return false;
     auto &ch = info->chapters[chapter];
 
-    ch.pagelinkList = newpagelist;
+    ch.pageUrlList = newpagelist;
 
-    if (ch.pagelinkList.count() == 0)
+    if (ch.pageUrlList.count() == 0)
     {
-        qDebug() << "pagelinks empty" << ch.chapterlink;
+        qDebug() << "pagelinks empty" << ch.chapterUrl;
         ch.numPages = 1;
-        ch.pagelinkList.clear();
-        ch.pagelinkList << "";
+        ch.pageUrlList.clear();
+        ch.pageUrlList << "";
         return false;
     }
-    ch.numPages = ch.pagelinkList.count();
-    ch.imagelinkList = QStringList();
-    for (int i = 0; i < ch.pagelinkList.count(); i++)
-        ch.imagelinkList.append("");
+    ch.numPages = ch.pageUrlList.count();
+    ch.imageUrlList = QStringList();
+    for (int i = 0; i < ch.pageUrlList.count(); i++)
+        ch.imageUrlList.append("");
     ch.pagesLoaded = true;
 
     return true;

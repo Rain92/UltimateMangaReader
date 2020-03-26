@@ -1,21 +1,20 @@
 #ifndef MANGACHAPTER_H
 #define MANGACHAPTER_H
-#include <QMutex>
-
-#include "abstractmangasource.h"
+#include <QtCore>
 
 class MangaChapter
 {
 public:
-    QString chapterlink;
+    QString chapterUrl;
+    QString chapterTitle;
 
     bool pagesLoaded;
     int numPages;
 
-    QStringList pagelinkList;
-    QStringList imagelinkList;
+    QStringList pageUrlList;
+    QStringList imageUrlList;
 
-    MangaChapter(const QString &link);
+    explicit MangaChapter(const QString &url);
     MangaChapter();
 };
 

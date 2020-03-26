@@ -88,17 +88,17 @@ QString MangaController::getImageLink(const MangaIndex &index)
     }
 
     if (index.chapter >= currentManga->numChapters ||
-        currentManga->chapters[index.chapter].imagelinkList.count() <=
+        currentManga->chapters[index.chapter].imageUrlList.count() <=
             index.page)
         return "";
 
-    if (currentManga->chapters[index.chapter].imagelinkList[index.page] == "")
-        currentManga->chapters[index.chapter].imagelinkList[index.page] =
+    if (currentManga->chapters[index.chapter].imageUrlList[index.page] == "")
+        currentManga->chapters[index.chapter].imageUrlList[index.page] =
             currentManga->mangaSource->getImageLink(
-                currentManga->chapters[index.chapter].pagelinkList.at(
+                currentManga->chapters[index.chapter].pageUrlList.at(
                     index.page));
 
-    return currentManga->chapters[index.chapter].imagelinkList[index.page];
+    return currentManga->chapters[index.chapter].imageUrlList[index.page];
 }
 void MangaController::currentIndexChangedInternal(bool preload)
 {
