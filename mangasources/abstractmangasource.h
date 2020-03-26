@@ -72,9 +72,6 @@ protected:
         const QRegularExpression &artistrx, const QRegularExpression &statusrx,
         const QRegularExpression &yearrx, const QRegularExpression &genresrx,
         const QRegularExpression &summaryrx, const QRegularExpression &coverrx);
-
-    void mergeChapters(QSharedPointer<MangaInfo> mangainfo,
-                       const QList<MangaChapter> &newChapterlist);
 };
 
 #endif  // ABSTRACTMANGASOURCE_H

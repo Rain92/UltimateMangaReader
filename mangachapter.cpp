@@ -1,7 +1,8 @@
 #include "mangachapter.h"
 
 MangaChapter::MangaChapter()
-    : chapterUrl(),
+    : chapterTitle(),
+      chapterUrl(),
       pagesLoaded(false),
       numPages(0),
       pageUrlList(),
@@ -9,8 +10,9 @@ MangaChapter::MangaChapter()
 {
 }
 
-MangaChapter::MangaChapter(const QString &url)
-    : chapterUrl(url),
+MangaChapter::MangaChapter(const QString &title, const QString &url)
+    : chapterTitle(title),
+      chapterUrl(url),
       pagesLoaded(false),
       numPages(0),
       pageUrlList(),

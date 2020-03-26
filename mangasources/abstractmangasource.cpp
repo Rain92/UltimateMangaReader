@@ -147,10 +147,6 @@ void AbstractMangaSource::updateMangaInfo(QSharedPointer<MangaInfo> info)
 
         {
             QMutexLocker locker(info->updateMutex.get());
-            info->chapters.clear();
-            info->chaperTitleListDescending.clear();
-            info->numChapters = 0;
-
             updateMangaInfoFinishedLoading(job, info);
         }
 
@@ -164,23 +160,6 @@ void AbstractMangaSource::updateMangaInfo(QSharedPointer<MangaInfo> info)
     //    lambda();
 
     executeOnJobCompletion(job, lambda);
-}
-
-void AbstractMangaSource::mergeChapters(
-    QSharedPointer<MangaInfo> mangainfo,
-    const QList<MangaChapter> &newChapterlist)
-{
-    if (mangainfo->numChapters == newChapterlist.size())
-    {
-        bool same = true;
-        for (int i = 0; i < mangainfo->numChapters; i++)
-            if (mangainfo->chapters[i].chapterUrl == newChapterlist)
-    }
-
-    for (auto &ch : mangainfo->chapters)
-    {
-        ch.
-    }
 }
 
 bool AbstractMangaSource::updatePageList(QSharedPointer<MangaInfo> info,

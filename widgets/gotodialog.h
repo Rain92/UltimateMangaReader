@@ -4,7 +4,7 @@
 #include <QDialog>
 #include <QResizeEvent>
 
-#include "mangadex.h"
+#include "mangaindex.h"
 
 namespace Ui
 {

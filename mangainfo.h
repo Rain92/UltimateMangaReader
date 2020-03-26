@@ -3,11 +3,12 @@
 
 #include <QMutex>
 
+#include "abstractmangasource.h"
 #include "defines.h"
 #include "downloadimagedescriptor.h"
-#include "mangachapter.h"
-#include "mangaindex.h"
-#include "preloadqueue.h"
+#include "mangachaptercollection.h"
+
+class MangaIndex;
 
 class MangaInfo : public QObject
 {
@@ -41,8 +42,7 @@ public:
 
     AbstractMangaSource *mangaSource;
 
-    QStringList chaperTitleListDescending;
-    QList<MangaChapter> chapters;
+    MangaChapterCollection chapters;
 
     bool updating;
     QScopedPointer<QMutex> updateMutex;

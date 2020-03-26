@@ -5,8 +5,8 @@
 class MangaChapter
 {
 public:
-    QString chapterUrl;
     QString chapterTitle;
+    QString chapterUrl;
 
     bool pagesLoaded;
     int numPages;
@@ -14,7 +14,7 @@ public:
     QStringList pageUrlList;
     QStringList imageUrlList;
 
-    explicit MangaChapter(const QString &url);
+    explicit MangaChapter(const QString &title, const QString &url);
     MangaChapter();
 };
 

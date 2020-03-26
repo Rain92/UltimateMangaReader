@@ -121,15 +121,13 @@ void MangaHub::updateMangaInfoFinishedLoading(
     auto spos = job->buffer.indexOf(R"(<div class="tab-content">)");
     auto epos = job->buffer.indexOf(R"(<section id="comments">)");
 
+    MangaChapterCollection newchapters;
     for (auto &chapterrxmatch :
          getAllRxMatches(chapterrx, job->buffer, spos, epos))
-    {
-        info->chapters.insert(0, MangaChapter(chapterrxmatch.captured(1)));
-
-        QString ctitle = htmlToPlainText(chapterrxmatch.captured(2));
-        info->chaperTitleListDescending.append(ctitle);
-        info->numChapters++;
-    }
+        newchapters.insert(
+            0, MangaChapter(htmlToPlainText(chapterrxmatch.captured(2)),
+                            chapterrxmatch.captured(1)));
+    info->chapters.mergeChapters(newchapters);
 }
 
 int MangaHub::binarySearchNumPages(const QRegularExpressionMatch &imagerxmatch,

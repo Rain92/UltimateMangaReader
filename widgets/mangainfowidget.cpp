@@ -91,7 +91,7 @@ void MangaInfoWidget::setManga(QSharedPointer<MangaInfo> manga)
     }
 
     QStringListModel *model = new QStringListModel(this);
-    model->setStringList(currentmanga->chaperTitleListDescending);
+    model->setStringList(currentmanga->chapters.getMangaTitlesReversed());
 
     if (ui->listViewChapters->model() != nullptr)
         ui->listViewChapters->model()->deleteLater();
@@ -134,7 +134,7 @@ void MangaInfoWidget::updateManga(bool newchapters)
     qDebug() << "update";
     ui->labelMangaInfoLabelStaus->setText(currentmanga->status);
     static_cast<QStringListModel *>(ui->listViewChapters->model())
-        ->setStringList(currentmanga->chaperTitleListDescending);
+        ->setStringList(currentmanga->chapters.getMangaTitlesReversed());
 }
 
 void MangaInfoWidget::updateCover()

@@ -155,17 +155,12 @@ void MangaDex::updateMangaInfoFinishedLoading(
     int pages = 1;
 
     auto pagerxmatch = pagerx.match(job->buffer);
-    auto lambda = [&](QSharedPointer<DownloadJobBase> job) {
-        auto sjob = static_cast<DownloadStringJob *>(job.get());
-        for (auto &match : getAllRxMatches(chapterrx, sjob->buffer))
+    auto lambda = [&](QSharedPointer<DownloadStringJob> job) {
+        for (auto &match : getAllRxMatches(chapterrx, job->buffer))
         {
-            info->chapters.insert(0, MangaChapter(baseurl + match.captured(1)));
-
-            info->chaperTitleListDescending.append(match.captured(2));
-            info->numChapters++;
+            info->chapters.insert(0, MangaChapter(match.captured(2),
+                                                  baseurl + match.captured(1)));
         }
-
-        //            qDebug() << "rx" << rxi ;
     };
 
     lambda(job);

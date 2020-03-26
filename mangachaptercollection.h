@@ -3,14 +3,14 @@
 
 #include "mangachapter.h"
 
-class MangaChapterContainer : public QList<MangaChapter>
+class MangaChapterCollection : public QList<MangaChapter>
 {
 public:
-    MangaChapterContainer();
+    MangaChapterCollection();
 
     QStringList getMangaTitlesReversed();
 
-    void mergeChapters(const MangaChapterContainer& newChapters);
+    void mergeChapters(MangaChapterCollection& newChapters);
 
     inline int numChapters() const { return size(); }
 };

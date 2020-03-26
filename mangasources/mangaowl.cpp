@@ -108,14 +108,11 @@ void MangaOwl::updateMangaInfoFinishedLoading(
     fillMangaInfo(info, job->buffer, titlerx, authorrx, artistrx, statusrx,
                   yearrx, genresrx, summaryrx, coverrx);
 
+    MangaChapterCollection newchapters;
     for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->buffer))
-    {
-        info->chapters.insert(0, MangaChapter(chapterrxmatch.captured(1)));
-
-        QString ctitle = chapterrxmatch.captured(2);
-        info->chaperTitleListDescending.append(ctitle);
-        info->numChapters++;
-    }
+        newchapters.insert(0, MangaChapter(chapterrxmatch.captured(2),
+                                           chapterrxmatch.captured(1)));
+    info->chapters.mergeChapters(newchapters);
 }
 
 QStringList MangaOwl::getPageList(const QString &chapterlink)

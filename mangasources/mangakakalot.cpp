@@ -113,15 +113,12 @@ void Mangakakalot::updateMangaInfoFinishedLoading(
     int spos = job->buffer.indexOf(R"(<div class="chapter-list">)");
     int epos = job->buffer.indexOf(R"(<div class="comment-info">)", spos);
 
+    MangaChapterCollection newchapters;
     for (auto &chapterrxmatch :
          getAllRxMatches(chapterrx, job->buffer, spos, epos))
-    {
-        info->chapters.insert(0, MangaChapter(chapterrxmatch.captured(1)));
-
-        QString ctitle = chapterrxmatch.captured(2);
-        info->chaperTitleListDescending.append(ctitle);
-        info->numChapters++;
-    }
+        newchapters.insert(0, MangaChapter(chapterrxmatch.captured(2),
+                                           chapterrxmatch.captured(1)));
+    info->chapters.mergeChapters(newchapters);
 }
 
 QStringList Mangakakalot::getPageList(const QString &chapterlink)

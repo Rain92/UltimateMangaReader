@@ -22,7 +22,7 @@ public:
 private:
     QString dicturl;
     int binarySearchNumPages(const QRegularExpressionMatch &imagerxmatch,
-                             int upperBound, int lowerBound, bool upperChecked);
+                             int lowerBound, int upperBound, bool upperChecked);
 
     inline QString buildImgUrl(const QRegularExpressionMatch &imagerxmatch,
                                int i)
