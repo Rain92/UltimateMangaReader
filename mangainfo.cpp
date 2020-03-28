@@ -3,7 +3,6 @@
 MangaInfo::MangaInfo(AbstractMangaSource *mangasource)
     : QObject(),
       updated(false),
-      numChapters(0),
       mangaSource(mangasource),
       updating(false),
       updateMutex(new QMutex())
@@ -23,8 +22,8 @@ QSharedPointer<MangaInfo> MangaInfo::deserialize(
 
     QDataStream in(&file);
     in >> mi->hostname >> mi->title >> mi->link >> mi->author >> mi->artist >>
-        mi->releaseYear >> mi->status >> mi->genres >> mi->summary;
-    in >> mi->coverLink >> mi->coverPath >> mi->numChapters >> mi->chapters;
+        mi->releaseYear >> mi->status >> mi->genres >> mi->summary >>
+        mi->coverLink >> mi->coverPath >> mi->chapters;
 
     file.close();
 
@@ -39,8 +38,7 @@ void MangaInfo::serialize()
 
     QDataStream out(&file);
     out << hostname << title << link << author << artist << releaseYear
-        << status << genres << summary;
-    out << coverLink << coverPath << (qint32)numChapters << chapters;
+        << status << genres << summary << coverLink << coverPath << chapters;
 
     file.close();
 }

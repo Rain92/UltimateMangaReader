@@ -150,8 +150,6 @@ void MangaDex::updateMangaInfoFinishedLoading(
         info->genres = demo + info->genres;
     }
 
-    info->numChapters = 0;
-
     int pages = 1;
 
     auto pagerxmatch = pagerx.match(job->buffer);

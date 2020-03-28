@@ -10,17 +10,11 @@ bool MangaIndex::increment()
 {
     if (page + 1 < mangainfo->chapters.at(chapter).numPages)
     {
-        page++;
-        return true;
+        return setChecked(chapter, page + 1);
     }
     else if (chapter + 1 < mangainfo->chapters.count())
     {
-        if (!mangainfo->chapters.at(chapter + 1).pagesLoaded)
-            mangainfo->mangaSource->updatePageList(mangainfo, chapter);
-
-        page = 0;
-        chapter++;
-        return true;
+        return setChecked(chapter + 1, 0);
     }
     else
     {
@@ -32,18 +26,16 @@ bool MangaIndex::decrement()
 {
     if (page > 0)
     {
-        page--;
-        return true;
+        return setChecked(chapter, page - 1);
     }
     else if (chapter > 0)
     {
         if (!mangainfo->chapters.at(chapter - 1).pagesLoaded)
-            mangainfo->mangaSource->updatePageList(mangainfo, chapter);
+            if (!mangainfo->mangaSource->updatePageList(mangainfo, chapter))
+                return false;
 
-        chapter--;
-        page = qMax(0, mangainfo->chapters.at(chapter).numPages - 1);
-
-        return true;
+        return setChecked(
+            chapter - 1, qMax(0, mangainfo->chapters.at(chapter).numPages - 1));
     }
     else
     {
@@ -58,7 +50,8 @@ bool MangaIndex::setChecked(int chapter, int page)
         return false;
 
     if (!mangainfo->chapters.at(chapter).pagesLoaded)
-        mangainfo->mangaSource->updatePageList(mangainfo, chapter);
+        if (!mangainfo->mangaSource->updatePageList(mangainfo, chapter))
+            return false;
 
     if (page >= mangainfo->chapters.at(chapter).numPages)
         return false;

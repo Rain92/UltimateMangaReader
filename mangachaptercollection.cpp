@@ -34,7 +34,7 @@ void MangaChapterCollection::mergeChapters(MangaChapterCollection& other)
     {
         if (ch.pagesLoaded)
         {
-            for (int i = 0; i < numChapters(); i++)
+            for (int i = 0; i < other.numChapters(); i++)
             {
                 if (ch.chapterUrl == other[i].chapterUrl ||
                     ch.chapterTitle == other[i].chapterTitle)

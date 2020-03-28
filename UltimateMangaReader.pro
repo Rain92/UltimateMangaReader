@@ -3,8 +3,8 @@ windows {
     DEFINES += DESKTOP WINDOWS
 }
 
-linux {
-    DEFINES += DESKTOP LINUX
+desktop {
+    DEFINES += DESKTOP
 }
 
 kobo {

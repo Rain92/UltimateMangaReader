@@ -329,7 +329,7 @@ void MangaReaderWidget::on_pushButtonReaderGoto_clicked()
 {
     // TODO
     //    gotodialog->setup(
-    //        currentmanga->numChapters,
+    //        currentmanga->chapters.numChapters(),
     //        currentmanga->chapters[currentmanga->currentIndex.chapter].numPages,
     //        currentmanga->currentIndex);
 

@@ -38,8 +38,6 @@ public:
 
     bool updated;
 
-    int numChapters;
-
     AbstractMangaSource *mangaSource;
 
     MangaChapterCollection chapters;

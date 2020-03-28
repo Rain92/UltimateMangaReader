@@ -27,11 +27,9 @@ void MangaController::setCurrentManga(QSharedPointer<MangaInfo> mangaInfo)
 
 bool MangaController::assurePagesLoaded()
 {
-    if (currentIndex.chapter > currentManga->numChapters)
-        currentIndex.chapter = qMax(0, currentManga->numChapters - 1);
-
-    if (currentIndex.chapter >= currentManga->numChapters)
-        return false;
+    if (currentIndex.chapter > currentManga->chapters.numChapters())
+        currentIndex.chapter =
+            qMax(0, currentManga->chapters.numChapters() - 1);
 
     if (!currentManga->chapters[currentIndex.chapter].pagesLoaded)
     {
@@ -41,6 +39,9 @@ bool MangaController::assurePagesLoaded()
 
         currentManga->serialize();
     }
+
+    if (currentIndex.chapter >= currentManga->chapters.numChapters())
+        return false;
 
     if (currentIndex.page >=
         currentManga->chapters[currentIndex.chapter].numPages)
@@ -78,7 +79,8 @@ void MangaController::setCurrentIndex(int chapter, int page)
 
 QString MangaController::getImageLink(const MangaIndex &index)
 {
-    if (index.chapter < 0 || index.chapter >= currentManga->numChapters)
+    if (index.chapter < 0 ||
+        index.chapter >= currentManga->chapters.numChapters())
         return "";
 
     if (!currentManga->chapters[index.chapter].pagesLoaded)
@@ -87,7 +89,7 @@ QString MangaController::getImageLink(const MangaIndex &index)
         currentManga->serialize();
     }
 
-    if (index.chapter >= currentManga->numChapters ||
+    if (index.chapter >= currentManga->chapters.numChapters() ||
         currentManga->chapters[index.chapter].imageUrlList.count() <=
             index.page)
         return "";
@@ -103,7 +105,8 @@ QString MangaController::getImageLink(const MangaIndex &index)
 void MangaController::currentIndexChangedInternal(bool preload)
 {
     emit currentIndexChanged(
-        currentIndex.chapter, currentIndex.page, currentManga->numChapters,
+        currentIndex.chapter, currentIndex.page,
+        currentManga->chapters.numChapters(),
         currentManga->chapters[currentIndex.chapter].numPages);
 
     updateCurrentImage();
@@ -165,13 +168,13 @@ void MangaController::preloadImage(const MangaIndex &index)
 
 void MangaController::preloadPopular()
 {
-    if (currentManga->numChapters == 0)
+    if (currentManga->chapters.numChapters() == 0)
         return;
 
-    if (currentManga->numChapters > 1 &&
-        currentIndex.chapter != currentManga->numChapters - 1)
-        preloadImage(
-            MangaIndex(currentManga, currentManga->numChapters - 1, 0));
+    if (currentManga->chapters.numChapters() > 1 &&
+        currentIndex.chapter != currentManga->chapters.numChapters() - 1)
+        preloadImage(MangaIndex(currentManga,
+                                currentManga->chapters.numChapters() - 1, 0));
 }
 
 void MangaController::preloadNeighbours(int forward, int backward)
@@ -206,7 +209,7 @@ void MangaController::serializeProgress()
         return;
 
     QDataStream out(&file);
-    out << currentIndex << (qint32)currentManga->numChapters;
+    out << currentIndex << (qint32)currentManga->chapters.numChapters();
 
     file.close();
 }
