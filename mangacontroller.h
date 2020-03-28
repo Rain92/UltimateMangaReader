@@ -7,7 +7,7 @@
 #include "downloadimagedescriptor.h"
 #include "enums.h"
 #include "mangachapter.h"
-#include "mangaindex.h"
+#include "mangaindextraverser.h"
 #include "mangainfo.h"
 #include "preloadqueue.h"
 
@@ -20,13 +20,13 @@ public:
                     QObject *parent = nullptr);
 
     QSharedPointer<MangaInfo> currentManga;
-    MangaIndex currentIndex;
+    MangaIndexTraverser currentIndex;
 
 signals:
     void indexMovedOutOfBounds();
     void downloadError(const QString &error);
     void currentMangaChanged(QSharedPointer<MangaInfo> mangaInfo);
-    void currentIndexChanged(int chapter, int page, int numChapters,
+    void currentIndexChanged(const MangaIndex &index, int numChapters,
                              int numPages);
     void currentImageChanged(const QString &imagePath);
     void completedImagePreloadSignal(const QString &path);
@@ -34,7 +34,7 @@ signals:
 public slots:
     void setCurrentManga(QSharedPointer<MangaInfo> mangaInfo);
 
-    void setCurrentIndex(int chapter, int page);
+    void setCurrentIndex(const MangaIndex &index);
     void advanceMangaPage(PageTurnDirection direction);
 
     QString getCoverpathScaled() const;

@@ -11,8 +11,6 @@ public:
     QStringList getMangaTitlesReversed();
 
     void mergeChapters(MangaChapterCollection& newChapters);
-
-    inline int numChapters() const { return size(); }
 };
 
 #endif  // MANGACHAPTERCONTAINER_H

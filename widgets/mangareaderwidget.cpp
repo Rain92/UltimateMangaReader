@@ -212,13 +212,17 @@ void MangaReaderWidget::updateTime()
     QTimer::singleShot(msecsleft, this, SLOT(updateTime()));
 }
 
-void MangaReaderWidget::updateReaderLabels(int chapter, int page,
+void MangaReaderWidget::updateCurrentIndex(const MangaIndex &mangaIndex,
                                            int numChapters, int numPages)
 {
-    ui->labelReaderChapter->setText("Chapter: " + QString::number(chapter + 1) +
-                                    "/" + QString::number(numChapters));
-    ui->labelReaderPage->setText("Page: " + QString::number(page + 1) + "/" +
-                                 QString::number(numPages));
+    ui->labelReaderChapter->setText(
+        "Chapter: " + QString::number(mangaIndex.chapter + 1) + "/" +
+        QString::number(numChapters));
+    ui->labelReaderPage->setText(
+        "Page: " + QString::number(mangaIndex.page + 1) + "/" +
+        QString::number(numPages));
+
+    gotodialog->setup(mangaIndex, numChapters, numPages);
 }
 
 void MangaReaderWidget::on_pushButtonReaderHome_clicked()
@@ -327,19 +331,12 @@ void MangaReaderWidget::on_horizontalSliderComfLight_valueChanged(int value)
 
 void MangaReaderWidget::on_pushButtonReaderGoto_clicked()
 {
-    // TODO
-    //    gotodialog->setup(
-    //        currentmanga->chapters.numChapters(),
-    //        currentmanga->chapters[currentmanga->currentIndex.chapter].numPages,
-    //        currentmanga->currentIndex);
+    if (gotodialog->exec() == QDialog::Accepted)
+    {
+        showMenuBar(false);
 
-    //    if (gotodialog->exec() == QDialog::Accepted &&
-    //        !gotodialog->selectedindex.illegal)
-    //    {
-    //        showMenuBar(false);
-
-    //        emit gotoIndex(gotodialog->selectedindex);
-    //    }
+        emit gotoIndex(gotodialog->selectedindex);
+    }
 }
 
 void MangaReaderWidget::setBatteryIcon()

@@ -143,7 +143,7 @@ void AbstractMangaSource::updateMangaInfo(QSharedPointer<MangaInfo> info)
     auto job = downloadManager->downloadAsString(info->link);
 
     auto lambda = [oldnumchapters, info, job, this] {
-        bool newchapters = info->chapters.numChapters() > oldnumchapters;
+        bool newchapters = info->chapters.count() > oldnumchapters;
 
         {
             QMutexLocker locker(info->updateMutex.get());
@@ -165,7 +165,7 @@ void AbstractMangaSource::updateMangaInfo(QSharedPointer<MangaInfo> info)
 bool AbstractMangaSource::updatePageList(QSharedPointer<MangaInfo> info,
                                          int chapter)
 {
-    if (chapter >= info->chapters.numChapters())
+    if (chapter >= info->chapters.count())
         return false;
 
     if (info->chapters[chapter].pagesLoaded)
@@ -174,7 +174,7 @@ bool AbstractMangaSource::updatePageList(QSharedPointer<MangaInfo> info,
     auto newpagelist = getPageList(info->chapters[chapter].chapterUrl);
     QMutexLocker locker(info->updateMutex.get());
 
-    if (chapter >= info->chapters.numChapters())
+    if (chapter >= info->chapters.count())
         return false;
     auto &ch = info->chapters[chapter];
 

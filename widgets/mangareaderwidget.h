@@ -24,7 +24,7 @@ public:
     ~MangaReaderWidget();
 
     void showImage(const QString &path);
-    void updateReaderLabels(int chapter, int page, int numChapters,
+    void updateCurrentIndex(const MangaIndex &mangaIndex, int numChapters,
                             int numPages);
 
     void setFrontLightPanelState(int lightmin, int lightmax, int light,
@@ -42,7 +42,7 @@ signals:
     void closeApp();
     void back();
     void frontlightchanged(int light, int comflight);
-    void gotoIndex(int chapter, int page);
+    void gotoIndex(const MangaIndex &mangaIndex);
 
 private slots:
     void on_pushButtonReaderHome_clicked();

@@ -1,8 +1,6 @@
 #ifndef READINGSTATEMANAGER_H
 #define READINGSTATEMANAGER_H
 
-#include <QMap>
-
 #include "abstractmangasource.h"
 #include "defines.h"
 #include "downloadmanager.h"

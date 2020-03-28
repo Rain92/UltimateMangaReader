@@ -19,7 +19,7 @@ public:
     explicit GotoDialog(QWidget *parent = 0);
     ~GotoDialog();
 
-    void setup(int maxchapter, int maxpage, MangaIndex currentindex);
+    void setup(MangaIndex currentindex, int maxchapter, int maxpage);
 
     void moveCursorRight(int steps = 4);
 

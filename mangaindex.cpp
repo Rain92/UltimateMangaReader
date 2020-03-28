@@ -1,66 +1,6 @@
 #include "mangaindex.h"
 
-MangaIndex::MangaIndex(QSharedPointer<MangaInfo> mangainfo, int chapter,
-                       int page)
-    : chapter(chapter), page(page), mangainfo(mangainfo)
-{
-}
-
-bool MangaIndex::increment()
-{
-    if (page + 1 < mangainfo->chapters.at(chapter).numPages)
-    {
-        return setChecked(chapter, page + 1);
-    }
-    else if (chapter + 1 < mangainfo->chapters.count())
-    {
-        return setChecked(chapter + 1, 0);
-    }
-    else
-    {
-        return false;
-    }
-}
-
-bool MangaIndex::decrement()
-{
-    if (page > 0)
-    {
-        return setChecked(chapter, page - 1);
-    }
-    else if (chapter > 0)
-    {
-        if (!mangainfo->chapters.at(chapter - 1).pagesLoaded)
-            if (!mangainfo->mangaSource->updatePageList(mangainfo, chapter))
-                return false;
-
-        return setChecked(
-            chapter - 1, qMax(0, mangainfo->chapters.at(chapter).numPages - 1));
-    }
-    else
-    {
-        return false;
-    }
-}
-
-bool MangaIndex::setChecked(int chapter, int page)
-{
-    if (chapter < 0 || page < 0 || chapter >= mangainfo->chapters.count() ||
-        (chapter == this->chapter && page == this->page))
-        return false;
-
-    if (!mangainfo->chapters.at(chapter).pagesLoaded)
-        if (!mangainfo->mangaSource->updatePageList(mangainfo, chapter))
-            return false;
-
-    if (page >= mangainfo->chapters.at(chapter).numPages)
-        return false;
-
-    this->chapter = chapter;
-    this->page = page;
-
-    return true;
-}
+MangaIndex::MangaIndex(int chapter, int page) : chapter(chapter), page(page) {}
 
 bool MangaIndex::operator==(const MangaIndex &b) const
 {

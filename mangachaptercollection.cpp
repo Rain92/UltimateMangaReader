@@ -14,10 +14,10 @@ QStringList MangaChapterCollection::getMangaTitlesReversed()
 
 void MangaChapterCollection::mergeChapters(MangaChapterCollection& other)
 {
-    if (numChapters() == other.numChapters())
+    if (count() == other.count())
     {
         bool same = true;
-        for (int i = 0; i < numChapters(); i++)
+        for (int i = 0; i < count(); i++)
         {
             if ((*this)[i].chapterUrl != other[i].chapterUrl ||
                 (*this)[i].chapterTitle != other[i].chapterTitle)
@@ -34,7 +34,7 @@ void MangaChapterCollection::mergeChapters(MangaChapterCollection& other)
     {
         if (ch.pagesLoaded)
         {
-            for (int i = 0; i < other.numChapters(); i++)
+            for (int i = 0; i < other.count(); i++)
             {
                 if (ch.chapterUrl == other[i].chapterUrl ||
                     ch.chapterTitle == other[i].chapterTitle)

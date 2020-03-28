@@ -114,7 +114,7 @@ void MangaInfoWidget::setManga(QSharedPointer<MangaInfo> manga)
     ui->scrollAreaMangaInfoSummary->verticalScrollBar()->setValue(0);
     ui->listViewChapters->verticalScrollBar()->setValue(0);
 
-    bool enable = currentmanga->chapters.numChapters() > 0;
+    bool enable = currentmanga->chapters.count() > 0;
 
     ui->pushButtonReadContinue->setEnabled(enable);
     ui->pushButtonReadFirst->setEnabled(enable);
@@ -170,12 +170,12 @@ void MangaInfoWidget::on_pushButtonMangaInfoAddFavorites_clicked()
 void MangaInfoWidget::on_listViewChapters_clicked(const QModelIndex &index)
 {
     emit readMangaClicked(
-        currentmanga->chapters.numChapters() - 1 - index.row(), 0);
+        {currentmanga->chapters.count() - 1 - index.row(), 0});
 }
 
 void MangaInfoWidget::on_pushButtonReadLatest_clicked()
 {
-    emit readMangaClicked(currentmanga->chapters.numChapters() - 1, 0);
+    emit readMangaClicked({currentmanga->chapters.count() - 1, 0});
 }
 
 void MangaInfoWidget::on_pushButtonReadContinue_clicked()
@@ -185,5 +185,5 @@ void MangaInfoWidget::on_pushButtonReadContinue_clicked()
 
 void MangaInfoWidget::on_pushButtonReadFirst_clicked()
 {
-    emit readMangaClicked(0, 0);
+    emit readMangaClicked({0, 0});
 }

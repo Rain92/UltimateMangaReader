@@ -36,7 +36,7 @@ MainWidget::MainWidget(QWidget *parent)
 
     QObject::connect(
         core->mangaController, &MangaController::currentIndexChanged,
-        ui->mangaReaderWidget, &MangaReaderWidget::updateReaderLabels);
+        ui->mangaReaderWidget, &MangaReaderWidget::updateCurrentIndex);
 
     QObject::connect(core->mangaController,
                      &MangaController::currentImageChanged,

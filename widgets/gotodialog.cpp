@@ -6,8 +6,8 @@
 
 GotoDialog::GotoDialog(QWidget *parent)
     : QDialog(parent, Qt::FramelessWindowHint | Qt::Dialog),
-      selectedindex(nullptr, 0, 0),
-      currentindex(nullptr, 0, 0),
+      selectedindex(0, 0),
+      currentindex(0, 0),
       ui(new Ui::GotoDialog)
 
 {
@@ -36,7 +36,7 @@ GotoDialog::GotoDialog(QWidget *parent)
 
 GotoDialog::~GotoDialog() { delete ui; }
 
-void GotoDialog::setup(int maxchapter, int maxpage, MangaIndex currentindex)
+void GotoDialog::setup(MangaIndex currentindex, int maxchapter, int maxpage)
 {
     this->currentindex = currentindex;
     this->selectedindex = MangaIndex(currentindex);

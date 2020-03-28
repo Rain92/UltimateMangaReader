@@ -5,6 +5,7 @@
 #include <QWidget>
 
 #include "defines.h"
+#include "mangaindex.h"
 #include "mangainfo.h"
 
 namespace Ui
@@ -25,7 +26,7 @@ public:
 
 signals:
     void toggleFavoriteClicked(QSharedPointer<MangaInfo> manga);
-    void readMangaClicked(int chapter, int page);
+    void readMangaClicked(const MangaIndex &index);
     void readMangaContinueClicked();
 
 public slots:

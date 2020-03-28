@@ -8,8 +8,6 @@
 #include "downloadimagedescriptor.h"
 #include "mangachaptercollection.h"
 
-class MangaIndex;
-
 class MangaInfo : public QObject
 {
     Q_OBJECT

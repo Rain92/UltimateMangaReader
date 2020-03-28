@@ -42,6 +42,9 @@ HEADERS += \
     enums.h \
     mangachaptercollection.h \
     mangacontroller.h \
+    mangaindextraverser.h \
+    result.h \
+    resulttypes.h \
     ultimatemangareadercore.h \
     widgets/customgesturerecognizer.h \
     defines.h \
@@ -85,6 +88,7 @@ HEADERS += \
 SOURCES += \
     mangachaptercollection.cpp \
     mangacontroller.cpp \
+    mangaindextraverser.cpp \
     ultimatemangareadercore.cpp \
     widgets/customgesturerecognizer.cpp \
     downloadjobbase.cpp \
