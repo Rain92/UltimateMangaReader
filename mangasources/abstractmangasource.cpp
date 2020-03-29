@@ -227,14 +227,15 @@ void AbstractMangaSource::downloadCover(QSharedPointer<MangaInfo> mangainfo)
         QString filetype = mangainfo->coverLink.mid(ind - 4, 4);
         mangainfo->coverPath =
             mangainfodir(name, mangainfo->title) + "cover" + filetype;
-
-        genrateCoverThumbnail(mangainfo);
     }
 
     auto coverjob = downloadManager->downloadAsFile(mangainfo->coverLink,
                                                     mangainfo->coverPath);
 
-    auto lambda = [mangainfo]() { mangainfo->sendCoverLoaded(); };
+    auto lambda = [this, mangainfo]() {
+        genrateCoverThumbnail(mangainfo);
+        mangainfo->sendCoverLoaded();
+    };
 
     //    coverjob->await(1000);
     //    lambda();

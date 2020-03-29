@@ -36,15 +36,15 @@ GotoDialog::GotoDialog(QWidget *parent)
 
 GotoDialog::~GotoDialog() { delete ui; }
 
-void GotoDialog::setup(MangaIndex currentindex, int maxchapter, int maxpage)
+void GotoDialog::setup(const ReadingProgress &progress)
 {
-    this->currentindex = currentindex;
-    this->selectedindex = MangaIndex(currentindex);
+    this->currentindex = MangaIndex(progress.index);
+    this->selectedindex = MangaIndex(progress.index);
 
-    ui->spinBoxChapter->setMaximum(maxchapter);
+    ui->spinBoxChapter->setMaximum(progress.numChapters);
     ui->spinBoxChapter->setValue(currentindex.chapter + 1);
 
-    ui->spinBoxPage->setMaximum(maxpage);
+    ui->spinBoxPage->setMaximum(progress.numPages);
     ui->spinBoxPage->setValue(currentindex.page + 1);
 
     ui->spinBoxChapter->setCorrectionMode(

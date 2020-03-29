@@ -4,6 +4,7 @@
 #include <QWidget>
 
 #include "favoritesmanager.h"
+#include "readingprogress.h"
 
 namespace Ui
 {
@@ -27,7 +28,7 @@ signals:
 
 private slots:
     void on_tableWidget_cellClicked(int row, int column);
-    void mangaUpdated();
+    void mangaUpdated(bool newchapters);
     void coverLoaded();
 
 private:

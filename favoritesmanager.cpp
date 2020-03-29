@@ -1,10 +1,10 @@
 #include "favoritesmanager.h"
 
 FavoritesManager::FavoritesManager(
-    const QList<AbstractMangaSource *> &mangasources, QObject *parent)
+    const QMap<QString, AbstractMangaSource *> &mangasources, QObject *parent)
     : QObject(parent), favoriteinfos(), favorites(), mangasources(mangasources)
 {
-    //    deserialize();
+    deserialize();
 }
 
 void FavoritesManager::deserialize()
@@ -16,8 +16,6 @@ void FavoritesManager::deserialize()
     QDataStream in(&file);
     in >> favorites;
     file.close();
-
-    loadInfos();
 }
 
 void FavoritesManager::serialize()
@@ -31,37 +29,32 @@ void FavoritesManager::serialize()
     file.close();
 }
 
-bool FavoritesManager::isFavorite(MangaInfo *info)
+bool FavoritesManager::isFavorite(QSharedPointer<MangaInfo> info)
 {
-    QString key = info->hostname + info->title;
-
-    foreach (const Favorite &f, favorites)
-    {
-        if (f.hostname + f.title == key)
+    for (const Favorite &f : favorites)
+        if (f.hostname == info->hostname && f.title == info->title)
             return true;
-    }
+
     return false;
 }
 
 bool FavoritesManager::toggleFavorite(QSharedPointer<MangaInfo> info)
 {
-    QString key = info->hostname + info->title;
-
-    QMutableListIterator<Favorite> iterator(favorites);
-    while (iterator.hasNext())
+    for (int i = 0; i < favorites.length(); i++)
     {
-        Favorite &f = iterator.next();
-        if (f.hostname + f.title == key)
+        if (favorites[i].hostname == info->hostname &&
+            favorites[i].title == info->title)
         {
-            iterator.remove();
-            serialize();
+            favorites.removeAt(i);
+            favoriteinfos.removeAt(i);
 
-            favoriteinfos.removeOne(info);
+            serialize();
 
             return false;
         }
     }
 
+    // add
     favorites.append(Favorite::fromMangaInfo(info.get()));
     favoriteinfos.append(info);
     serialize();
@@ -79,30 +72,26 @@ void FavoritesManager::moveFavoriteToFront(int i)
 void FavoritesManager::loadInfos()
 {
     favoriteinfos.clear();
-    foreach (const Favorite &fav, favorites)
+    for (int i = 0; i < favorites.length(); i++)
     {
-        foreach (AbstractMangaSource *s, mangasources)
+        auto &fav = favorites[i];
+        if (mangasources.contains(fav.hostname))
         {
-            if (s->name != fav.hostname)
-                continue;
-
-            QSharedPointer<MangaInfo> mi =
-                s->loadMangaInfo(fav.mangalink, fav.title, false);
+            auto mi = mangasources[fav.hostname]->loadMangaInfo(
+                fav.mangalink, fav.title, false);
             favoriteinfos.append(mi);
-            break;
+        }
+        else
+        {
+            favorites.removeAt(i--);
         }
     }
 }
 
 void FavoritesManager::updateInfos()
 {
-    foreach (QSharedPointer<MangaInfo> info, favoriteinfos)
-        foreach (AbstractMangaSource *s, mangasources)
-            if (s->name == info->hostname)
-            {
-                s->updateMangaInfo(info);
-                break;
-            }
+    for (const auto &info : favoriteinfos)
+        mangasources[info->hostname]->updateMangaInfo(info);
 }
 
 void FavoritesManager::clearFavorites()

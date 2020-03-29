@@ -26,8 +26,6 @@ public:
 
 public slots:
 
-    void viewFavorite(QSharedPointer<MangaInfo> info, bool current);
-
     void readerGoBack();
 
     void setWidgetTab(WidgetTab tab);

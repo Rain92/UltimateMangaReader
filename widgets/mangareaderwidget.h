@@ -9,6 +9,7 @@
 #include "enums.h"
 #include "gotodialog.h"
 #include "mangainfo.h"
+#include "readingprogress.h"
 
 namespace Ui
 {
@@ -24,8 +25,7 @@ public:
     ~MangaReaderWidget();
 
     void showImage(const QString &path);
-    void updateCurrentIndex(const MangaIndex &mangaIndex, int numChapters,
-                            int numPages);
+    void updateCurrentIndex(const ReadingProgress &progress);
 
     void setFrontLightPanelState(int lightmin, int lightmax, int light,
                                  int comflightmin, int comflightmax,

@@ -11,13 +11,13 @@ protected:
     QFile file;
 
 public:
-    DownloadFileJob(QObject *parent, QNetworkAccessManager *networkManager,
-                    const QString &url, const QString &localFilePath);
+    DownloadFileJob(QNetworkAccessManager *networkManager, const QString &url,
+                    const QString &localFilePath);
     ~DownloadFileJob();
 
     QString filepath;
 
-    bool await(int timeout = 3000);
+    bool await(int timeout = 6000);
 
 public slots:
     void start() override;

@@ -1,5 +1,6 @@
 #include "mangaindex.h"
 
+MangaIndex::MangaIndex() : chapter(0), page(0) {}
 MangaIndex::MangaIndex(int chapter, int page) : chapter(chapter), page(page) {}
 
 bool MangaIndex::operator==(const MangaIndex &b) const

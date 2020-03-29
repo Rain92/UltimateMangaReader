@@ -8,7 +8,7 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
       currentManga(),
       downloadManager(new DownloadManager(this)),
       mangaController(new MangaController(downloadManager, this)),
-      favoritesManager(new FavoritesManager(activeMangaSources_, this)),
+      favoritesManager(new FavoritesManager(activeMangaSources, this)),
       settings()
 {
     setupDirectories();
@@ -31,13 +31,13 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
 
     currentMangaSource = mangaSources.first().get();
 
-    favoritesManager->deserialize();
-
     for (auto ms : mangaSources)
         ms->deserializeMangaList();
 
     for (auto ms : mangaSources)
         activeMangaSources.insert(ms->name, ms.get());
+
+    favoritesManager->loadInfos();
 }
 
 void UltimateMangaReaderCore::setImageSize(const QSize& size)

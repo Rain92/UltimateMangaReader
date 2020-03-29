@@ -13,8 +13,7 @@ protected:
     QScopedPointer<QNetworkReply> reply;
 
 public:
-    DownloadJobBase(QObject *parent, QNetworkAccessManager *networkManager,
-                    const QString &url);
+    DownloadJobBase(QNetworkAccessManager *networkManager, const QString &url);
 
     QString url;
     QString originalUrl;

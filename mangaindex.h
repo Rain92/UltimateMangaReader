@@ -9,6 +9,7 @@ public:
     int chapter;
     int page;
 
+    MangaIndex();
     MangaIndex(int chapter, int page);
     MangaIndex(const MangaIndex &mangaIndex) = default;
 

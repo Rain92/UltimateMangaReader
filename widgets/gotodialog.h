@@ -4,7 +4,7 @@
 #include <QDialog>
 #include <QResizeEvent>
 
-#include "mangaindex.h"
+#include "readingprogress.h"
 
 namespace Ui
 {
@@ -19,7 +19,7 @@ public:
     explicit GotoDialog(QWidget *parent = 0);
     ~GotoDialog();
 
-    void setup(MangaIndex currentindex, int maxchapter, int maxpage);
+    void setup(const ReadingProgress &progress);
 
     void moveCursorRight(int steps = 4);
 

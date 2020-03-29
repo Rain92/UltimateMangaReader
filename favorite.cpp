@@ -1,8 +1,5 @@
 #include "favorite.h"
 
-#include <QFileInfo>
-#include <QImage>
-
 #include "defines.h"
 
 Favorite::Favorite() = default;
@@ -16,11 +13,6 @@ Favorite::Favorite(const QString &hostname, const QString &title,
 QString Favorite::mangaInfoPath() const
 {
     return mangainfodir(hostname, title) + "mangainfo.dat";
-}
-
-QString Favorite::mangaProgressPath() const
-{
-    return mangainfodir(hostname, title) + "progress.dat";
 }
 
 QDataStream &operator<<(QDataStream &str, const Favorite &m)

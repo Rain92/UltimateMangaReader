@@ -16,15 +16,15 @@ struct Favorite
     Favorite(const QString &hostname, const QString &title,
              const QString &mangalink);
 
-    QString mangaInfoPath() const;
-    QString mangaProgressPath() const;
-
     QString coverpathscaled() const;
 
     static Favorite fromMangaInfo(MangaInfo *info)
     {
         return Favorite(info->hostname, info->title, info->link);
     }
+
+private:
+    QString mangaInfoPath() const;
 };
 
 QDataStream &operator<<(QDataStream &str, const Favorite &m);

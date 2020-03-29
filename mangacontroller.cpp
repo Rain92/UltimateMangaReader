@@ -27,7 +27,11 @@ void MangaController::setCurrentManga(QSharedPointer<MangaInfo> mangaInfo)
 
 bool MangaController::assurePagesLoaded()
 {
-    if (currentIndex.chapter > currentManga->chapters.count())
+    if (currentManga->chapters.count() == 0)
+        return false;
+
+    if (currentIndex.chapter >= currentManga->chapters.count() ||
+        currentIndex.chapter < 0)
         currentIndex.chapter = qMax(0, currentManga->chapters.count() - 1);
 
     if (!currentIndex.currentChapter().pagesLoaded)
@@ -101,8 +105,8 @@ QString MangaController::getImageLink(const MangaIndex &index)
 }
 void MangaController::currentIndexChangedInternal(bool preload)
 {
-    emit currentIndexChanged(currentIndex, currentManga->chapters.count(),
-                             currentIndex.currentChapter().numPages);
+    emit currentIndexChanged({currentIndex, currentManga->chapters.count(),
+                              currentIndex.currentChapter().numPages});
 
     updateCurrentImage();
 
@@ -197,28 +201,14 @@ void MangaController::completedImagePreload(const QString &path)
 
 void MangaController::serializeProgress()
 {
-    QFile file(mangainfodir(currentManga->hostname, currentManga->title) +
-               "progress.dat");
-    if (!file.open(QIODevice::WriteOnly))
-        return;
-
-    QDataStream out(&file);
-    out << currentIndex << (qint32)currentManga->chapters.count();
-
-    file.close();
+    ReadingProgress c(currentIndex, currentManga->chapters.count(),
+                      currentIndex.currentChapter().numPages);
+    c.serialize(currentManga->hostname, currentManga->title);
 }
 
-bool MangaController::deserializeProgress()
+void MangaController::deserializeProgress()
 {
-    QFile file(mangainfodir(currentManga->hostname, currentManga->title) +
-               "progress.dat");
-
-    if (!file.open(QIODevice::ReadOnly))
-        return false;
-
-    QDataStream in2(&file);
-    in2 >> this->currentIndex;
-
-    file.close();
-    return true;
+    ReadingProgress progress(currentManga->hostname, currentManga->title);
+    currentIndex.chapter = progress.index.chapter;
+    currentIndex.page = progress.index.page;
 }

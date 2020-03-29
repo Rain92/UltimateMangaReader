@@ -1,6 +1,8 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
+#include "utils.h"
+
 // dirstructure:
 //               /cache/      -> favorites.dat
 //               /cache/mangalists/ -> hostname_mangalist.dat

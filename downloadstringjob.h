@@ -15,11 +15,10 @@ protected:
 public:
     QString buffer;
 
-    DownloadStringJob(QObject *parent, QNetworkAccessManager *networkManager,
-                      const QString &url, int timeout = 3000,
-                      QByteArray *postdata = nullptr);
+    DownloadStringJob(QNetworkAccessManager *networkManager, const QString &url,
+                      int timeout = 6000, QByteArray *postdata = nullptr);
 
-    bool await(int timeout = 5000, bool retry = true);
+    bool await(int timeout = 6000, bool retry = true);
 
 public slots:
     void start() override;

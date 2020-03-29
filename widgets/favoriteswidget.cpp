@@ -52,9 +52,11 @@ void FavoritesWidget::showFavoritesList()
     {
         insertRow(favoritesmanager->favoriteinfos[r], r);
         QObject::connect(favoritesmanager->favoriteinfos[r].get(),
-                         SIGNAL(updatedSignal()), this, SLOT(mangaUpdated()));
+                         &MangaInfo::updatedSignal, this,
+                         &FavoritesWidget::mangaUpdated);
         QObject::connect(favoritesmanager->favoriteinfos[r].get(),
-                         SIGNAL(coverLoaded()), this, SLOT(coverLoaded()));
+                         &MangaInfo::coverLoaded, this,
+                         &FavoritesWidget::coverLoaded);
     }
 
     ui->tableWidget->verticalScrollBar()->setValue(0);
@@ -71,23 +73,23 @@ void FavoritesWidget::insertRow(const QSharedPointer<MangaInfo> &fav, int row)
     QTableWidgetItem *hostwidget = new QTableWidgetItem(fav->hostname);
     hostwidget->setTextAlignment(Qt::AlignCenter);
 
-    QString statusstring =
-        (fav->updated ? "Updated!\n" : fav->status + "\n") +
-        "Chapters: " + QString::number(fav->chapters.count());
+    ReadingProgress progress(fav->hostname, fav->title);
+
+    QString statusstring = (fav->updated ? "Updated!\n" : fav->status + "\n") +
+                           "Chapters: " + QString::number(progress.numChapters);
     QTableWidgetItem *chapters = new QTableWidgetItem(statusstring);
     chapters->setTextAlignment(Qt::AlignCenter);
 
-    // TODO
-    //    QString progressstring =
-    //        "Chapter: " + QString::number(fav->currentIndex.chapter + 1) +
-    //        "\nPage: " + QString::number(fav->currentIndex.page + 1);
-    //    QTableWidgetItem *progress = new QTableWidgetItem(progressstring);
-    //    progress->setTextAlignment(Qt::AlignCenter);
+    QString progressstring =
+        "Chapter: " + QString::number(progress.index.chapter + 1) +
+        "\nPage: " + QString::number(progress.index.page + 1);
+    QTableWidgetItem *progressitem = new QTableWidgetItem(progressstring);
+    progressitem->setTextAlignment(Qt::AlignCenter);
 
     ui->tableWidget->setCellWidget(row, 0, titlewidget);
     ui->tableWidget->setItem(row, 1, hostwidget);
     ui->tableWidget->setItem(row, 2, chapters);
-    //    ui->tableWidget->setItem(row, 3, progress);
+    ui->tableWidget->setItem(row, 3, progressitem);
 }
 
 void FavoritesWidget::moveFavoriteToFront(int i)
@@ -100,8 +102,11 @@ void FavoritesWidget::moveFavoriteToFront(int i)
     emit(mangaListUpdated());
 }
 
-void FavoritesWidget::mangaUpdated()
+void FavoritesWidget::mangaUpdated(bool newchapters)
 {
+    if (!newchapters)
+        return;
+
     MangaInfo *mi = static_cast<MangaInfo *>(sender());
 
     int i = 0;

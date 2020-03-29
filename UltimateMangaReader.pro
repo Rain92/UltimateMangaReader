@@ -43,6 +43,7 @@ HEADERS += \
     mangachaptercollection.h \
     mangacontroller.h \
     mangaindextraverser.h \
+    readingprogress.h \
     result.h \
     resulttypes.h \
     ultimatemangareadercore.h \
@@ -89,6 +90,7 @@ SOURCES += \
     mangachaptercollection.cpp \
     mangacontroller.cpp \
     mangaindextraverser.cpp \
+    readingprogress.cpp \
     ultimatemangareadercore.cpp \
     widgets/customgesturerecognizer.cpp \
     downloadjobbase.cpp \

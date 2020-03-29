@@ -54,7 +54,7 @@ QSharedPointer<DownloadStringJob> DownloadManager::downloadAsString(
     qDebug() << "downloading:" << url;
 
     auto job = QSharedPointer<DownloadStringJob>(
-        new DownloadStringJob(this, networkmanager, url, timeout),
+        new DownloadStringJob(networkmanager, url, timeout),
         &QObject::deleteLater);
 
     job->start();
@@ -67,7 +67,7 @@ QSharedPointer<DownloadStringJob> DownloadManager::downloadAsStringPost(
     qDebug() << "downloading:" << url;
 
     auto job = QSharedPointer<DownloadStringJob>(
-        new DownloadStringJob(this, networkmanager, url, timeout, postdata),
+        new DownloadStringJob(networkmanager, url, timeout, postdata),
         &QObject::deleteLater);
 
     job->start();
@@ -87,7 +87,7 @@ QSharedPointer<DownloadFileJob> DownloadManager::downloadAsFile(
     }
 
     auto job = QSharedPointer<DownloadFileJob>(
-        new DownloadFileJob(this, networkmanager, url, localPath),
+        new DownloadFileJob(networkmanager, url, localPath),
         [this](DownloadFileJob *j) {
             this->fileDownloads.remove(j->originalUrl);
             j->deleteLater();
@@ -112,7 +112,7 @@ QSharedPointer<DownloadFileJob> DownloadManager::downloadAsScaledImage(
             fileDownloads.remove(url);
     }
     auto job = QSharedPointer<DownloadFileJob>(
-        new DownloadScaledImageJob(this, networkmanager, url, localPath,
+        new DownloadScaledImageJob(networkmanager, url, localPath,
                                    imageRescaleSize),
         [this](DownloadFileJob *j) {
             this->fileDownloads.remove(j->originalUrl);

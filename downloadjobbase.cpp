@@ -1,10 +1,8 @@
 #include "downloadjobbase.h"
 
-DownloadJobBase::DownloadJobBase(QObject *parent,
-                                 QNetworkAccessManager *networkManager,
+DownloadJobBase::DownloadJobBase(QNetworkAccessManager *networkManager,
                                  const QString &url)
-    : QObject(parent),
-      networkManager(networkManager),
+    : networkManager(networkManager),
       reply(),
       url(url),
       originalUrl(url),

@@ -6,11 +6,10 @@
 #include "defines.h"
 #include "downloadmanager.h"
 
-DownloadStringJob::DownloadStringJob(QObject *parent,
-                                     QNetworkAccessManager *networkManager,
+DownloadStringJob::DownloadStringJob(QNetworkAccessManager *networkManager,
                                      const QString &url, int timeout,
                                      QByteArray *postdata)
-    : DownloadJobBase(parent, networkManager, url),
+    : DownloadJobBase(networkManager, url),
       timeouttime(timeout),
       postdata(postdata),
       buffer("")

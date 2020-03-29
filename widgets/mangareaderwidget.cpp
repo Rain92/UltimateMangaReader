@@ -212,17 +212,16 @@ void MangaReaderWidget::updateTime()
     QTimer::singleShot(msecsleft, this, SLOT(updateTime()));
 }
 
-void MangaReaderWidget::updateCurrentIndex(const MangaIndex &mangaIndex,
-                                           int numChapters, int numPages)
+void MangaReaderWidget::updateCurrentIndex(const ReadingProgress &progress)
 {
     ui->labelReaderChapter->setText(
-        "Chapter: " + QString::number(mangaIndex.chapter + 1) + "/" +
-        QString::number(numChapters));
+        "Chapter: " + QString::number(progress.index.chapter + 1) + "/" +
+        QString::number(progress.numChapters));
     ui->labelReaderPage->setText(
-        "Page: " + QString::number(mangaIndex.page + 1) + "/" +
-        QString::number(numPages));
+        "Page: " + QString::number(progress.index.page + 1) + "/" +
+        QString::number(progress.numPages));
 
-    gotodialog->setup(mangaIndex, numChapters, numPages);
+    gotodialog->setup(progress);
 }
 
 void MangaReaderWidget::on_pushButtonReaderHome_clicked()

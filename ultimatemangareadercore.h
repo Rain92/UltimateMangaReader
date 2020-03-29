@@ -23,7 +23,7 @@ public:
     QList<QSharedPointer<AbstractMangaSource>> mangaSources;
 
     QMap<QString, AbstractMangaSource *> activeMangaSources;
-    QList<AbstractMangaSource *> activeMangaSources_;
+
     AbstractMangaSource *currentMangaSource;
 
     QSharedPointer<MangaInfo> currentManga;

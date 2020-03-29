@@ -6,9 +6,9 @@
 #include "downloadmanager.h"
 
 DownloadScaledImageJob::DownloadScaledImageJob(
-    QObject *parent, QNetworkAccessManager *networkManager, const QString &url,
+    QNetworkAccessManager *networkManager, const QString &url,
     const QString &path, QSize size)
-    : DownloadFileJob(parent, networkManager, url, path), size(size)
+    : DownloadFileJob(networkManager, url, path), size(size)
 {
 }
 

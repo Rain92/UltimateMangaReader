@@ -3,11 +3,10 @@
 #include "defines.h"
 #include "downloadmanager.h"
 
-DownloadFileJob::DownloadFileJob(QObject *parent,
-                                 QNetworkAccessManager *networkManager,
+DownloadFileJob::DownloadFileJob(QNetworkAccessManager *networkManager,
                                  const QString &url,
                                  const QString &localFilePath)
-    : DownloadJobBase(parent, networkManager, url), filepath(localFilePath)
+    : DownloadJobBase(networkManager, url), filepath(localFilePath)
 {
 }
 
