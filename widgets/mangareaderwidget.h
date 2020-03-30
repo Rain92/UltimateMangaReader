@@ -2,9 +2,11 @@
 #define MANGAREADERWIDGET_H
 
 #include <QGesture>
+#include <QPainter>
 #include <QPair>
 #include <QWidget>
 
+#include "customgesturerecognizer.h"
 #include "defines.h"
 #include "enums.h"
 #include "gotodialog.h"

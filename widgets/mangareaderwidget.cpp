@@ -1,10 +1,9 @@
 #include "mangareaderwidget.h"
 
-#include <QPainter>
-
+#ifdef KOBO
 #include "../koboplatformintegrationplugin/koboplatformfunctions.h"
-#include "customgesturerecognizer.h"
-#include "defines.h"
+#endif
+
 #include "ui_mangareaderwidget.h"
 
 MangaReaderWidget::MangaReaderWidget(QWidget *parent)

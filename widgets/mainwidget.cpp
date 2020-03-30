@@ -1,9 +1,9 @@
 #include "mainwidget.h"
 
-#include <QScrollBar>
-#include <QStringListModel>
-
+#ifdef KOBO
 #include "../koboplatformintegrationplugin/koboplatformfunctions.h"
+#endif
+
 #include "ui_mainwidget.h"
 
 MainWidget::MainWidget(QWidget *parent)

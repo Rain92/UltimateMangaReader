@@ -1,7 +1,9 @@
 #ifndef MAINWIDGET_H
 #define MAINWIDGET_H
 
+#include <QScrollBar>
 #include <QStandardItemModel>
+#include <QStringListModel>
 #include <QWidget>
 
 #include "VirtualKeyboard.h"

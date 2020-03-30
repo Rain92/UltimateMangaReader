@@ -1,7 +1,10 @@
 #include <QApplication>
 #include <QScreen>
 
+#ifdef KOBO
 #include "../koboplatformintegrationplugin/koboplatformfunctions.h"
+#endif
+
 #include "mainwidget.h"
 
 int main(int argc, char *argv[])
