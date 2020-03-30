@@ -8,7 +8,7 @@
 //               /cache/mangalists/ -> hostname_mangalist.dat
 //               /cache/hostname/manganame/ -> mangainfo.dat progress.dat
 //               /cache/hostname/manganame/images/ ->
-//               manganame_chapter_page.jpg|png
+//                                         manganame_chapter_page.jpg|png
 
 #define CONF StaticSettings::get()
 
@@ -21,17 +21,17 @@ public:
         return instance;
     }
 
-    QString cachedir;
-    QString mangalistdir;
-    int imagecachesize;
-    int maxparalleldownloads;
-    int maxparalleldownloads2;
-    int forwardpreloads;
-    int backwardpreloads;
+    QString cacheDir;
+    QString mangaListDir;
+    int imageCacheSize;
+    int parallelDownloadsLow;
+    int parallelDownloadsHigh;
+    int forwardPreloads;
+    int backwardPreloads;
 
     inline QString mangainfodir(const QString &hostname, const QString &title)
     {
-        return cachedir + hostname + "/" + makePathLegal(title) + "/";
+        return cacheDir + hostname + "/" + makePathLegal(title) + "/";
     }
     inline QString mangaimagesdir(const QString &hostname, const QString &title)
     {
@@ -41,13 +41,13 @@ public:
 private:
     StaticSettings()
     {
-        cachedir = QCoreApplication::applicationDirPath() + "/cache/";
-        mangalistdir = cachedir + "mangalists/";
-        imagecachesize = 10;
-        maxparalleldownloads = 4;
-        maxparalleldownloads2 = 8;
-        forwardpreloads = 6;
-        backwardpreloads = 1;
+        cacheDir = QCoreApplication::applicationDirPath() + "/cache/";
+        mangaListDir = cacheDir + "mangalists/";
+        imageCacheSize = 10;
+        parallelDownloadsLow = 4;
+        parallelDownloadsHigh = 8;
+        forwardPreloads = 6;
+        backwardPreloads = 1;
     };
 };
 

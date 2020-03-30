@@ -181,7 +181,7 @@ void HomeWidget::clearCacheDialogButtonClicked(int level)
             {
                 foreach (
                     QFileInfo info,
-                    QDir(CONF.cachedir + ms->name)
+                    QDir(CONF.cacheDir + ms->name)
                         .entryInfoList(QDir::NoDotAndDotDot | QDir::System |
                                        QDir::Hidden | QDir::AllDirs))
                     removeDir(info.absoluteFilePath() + "/images");
@@ -190,12 +190,12 @@ void HomeWidget::clearCacheDialogButtonClicked(int level)
 
         case 2:
             for (auto ms : mangasources)
-                removeDir(CONF.cachedir + ms->name, "progress.dat");
+                removeDir(CONF.cacheDir + ms->name, "progress.dat");
 
             break;
 
         case 3:
-            removeDir(CONF.cachedir, "mangaList.dat");
+            removeDir(CONF.cacheDir, "mangaList.dat");
             emit favoritesCleared();
             break;
 

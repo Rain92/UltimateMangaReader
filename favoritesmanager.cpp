@@ -9,7 +9,7 @@ FavoritesManager::FavoritesManager(
 
 void FavoritesManager::deserialize()
 {
-    QFile file(QString(CONF.cachedir) + "favorites.dat");
+    QFile file(QString(CONF.cacheDir) + "favorites.dat");
     if (!file.open(QIODevice::ReadOnly))
         return;
 
@@ -20,7 +20,7 @@ void FavoritesManager::deserialize()
 
 void FavoritesManager::serialize()
 {
-    QFile file(QString(CONF.cachedir) + "favorites.dat");
+    QFile file(QString(CONF.cacheDir) + "favorites.dat");
     if (!file.open(QIODevice::WriteOnly))
         return;
 

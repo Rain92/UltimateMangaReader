@@ -6,8 +6,8 @@ DownloadStringJob::DownloadStringJob(QNetworkAccessManager *networkManager,
                                      const QString &url, int timeout,
                                      QByteArray *postdata)
     : DownloadJobBase(networkManager, url),
-      timeouttime(timeout),
-      postdata(postdata),
+      timeoutTime(timeout),
+      postData(postdata),
       buffer("")
 {
 }
@@ -15,13 +15,13 @@ DownloadStringJob::DownloadStringJob(QNetworkAccessManager *networkManager,
 void DownloadStringJob::start()
 {
     QNetworkRequest request(url);
-    if (!postdata)
+    if (!postData)
         reply.reset(networkManager->get(request));
     else
     {
         request.setHeader(QNetworkRequest::ContentTypeHeader,
                           "application/x-www-form-urlencoded");
-        reply.reset(networkManager->post(request, *postdata));
+        reply.reset(networkManager->post(request, *postData));
     }
     reply->setParent(this);
 
@@ -32,11 +32,11 @@ void DownloadStringJob::start()
     QObject::connect(reply.get(), SIGNAL(sslErrors(const QList<QSslError> &)),
                      this, SLOT(onSslErrors(const QList<QSslError> &)));
 
-    if (timeouttime > 0)
+    if (timeoutTime > 0)
     {
-        QObject::connect(&timeouttimer, SIGNAL(timeout()), this,
+        QObject::connect(&timeoutTimer, SIGNAL(timeout()), this,
                          SLOT(timeout()));
-        timeouttimer.start(timeouttime);
+        timeoutTimer.start(timeoutTime);
     }
 }
 
@@ -57,7 +57,7 @@ void DownloadStringJob::downloadStringReadyRead()
 
 void DownloadStringJob::downloadStringFinished()
 {
-    timeouttimer.stop();
+    timeoutTimer.stop();
 
     QUrl redirect =
         reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
@@ -93,7 +93,7 @@ void DownloadStringJob::downloadStringFinished()
 
 void DownloadStringJob::onError(QNetworkReply::NetworkError)
 {
-    timeouttimer.stop();
+    timeoutTimer.stop();
 
     if (errorString != "")
         errorString = "Download error: " + reply->errorString();
@@ -112,7 +112,7 @@ void DownloadStringJob::timeout()
 
 bool DownloadStringJob::await(int timeout, bool retry)
 {
-    QMetaObject::invokeMethod(&timeouttimer, "stop", Qt::AutoConnection);
+    QMetaObject::invokeMethod(&timeoutTimer, "stop", Qt::AutoConnection);
     //    timeouttimer.stop();
 
     if (isCompleted)

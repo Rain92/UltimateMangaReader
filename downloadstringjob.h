@@ -8,15 +8,15 @@ class DownloadStringJob : public DownloadJobBase
     Q_OBJECT
 
 protected:
-    QTimer timeouttimer;
-    int timeouttime;
-    QByteArray *postdata;
+    QTimer timeoutTimer;
+    int timeoutTime;
+    QByteArray *postData;
 
 public:
     QString buffer;
 
     DownloadStringJob(QNetworkAccessManager *networkManager, const QString &url,
-                      int timeout = 6000, QByteArray *postdata = nullptr);
+                      int timeout = 6000, QByteArray *postData = nullptr);
 
     bool await(int timeout = 6000, bool retry = true);
 

@@ -56,7 +56,7 @@ signals:
 public slots:
 
 private:
-    QNetworkAccessManager *networkmanager;
+    QNetworkAccessManager *networkManager;
     CCookieJar cookies;
 
     QSize imageRescaleSize;

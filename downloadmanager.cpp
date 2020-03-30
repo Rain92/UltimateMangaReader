@@ -8,11 +8,11 @@
 
 DownloadManager::DownloadManager(QObject *parent)
     : QObject(parent),
-      networkmanager(new QNetworkAccessManager(this)),
+      networkManager(new QNetworkAccessManager(this)),
       cookies(),
       fileDownloads()
 {
-    networkmanager->setCookieJar(&cookies);
+    networkManager->setCookieJar(&cookies);
 #ifdef KOBO
     loadCertificates("/mnt/onboard/.adds/qt-5.14.1-kobo/lib/ssl_certs");
 #endif
@@ -20,7 +20,7 @@ DownloadManager::DownloadManager(QObject *parent)
 
 QNetworkAccessManager *DownloadManager::networkAccessManager()
 {
-    return this->networkmanager;
+    return this->networkManager;
 }
 
 bool DownloadManager::connect()
@@ -49,7 +49,7 @@ QSharedPointer<DownloadStringJob> DownloadManager::downloadAsString(
     qDebug() << "downloading:" << url;
 
     auto job = QSharedPointer<DownloadStringJob>(
-        new DownloadStringJob(networkmanager, url, timeout),
+        new DownloadStringJob(networkManager, url, timeout),
         &QObject::deleteLater);
 
     job->start();
@@ -62,7 +62,7 @@ QSharedPointer<DownloadStringJob> DownloadManager::downloadAsStringPost(
     qDebug() << "downloading:" << url;
 
     auto job = QSharedPointer<DownloadStringJob>(
-        new DownloadStringJob(networkmanager, url, timeout, postdata),
+        new DownloadStringJob(networkManager, url, timeout, postdata),
         &QObject::deleteLater);
 
     job->start();
@@ -82,7 +82,7 @@ QSharedPointer<DownloadFileJob> DownloadManager::downloadAsFile(
     }
 
     auto job = QSharedPointer<DownloadFileJob>(
-        new DownloadFileJob(networkmanager, url, localPath),
+        new DownloadFileJob(networkManager, url, localPath),
         [this](DownloadFileJob *j) {
             this->fileDownloads.remove(j->originalUrl);
             j->deleteLater();
@@ -107,7 +107,7 @@ QSharedPointer<DownloadFileJob> DownloadManager::downloadAsScaledImage(
             fileDownloads.remove(url);
     }
     auto job = QSharedPointer<DownloadFileJob>(
-        new DownloadScaledImageJob(networkmanager, url, localPath,
+        new DownloadScaledImageJob(networkManager, url, localPath,
                                    imageRescaleSize),
         [this](DownloadFileJob *j) {
             this->fileDownloads.remove(j->originalUrl);
@@ -167,7 +167,7 @@ bool DownloadManager::urlExists(const QString &url)
 {
     QNetworkRequest request(url);
 
-    auto reply = networkmanager->head(request);
+    auto reply = networkManager->head(request);
 
     awaitSignal(reply, {SIGNAL(finished())}, 2000);
 

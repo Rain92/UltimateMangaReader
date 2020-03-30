@@ -47,7 +47,7 @@ long dirSize(QString dirPath)
 
 void ClearCacheDialog::getCacheSize()
 {
-    long size = dirSize(CONF.cachedir) / 1024 / 1024;
+    long size = dirSize(CONF.cacheDir) / 1024 / 1024;
 
     ui->labelCacheSize->setText("The cache takes up " + QString::number(size) +
                                 " MB.");

@@ -65,7 +65,7 @@ MangaList MangaHub::getMangaList()
         for (int i = oldPages + 1; i <= pages; i++)
             urls.append(dicturl + QString::number(i));
 
-        DownloadQueue queue(downloadManager, urls, CONF.maxparalleldownloads2,
+        DownloadQueue queue(downloadManager, urls, CONF.parallelDownloadsHigh,
                             lambda);
         queue.start();
         awaitSignal(&queue, {SIGNAL(allCompleted())}, 1000000);

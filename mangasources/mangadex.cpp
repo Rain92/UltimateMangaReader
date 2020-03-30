@@ -97,7 +97,7 @@ MangaList MangaDex::getMangaList()
     for (int i = 2; i <= pages; i++)
         urls.append(basedictlink + QString::number(i));
 
-    DownloadQueue queue(downloadManager, urls, CONF.maxparalleldownloads,
+    DownloadQueue queue(downloadManager, urls, CONF.parallelDownloadsLow,
                         lambda);
 
     queue.start();
@@ -173,7 +173,7 @@ void MangaDex::updateMangaInfoFinishedLoading(
         for (int i = 2; i <= pages; i++)
             urls.append(info->link + QString::number(i));
 
-        DownloadQueue queue(downloadManager, urls, CONF.maxparalleldownloads,
+        DownloadQueue queue(downloadManager, urls, CONF.parallelDownloadsLow,
                             lambda);
 
         queue.start();

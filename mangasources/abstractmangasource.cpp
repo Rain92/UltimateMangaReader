@@ -10,7 +10,7 @@ AbstractMangaSource::AbstractMangaSource(QObject *parent,
 
 bool AbstractMangaSource::serializeMangaList()
 {
-    QFile file(CONF.mangalistdir + name + "_mangaList.dat");
+    QFile file(CONF.mangaListDir + name + "_mangaList.dat");
     if (!file.open(QIODevice::WriteOnly))
         return false;
     QDataStream out(&file);
@@ -30,7 +30,7 @@ bool AbstractMangaSource::deserializeMangaList()
     mangaList.links.clear();
     mangaList.titles.clear();
 
-    QFile file(CONF.mangalistdir + name + "_mangalist.dat");
+    QFile file(CONF.mangaListDir + name + "_mangalist.dat");
     if (!file.open(QIODevice::ReadOnly))
         return false;
     QDataStream in(&file);
@@ -48,10 +48,10 @@ bool AbstractMangaSource::deserializeMangaList()
 QString AbstractMangaSource::getImagePath(
     const DownloadImageDescriptor &descriptor)
 {
-    int ind = descriptor.imagelink.indexOf('?');
+    int ind = descriptor.imageUrl.indexOf('?');
     if (ind == -1)
-        ind = descriptor.imagelink.length();
-    QString filetype = descriptor.imagelink.mid(ind - 4, 4);
+        ind = descriptor.imageUrl.length();
+    QString filetype = descriptor.imageUrl.mid(ind - 4, 4);
 
     QString path = CONF.mangaimagesdir(name, descriptor.title) +
                    QString::number(descriptor.chapter) + "_" +
@@ -65,7 +65,7 @@ QSharedPointer<DownloadFileJob> AbstractMangaSource::downloadImage(
 {
     QString path = getImagePath(descriptor);
 
-    return downloadManager->downloadAsScaledImage(descriptor.imagelink, path);
+    return downloadManager->downloadAsScaledImage(descriptor.imageUrl, path);
 }
 
 QString AbstractMangaSource::downloadAwaitImage(
@@ -77,7 +77,7 @@ QString AbstractMangaSource::downloadAwaitImage(
         return path;
 
     auto job =
-        downloadManager->downloadAsScaledImage(descriptor.imagelink, path);
+        downloadManager->downloadAsScaledImage(descriptor.imageUrl, path);
 
     return job->await(5000) ? path : "";
 }

@@ -66,7 +66,7 @@ MangaList MangaOwl::getMangaList()
     for (int i = 2; i <= pages; i++)
         urls.append(dicturl + QString::number(i));
 
-    DownloadQueue queue(downloadManager, urls, CONF.maxparalleldownloads2,
+    DownloadQueue queue(downloadManager, urls, CONF.parallelDownloadsHigh,
                         lambda);
 
     queue.start();

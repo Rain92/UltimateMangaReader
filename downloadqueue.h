@@ -8,7 +8,7 @@ class DownloadQueue : public QObject
     Q_OBJECT
 public:
     explicit DownloadQueue(
-        DownloadManager *downloadmanager, const QList<QString> &urls,
+        DownloadManager *downloadmanager, const QList<QString> &urlQueue,
         int parallelDownloads,
         std::function<void(QSharedPointer<DownloadStringJob>)> lambda);
 
@@ -26,8 +26,8 @@ private:
     DownloadManager *downloadmanager;
 
     int parallelDownloads;
-    QQueue<QString> urls;
-    int totaljobs;
+    QQueue<QString> urlQueue;
+    int totalJobs;
     std::function<void(QSharedPointer<DownloadStringJob>)> lambda;
 
     void startSingle();

@@ -9,11 +9,11 @@ DownloadQueue::DownloadQueue(
       errors(0),
       downloadmanager(downloadmanager),
       parallelDownloads(parallelDownloads),
-      urls(),
+      urlQueue(),
       lambda(lambda)
 {
-    this->urls.append(urls);
-    totaljobs = urls.size();
+    this->urlQueue.append(urls);
+    totalJobs = urls.size();
 }
 
 void DownloadQueue::start()
@@ -24,10 +24,10 @@ void DownloadQueue::start()
 
 void DownloadQueue::startSingle()
 {
-    if (urls.empty())
+    if (urlQueue.empty())
         return;
 
-    auto url = urls.dequeue();
+    auto url = urlQueue.dequeue();
 
     auto job = downloadmanager->downloadAsString(url, 8000);
 
@@ -61,7 +61,7 @@ void DownloadQueue::downloadFinished(QSharedPointer<DownloadStringJob> job,
 
     job->disconnect();
 
-    if (completed == totaljobs)
+    if (completed == totalJobs)
     {
         emit allCompleted();
     }
@@ -69,4 +69,4 @@ void DownloadQueue::downloadFinished(QSharedPointer<DownloadStringJob> job,
         startSingle();
 }
 
-void DownloadQueue::clearQuene() { urls.clear(); }
+void DownloadQueue::clearQuene() { urlQueue.clear(); }

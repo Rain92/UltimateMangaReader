@@ -5,13 +5,13 @@
 
 struct DownloadImageDescriptor
 {
-    DownloadImageDescriptor(const QString &imagelink, const QString &title,
+    DownloadImageDescriptor(const QString &imageUrl, const QString &title,
                             int chapter, int page)
-        : imagelink(imagelink), title(title), chapter(chapter), page(page)
+        : imageUrl(imageUrl), title(title), chapter(chapter), page(page)
     {
     }
 
-    QString imagelink;
+    QString imageUrl;
     QString title;
     int chapter;
     int page;

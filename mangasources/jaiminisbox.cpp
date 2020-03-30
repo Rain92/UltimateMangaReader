@@ -66,7 +66,7 @@ MangaList JaiminisBox::getMangaList()
     for (int i = 2; i <= pages; i++)
         urls.append(readerlink + QString::number(i));
 
-    DownloadQueue queue(downloadManager, urls, CONF.maxparalleldownloads,
+    DownloadQueue queue(downloadManager, urls, CONF.parallelDownloadsLow,
                         lambda);
 
     queue.start();

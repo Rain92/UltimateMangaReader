@@ -273,7 +273,7 @@ void MangaReaderWidget::addImageToCache(const QString &path)
     {
         imgcache.insert(0, {QSharedPointer<QPixmap>(new QPixmap(path)), path});
 
-        if (imgcache.count() > CONF.imagecachesize)
+        if (imgcache.count() > CONF.imageCacheSize)
             imgcache.removeLast();
     }
 }
