@@ -28,6 +28,7 @@ RESOURCES += \
     images.qrc
 
 FORMS += \
+    widgets/errormessagewidget.ui \
     widgets/favoriteswidget.ui \
     widgets/mainwidget.ui \
     widgets/homewidget.ui \
@@ -62,8 +63,8 @@ HEADERS += \
     mangasources/mangadex.h \
     mangasources/jaiminisbox.h \
     utils.h \
-    widgets/VirtualKeyboard.h \
     widgets/clineedit.h \
+    widgets/errormessagewidget.h \
     widgets/favoriteswidget.h \
     widgets/mainwidget.h \
     widgets/mangaimagecontainer.h \
@@ -85,7 +86,8 @@ HEADERS += \
     widgets/updatedialog.h \
     settings.h \
     widgets/numpadwidget.h \
-    widgets/clearcachedialog.h
+    widgets/clearcachedialog.h \
+    widgets/virtualkeyboard.h
 
 SOURCES += \
     mangachaptercollection.cpp \
@@ -104,8 +106,8 @@ SOURCES += \
     mangasources/mangadex.cpp \
     mangasources/jaiminisbox.cpp \
     utils.cpp \
-    widgets/VirtualKeyboard.cpp \
     widgets/clineedit.cpp \
+    widgets/errormessagewidget.cpp \
     widgets/favoriteswidget.cpp \
     widgets/mainwidget.cpp \
     widgets/mangaimagecontainer.cpp \
@@ -128,6 +130,7 @@ SOURCES += \
     widgets/updatedialog.cpp \
     settings.cpp \
     widgets/numpadwidget.cpp \
-    widgets/clearcachedialog.cpp
+    widgets/clearcachedialog.cpp \
+    widgets/virtualkeyboard.cpp
 
 

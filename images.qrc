@@ -17,7 +17,8 @@
         <file>images/icons/batteryfull.png</file>
         <file>images/mangahostlogos/mangahub.png</file>
         <file>images/mangahostlogos/mangaowl.png</file>
-        <file>images/keyboardicons.svg</file>
+        <file>images/icons/error.jpg</file>
+        <file>images/icons/keyboardicons.svg</file>
     </qresource>
     <qresource prefix="/"/>
 </RCC>

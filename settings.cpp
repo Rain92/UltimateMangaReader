@@ -1,12 +1,10 @@
 #include "settings.h"
 
-Settings::Settings() : timer()
+Settings::Settings()
+    : lightValue(0), comflightValue(0), hideErrorMessages(false), timer()
 {
     timer.setSingleShot(true);
-    QObject::connect(&timer, SIGNAL(timeout()), this, SLOT(serialize()));
-
-    lightvalue = 30;
-    comflightvalue = 6400;
+    QObject::connect(&timer, &QTimer::timeout, [this]() { this->serialize(); });
 }
 
 void Settings::deserialize()
@@ -35,14 +33,15 @@ void Settings::serialize()
 
 QDataStream &operator<<(QDataStream &str, const Settings &m)
 {
-    str << (qint32)m.lightvalue << (qint32)m.comflightvalue;
+    str << (qint32)m.lightValue << (qint32)m.comflightValue
+        << m.hideErrorMessages;
 
     return str;
 }
 
 QDataStream &operator>>(QDataStream &str, Settings &m)
 {
-    str >> m.lightvalue >> m.comflightvalue;
+    str >> m.lightValue >> m.comflightValue >> m.hideErrorMessages;
 
     return str;
 }

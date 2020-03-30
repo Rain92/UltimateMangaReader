@@ -129,7 +129,7 @@ void MangaController::updateCurrentImage()
     if (imagePath != "")
         emit currentImageChanged(imagePath);
     else
-        emit downloadError("");
+        emit downloadError("Download Error!");
 }
 
 void MangaController::advanceMangaPage(PageTurnDirection direction)

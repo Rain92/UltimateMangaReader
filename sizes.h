@@ -41,4 +41,6 @@
 #define frontlightsliderhandlewidth mm_to_px(7)
 #define frontlightsliderhandleheight mm_to_px(6)
 
+#define errormessagewidgetheight mm_to_px(8)
+
 #endif  // SIZES_H

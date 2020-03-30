@@ -12,7 +12,8 @@ MainWidget::MainWidget(QWidget *parent)
       core(new UltimateMangaReaderCore(this)),
       lastTab(MangaInfoTab),
       restorefrontlighttimer(),
-      virtualKeyboard(new VirtualKeyboard(this))
+      virtualKeyboard(new VirtualKeyboard(this)),
+      errorMessageWidget(new ErrorMessageWidget(this))
 {
     ui->setupUi(this);
     adjustSizes();
@@ -45,6 +46,9 @@ MainWidget::MainWidget(QWidget *parent)
     QObject::connect(core->mangaController,
                      &MangaController::indexMovedOutOfBounds, this,
                      &MainWidget::readerGoBack);
+
+    QObject::connect(core->mangaController, &MangaController::downloadError,
+                     errorMessageWidget, &ErrorMessageWidget::showError);
 
     // HomeWidget
     ui->homeWidget->setMangaSources(core->activeMangaSources.values());
@@ -88,12 +92,6 @@ MainWidget::MainWidget(QWidget *parent)
                          if (jumptoreader)
                              setWidgetTab(MangaReaderTab);
                      });
-
-    // TODO
-    //    QObject::connect(ui->favoritesWidget,
-    //    SIGNAL(mangaListUpdated()),
-    //                     core->favoritesManager,
-    //                     SLOT(serialize()));
 
     // MangaReaderWidget
     QObject::connect(ui->mangaReaderWidget, &MangaReaderWidget::changeView,
@@ -154,10 +152,10 @@ void MainWidget::enableVirtualKeyboard(bool enabled)
 
 void MainWidget::setupFrontLight()
 {
-    setFrontLight(core->settings.lightvalue, core->settings.comflightvalue);
+    setFrontLight(core->settings.lightValue, core->settings.comflightValue);
 
     ui->mangaReaderWidget->setFrontLightPanelState(
-        core->settings.lightvalue, core->settings.comflightvalue);
+        core->settings.lightValue, core->settings.comflightValue);
 }
 
 void MainWidget::setFrontLight(int light, int comflight)
@@ -166,11 +164,11 @@ void MainWidget::setFrontLight(int light, int comflight)
     KoboPlatformFunctions::setFrontlightLevel(light, comflight);
 #endif
 
-    if (core->settings.lightvalue != light ||
-        core->settings.comflightvalue != comflight)
+    if (core->settings.lightValue != light ||
+        core->settings.comflightValue != comflight)
     {
-        core->settings.lightvalue = light;
-        core->settings.comflightvalue = comflight;
+        core->settings.lightValue = light;
+        core->settings.comflightValue = comflight;
 
         core->settings.scheduleSerialize();
     }
@@ -188,6 +186,9 @@ void MainWidget::on_pushButtonClose_clicked() { close(); }
 void MainWidget::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
+
+    errorMessageWidget->setMinimumWidth(this->width());
+    errorMessageWidget->setMaximumWidth(this->width());
 
     core->downloadManager->setImageRescaleSize(this->size());
 }
@@ -225,7 +226,7 @@ void MainWidget::readerGoBack() { setWidgetTab(lastTab); }
 
 void MainWidget::restoreFrontLight()
 {
-    setFrontLight(core->settings.lightvalue, core->settings.comflightvalue);
+    setFrontLight(core->settings.lightValue, core->settings.comflightValue);
 }
 
 bool MainWidget::eventFilter(QObject *obj, QEvent *ev)

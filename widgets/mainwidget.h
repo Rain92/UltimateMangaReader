@@ -6,12 +6,13 @@
 #include <QStringListModel>
 #include <QWidget>
 
-#include "VirtualKeyboard.h"
 #include "downloadmanager.h"
+#include "errormessagewidget.h"
 #include "favoriteswidget.h"
 #include "homewidget.h"
 #include "mangareaderwidget.h"
 #include "ultimatemangareadercore.h"
+#include "virtualkeyboard.h"
 
 namespace Ui
 {
@@ -60,6 +61,7 @@ private:
 
     QTimer restorefrontlighttimer;
     VirtualKeyboard *virtualKeyboard;
+    ErrorMessageWidget *errorMessageWidget;
 };
 
 #endif  // MAINWIDGET_H

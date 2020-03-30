@@ -7,21 +7,19 @@
 
 #include "staticsettings.h"
 
-class Settings : QObject
+class Settings
 {
-    Q_OBJECT
-
 public:
     Settings();
 
     void deserialize();
+    void serialize();
     void scheduleSerialize();
 
-    int lightvalue;
-    int comflightvalue;
+    int lightValue;
+    int comflightValue;
 
-public slots:
-    void serialize();
+    bool hideErrorMessages;
 
 private:
     QTimer timer;

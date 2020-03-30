@@ -92,8 +92,6 @@ void FavoritesWidget::moveFavoriteToFront(int i)
 
     ui->tableWidget->removeRow(i);
     insertRow(favoritesmanager->favoriteinfos.at(0), 0);
-
-    emit(mangaListUpdated());
 }
 
 void FavoritesWidget::mangaUpdated(bool newchapters)
