@@ -1,11 +1,5 @@
 #include "favoriteswidget.h"
 
-#include <qlabel.h>
-
-#include <QFileInfo>
-
-#include "cscrollbar.h"
-#include "defines.h"
 #include "ui_favoriteswidget.h"
 
 FavoritesWidget::FavoritesWidget(QWidget *parent)

@@ -1,11 +1,6 @@
 #include "downloadmanager.h"
 
-#include <QDir>
-#include <QList>
-#include <QNetworkReply>
-#include <QNetworkRequest>
-#include <QTime>
-#include <QUrl>
+#include "utils.h"
 
 #ifdef KOBO
 #include "../koboplatformintegrationplugin/koboplatformfunctions.h"

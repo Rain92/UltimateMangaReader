@@ -1,17 +1,16 @@
 #ifndef HOMEWIDGET_H
 #define HOMEWIDGET_H
 
-#include <QDialogButtonBox>
-#include <QProgressBar>
 #include <QProgressDialog>
 #include <QScrollBar>
-#include <QStandardItem>
 #include <QStandardItemModel>
-#include <QStringListModel>
-#include <QWidget>
 
 #include "abstractmangasource.h"
 #include "clearcachedialog.h"
+#include "clineedit.h"
+#include "cscrollbar.h"
+#include "sizes.h"
+#include "staticsettings.h"
 #include "updatedialog.h"
 
 namespace Ui

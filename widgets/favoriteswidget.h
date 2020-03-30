@@ -1,10 +1,14 @@
 #ifndef FAVORITESWIDGET_H
 #define FAVORITESWIDGET_H
 
+#include <QFileInfo>
+#include <QLabel>
 #include <QWidget>
 
+#include "cscrollbar.h"
 #include "favoritesmanager.h"
 #include "readingprogress.h"
+#include "sizes.h"
 
 namespace Ui
 {

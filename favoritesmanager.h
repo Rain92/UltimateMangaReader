@@ -2,7 +2,6 @@
 #define READINGSTATEMANAGER_H
 
 #include "abstractmangasource.h"
-#include "defines.h"
 #include "downloadmanager.h"
 #include "favorite.h"
 

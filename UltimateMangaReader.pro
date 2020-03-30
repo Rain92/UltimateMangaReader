@@ -46,9 +46,10 @@ HEADERS += \
     readingprogress.h \
     result.h \
     resulttypes.h \
+    sizes.h \
+    staticsettings.h \
     ultimatemangareadercore.h \
     widgets/customgesturerecognizer.h \
-    defines.h \
     downloadimagedescriptor.h \
     downloadjobbase.h \
     downloadqueue.h \

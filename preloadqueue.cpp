@@ -1,7 +1,5 @@
 #include "preloadqueue.h"
 
-#include "defines.h"
-
 PreloadQueue::PreloadQueue(DownloadManager* downloadManager)
     : QObject(), downloadManager(downloadManager), queue(), running(false)
 {

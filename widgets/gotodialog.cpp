@@ -1,7 +1,5 @@
 #include "gotodialog.h"
 
-#include "defines.h"
-#include "numpadwidget.h"
 #include "ui_gotodialog.h"
 
 GotoDialog::GotoDialog(QWidget *parent)

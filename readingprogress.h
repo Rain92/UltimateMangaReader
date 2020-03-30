@@ -2,8 +2,8 @@
 #ifndef READINGPROGRESS_H
 #define READINGPROGRESS_H
 
-#include "defines.h"
 #include "mangaindex.h"
+#include "staticsettings.h"
 
 class ReadingProgress
 {

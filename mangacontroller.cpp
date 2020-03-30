@@ -114,7 +114,7 @@ void MangaController::currentIndexChangedInternal(bool preload)
 
     if (preload)
         QTimer::singleShot(50, [this]() {
-            preloadNeighbours(forwardpreloads, backwardpreloads);
+            preloadNeighbours(CONF.forwardpreloads, CONF.backwardpreloads);
         });
 }
 void MangaController::updateCurrentImage()

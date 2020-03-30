@@ -1,7 +1,5 @@
 #include "mangakakalot.h"
 
-#include "downloadqueue.h"
-
 Mangakakalot::Mangakakalot(QObject *parent, DownloadManager *dm)
     : AbstractMangaSource(parent, dm)
 {
@@ -74,7 +72,8 @@ MangaList Mangakakalot::getMangaList()
     for (int i = 2; i <= pages; i++)
         urls.append(dicturl + QString::number(i));
 
-    DownloadQueue queue(downloadManager, urls, maxparalleldownloads, lambda);
+    DownloadQueue queue(downloadManager, urls, CONF.maxparalleldownloads,
+                        lambda);
 
     queue.start();
     awaitSignal(&queue, {SIGNAL(allCompleted())}, 1000000);

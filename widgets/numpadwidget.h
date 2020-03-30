@@ -2,8 +2,10 @@
 #define NUMPADWIDGET_H
 
 #include <QAbstractButton>
-#include <QWidget>
-#include <QtCore>
+#include <QIcon>
+#include <QKeyEvent>
+
+#include "sizes.h"
 
 namespace Ui
 {

@@ -1,9 +1,5 @@
 #include "abstractmangasource.h"
 
-#include <QDateTime>
-#include <QImage>
-
-#include "defines.h"
 #include "mangainfo.h"
 
 AbstractMangaSource::AbstractMangaSource(QObject *parent,
@@ -14,7 +10,7 @@ AbstractMangaSource::AbstractMangaSource(QObject *parent,
 
 bool AbstractMangaSource::serializeMangaList()
 {
-    QFile file(mangalistdir + name + "_mangaList.dat");
+    QFile file(CONF.mangalistdir + name + "_mangaList.dat");
     if (!file.open(QIODevice::WriteOnly))
         return false;
     QDataStream out(&file);
@@ -34,7 +30,7 @@ bool AbstractMangaSource::deserializeMangaList()
     mangaList.links.clear();
     mangaList.titles.clear();
 
-    QFile file(mangalistdir + name + "_mangalist.dat");
+    QFile file(CONF.mangalistdir + name + "_mangalist.dat");
     if (!file.open(QIODevice::ReadOnly))
         return false;
     QDataStream in(&file);
@@ -57,7 +53,7 @@ QString AbstractMangaSource::getImagePath(
         ind = descriptor.imagelink.length();
     QString filetype = descriptor.imagelink.mid(ind - 4, 4);
 
-    QString path = mangaimagesdir(name, descriptor.title) +
+    QString path = CONF.mangaimagesdir(name, descriptor.title) +
                    QString::number(descriptor.chapter) + "_" +
                    QString::number(descriptor.page) + filetype;
 
@@ -89,7 +85,7 @@ QString AbstractMangaSource::downloadAwaitImage(
 QSharedPointer<MangaInfo> AbstractMangaSource::loadMangaInfo(
     const QString &mangalink, const QString &mangatitle, bool update)
 {
-    QString path(mangainfodir(name, mangatitle) + "mangainfo.dat");
+    QString path(CONF.mangainfodir(name, mangatitle) + "mangainfo.dat");
     if (QFile::exists(path) && true)
     {
         QSharedPointer<MangaInfo> mi(MangaInfo::deserialize(this, path));
@@ -226,7 +222,7 @@ void AbstractMangaSource::downloadCover(QSharedPointer<MangaInfo> mangainfo)
             ind = mangainfo->coverLink.length();
         QString filetype = mangainfo->coverLink.mid(ind - 4, 4);
         mangainfo->coverPath =
-            mangainfodir(name, mangainfo->title) + "cover" + filetype;
+            CONF.mangainfodir(name, mangainfo->title) + "cover" + filetype;
     }
 
     auto coverjob = downloadManager->downloadAsFile(mangainfo->coverLink,

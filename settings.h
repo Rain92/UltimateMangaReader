@@ -1,10 +1,11 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
+#include <QDataStream>
+#include <QFile>
 #include <QTimer>
-#include <QtCore>
 
-#include "defines.h"
+#include "staticsettings.h"
 
 class Settings : QObject
 {

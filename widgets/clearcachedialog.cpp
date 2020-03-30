@@ -1,8 +1,5 @@
 #include "clearcachedialog.h"
 
-#include <QDir>
-
-#include "defines.h"
 #include "ui_clearcachedialog.h"
 
 ClearCacheDialog::ClearCacheDialog(QWidget *parent)
@@ -50,7 +47,7 @@ long dirSize(QString dirPath)
 
 void ClearCacheDialog::getCacheSize()
 {
-    long size = dirSize(cachedir) / 1024 / 1024;
+    long size = dirSize(CONF.cachedir) / 1024 / 1024;
 
     ui->labelCacheSize->setText("The cache takes up " + QString::number(size) +
                                 " MB.");

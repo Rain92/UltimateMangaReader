@@ -1,9 +1,5 @@
 #include "numpadwidget.h"
 
-#include <QIcon>
-#include <QKeyEvent>
-
-#include "defines.h"
 #include "ui_numpadwidget.h"
 
 NumpadWidget::NumpadWidget(QWidget *parent)

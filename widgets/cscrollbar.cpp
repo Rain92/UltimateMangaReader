@@ -1,23 +1,5 @@
 #include "cscrollbar.h"
 
-#include <QtCore/qelapsedtimer.h>
-#include <limits.h>
-
-#include <QDebug>
-#include <QPaintEvent>
-#include <QPainter>
-#include <QScrollBar>
-
-#include "defines.h"
-#include "qapplication.h"
-#include "qcursor.h"
-#include "qevent.h"
-#include "qmenu.h"
-#include "qpainter.h"
-#include "qscrollbar.h"
-#include "qstyle.h"
-#include "qstyleoption.h"
-
 CScrollBar::CScrollBar(Qt::Orientation orientation, QWidget *parent)
     : QScrollBar(orientation, parent),
       extent(-1),

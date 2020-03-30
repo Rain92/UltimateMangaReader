@@ -1,7 +1,5 @@
 #include "favorite.h"
 
-#include "defines.h"
-
 Favorite::Favorite() = default;
 
 Favorite::Favorite(const QString &hostname, const QString &title,
@@ -12,7 +10,7 @@ Favorite::Favorite(const QString &hostname, const QString &title,
 
 QString Favorite::mangaInfoPath() const
 {
-    return mangainfodir(hostname, title) + "mangainfo.dat";
+    return CONF.mangainfodir(hostname, title) + "mangainfo.dat";
 }
 
 QDataStream &operator<<(QDataStream &str, const Favorite &m)

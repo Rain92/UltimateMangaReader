@@ -2,9 +2,6 @@
 
 #include <QImage>
 
-#include "defines.h"
-#include "downloadmanager.h"
-
 DownloadScaledImageJob::DownloadScaledImageJob(
     QNetworkAccessManager *networkManager, const QString &url,
     const QString &path, QSize size)

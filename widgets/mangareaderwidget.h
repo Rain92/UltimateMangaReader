@@ -7,11 +7,11 @@
 #include <QWidget>
 
 #include "customgesturerecognizer.h"
-#include "defines.h"
 #include "enums.h"
 #include "gotodialog.h"
 #include "mangainfo.h"
 #include "readingprogress.h"
+#include "sizes.h"
 
 namespace Ui
 {

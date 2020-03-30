@@ -13,7 +13,7 @@ ReadingProgress::ReadingProgress(const QString &hostname, const QString &title)
 void ReadingProgress::serialize(const QString &hostname, const QString &title)
 
 {
-    QFile file(mangainfodir(hostname, title) + "progress.dat");
+    QFile file(CONF.mangainfodir(hostname, title) + "progress.dat");
     if (!file.open(QIODevice::WriteOnly))
         return;
 
@@ -25,7 +25,7 @@ void ReadingProgress::serialize(const QString &hostname, const QString &title)
 
 bool ReadingProgress::deserialize(const QString &hostname, const QString &title)
 {
-    QFile file(mangainfodir(hostname, title) + "progress.dat");
+    QFile file(CONF.mangainfodir(hostname, title) + "progress.dat");
 
     if (!file.open(QIODevice::ReadOnly))
         return false;

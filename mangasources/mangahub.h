@@ -2,9 +2,6 @@
 #define MANGAHUB_H
 
 #include "abstractmangasource.h"
-#include "defines.h"
-#include "downloadqueue.h"
-#include "mangachapter.h"
 #include "mangainfo.h"
 
 class MangaHub : public AbstractMangaSource

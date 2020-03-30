@@ -1,7 +1,5 @@
 #include "mangapanda.h"
 
-#include "defines.h"
-
 MangaPanda::MangaPanda(QObject *parent, DownloadManager *dm)
     : AbstractMangaSource(parent, dm)
 {

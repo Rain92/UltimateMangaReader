@@ -1,11 +1,5 @@
 #include "jaiminisbox.h"
 
-#include <QElapsedTimer>
-#include <QMessageBox>
-
-#include "defines.h"
-#include "downloadqueue.h"
-
 JaiminisBox::JaiminisBox(QObject *parent, DownloadManager *dm)
     : AbstractMangaSource(parent, dm)
 {
@@ -72,7 +66,8 @@ MangaList JaiminisBox::getMangaList()
     for (int i = 2; i <= pages; i++)
         urls.append(readerlink + QString::number(i));
 
-    DownloadQueue queue(downloadManager, urls, maxparalleldownloads, lambda);
+    DownloadQueue queue(downloadManager, urls, CONF.maxparalleldownloads,
+                        lambda);
 
     queue.start();
 

@@ -1,8 +1,5 @@
 #include "homewidget.h"
 
-#include "clineedit.h"
-#include "cscrollbar.h"
-#include "defines.h"
 #include "ui_homewidget.h"
 
 HomeWidget::HomeWidget(QWidget *parent)
@@ -184,7 +181,7 @@ void HomeWidget::clearCacheDialogButtonClicked(int level)
             {
                 foreach (
                     QFileInfo info,
-                    QDir(cachedir + ms->name)
+                    QDir(CONF.cachedir + ms->name)
                         .entryInfoList(QDir::NoDotAndDotDot | QDir::System |
                                        QDir::Hidden | QDir::AllDirs))
                     removeDir(info.absoluteFilePath() + "/images");
@@ -193,12 +190,12 @@ void HomeWidget::clearCacheDialogButtonClicked(int level)
 
         case 2:
             for (auto ms : mangasources)
-                removeDir(cachedir + ms->name, "progress.dat");
+                removeDir(CONF.cachedir + ms->name, "progress.dat");
 
             break;
 
         case 3:
-            removeDir(cachedir, "mangaList.dat");
+            removeDir(CONF.cachedir, "mangaList.dat");
             emit favoritesCleared();
             break;
 

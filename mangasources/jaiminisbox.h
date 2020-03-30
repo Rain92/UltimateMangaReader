@@ -2,7 +2,6 @@
 #define JAIMINISBOX_H
 
 #include "abstractmangasource.h"
-#include "mangachapter.h"
 #include "mangainfo.h"
 
 class JaiminisBox : public AbstractMangaSource

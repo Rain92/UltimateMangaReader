@@ -2,6 +2,10 @@
 #define CLEARCACHEDIALOG_H
 
 #include <QDialog>
+#include <QDir>
+
+#include "sizes.h"
+#include "staticsettings.h"
 
 namespace Ui
 {

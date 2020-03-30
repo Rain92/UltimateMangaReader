@@ -1,22 +1,5 @@
-#ifndef DEFINES_H
-#define DEFINES_H
-
-#include "utils.h"
-
-// dirstructure:
-//               /cache/      -> favorites.dat
-//               /cache/mangalists/ -> hostname_mangalist.dat
-//               /cache/hostname/manganame/ -> mangainfo.dat progress.dat
-//               /cache/hostname/manganame/images/ ->
-//               manganame_chapter_page.jpg|png
-
-#define cachedir QCoreApplication::applicationDirPath() + "/cache/"
-#define mangalistdir cachedir + "mangalists/"
-
-#define mangainfodir(hostname, manganame) \
-    (cachedir + hostname + "/" + makePathLegal(manganame) + "/")
-#define mangaimagesdir(hostname, manganame) \
-    (mangainfodir(hostname, manganame) + "images/")
+#ifndef SIZES_H
+#define SIZES_H
 
 #ifdef DESKTOP
 #define screen_dpi 108
@@ -58,11 +41,4 @@
 #define frontlightsliderhandlewidth mm_to_px(7)
 #define frontlightsliderhandleheight mm_to_px(6)
 
-#define imagecachesize 10
-
-#define maxparalleldownloads 4
-
-#define forwardpreloads 6
-#define backwardpreloads 1
-
-#endif  // DEFINES_H
+#endif  // SIZES_H

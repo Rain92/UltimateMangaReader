@@ -1,9 +1,8 @@
 #ifndef READINGSTATE_H
 #define READINGSTATE_H
 
-#include "defines.h"
-#include "mangaindex.h"
 #include "mangainfo.h"
+#include "staticsettings.h"
 
 struct Favorite
 {

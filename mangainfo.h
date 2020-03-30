@@ -4,9 +4,9 @@
 #include <QMutex>
 
 #include "abstractmangasource.h"
-#include "defines.h"
 #include "downloadimagedescriptor.h"
 #include "mangachaptercollection.h"
+#include "staticsettings.h"
 
 class MangaInfo : public QObject
 {

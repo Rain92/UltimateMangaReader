@@ -131,7 +131,9 @@ void MangaInfoWidget::setManga(QSharedPointer<MangaInfo> manga)
 
 void MangaInfoWidget::updateManga(bool newchapters)
 {
-    qDebug() << "update";
+    Q_UNUSED(newchapters)
+
+    qDebug() << "updated" << currentmanga->title;
     ui->labelMangaInfoLabelStaus->setText(currentmanga->status);
     static_cast<QStringListModel *>(ui->listViewChapters->model())
         ->setStringList(currentmanga->chapters.getMangaTitlesReversed());

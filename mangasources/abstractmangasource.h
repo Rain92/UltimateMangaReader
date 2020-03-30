@@ -1,14 +1,17 @@
 #ifndef ABSTRACTMANGASOURCE_H
 #define ABSTRACTMANGASOURCE_H
 #include <QDateTime>
+#include <QImage>
 #include <QRegularExpression>
 #include <QTextDocument>
 
 #include "downloadimagedescriptor.h"
 #include "downloadmanager.h"
+#include "downloadqueue.h"
 #include "mangachapter.h"
 #include "mangalist.h"
-#include "utils.h"
+#include "sizes.h"
+#include "staticsettings.h"
 
 class MangaInfo;
 

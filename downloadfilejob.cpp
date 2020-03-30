@@ -1,7 +1,6 @@
 #include "downloadfilejob.h"
 
-#include "defines.h"
-#include "downloadmanager.h"
+#include "utils.h"
 
 DownloadFileJob::DownloadFileJob(QNetworkAccessManager *networkManager,
                                  const QString &url,

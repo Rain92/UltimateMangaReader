@@ -1,9 +1,5 @@
 #include "settings.h"
 
-#include <QDataStream>
-#include <QFile>
-#include <QTime>
-
 Settings::Settings() : timer()
 {
     timer.setSingleShot(true);
@@ -15,7 +11,7 @@ Settings::Settings() : timer()
 
 void Settings::deserialize()
 {
-    QFile file(QString(cachedir) + "/settings.dat");
+    QFile file(QString(CONF.cachedir) + "/settings.dat");
     if (!file.open(QIODevice::ReadOnly))
         return;
 
@@ -28,7 +24,7 @@ void Settings::scheduleSerialize() { timer.start(500); }
 
 void Settings::serialize()
 {
-    QFile file(QString(cachedir) + "/settings.dat");
+    QFile file(QString(CONF.cachedir) + "/settings.dat");
     if (!file.open(QIODevice::WriteOnly))
         return;
 

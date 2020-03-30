@@ -1,10 +1,15 @@
 #ifndef CSCROLLBAR_H
 #define CSCROLLBAR_H
 
-#include <QScrollBar>
+#include <limits.h>
 
-#include "qstyle.h"
-#include "qstyleoption.h"
+#include <QElapsedTimer>
+#include <QPaintEvent>
+#include <QPainter>
+#include <QScrollBar>
+#include <QStyleOption>
+
+#include "sizes.h"
 
 class CScrollBar : public QScrollBar
 {

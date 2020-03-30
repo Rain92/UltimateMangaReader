@@ -32,7 +32,7 @@ QSharedPointer<MangaInfo> MangaInfo::deserialize(
 
 void MangaInfo::serialize()
 {
-    QFile file(mangainfodir(hostname, title) + "mangainfo.dat");
+    QFile file(CONF.mangainfodir(hostname, title) + "mangainfo.dat");
     if (!file.open(QIODevice::WriteOnly))
         return;
 

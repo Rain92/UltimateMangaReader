@@ -3,7 +3,6 @@
 
 #include <QImage>
 
-#include "defines.h"
 #include "downloadimagedescriptor.h"
 #include "enums.h"
 #include "mangachapter.h"
@@ -11,6 +10,7 @@
 #include "mangainfo.h"
 #include "preloadqueue.h"
 #include "readingprogress.h"
+#include "staticsettings.h"
 
 class MangaController : public QObject
 {

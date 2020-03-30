@@ -4,7 +4,9 @@
 #include <QDialog>
 #include <QResizeEvent>
 
+#include "numpadwidget.h"
 #include "readingprogress.h"
+#include "sizes.h"
 
 namespace Ui
 {

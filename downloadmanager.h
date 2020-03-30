@@ -1,13 +1,11 @@
 #ifndef DOWNLOADMANAGER_H
 #define DOWNLOADMANAGER_H
 
-#include <QList>
 #include <QNetworkReply>
 
 #include "downloadfilejob.h"
 #include "downloadimageandrescalejob.h"
 #include "downloadstringjob.h"
-#include "utils.h"
 
 class CCookieJar : public QNetworkCookieJar
 {

@@ -64,9 +64,9 @@ void UltimateMangaReaderCore::setCurrentManga(const QString& mangalink,
 
 void UltimateMangaReaderCore::setupDirectories()
 {
-    if (!QDir(cachedir).exists())
-        QDir().mkpath(cachedir);
+    if (!QDir(CONF.cachedir).exists())
+        QDir().mkpath(CONF.cachedir);
 
-    if (!QDir(mangalistdir).exists())
-        QDir().mkpath(mangalistdir);
+    if (!QDir(CONF.mangalistdir).exists())
+        QDir().mkpath(CONF.mangalistdir);
 }

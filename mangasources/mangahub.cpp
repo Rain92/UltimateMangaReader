@@ -1,7 +1,5 @@
 #include "mangahub.h"
 
-#include "mangaowl.h"
-
 MangaHub::MangaHub(QObject *parent, DownloadManager *dm)
     : AbstractMangaSource(parent, dm)
 {
@@ -67,7 +65,8 @@ MangaList MangaHub::getMangaList()
         for (int i = oldPages + 1; i <= pages; i++)
             urls.append(dicturl + QString::number(i));
 
-        DownloadQueue queue(downloadManager, urls, 8, lambda);
+        DownloadQueue queue(downloadManager, urls, CONF.maxparalleldownloads2,
+                            lambda);
         queue.start();
         awaitSignal(&queue, {SIGNAL(allCompleted())}, 1000000);
 

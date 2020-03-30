@@ -1,10 +1,6 @@
 #include "downloadstringjob.h"
 
-#include <QElapsedTimer>
-#include <QSslError>
-
-#include "defines.h"
-#include "downloadmanager.h"
+#include "utils.h"
 
 DownloadStringJob::DownloadStringJob(QNetworkAccessManager *networkManager,
                                      const QString &url, int timeout,

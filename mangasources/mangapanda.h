@@ -2,7 +2,6 @@
 #define MANGAPANDA_H
 
 #include "abstractmangasource.h"
-#include "mangachapter.h"
 #include "mangainfo.h"
 
 class MangaPanda : public AbstractMangaSource

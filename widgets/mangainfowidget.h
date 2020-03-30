@@ -4,7 +4,7 @@
 #include <QIcon>
 #include <QWidget>
 
-#include "defines.h"
+#include "sizes.h"
 #include "mangaindex.h"
 #include "mangainfo.h"
 

@@ -4,6 +4,8 @@
 #include <QDialog>
 #include <QResizeEvent>
 
+#include "sizes.h"
+
 namespace Ui
 {
 class UpdateDialog;

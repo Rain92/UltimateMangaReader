@@ -2,8 +2,6 @@
 #define MANGAKALOT_H
 
 #include "abstractmangasource.h"
-#include "defines.h"
-#include "mangachapter.h"
 #include "mangainfo.h"
 
 class Mangakakalot : public AbstractMangaSource

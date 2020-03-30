@@ -1,10 +1,10 @@
 #include "mangareaderwidget.h"
 
+#include "ui_mangareaderwidget.h"
+
 #ifdef KOBO
 #include "../koboplatformintegrationplugin/koboplatformfunctions.h"
 #endif
-
-#include "ui_mangareaderwidget.h"
 
 MangaReaderWidget::MangaReaderWidget(QWidget *parent)
     : QWidget(parent),
@@ -156,12 +156,12 @@ bool MangaReaderWidget::gestureEvent(QGestureEvent *event)
         }
         else if (angle > 155 && angle < 205)
         {
-            pagechanging = true;
+            //            pagechanging = true;
             emit advancPageClicked(Forward);
         }
         else if (angle > 335 || angle < 25)
         {
-            pagechanging = true;
+            //            pagechanging = true;
             emit advancPageClicked(Backward);
         }
         else if (swipe->hotSpot().y() <
@@ -190,7 +190,7 @@ bool MangaReaderWidget::gestureEvent(QGestureEvent *event)
         }
         else
         {
-            pagechanging = true;
+            //            pagechanging = true;
             PageTurnDirection direction =
                 pos.x() > this->width() * readerpreviouspagethreshold
                     ? Forward
@@ -260,8 +260,6 @@ void MangaReaderWidget::showImage(const QString &path)
     }
 
     pagechanging = false;
-
-    //    QTimer::singleShot(50, [this]() { pagechanging = false; });
 }
 
 void MangaReaderWidget::addImageToCache(const QString &path)
@@ -275,7 +273,7 @@ void MangaReaderWidget::addImageToCache(const QString &path)
     {
         imgcache.insert(0, {QSharedPointer<QPixmap>(new QPixmap(path)), path});
 
-        if (imgcache.count() > imagecachesize)
+        if (imgcache.count() > CONF.imagecachesize)
             imgcache.removeLast();
     }
 }
