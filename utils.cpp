@@ -34,3 +34,18 @@ void executeOnJobCompletion(QSharedPointer<DownloadJobBase> job,
 {
     new BindingClass(job, lambda);
 }
+
+PageTurnDirection conditionalReverse(PageTurnDirection dir, bool condition)
+{
+    if (!condition)
+    {
+        return dir;
+    }
+    else
+    {
+        if (dir == Forward)
+            return Backward;
+        else
+            return Forward;
+    }
+}

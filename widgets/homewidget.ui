@@ -117,7 +117,7 @@
      <item>
       <widget class="QPushButton" name="pushButtonFilter">
        <property name="text">
-        <string>Filter</string>
+        <string>Search</string>
        </property>
       </widget>
      </item>

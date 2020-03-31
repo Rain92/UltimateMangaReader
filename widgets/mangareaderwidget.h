@@ -11,6 +11,7 @@
 #include "gotodialog.h"
 #include "mangainfo.h"
 #include "readingprogress.h"
+#include "settings.h"
 #include "sizes.h"
 
 namespace Ui
@@ -37,6 +38,7 @@ public:
 public slots:
     void addImageToCache(const QString &path);
     void updateTime();
+    void setSettings(Settings *settings);
 
 signals:
     void changeView(WidgetTab page);
@@ -72,6 +74,8 @@ private:
     QPixmap batteryicons[4];
 
     GotoDialog *gotodialog;
+
+    Settings *settings;
 
     void adjustSizes();
 

@@ -19,6 +19,8 @@ MainWidget::MainWidget(QWidget *parent)
     adjustSizes();
     setupVirtualKeyboard();
 
+    ui->mangaReaderWidget->setSettings(&core->settings);
+
     // DownloadManager
     core->downloadManager->setImageRescaleSize(this->size());
 
@@ -48,7 +50,10 @@ MainWidget::MainWidget(QWidget *parent)
                      &MainWidget::readerGoBack);
 
     QObject::connect(core->mangaController, &MangaController::downloadError,
-                     errorMessageWidget, &ErrorMessageWidget::showError);
+                     [this](auto msg) {
+                         if (!core->settings.hideErrorMessages)
+                             errorMessageWidget->showError(msg);
+                     });
 
     // HomeWidget
     ui->homeWidget->setMangaSources(core->activeMangaSources.values());

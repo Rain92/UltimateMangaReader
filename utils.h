@@ -1,11 +1,11 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include <QObject>
 #include <QRegularExpression>
-#include <QSharedPointer>
+#include <QtCore>
 
 #include "downloadmanager.h"
+#include "enums.h"
 
 QList<QRegularExpressionMatch> getAllRxMatches(const QRegularExpression& rx,
                                                const QString& text,
@@ -68,5 +68,7 @@ private:
 
 void executeOnJobCompletion(QSharedPointer<DownloadJobBase> job,
                             std::function<void()> lambda);
+
+PageTurnDirection conditionalReverse(PageTurnDirection dir, bool condition);
 
 #endif  // UTILS_H

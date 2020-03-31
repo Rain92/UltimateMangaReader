@@ -56,8 +56,13 @@ bool DownloadScaledImageJob::rescaleImage(const QByteArray &array)
     QImage img;
     if (!img.loadFromData(array))
         return false;
+
+    auto rsize = size;
+    if ((img.width() <= img.height()) != (size.width() <= size.height()))
+        rsize.transpose();
+
     img = img.convertToFormat(QImage::Format_Grayscale8);
-    img = img.scaled(size.width(), size.height(), Qt::KeepAspectRatio,
+    img = img.scaled(rsize.width(), rsize.height(), Qt::KeepAspectRatio,
                      Qt::SmoothTransformation);
     if (!img.save(filepath))
         return QFileInfo(filepath).size() > 0;

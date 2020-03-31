@@ -1,7 +1,13 @@
 #include "settings.h"
 
 Settings::Settings()
-    : lightValue(0), comflightValue(0), hideErrorMessages(false), timer()
+    : lightValue(0),
+      comflightValue(0),
+      hideErrorMessages(false),
+      reverseSwipeDirection(false),
+      reverseButtonDirection(false),
+      doublePageFullscreen(false),
+      timer()
 {
     timer.setSingleShot(true);
     QObject::connect(&timer, &QTimer::timeout, [this]() { this->serialize(); });
@@ -34,14 +40,17 @@ void Settings::serialize()
 QDataStream &operator<<(QDataStream &str, const Settings &m)
 {
     str << (qint32)m.lightValue << (qint32)m.comflightValue
-        << m.hideErrorMessages;
+        << m.hideErrorMessages << m.reverseSwipeDirection
+        << m.reverseButtonDirection << m.doublePageFullscreen;
 
     return str;
 }
 
 QDataStream &operator>>(QDataStream &str, Settings &m)
 {
-    str >> m.lightValue >> m.comflightValue >> m.hideErrorMessages;
+    str >> m.lightValue >> m.comflightValue >> m.hideErrorMessages >>
+        m.reverseSwipeDirection >> m.reverseButtonDirection >>
+        m.doublePageFullscreen;
 
     return str;
 }

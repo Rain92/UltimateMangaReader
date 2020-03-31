@@ -21,6 +21,11 @@ public:
 
     bool hideErrorMessages;
 
+    bool reverseSwipeDirection;
+    bool reverseButtonDirection;
+
+    bool doublePageFullscreen;
+
 private:
     QTimer timer;
 };

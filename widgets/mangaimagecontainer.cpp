@@ -23,6 +23,7 @@ void MangaImageContainer::setImage(const QString &path)
 void MangaImageContainer::setImage(QSharedPointer<QPixmap> img)
 {
     pixmap = img;
+
     update();
 }
 
@@ -31,6 +32,7 @@ void MangaImageContainer::paintEvent(QPaintEvent *)
     if (pixmap)
     {
         QPainter painter(this);
+
         int x = (this->size().width() - pixmap->width()) / 2;
         int y = (this->size().height() - pixmap->height()) / 2;
 

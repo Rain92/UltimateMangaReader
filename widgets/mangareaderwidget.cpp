@@ -10,7 +10,8 @@ MangaReaderWidget::MangaReaderWidget(QWidget *parent)
     : QWidget(parent),
       ui(new Ui::MangaReaderWidget),
       pagechanging(false),
-      imgcache()
+      imgcache(),
+      settings(nullptr)
 {
     ui->setupUi(this);
     adjustSizes();
@@ -157,12 +158,14 @@ bool MangaReaderWidget::gestureEvent(QGestureEvent *event)
         else if (angle > 155 && angle < 205)
         {
             //            pagechanging = true;
-            emit advancPageClicked(Forward);
+            emit advancPageClicked(conditionalReverse(
+                Forward, settings && settings->reverseSwipeDirection));
         }
         else if (angle > 335 || angle < 25)
         {
             //            pagechanging = true;
-            emit advancPageClicked(Backward);
+            emit advancPageClicked(conditionalReverse(
+                Backward, settings && settings->reverseSwipeDirection));
         }
         else if (swipe->hotSpot().y() <
                      this->height() * readerbottommenuethreshold &&
@@ -271,7 +274,21 @@ void MangaReaderWidget::addImageToCache(const QString &path)
     }
     else
     {
-        imgcache.insert(0, {QSharedPointer<QPixmap>(new QPixmap(path)), path});
+        auto img = new QPixmap(path);
+
+        if (settings && settings->doublePageFullscreen &&
+            (img->width() <= img->height()) !=
+                (this->width() <= this->height()))
+        {
+            QTransform t;
+            t = t.rotate(90);
+
+            auto imgRot = new QPixmap(img->transformed(t));
+            delete img;
+            img = imgRot;
+        }
+
+        imgcache.insert(0, {QSharedPointer<QPixmap>(img), path});
 
         if (imgcache.count() > CONF.imageCacheSize)
             imgcache.removeLast();
@@ -285,6 +302,10 @@ int MangaReaderWidget::searchCache(const QString &path) const
             return i;
 
     return -1;
+}
+void MangaReaderWidget::setSettings(Settings *settings)
+{
+    this->settings = settings;
 }
 
 void MangaReaderWidget::setFrontLightPanelState(int lightmin, int lightmax,
@@ -342,9 +363,13 @@ void MangaReaderWidget::setBatteryIcon()
     bool charging = batterystate.second;
 
     if (bat >= 98)
+    {
         ui->labelBattery->setPixmap(batteryicons[0]);
+    }
     else if (charging)
+    {
         ui->labelBattery->setPixmap(batteryicons[1]);
+    }
     else
     {
         batteryicons[3] = QPixmap(":/resources/images/icons/batteryempty.png");
