@@ -3,14 +3,16 @@
 DownloadQueue::DownloadQueue(
     DownloadManager* downloadmanager, const QList<QString>& urls,
     int parallelDownloads,
-    std::function<void(QSharedPointer<DownloadStringJob>)> lambda)
+    std::function<void(QSharedPointer<DownloadStringJob>)> lambda,
+    int individualTimeout)
     : QObject(),
       completed(0),
       errors(0),
       downloadmanager(downloadmanager),
       parallelDownloads(parallelDownloads),
       urlQueue(),
-      lambda(lambda)
+      lambda(lambda),
+      individualTimeout(individualTimeout)
 {
     this->urlQueue.append(urls);
     totalJobs = urls.size();
@@ -29,7 +31,7 @@ void DownloadQueue::startSingle()
 
     auto url = urlQueue.dequeue();
 
-    auto job = downloadmanager->downloadAsString(url, 8000);
+    auto job = downloadmanager->downloadAsString(url, individualTimeout);
 
     if (!job->isCompleted)
     {

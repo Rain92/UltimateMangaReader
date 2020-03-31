@@ -37,7 +37,25 @@ class BindingClass : public QObject
 public:
     BindingClass(QSharedPointer<DownloadJobBase> job,
                  std::function<void()> lambda)
-        : QObject(), job(job), lambda(lambda)
+        : QObject(), job(job), lambda(lambda), lambda2(nullptr)
+    {
+        connect(job);
+    }
+
+    BindingClass(QSharedPointer<DownloadJobBase> job,
+                 std::function<void(QSharedPointer<DownloadJobBase>)> lambda)
+        : QObject(), job(job), lambda(nullptr), lambda2(lambda)
+    {
+        connect(job);
+    }
+    ~BindingClass() = default;
+
+private:
+    QSharedPointer<DownloadJobBase> job;
+    std::function<void()> lambda;
+    std::function<void(QSharedPointer<DownloadJobBase>)> lambda2;
+
+    void connect(QSharedPointer<DownloadJobBase> job)
     {
         if (!job->isCompleted)
         {
@@ -51,15 +69,13 @@ public:
             action();
         }
     }
-    ~BindingClass() = default;
-
-private:
-    QSharedPointer<DownloadJobBase> job;
-    std::function<void()> lambda;
 
     void action()
     {
-        lambda();
+        if (lambda)
+            lambda();
+        if (lambda2)
+            lambda2(job);
         job.get()->disconnect();
         job.clear();
         deleteLater();
@@ -68,6 +84,10 @@ private:
 
 void executeOnJobCompletion(QSharedPointer<DownloadJobBase> job,
                             std::function<void()> lambda);
+
+void executeOnJobCompletion(
+    QSharedPointer<DownloadJobBase> job,
+    std::function<void(QSharedPointer<DownloadJobBase>)> lambda);
 
 PageTurnDirection conditionalReverse(PageTurnDirection dir, bool condition);
 

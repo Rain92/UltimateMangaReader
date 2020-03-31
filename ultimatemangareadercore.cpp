@@ -20,10 +20,8 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
         new MangaPanda(this, downloadManager)));
     mangaSources.append(QSharedPointer<AbstractMangaSource>(
         new JaiminisBox(this, downloadManager)));
-    //    mangasources.append(QSharedPointer<AbstractMangaSource>(new
-    //    MangaDex(this, downloadManager)));
-    //        mangasources.append(QSharedPointer<AbstractMangaSource>(new
-    //        Mangakakalot(this, downloadManager)));
+    mangaSources.append(QSharedPointer<AbstractMangaSource>(
+        new MangaDex(this, downloadManager)));
     mangaSources.append(QSharedPointer<AbstractMangaSource>(
         new MangaHub(this, downloadManager)));
     mangaSources.append(QSharedPointer<AbstractMangaSource>(

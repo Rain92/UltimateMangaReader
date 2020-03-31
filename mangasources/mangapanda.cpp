@@ -15,7 +15,7 @@ MangaList MangaPanda::getMangaList()
 
     auto job = downloadManager->downloadAsString(baseurl + "/alphabetical");
 
-    if (!job->await(8000))
+    if (!job->await(10000))
     {
         emit updateError(job->errorString);
         return mangas;
@@ -72,10 +72,11 @@ void MangaPanda::updateMangaInfoFinishedLoading(
     for (auto &chapterrxmatch :
          getAllRxMatches(chapterrx, job->buffer, spos, epos))
     {
-        QString ctitle = chapterrxmatch.captured(2);
+        auto ctitle = chapterrxmatch.captured(2);
         if (chapterrxmatch.captured(3) != " : ")
             ctitle += chapterrxmatch.captured(3);
-        newchapters.append(MangaChapter(ctitle, chapterrxmatch.captured(1)));
+        auto curl = baseurl + chapterrxmatch.captured(1);
+        newchapters.append(MangaChapter(ctitle, curl));
     }
     info->chapters.mergeChapters(newchapters);
 }
@@ -87,7 +88,7 @@ QStringList MangaPanda::getPageList(const QString &chapterlink)
     auto job = downloadManager->downloadAsString(chapterlink);
     QStringList pageLinks;
 
-    if (!job->await(3000))
+    if (!job->await(7000))
         return pageLinks;
 
     int spos = job->buffer.indexOf(R"(<select id="pageMenu")");
@@ -108,7 +109,7 @@ QString MangaPanda::getImageLink(const QString &pagelink)
 
     QRegularExpression imagerx(R"lit(<img id="img"[^>]*src="([^"]*)")lit");
 
-    if (!job->await(3000))
+    if (!job->await(7000))
         return imageLink;
 
     auto match = imagerx.match(job->buffer);

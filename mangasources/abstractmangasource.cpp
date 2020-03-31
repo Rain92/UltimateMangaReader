@@ -10,7 +10,7 @@ AbstractMangaSource::AbstractMangaSource(QObject *parent,
 
 bool AbstractMangaSource::serializeMangaList()
 {
-    QFile file(CONF.mangaListDir + name + "_mangaList.dat");
+    QFile file(CONF.mangaListDir + name + "_mangalist.dat");
     if (!file.open(QIODevice::WriteOnly))
         return false;
     QDataStream out(&file);

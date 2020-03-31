@@ -14,7 +14,7 @@ MangaList MangaOwl::getMangaList()
         R"(>(\d+)</a>\s*</li>\s*<li>\s*<a[^>]*?rel="next")");
 
     QRegularExpression mangarx(
-        R"lit(<a href="(https://mangaowl.com/single/[^"]+)">.*?</td>.*?<td>([^<]+)</td>)lit",
+        R"lit(<a href="(https://mangaowl.(?:net|com)/single/[^"]+)">.*?</td>.*?<td>([^<]+)</td>)lit",
         QRegularExpression::DotMatchesEverythingOption);
 
     MangaList mangas;
@@ -70,7 +70,7 @@ MangaList MangaOwl::getMangaList()
                         lambda);
 
     queue.start();
-    awaitSignal(&queue, {SIGNAL(allCompleted())}, 1000000);
+    awaitSignal(&queue, {SIGNAL(allCompleted())}, 1700000);
 
     mangas.nominalSize = mangas.actualSize;
     mangas.absoluteUrls = true;
@@ -125,7 +125,7 @@ QStringList MangaOwl::getPageList(const QString &chapterlink)
 
     QStringList pageLinks;
 
-    if (!job->await(3000))
+    if (!job->await(7000))
         return pageLinks;
 
     for (auto &match : getAllRxMatches(pagerx, job->buffer))

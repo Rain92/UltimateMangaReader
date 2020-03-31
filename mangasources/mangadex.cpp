@@ -9,11 +9,8 @@ MangaDex::MangaDex(QObject *parent, DownloadManager *dm)
     //    downloadmanager->addCookie(".mangadex.org", "mangadex_h_toggle", "1");
     downloadManager->addCookie(".mangadex.org", "mangadex_title_mode", "2");
     downloadManager->addCookie(".mangadex.org", "mangadex_filter_langs", "1");
-    //    downloadmanager->addCookie(".mangadex.org",
-    //    "mangadex_rememberme_token",
-    //    "ba07d6d335a2b433d4b57b396d99224cbfaf100cad243a50694161d681270c5a");
 
-    login();
+    //    login();
 }
 
 void MangaDex::login()
@@ -27,16 +24,18 @@ void MangaDex::login()
     QString loginurl(
         "https://mangadex.org/ajax/actions.ajax.php?function=login&nojs=1");
 
-    auto job = downloadManager->downloadAsStringPost(loginurl, &query);
+    auto lambda = [this](QSharedPointer<DownloadJobBase> job) {
+        auto ncookies = job->getCookies();
+        foreach (QNetworkCookie c, ncookies)
+        {
+            qDebug() << "Added cookie" << c.name() << c.value();
+            downloadManager->addCookie(".mangadex.org", c.name(), c.value());
+        }
+    };
 
-    job->await(1000);
+    auto job = downloadManager->downloadAsStringPost(loginurl, query);
 
-    auto ncookies = job->getCookies();
-    foreach (QNetworkCookie c, ncookies)
-    {
-        qDebug() << "Added cookie" << c.name() << c.value();
-        downloadManager->addCookie(".mangadex.org", c.name(), c.value());
-    }
+    executeOnJobCompletion(job, lambda);
 }
 
 MangaList MangaDex::getMangaList()
@@ -53,7 +52,7 @@ MangaList MangaDex::getMangaList()
 
     auto job = downloadManager->downloadAsString(basedictlink + "1", -1);
 
-    if (!job->await(5000))
+    if (!job->await(7000))
     {
         emit updateError(job->errorString);
         return mangas;
@@ -102,7 +101,7 @@ MangaList MangaDex::getMangaList()
 
     queue.start();
 
-    awaitSignal(&queue, {SIGNAL(allCompleted())}, 1000000);
+    awaitSignal(&queue, {SIGNAL(allCompleted())}, 1700000);
 
     qDebug() << "mangas:" << mangas.actualSize << "time:" << timer.elapsed();
 
@@ -177,7 +176,7 @@ void MangaDex::updateMangaInfoFinishedLoading(
                             lambda);
 
         queue.start();
-        awaitSignal(&queue, {SIGNAL(allCompleted())}, 1000000);
+        awaitSignal(&queue, {SIGNAL(allCompleted())}, 1700000);
     }
 }
 
@@ -192,7 +191,7 @@ QStringList MangaDex::getPageList(const QString &chapterlink)
 
     QStringList pageLinks;
 
-    if (!job->await(3000))
+    if (!job->await(7000))
         return pageLinks;
 
     int spos = job->buffer.indexOf(scriptstart);

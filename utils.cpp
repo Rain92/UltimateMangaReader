@@ -35,6 +35,13 @@ void executeOnJobCompletion(QSharedPointer<DownloadJobBase> job,
     new BindingClass(job, lambda);
 }
 
+void executeOnJobCompletion(
+    QSharedPointer<DownloadJobBase> job,
+    std::function<void(QSharedPointer<DownloadJobBase>)> lambda)
+{
+    new BindingClass(job, lambda);
+}
+
 PageTurnDirection conditionalReverse(PageTurnDirection dir, bool condition)
 {
     if (!condition)

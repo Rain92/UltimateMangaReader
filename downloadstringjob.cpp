@@ -4,7 +4,7 @@
 
 DownloadStringJob::DownloadStringJob(QNetworkAccessManager *networkManager,
                                      const QString &url, int timeout,
-                                     QByteArray *postdata)
+                                     const QByteArray &postdata)
     : DownloadJobBase(networkManager, url),
       timeoutTime(timeout),
       postData(postdata),
@@ -15,13 +15,13 @@ DownloadStringJob::DownloadStringJob(QNetworkAccessManager *networkManager,
 void DownloadStringJob::start()
 {
     QNetworkRequest request(url);
-    if (!postData)
+    if (!postData.isEmpty())
         reply.reset(networkManager->get(request));
     else
     {
         request.setHeader(QNetworkRequest::ContentTypeHeader,
                           "application/x-www-form-urlencoded");
-        reply.reset(networkManager->post(request, *postData));
+        reply.reset(networkManager->post(request, postData));
     }
     reply->setParent(this);
 
@@ -95,10 +95,10 @@ void DownloadStringJob::onError(QNetworkReply::NetworkError)
 {
     timeoutTimer.stop();
 
-    if (errorString != "")
+    if (errorString == "")
         errorString = "Download error: " + reply->errorString();
 
-    qDebug() << errorString;
+    qDebug() << "Error string:" << errorString;
     emit downloadError();
 }
 
@@ -106,14 +106,12 @@ void DownloadStringJob::timeout()
 {
     errorString = "Download error: timeout";
     reply->abort();
-
-    //    emit downloadError();
 }
 
 bool DownloadStringJob::await(int timeout, bool retry)
 {
-    QMetaObject::invokeMethod(&timeoutTimer, "stop", Qt::AutoConnection);
     //    timeouttimer.stop();
+    QMetaObject::invokeMethod(&timeoutTimer, "stop", Qt::AutoConnection);
 
     if (isCompleted)
         return true;

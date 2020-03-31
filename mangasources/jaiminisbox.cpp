@@ -24,7 +24,7 @@ MangaList JaiminisBox::getMangaList()
 
     auto job = downloadManager->downloadAsString(readerlink + "1", -1);
 
-    if (!job->await(5000))
+    if (!job->await(7000))
     {
         emit updateError(job->errorString);
         return mangas;
@@ -71,7 +71,7 @@ MangaList JaiminisBox::getMangaList()
 
     queue.start();
 
-    awaitSignal(&queue, {SIGNAL(allCompleted())}, 1000000);
+    awaitSignal(&queue, {SIGNAL(allCompleted())}, 1700000);
 
     mangas.nominalSize = mangas.actualSize;
     mangas.absoluteUrls = true;
@@ -85,7 +85,7 @@ MangaList JaiminisBox::getMangaList()
 
 QSharedPointer<MangaInfo> JaiminisBox::getMangaInfo(const QString &mangalink)
 {
-    auto job = downloadManager->downloadAsStringPost(mangalink, &postdatastr);
+    auto job = downloadManager->downloadAsStringPost(mangalink, postdatastr);
 
     auto info = QSharedPointer<MangaInfo>(new MangaInfo(this));
 
@@ -94,7 +94,7 @@ QSharedPointer<MangaInfo> JaiminisBox::getMangaInfo(const QString &mangalink)
 
     info->link = mangalink;
 
-    if (!job->await(3000))
+    if (!job->await(5000))
         return info;
 
     updateMangaInfoFinishedLoading(job, info);
@@ -135,10 +135,10 @@ QStringList JaiminisBox::getPageList(const QString &chapterlink)
     QRegularExpression imagelinksrx(R"("url":"([^"]*))");
 
     auto job =
-        downloadManager->downloadAsStringPost(chapterlink, &postdatastr, -1);
+        downloadManager->downloadAsStringPost(chapterlink, postdatastr, -1);
     QStringList imagelinks;
 
-    if (!job->await(4000))
+    if (!job->await(7000))
         return imagelinks;
 
     auto rxmatch = encodedrx.match(job->buffer);

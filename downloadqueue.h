@@ -10,7 +10,8 @@ public:
     explicit DownloadQueue(
         DownloadManager *downloadmanager, const QList<QString> &urlQueue,
         int parallelDownloads,
-        std::function<void(QSharedPointer<DownloadStringJob>)> lambda);
+        std::function<void(QSharedPointer<DownloadStringJob>)> lambda,
+        int individualTimeout = 8000);
 
     void start();
     void clearQuene();
@@ -29,6 +30,7 @@ private:
     QQueue<QString> urlQueue;
     int totalJobs;
     std::function<void(QSharedPointer<DownloadStringJob>)> lambda;
+    int individualTimeout;
 
     void startSingle();
     void downloadFinished(QSharedPointer<DownloadStringJob> job, bool success);

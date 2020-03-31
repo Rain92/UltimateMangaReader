@@ -17,7 +17,7 @@ MangaList MangaHub::getMangaList()
 
     auto job = downloadManager->downloadAsString(dicturl + "1");
 
-    if (!job->await(2000))
+    if (!job->await(7000))
     {
         emit updateError(job->errorString);
         return mangas;
@@ -30,7 +30,7 @@ MangaList MangaHub::getMangaList()
 
     int pages = 950;
 
-    const int matchesPerPage = 36;
+    const int matchesPerPage = 30;
     int noMatchCounter = 0;
 
     auto lambda = [&](QSharedPointer<DownloadJobBase> job) {
@@ -66,9 +66,9 @@ MangaList MangaHub::getMangaList()
             urls.append(dicturl + QString::number(i));
 
         DownloadQueue queue(downloadManager, urls, CONF.parallelDownloadsHigh,
-                            lambda);
+                            lambda, 12000);
         queue.start();
-        awaitSignal(&queue, {SIGNAL(allCompleted())}, 1000000);
+        awaitSignal(&queue, {SIGNAL(allCompleted())}, 1700000);
 
         oldPages = pages;
         pages += 50;
@@ -164,7 +164,7 @@ QStringList MangaHub::getPageList(const QString &chapterlink)
 
     QStringList pageLinks;
 
-    if (!job->await(3000))
+    if (!job->await(7000))
         return pageLinks;
 
     auto imagerxmatch = imagerx.match(job->buffer);

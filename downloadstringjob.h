@@ -10,13 +10,14 @@ class DownloadStringJob : public DownloadJobBase
 protected:
     QTimer timeoutTimer;
     int timeoutTime;
-    QByteArray *postData;
+    QByteArray postData;
 
 public:
     QString buffer;
 
     DownloadStringJob(QNetworkAccessManager *networkManager, const QString &url,
-                      int timeout = 6000, QByteArray *postData = nullptr);
+                      int timeout = 6000,
+                      const QByteArray &postData = QByteArray());
 
     bool await(int timeout = 6000, bool retry = true);
 

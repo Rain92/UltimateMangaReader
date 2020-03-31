@@ -57,7 +57,7 @@ QSharedPointer<DownloadStringJob> DownloadManager::downloadAsString(
 }
 
 QSharedPointer<DownloadStringJob> DownloadManager::downloadAsStringPost(
-    const QString &url, QByteArray *postdata, int timeout)
+    const QString &url, const QByteArray &postdata, int timeout)
 {
     qDebug() << "downloading:" << url;
 
