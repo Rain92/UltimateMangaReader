@@ -2,7 +2,7 @@
 
 #include "ui_clearcachedialog.h"
 
-ClearCacheDialog::ClearCacheDialog(QWidget *parent)
+ClearCacheDialog::ClearCacheDialog(QWidget* parent)
     : QDialog(parent), ui(new Ui::ClearCacheDialog)
 {
     ui->setupUi(this);
@@ -10,17 +10,10 @@ ClearCacheDialog::ClearCacheDialog(QWidget *parent)
     setWindowFlags(Qt::FramelessWindowHint | Qt::Dialog);
     setWindowModality(Qt::WindowModal);
 
-    QString ss =
-        "QDialog{                  "
-        "border: 2px solid black;  "
-        "background: white;        "
-        "}                         ";
-    setStyleSheet(ss);
-
-    ui->pushButtonCancel->setMinimumHeight(buttonsize);
-    ui->pushButtonClear1->setMinimumHeight(buttonsize);
-    ui->pushButtonClear2->setMinimumHeight(buttonsize);
-    ui->pushButtonClear3->setMinimumHeight(buttonsize);
+    ui->pushButtonCancel->setFixedHeight(buttonsize);
+    ui->pushButtonClear1->setFixedHeight(buttonsize);
+    ui->pushButtonClear2->setFixedHeight(buttonsize);
+    ui->pushButtonClear3->setFixedHeight(buttonsize);
 }
 
 ClearCacheDialog::~ClearCacheDialog() { delete ui; }
@@ -31,7 +24,7 @@ long dirSize(QString dirPath)
     QDir dir(dirPath);
     // calculate total size of current directories' files
     QDir::Filters fileFilters = QDir::Files | QDir::System | QDir::Hidden;
-    foreach (QString filePath, dir.entryList(fileFilters))
+    for (const auto& filePath : dir.entryList(fileFilters))
     {
         QFileInfo fi(dir, filePath);
         size += fi.size();
@@ -40,7 +33,7 @@ long dirSize(QString dirPath)
     QDir::Filters dirFilters =
         QDir::Dirs | QDir::NoDotAndDotDot | QDir::System | QDir::Hidden;
 
-    foreach (QString childDirPath, dir.entryList(dirFilters))
+    for (const auto& childDirPath : dir.entryList(dirFilters))
         size += dirSize(dirPath + QDir::separator() + childDirPath);
     return size;
 }

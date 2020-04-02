@@ -12,6 +12,12 @@ protected:
     int timeoutTime;
     QByteArray postData;
 
+protected slots:
+    void downloadStringReadyRead();
+    void downloadStringFinished();
+    void onError(QNetworkReply::NetworkError);
+    void timeout();
+
 public:
     QString buffer;
 
@@ -24,10 +30,6 @@ public:
 public slots:
     void start() override;
     void restart() override;
-    void downloadStringReadyRead();
-    void downloadStringFinished();
-    void onError(QNetworkReply::NetworkError);
-    void timeout();
 };
 
 #endif  // DOWNLOADFILEJOB_H

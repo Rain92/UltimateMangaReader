@@ -8,17 +8,11 @@ UpdateDialog::UpdateDialog(QWidget *parent)
 {
     ui->setupUi(this);
 
-    QString ss =
-        "QDialog{                  "
-        "border: 2px solid black;  "
-        "background: white;        "
-        "}                         ";
     setWindowModality(Qt::WindowModal);
-    setStyleSheet(ss);
 
-    ui->pushButtonOk->setMinimumHeight(buttonsize);
-    ui->pushButtonRetry->setMinimumHeight(buttonsize);
-    ui->progressBar->setMinimumHeight(buttonsize);
+    ui->pushButtonOk->setFixedHeight(buttonsize);
+    ui->pushButtonRetry->setFixedHeight(buttonsize);
+    ui->progressBar->setFixedHeight(buttonsize);
     this->setMaximumWidth(parent->width());
 }
 

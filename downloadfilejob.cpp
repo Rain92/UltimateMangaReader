@@ -26,18 +26,19 @@ void DownloadFileJob::start()
         {
             QNetworkRequest request(url);
             reply.reset(networkManager->get(request));
-            reply->setParent(this);
+            reply->setParent(nullptr);
 
-            QObject::connect(reply.get(), SIGNAL(readyRead()), this,
-                             SLOT(downloadFileReadyRead()));
-            QObject::connect(reply.get(), SIGNAL(finished()), this,
-                             SLOT(downloadFileFinished()));
-            QObject::connect(reply.get(),
-                             SIGNAL(error(QNetworkReply::NetworkError)), this,
-                             SLOT(onError(QNetworkReply::NetworkError)));
-            QObject::connect(reply.get(),
-                             SIGNAL(sslErrors(const QList<QSslError> &)), this,
-                             SLOT(onSslErrors(const QList<QSslError> &)));
+            QObject::connect(reply.get(), &QNetworkReply::readyRead, this,
+                             &DownloadFileJob::downloadFileReadyRead);
+            QObject::connect(reply.get(), &QNetworkReply::finished, this,
+                             &DownloadFileJob::downloadFileFinished);
+            QObject::connect(
+                reply.get(),
+                static_cast<void (QNetworkReply::*)(
+                    QNetworkReply::NetworkError)>(&QNetworkReply::error),
+                this, &DownloadFileJob::onError);
+            QObject::connect(reply.get(), &QNetworkReply::sslErrors, this,
+                             &DownloadJobBase::onSslErrors);
         }
         else
         {

@@ -38,44 +38,34 @@ MangaReaderWidget::~MangaReaderWidget() { delete ui; }
 
 void MangaReaderWidget::adjustSizes()
 {
-    ui->pushButtonReaderBack->setMinimumHeight(buttonsize);
-    ui->pushButtonReaderClose->setMinimumHeight(buttonsize);
-    ui->pushButtonReaderHome->setMinimumHeight(buttonsize);
-    ui->pushButtonReaderGoto->setMinimumHeight(buttonsize);
+    ui->pushButtonReaderBack->setFixedHeight(buttonsize);
+    ui->pushButtonReaderClose->setFixedHeight(buttonsize);
+    ui->pushButtonReaderHome->setFixedHeight(buttonsize);
+    ui->pushButtonReaderGoto->setFixedHeight(buttonsize);
 
-    ui->horizontalSliderLight->setMinimumHeight(resourceiconsize);
-    ui->horizontalSliderComfLight->setMinimumHeight(resourceiconsize);
+    ui->horizontalSliderLight->setFixedHeight(resourceiconsize);
+    ui->horizontalSliderComfLight->setFixedHeight(resourceiconsize);
 
-    ui->labelLessLight->setMinimumSize(
-        QSize(resourceiconsize, resourceiconsize));
-    ui->labelLessLight->setMaximumSize(
-        QSize(resourceiconsize, resourceiconsize));
+    ui->labelLessLight->setFixedSize(QSize(resourceiconsize, resourceiconsize));
 
     QPixmap p(":/resources/images/icons/darker.png");
     ui->labelLessLight->setPixmap(
         p.scaledToHeight(resourceiconsize, Qt::SmoothTransformation));
 
-    ui->labelMoreLight->setMinimumSize(
-        QSize(resourceiconsize, resourceiconsize));
-    ui->labelMoreLight->setMaximumSize(
-        QSize(resourceiconsize, resourceiconsize));
+    ui->labelMoreLight->setFixedSize(QSize(resourceiconsize, resourceiconsize));
 
     QPixmap p2(":/resources/images/icons/lighter.png");
     ui->labelMoreLight->setPixmap(
         p2.scaledToHeight(resourceiconsize, Qt::SmoothTransformation));
 
-    ui->labelLessComfLight->setMinimumSize(
-        QSize(resourceiconsize, resourceiconsize));
-    ui->labelLessComfLight->setMaximumSize(
+    ui->labelLessComfLight->setFixedSize(
         QSize(resourceiconsize, resourceiconsize));
 
     QPixmap p3(":/resources/images/icons/moon.png");
     ui->labelLessComfLight->setPixmap(
         p3.scaledToHeight(resourceiconsize, Qt::SmoothTransformation));
 
-    ui->labelMoreComfLight->setMinimumSize(
-        QSize(resourceiconsize, resourceiconsize));
-    ui->labelMoreComfLight->setMaximumSize(
+    ui->labelMoreComfLight->setFixedSize(
         QSize(resourceiconsize, resourceiconsize));
 
     QPixmap p4(":/resources/images/icons/sun.png");

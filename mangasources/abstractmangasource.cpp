@@ -86,7 +86,7 @@ QSharedPointer<MangaInfo> AbstractMangaSource::loadMangaInfo(
     const QString &mangalink, const QString &mangatitle, bool update)
 {
     QString path(CONF.mangainfodir(name, mangatitle) + "mangainfo.dat");
-    if (QFile::exists(path) && true)
+    if (QFile::exists(path))
     {
         QSharedPointer<MangaInfo> mi(MangaInfo::deserialize(this, path));
         if (update)

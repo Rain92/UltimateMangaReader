@@ -10,21 +10,15 @@ GotoDialog::GotoDialog(QWidget *parent)
 
 {
     ui->setupUi(this);
-    QString ss =
-        "QDialog{                  "
-        "border: 2px solid black;  "
-        "background: white;        "
-        "}                         ";
     setWindowModality(Qt::WindowModal);
-    setStyleSheet(ss);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
 
-    ui->pushButtonGoChapter->setMinimumHeight(buttonsize);
-    ui->pushButtonGoPage->setMinimumHeight(buttonsize);
-    ui->spinBoxChapter->setMinimumHeight(buttonsize);
-    ui->spinBoxPage->setMinimumHeight(buttonsize);
+    ui->pushButtonGoChapter->setFixedHeight(buttonsize);
+    ui->pushButtonGoPage->setFixedHeight(buttonsize);
+    ui->spinBoxChapter->setFixedHeight(buttonsize);
+    ui->spinBoxPage->setFixedHeight(buttonsize);
 
-    ui->buttonBox->buttons()[0]->setMinimumHeight(buttonsize);
+    ui->buttonBox->buttons()[0]->setFixedHeight(buttonsize);
 
     ui->spinBoxChapter->installEventFilter(this);
     ui->spinBoxPage->installEventFilter(this);

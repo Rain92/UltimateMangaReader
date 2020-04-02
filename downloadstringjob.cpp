@@ -15,27 +15,32 @@ DownloadStringJob::DownloadStringJob(QNetworkAccessManager *networkManager,
 void DownloadStringJob::start()
 {
     QNetworkRequest request(url);
-    if (!postData.isEmpty())
+    if (postData.isEmpty())
+    {
         reply.reset(networkManager->get(request));
+    }
     else
     {
         request.setHeader(QNetworkRequest::ContentTypeHeader,
                           "application/x-www-form-urlencoded");
         reply.reset(networkManager->post(request, postData));
     }
-    reply->setParent(this);
+    reply->setParent(nullptr);
 
-    QObject::connect(reply.get(), SIGNAL(finished()), this,
-                     SLOT(downloadStringFinished()));
-    QObject::connect(reply.get(), SIGNAL(error(QNetworkReply::NetworkError)),
-                     this, SLOT(onError(QNetworkReply::NetworkError)));
-    QObject::connect(reply.get(), SIGNAL(sslErrors(const QList<QSslError> &)),
-                     this, SLOT(onSslErrors(const QList<QSslError> &)));
+    QObject::connect(reply.get(), &QNetworkReply::finished, this,
+                     &DownloadStringJob::downloadStringFinished);
+    QObject::connect(
+        reply.get(),
+        static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(
+            &QNetworkReply::error),
+        this, &DownloadStringJob::onError);
+    QObject::connect(reply.get(), &QNetworkReply::sslErrors, this,
+                     &DownloadJobBase::onSslErrors);
 
     if (timeoutTime > 0)
     {
-        QObject::connect(&timeoutTimer, SIGNAL(timeout()), this,
-                         SLOT(timeout()));
+        QObject::connect(&timeoutTimer, &QTimer::timeout, this,
+                         &DownloadStringJob::timeout);
         timeoutTimer.start(timeoutTime);
     }
 }

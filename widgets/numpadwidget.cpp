@@ -32,12 +32,13 @@ void NumpadWidget::setupButtons()
             btn->setProperty("key", Qt::Key_0 + btn->text().trimmed().toInt());
 
         btn->setFocusPolicy(Qt::NoFocus);
-        btn->setMinimumHeight(buttonsize);
+        btn->setFixedHeight(buttonsize);
     }
 
     QObject::connect(ui->buttonGroupAllButtons,
-                     SIGNAL(buttonPressed(QAbstractButton *)), this,
-                     SLOT(numButtonPressed(QAbstractButton *)));
+                     static_cast<void (QButtonGroup::*)(QAbstractButton *)>(
+                         &QButtonGroup::buttonPressed),
+                     this, &NumpadWidget::numButtonPressed);
 }
 
 void NumpadWidget::numButtonPressed(QAbstractButton *button)

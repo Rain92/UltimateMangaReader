@@ -56,7 +56,7 @@ MainWidget::MainWidget(QWidget *parent)
                      });
 
     // HomeWidget
-    ui->homeWidget->setMangaSources(core->activeMangaSources.values());
+    ui->homeWidget->setCore(core);
 
     QObject::connect(ui->homeWidget, &HomeWidget::mangaSourceClicked, core,
                      &UltimateMangaReaderCore::setCurrentMangaSource);
@@ -64,11 +64,8 @@ MainWidget::MainWidget(QWidget *parent)
     QObject::connect(ui->homeWidget, &HomeWidget::mangaClicked, core,
                      &UltimateMangaReaderCore::setCurrentManga);
 
-    QObject::connect(ui->mangaInfoWidget, &MangaInfoWidget::readMangaClicked,
-                     [this]() { setWidgetTab(MangaInfoTab); });
-
-    QObject::connect(ui->homeWidget, SIGNAL(favoritesCleared()),
-                     core->favoritesManager, SLOT(clearFavorites()));
+    QObject::connect(core, &UltimateMangaReaderCore::currentMangaSourceChanged,
+                     ui->homeWidget, &HomeWidget::currentMangaSourceChanged);
 
     // MangaInfoWidget
     QObject::connect(
@@ -122,8 +119,8 @@ MainWidget::MainWidget(QWidget *parent)
     // FrontLight
     setupFrontLight();
     restorefrontlighttimer.setSingleShot(true);
-    QObject::connect(&restorefrontlighttimer, SIGNAL(timeout()), this,
-                     SLOT(restoreFrontLight()));
+    QObject::connect(&restorefrontlighttimer, &QTimer::timeout, this,
+                     &MainWidget::restoreFrontLight);
 }
 
 MainWidget::~MainWidget() { delete ui; }
@@ -138,9 +135,9 @@ void MainWidget::setupVirtualKeyboard()
 
 void MainWidget::adjustSizes()
 {
-    ui->pushButtonClose->setMinimumHeight(buttonsize);
-    ui->pushButtonFavorites->setMinimumHeight(buttonsize);
-    ui->pushButtonHome->setMinimumHeight(buttonsize);
+    ui->pushButtonClose->setFixedHeight(buttonsize);
+    ui->pushButtonFavorites->setFixedHeight(buttonsize);
+    ui->pushButtonHome->setFixedHeight(buttonsize);
 }
 
 void MainWidget::enableVirtualKeyboard(bool enabled)

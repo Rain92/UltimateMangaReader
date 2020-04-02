@@ -9,10 +9,10 @@ class ReadingProgress
 {
 public:
     MangaIndex index;
-    int numPages;
     int numChapters;
+    int numPages;
 
-    ReadingProgress(const MangaIndex& index, int numPages, int numChapters);
+    ReadingProgress(const MangaIndex& index, int numChapters, int numPages);
     ReadingProgress(const QString& hostname, const QString& title);
 
     void serialize(const QString& hostname, const QString& title);

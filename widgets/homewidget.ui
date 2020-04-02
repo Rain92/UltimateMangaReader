@@ -24,16 +24,16 @@
     <number>6</number>
    </property>
    <property name="leftMargin">
-    <number>1</number>
+    <number>10</number>
    </property>
    <property name="topMargin">
-    <number>1</number>
+    <number>10</number>
    </property>
    <property name="rightMargin">
-    <number>1</number>
+    <number>10</number>
    </property>
    <property name="bottomMargin">
-    <number>1</number>
+    <number>10</number>
    </property>
    <item>
     <layout class="QGridLayout" name="gridLayout_2">
@@ -76,6 +76,27 @@
          <family>Sans Serif</family>
         </font>
        </property>
+       <property name="verticalScrollBarPolicy">
+        <enum>Qt::ScrollBarAlwaysOff</enum>
+       </property>
+       <property name="horizontalScrollBarPolicy">
+        <enum>Qt::ScrollBarAlwaysOff</enum>
+       </property>
+       <property name="autoScroll">
+        <bool>false</bool>
+       </property>
+       <property name="editTriggers">
+        <set>QAbstractItemView::NoEditTriggers</set>
+       </property>
+       <property name="showDropIndicator" stdset="0">
+        <bool>false</bool>
+       </property>
+       <property name="defaultDropAction">
+        <enum>Qt::IgnoreAction</enum>
+       </property>
+       <property name="selectionMode">
+        <enum>QAbstractItemView::NoSelection</enum>
+       </property>
        <property name="uniformItemSizes">
         <bool>true</bool>
        </property>
@@ -117,7 +138,7 @@
      <item>
       <widget class="QPushButton" name="pushButtonFilter">
        <property name="text">
-        <string>Search</string>
+        <string> Search </string>
        </property>
       </widget>
      </item>

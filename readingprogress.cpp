@@ -1,11 +1,11 @@
 #include "readingprogress.h"
 
-ReadingProgress::ReadingProgress(const MangaIndex &index, int numPages,
-                                 int numChapters)
-    : index(index), numPages(numPages), numChapters(numChapters){};
+ReadingProgress::ReadingProgress(const MangaIndex &index, int numChapters,
+                                 int numPages)
+    : index(index), numChapters(numChapters), numPages(numPages){};
 
 ReadingProgress::ReadingProgress(const QString &hostname, const QString &title)
-    : numPages(0), numChapters(0)
+    : numChapters(0), numPages(0)
 {
     deserialize(hostname, title);
 }

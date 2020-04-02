@@ -7,8 +7,8 @@ MangaController::MangaController(DownloadManager *downloadManager,
       downloadManager(downloadManager),
       preloadQueue(downloadManager)
 {
-    QObject::connect(&preloadQueue, SIGNAL(completedDownload(QString)), this,
-                     SLOT(completedImagePreload(QString)));
+    QObject::connect(&preloadQueue, &PreloadQueue::completedDownload, this,
+                     &MangaController::completedImagePreload);
 }
 
 void MangaController::setCurrentManga(QSharedPointer<MangaInfo> mangaInfo)

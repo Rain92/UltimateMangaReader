@@ -10,6 +10,10 @@ class DownloadFileJob : public DownloadJobBase
 protected:
     QFile file;
 
+protected slots:
+    virtual void downloadFileReadyRead();
+    virtual void downloadFileFinished();
+
 public:
     DownloadFileJob(QNetworkAccessManager *networkManager, const QString &url,
                     const QString &localFilePath);
@@ -22,8 +26,6 @@ public:
 public slots:
     void start() override;
     void restart() override;
-    virtual void downloadFileReadyRead();
-    virtual void downloadFileFinished();
     void onError(QNetworkReply::NetworkError);
 };
 

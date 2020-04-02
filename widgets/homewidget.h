@@ -11,6 +11,7 @@
 #include "cscrollbar.h"
 #include "sizes.h"
 #include "staticsettings.h"
+#include "ultimatemangareadercore.h"
 #include "updatedialog.h"
 
 namespace Ui
@@ -26,13 +27,14 @@ public:
     explicit HomeWidget(QWidget *parent = 0);
     ~HomeWidget();
 
-    void setMangaSources(const QList<AbstractMangaSource *> &sources);
+    void setCore(UltimateMangaReaderCore *core);
+
+    void currentMangaSourceChanged();
 
 signals:
     void mangaSourceClicked(AbstractMangaSource *source);
     void mangaClicked(const QString &mangalink, const QString &mangatitle);
     void favoritesCleared();
-    //    void favoritesInvalid();
 
 private slots:
     void on_pushButtonUpdate_clicked();
@@ -41,17 +43,16 @@ private slots:
     void on_pushButtonFilter_clicked();
     void on_pushButtonFilterClear_clicked();
     void on_listViewMangas_clicked(const QModelIndex &index);
-    void updateProgress(int p);
+    void updateProgress(int progress);
     void updateError(const QString &error);
     void clearCacheDialogButtonClicked(int level);
 
 private:
     Ui::HomeWidget *ui;
-    QVector<int> sourcesprogress;
 
-    // TODO?
-    QList<AbstractMangaSource *> mangasources;
-    AbstractMangaSource *currentsource;
+    UltimateMangaReaderCore *core;
+
+    QMap<AbstractMangaSource *, int> sourcesprogress;
 
     QStringList filteredmangatitles;
     QStringList filteredmangalinks;

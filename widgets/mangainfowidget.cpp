@@ -18,12 +18,11 @@ MangaInfoWidget::~MangaInfoWidget() { delete ui; }
 
 void MangaInfoWidget::adjustSizes()
 {
-    ui->pushButtonReadContinue->setMinimumHeight(buttonsize);
-    ui->pushButtonReadFirst->setMinimumHeight(buttonsize);
-    ui->pushButtonReadLatest->setMinimumHeight(buttonsize);
-    ui->pushButtonMangaInfoAddFavorites->setMinimumHeight(
-        buttonsizeaddfavorite);
-    ui->pushButtonMangaInfoAddFavorites->setMaximumWidth(buttonsizeaddfavorite);
+    ui->pushButtonReadContinue->setFixedHeight(buttonsize);
+    ui->pushButtonReadFirst->setFixedHeight(buttonsize);
+    ui->pushButtonReadLatest->setFixedHeight(buttonsize);
+    ui->pushButtonMangaInfoAddFavorites->setFixedSize(buttonsizeaddfavorite,
+                                                      buttonsizeaddfavorite);
     ui->pushButtonMangaInfoAddFavorites->setFocusPolicy(Qt::NoFocus);
     ui->pushButtonMangaInfoAddFavorites->setText("");
     ui->pushButtonMangaInfoAddFavorites->setIconSize(
@@ -47,23 +46,7 @@ void MangaInfoWidget::adjustSizes()
     ui->scrollAreaMangaInfoSummary->setVerticalScrollBar(new CScrollBar(
         Qt::Vertical, ui->scrollAreaMangaInfoSummary, summaryscrollbarwidth));
 
-    ui->labelMangaInfoTitle->setStyleSheet("QLabel{ font-size: 18pt; }");
-
-    QString favbuttonstyle =
-        "QPushButton {         "
-        "    background: white;"
-        "    border: none;     "
-        "    color: black;     "
-        "    outline: none;    "
-        "}                     "
-        "QPushButton:focus {   "
-        "    border: none;     "
-        "}                     "
-        "QPushButton:pressed { "
-        "    border: none;     "
-        "}                     ";
-
-    ui->pushButtonMangaInfoAddFavorites->setStyleSheet(favbuttonstyle);
+    ui->labelMangaInfoTitle->setStyleSheet("font-size: 18pt");
 
 #ifdef KOBO
 

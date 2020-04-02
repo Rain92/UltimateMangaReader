@@ -130,21 +130,21 @@ QComboBox::down-arrow:focus
   padding-bottom: 0px;
   padding-left: 0px;  
 }
-QTreeView, QListView {
+QTreeView {
     padding: 2px;
     border: 1px solid black;
     background: white;
     outline: none;
     font-size: 10pt;
 }
-QTreeView, QListView {
-    padding: 2px;
+QListView {
+    padding: 6px;
     border: 1px solid black;
     background: white;
     outline: none;
     font-size: 12pt;
 }
-QTreeView:focus, QListView:focus, QTableView:focus {
+QTreeView:focus, QTableView:focus {
     padding: 1px;
     border: 2px solid black;
 }
@@ -170,17 +170,17 @@ QPushButton
     background: white;
     border: 1px solid black;
     color: black;
-    padding: 9px;
+    padding: 2px;
     outline: none;
     font-size: 13pt;
 }
 QPushButton:focus {
-    border: 3px solid black;
-    padding: 7px;
+    border: 2px solid black;
+    padding: 2px;
 }
 QPushButton:pressed {
-    border: 4px solid black;
-    padding: 6px;
+    border: 2px solid black;
+    padding: 2px;
 }
 
 QToolButton
@@ -188,7 +188,7 @@ QToolButton
     background: transparent;
     border: 1px transparent;
     color: black;
-    padding: 4px;
+    padding: 2px;
     outline: none;
 }
 QToolButton:checked
@@ -224,7 +224,7 @@ QSlider::handle:horizontal {
      height: 30px;
      width: 20px;
      margin: -7px 0;
-     border-radius: 5px;
+     border-radius: 9px;
 }
 
 QSlider::handle:horizontal::focus {
@@ -239,9 +239,9 @@ QScrollBar::handle {
     min-height: 50px;
 }
 QScrollBar::handle:vertical {
-  min-height: 47px;
-  height: 47px;
-  width:10px;
+    min-height: 47px;
+    height: 47px;
+    width:10px;
 }
 QScrollBar::add-line {
     width: 0px;
@@ -249,4 +249,20 @@ QScrollBar::add-line {
 QScrollBar::sub-line {
     width: 0px;
 }
+QDialog {
+    border: 2px solid black;
+    background: white;
+}
 
+QPushButton#pushButtonMangaInfoAddFavorites {
+    background: white;
+    border: none;
+    color: black;
+    outline: none;
+}
+QPushButton:focus#pushButtonMangaInfoAddFavorites {
+    border: none;
+}
+QPushButton:pressed#pushButtonMangaInfoAddFavorites {
+    border: none;
+}

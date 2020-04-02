@@ -25,13 +25,26 @@ QNetworkAccessManager *DownloadManager::networkAccessManager()
 
 bool DownloadManager::connect()
 {
+    bool connected = true;
 #ifdef KOBO
-    if (!KoboPlatformFunctions::testInternetConnection(1))
+    if (!KoboPlatformFunctions::testInternetConnection(500))
+    {
+        qDebug() << "Connecting to Wifi...";
+        QElapsedTimer t;
+        t.start();
         KoboPlatformFunctions::enableWiFiConnection();
-    return KoboPlatformFunctions::testInternetConnection(1);
+        connected = KoboPlatformFunctions::testInternetConnection(500);
+        qDebug() << "Connected"
+                 << (connected ? "successfully" : "unsuccessfully") << "in"
+                 << t.elapsed() << "ms.";
+    }
+    else
+    {
+        qDebug() << "Already connected to Wifi.";
+    }
 #endif
 
-    return true;
+    return connected;
 }
 
 bool DownloadManager::connected()
