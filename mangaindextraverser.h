@@ -14,11 +14,11 @@ public:
                         int page);
     MangaIndexTraverser(const MangaIndexTraverser &mangaIndex) = default;
 
-    bool increment();
+    Result<bool, QString> increment();
 
-    bool decrement();
+    Result<bool, QString> decrement();
 
-    bool setChecked(int chapter, int page);
+    Result<bool, QString> setChecked(int chapter, int page);
 
     inline MangaChapter &currentChapter()
     {

@@ -83,7 +83,8 @@ MangaList JaiminisBox::getMangaList()
     return mangas;
 }
 
-QSharedPointer<MangaInfo> JaiminisBox::getMangaInfo(const QString &mangalink)
+Result<QSharedPointer<MangaInfo>, QString> JaiminisBox::getMangaInfo(
+    const QString &mangalink)
 {
     auto job = downloadManager->downloadAsStringPost(mangalink, postdatastr);
 
@@ -95,13 +96,13 @@ QSharedPointer<MangaInfo> JaiminisBox::getMangaInfo(const QString &mangalink)
     info->link = mangalink;
 
     if (!job->await(5000))
-        return info;
+        return Err(job->errorString);
 
     updateMangaInfoFinishedLoading(job, info);
 
     downloadCoverAsync(info);
 
-    return info;
+    return Ok(info);
 }
 
 void JaiminisBox::updateMangaInfoFinishedLoading(
@@ -129,35 +130,30 @@ void JaiminisBox::updateMangaInfoFinishedLoading(
     info->chapters.mergeChapters(newchapters);
 }
 
-QStringList JaiminisBox::getPageList(const QString &chapterlink)
+Result<QStringList, QString> JaiminisBox::getPageList(
+    const QString &chapterlink)
 {
     QRegularExpression encodedrx(R"(JSON.parse\(atob\("([^"]*))");
     QRegularExpression imagelinksrx(R"("url":"([^"]*))");
 
     auto job =
         downloadManager->downloadAsStringPost(chapterlink, postdatastr, -1);
-    QStringList imagelinks;
 
     if (!job->await(7000))
-        return imagelinks;
+        return Err(job->errorString);
 
     auto rxmatch = encodedrx.match(job->buffer);
     if (!rxmatch.hasMatch())
-        return imagelinks;
+        return Err(QString("Error. Couldn't process pages/images."));
 
     QByteArray decoded = QByteArray::fromBase64(rxmatch.captured(1).toLatin1());
     QString decodedstr(decoded);
 
+    QStringList imageLinks;
     for (auto &match : getAllRxMatches(imagelinksrx, decodedstr))
     {
-        imagelinks.append(match.captured(1).replace("\\/", "/"));
+        imageLinks.append(match.captured(1).replace("\\/", "/"));
     }
 
-    return imagelinks;
-}
-
-QString JaiminisBox::getImageLink(const QString &pagelink)
-{
-    // pagelinks are actually already imagelinks
-    return pagelink;
+    return Ok(imageLinks);
 }

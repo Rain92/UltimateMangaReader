@@ -39,7 +39,7 @@ public:
 
     virtual Result<QStringList, QString> getPageList(
         const QString &chapterlink) = 0;
-    virtual Result<QString, QString> getImageLink(const QString &pagelink) = 0;
+    virtual Result<QString, QString> getImageLink(const QString &pagelink);
 
     Result<QSharedPointer<MangaInfo>, QString> loadMangaInfo(
         const QString &mangalink, const QString &mangatitle,

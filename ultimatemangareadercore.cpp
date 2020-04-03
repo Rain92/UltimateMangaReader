@@ -56,8 +56,11 @@ void UltimateMangaReaderCore::setCurrentMangaSource(
 void UltimateMangaReaderCore::setCurrentManga(const QString& mangalink,
                                               const QString& mangatitle)
 {
-    mangaController->setCurrentManga(QSharedPointer<MangaInfo>(
-        currentMangaSource->loadMangaInfo(mangalink, mangatitle)));
+    auto res = currentMangaSource->loadMangaInfo(mangalink, mangatitle);
+    if (res.isOk())
+        mangaController->setCurrentManga(res.unwrap());
+    else
+        emit error(res.unwrapErr());
 }
 
 void UltimateMangaReaderCore::setupDirectories()

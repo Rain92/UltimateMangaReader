@@ -9,7 +9,6 @@
 #include "mangacontroller.h"
 #include "mangadex.h"
 #include "mangahub.h"
-#include "mangakakalot.h"
 #include "mangaowl.h"
 #include "mangapanda.h"
 #include "settings.h"
@@ -44,6 +43,8 @@ signals:
     void currentMangaSourceChanged();
     void currentMangaChanged();
     void currentMangaIndexChanged();
+
+    void error(const QString &error);
 
 private:
     void setupDirectories();

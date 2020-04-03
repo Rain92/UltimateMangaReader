@@ -81,41 +81,42 @@ void MangaPanda::updateMangaInfoFinishedLoading(
     info->chapters.mergeChapters(newchapters);
 }
 
-QStringList MangaPanda::getPageList(const QString &chapterlink)
+Result<QStringList, QString> MangaPanda::getPageList(const QString &chapterlink)
 {
     QRegularExpression pagerx(R"lit(<option value="([^"]*)")lit");
 
     auto job = downloadManager->downloadAsString(chapterlink);
-    QStringList pageLinks;
 
     if (!job->await(7000))
-        return pageLinks;
+        return Err(job->errorString);
 
     int spos = job->buffer.indexOf(R"(<select id="pageMenu")");
     int epos = job->buffer.indexOf("</select>", spos);
 
+    QStringList pageLinks;
     for (auto &match : getAllRxMatches(pagerx, job->buffer, spos, epos))
     {
         pageLinks.append(baseurl + match.captured(1));
     }
 
-    return pageLinks;
+    return Ok(pageLinks);
 }
 
-QString MangaPanda::getImageLink(const QString &pagelink)
+Result<QString, QString> MangaPanda::getImageLink(const QString &pagelink)
 {
     auto job = downloadManager->downloadAsString(pagelink);
-    QString imageLink;
 
     QRegularExpression imagerx(R"lit(<img id="img"[^>]*src="([^"]*)")lit");
 
     if (!job->await(7000))
-        return imageLink;
+        return Err(job->errorString);
 
     auto match = imagerx.match(job->buffer);
 
-    if (match.hasMatch())
-        imageLink = match.captured(1);
+    if (!match.hasMatch())
+        return Err(QString("Error. Couldn't process pages/images."));
 
-    return imageLink;
+    auto imageLink = match.captured(1);
+
+    return Ok(imageLink);
 }

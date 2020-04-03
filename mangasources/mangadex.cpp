@@ -180,7 +180,7 @@ void MangaDex::updateMangaInfoFinishedLoading(
     }
 }
 
-QStringList MangaDex::getPageList(const QString &chapterlink)
+Result<QStringList, QString> MangaDex::getPageList(const QString &chapterlink)
 {
     QString scriptstart("<script");
     QRegularExpression baserx(R"(server\s+=\s+'([^']*)')");
@@ -189,14 +189,12 @@ QStringList MangaDex::getPageList(const QString &chapterlink)
 
     auto job = downloadManager->downloadAsString(chapterlink);
 
-    QStringList pageLinks;
-
     if (!job->await(7000))
-        return pageLinks;
+        return Err(job->errorString);
 
     int spos = job->buffer.indexOf(scriptstart);
     if (spos == -1)
-        return pageLinks;
+        return Err(QString("Error. Couldn't process pages/images."));
 
     auto baserxmatch = baserx.match(job->buffer);
     auto datarxmatch = datarx.match(job->buffer);
@@ -204,23 +202,18 @@ QStringList MangaDex::getPageList(const QString &chapterlink)
 
     if (!baserxmatch.hasMatch() || !datarxmatch.hasMatch() ||
         !pagesrxmatch.hasMatch())
-        return pageLinks;
+        return Err(QString("Error. Couldn't process pages/images."));
 
     QString baselink =
         baserxmatch.captured(1).remove('\\') + datarxmatch.captured(1) + '/';
 
+    QStringList imagelinks;
     for (QString s : pagesrxmatch.captured(1).split(','))
     {
         s = s.remove('\'').remove('\r').remove('\n');
         if (s != "")
-            pageLinks.append(baselink + s.remove('\'').remove('\r'));
+            imagelinks.append(baselink + s.remove('\'').remove('\r'));
     }
 
-    return pageLinks;
-}
-
-QString MangaDex::getImageLink(const QString &pagelink)
-{
-    // pagelinks are actually already imagelinks
-    return pagelink;
+    return Ok(imagelinks);
 }

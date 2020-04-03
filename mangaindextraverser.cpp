@@ -6,7 +6,7 @@ MangaIndexTraverser::MangaIndexTraverser(QSharedPointer<MangaInfo> mangainfo,
 {
 }
 
-bool MangaIndexTraverser::increment()
+Result<bool, QString> MangaIndexTraverser::increment()
 {
     if (page + 1 < mangaInfo->chapters.at(chapter).numPages)
     {
@@ -18,11 +18,11 @@ bool MangaIndexTraverser::increment()
     }
     else
     {
-        return false;
+        return Ok(false);
     }
 }
 
-bool MangaIndexTraverser::decrement()
+Result<bool, QString> MangaIndexTraverser::decrement()
 {
     if (page > 0)
     {
@@ -31,33 +31,40 @@ bool MangaIndexTraverser::decrement()
     else if (chapter > 0)
     {
         if (!mangaInfo->chapters.at(chapter - 1).pagesLoaded)
-            if (!mangaInfo->mangaSource->updatePageList(mangaInfo, chapter))
-                return false;
+        {
+            auto res =
+                mangaInfo->mangaSource->updatePageList(mangaInfo, chapter);
+            if (!res.isOk())
+                return Err(res.unwrapErr());
+        }
 
         return setChecked(
             chapter - 1, qMax(0, mangaInfo->chapters.at(chapter).numPages - 1));
     }
     else
     {
-        return false;
+        return Ok(false);
     }
 }
 
-bool MangaIndexTraverser::setChecked(int chapter, int page)
+Result<bool, QString> MangaIndexTraverser::setChecked(int chapter, int page)
 {
     if (chapter < 0 || page < 0 || chapter >= mangaInfo->chapters.count() ||
         (chapter == this->chapter && page == this->page))
-        return false;
+        return Ok(false);
 
     if (!mangaInfo->chapters.at(chapter).pagesLoaded)
-        if (!mangaInfo->mangaSource->updatePageList(mangaInfo, chapter))
-            return false;
+    {
+        auto res = mangaInfo->mangaSource->updatePageList(mangaInfo, chapter);
+        if (!res.isOk())
+            return Err(res.unwrapErr());
+    }
 
     if (page >= mangaInfo->chapters.at(chapter).numPages)
-        return false;
+        return Ok(false);
 
     this->chapter = chapter;
     this->page = page;
 
-    return true;
+    return Ok(true);
 }

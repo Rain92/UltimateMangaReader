@@ -10,6 +10,7 @@
 #include "mangainfo.h"
 #include "preloadqueue.h"
 #include "readingprogress.h"
+#include "result.h"
 #include "staticsettings.h"
 
 class MangaController : public QObject
@@ -25,7 +26,7 @@ public:
 
 signals:
     void indexMovedOutOfBounds();
-    void downloadError(const QString &error);
+    void error(const QString &error);
     void currentMangaChanged(QSharedPointer<MangaInfo> mangaInfo);
     void currentIndexChanged(const ReadingProgress &progress);
     void currentImageChanged(const QString &imagePath);
@@ -37,8 +38,8 @@ public slots:
     void setCurrentIndex(const MangaIndex &index);
     void advanceMangaPage(PageTurnDirection direction);
 
-    QString getCoverpathScaled() const;
-    QString getImageLink(const MangaIndex &index);
+    Result<QString, QString> getCoverpathScaled() const;
+    Result<QString, QString> getImageLink(const MangaIndex &index);
 
     void preloadNeighbours(int Forward, int Backward);
     void preloadImage(const MangaIndex &index);
@@ -48,7 +49,7 @@ public slots:
 
 private slots:
     void completedImagePreload(const QString &path);
-    bool assurePagesLoaded();
+    Result<void, QString> assurePagesLoaded();
 
 private:
     void currentIndexChangedInternal(bool preload);

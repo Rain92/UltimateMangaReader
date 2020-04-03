@@ -13,8 +13,9 @@ public:
     void updateMangaInfoFinishedLoading(
         QSharedPointer<DownloadStringJob> job,
         QSharedPointer<MangaInfo> info) override;
-    QStringList getPageList(const QString &chapterlink) override;
-    QString getImageLink(const QString &pagelink) override;
+    Result<QStringList, QString> getPageList(
+        const QString &chapterlink) override;
+    Result<QString, QString> getImageLink(const QString &pagelink) override;
 
 private:
     void login();

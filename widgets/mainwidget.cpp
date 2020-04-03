@@ -24,6 +24,13 @@ MainWidget::MainWidget(QWidget *parent)
     // DownloadManager
     core->downloadManager->setImageRescaleSize(this->size());
 
+    // Core
+
+    QObject::connect(core, &UltimateMangaReaderCore::error, [this](auto msg) {
+        if (!core->settings.hideErrorMessages)
+            errorMessageWidget->showError(msg);
+    });
+
     // MangaController
     QObject::connect(core->mangaController,
                      &MangaController::currentMangaChanged, [this](auto info) {
@@ -49,7 +56,7 @@ MainWidget::MainWidget(QWidget *parent)
                      &MangaController::indexMovedOutOfBounds, this,
                      &MainWidget::readerGoBack);
 
-    QObject::connect(core->mangaController, &MangaController::downloadError,
+    QObject::connect(core->mangaController, &MangaController::error,
                      [this](auto msg) {
                          if (!core->settings.hideErrorMessages)
                              errorMessageWidget->showError(msg);

@@ -154,7 +154,7 @@ int MangaHub::binarySearchNumPages(const QRegularExpressionMatch &imagerxmatch,
         return binarySearchNumPages(imagerxmatch, lowerBound, mid, true);
 }
 
-QStringList MangaHub::getPageList(const QString &chapterlink)
+Result<QStringList, QString> MangaHub::getPageList(const QString &chapterlink)
 {
     QRegularExpression imagerx(R"lit(<img src="([^"]+?/)\d+(\..{3,4})")lit");
 
@@ -162,16 +162,14 @@ QStringList MangaHub::getPageList(const QString &chapterlink)
 
     auto job = downloadManager->downloadAsString(chapterlink);
 
-    QStringList pageLinks;
-
     if (!job->await(7000))
-        return pageLinks;
+        return Err(job->errorString);
 
     auto imagerxmatch = imagerx.match(job->buffer);
     auto numimagesrxmatch = numimagesrx.match(job->buffer);
 
     if (!imagerxmatch.hasMatch())
-        return pageLinks;
+        return Err(QString("Error. Couldn't process pages/images."));
 
     int pages = 1;
     if (numimagesrxmatch.hasMatch())
@@ -183,17 +181,12 @@ QStringList MangaHub::getPageList(const QString &chapterlink)
         pages = binarySearchNumPages(imagerxmatch, 1, 25, false);
     }
 
+    QStringList imageLinks;
     for (int i = 1; i <= pages; i++)
     {
         auto link = buildImgUrl(imagerxmatch, i);
-        pageLinks.append(link);
+        imageLinks.append(link);
     }
 
-    return pageLinks;
-}
-
-QString MangaHub::getImageLink(const QString &pagelink)
-{
-    // pagelinks are actually already imagelinks
-    return pagelink;
+    return Ok(imageLinks);
 }

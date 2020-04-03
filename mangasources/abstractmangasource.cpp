@@ -85,6 +85,14 @@ Result<QString, QString> AbstractMangaSource::downloadAwaitImage(
         return Err(job->errorString);
 }
 
+Result<QString, QString> AbstractMangaSource::getImageLink(
+    const QString &pagelink)
+{
+    // Default implementation:
+    // pagelinks are actually already imagelinks
+    return Ok(pagelink);
+}
+
 Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::loadMangaInfo(
     const QString &mangalink, const QString &mangatitle, bool update)
 {

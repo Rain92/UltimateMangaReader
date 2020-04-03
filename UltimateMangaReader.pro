@@ -58,7 +58,6 @@ HEADERS += \
     mangasources/mangahub.h \
     mangasources/mangaowl.h \
     mangasources/mangapanda.h \
-    mangasources/mangakakalot.h \
     mangasources/mangadex.h \
     mangasources/jaiminisbox.h \
     utils.h \
@@ -101,7 +100,6 @@ SOURCES += \
     mangasources/mangahub.cpp \
     mangasources/mangaowl.cpp \
     mangasources/mangapanda.cpp \
-    mangasources/mangakakalot.cpp \
     mangasources/mangadex.cpp \
     mangasources/jaiminisbox.cpp \
     utils.cpp \

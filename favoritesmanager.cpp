@@ -79,7 +79,15 @@ void FavoritesManager::loadInfos()
         {
             auto mi = mangasources[fav.hostname]->loadMangaInfo(
                 fav.mangalink, fav.title, false);
-            favoriteinfos.append(mi);
+
+            if (mi.isOk())
+            {
+                favoriteinfos.append(mi.unwrap());
+            }
+            else
+            {
+                // TODO
+            }
         }
         else
         {

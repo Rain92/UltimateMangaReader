@@ -116,28 +116,21 @@ void MangaOwl::updateMangaInfoFinishedLoading(
     info->chapters.mergeChapters(newchapters);
 }
 
-QStringList MangaOwl::getPageList(const QString &chapterlink)
+Result<QStringList, QString> MangaOwl::getPageList(const QString &chapterlink)
 {
     QRegularExpression pagerx(
         R"lit(<img[^>]*class="owl-lazy"[^>]*data-src="([^"]*)")lit");
 
     auto job = downloadManager->downloadAsString(chapterlink);
 
-    QStringList pageLinks;
-
     if (!job->await(7000))
-        return pageLinks;
+        return Err(job->errorString);
 
+    QStringList imageLinks;
     for (auto &match : getAllRxMatches(pagerx, job->buffer))
     {
-        pageLinks.append(match.captured(1));
+        imageLinks.append(match.captured(1));
     }
 
-    return pageLinks;
-}
-
-QString MangaOwl::getImageLink(const QString &pagelink)
-{
-    // pagelinks are actually already imagelinks
-    return pagelink;
+    return Ok(imageLinks);
 }
