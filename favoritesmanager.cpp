@@ -91,7 +91,7 @@ void FavoritesManager::loadInfos()
 void FavoritesManager::updateInfos()
 {
     for (const auto &info : favoriteinfos)
-        mangasources[info->hostname]->updateMangaInfo(info);
+        mangasources[info->hostname]->updateMangaInfoAsync(info);
 }
 
 void FavoritesManager::clearFavorites()

@@ -10,6 +10,7 @@
 #include "downloadqueue.h"
 #include "mangachapter.h"
 #include "mangalist.h"
+#include "result.h"
 #include "sizes.h"
 #include "staticsettings.h"
 
@@ -33,14 +34,16 @@ public:
         QSharedPointer<DownloadStringJob> job,
         QSharedPointer<MangaInfo> mangainfo) = 0;
 
-    virtual QSharedPointer<MangaInfo> getMangaInfo(const QString &mangalink);
+    virtual Result<QSharedPointer<MangaInfo>, QString> getMangaInfo(
+        const QString &mangalink);
 
-    virtual QStringList getPageList(const QString &chapterlink) = 0;
-    virtual QString getImageLink(const QString &pagelink) = 0;
+    virtual Result<QStringList, QString> getPageList(
+        const QString &chapterlink) = 0;
+    virtual Result<QString, QString> getImageLink(const QString &pagelink) = 0;
 
-    QSharedPointer<MangaInfo> loadMangaInfo(const QString &mangalink,
-                                            const QString &mangatitle,
-                                            bool update = true);
+    Result<QSharedPointer<MangaInfo>, QString> loadMangaInfo(
+        const QString &mangalink, const QString &mangatitle,
+        bool update = true);
 
     bool serializeMangaList();
     bool deserializeMangaList();
@@ -50,15 +53,17 @@ public:
     QSharedPointer<DownloadFileJob> downloadImage(
         const DownloadImageDescriptor &descriptor);
 
-    QString downloadAwaitImage(const DownloadImageDescriptor &descriptor);
+    Result<QString, QString> downloadAwaitImage(
+        const DownloadImageDescriptor &descriptor);
 
     QString htmlToPlainText(const QString &str);
 
 public slots:
 
-    virtual void updateMangaInfo(QSharedPointer<MangaInfo> mangainfo);
-    void downloadCover(QSharedPointer<MangaInfo> mangainfo);
-    bool updatePageList(QSharedPointer<MangaInfo> info, int chapter);
+    virtual void updateMangaInfoAsync(QSharedPointer<MangaInfo> mangainfo);
+    void downloadCoverAsync(QSharedPointer<MangaInfo> mangainfo);
+    Result<void, QString> updatePageList(QSharedPointer<MangaInfo> info,
+                                         int chapter);
 
 signals:
     void updateProgress(int);

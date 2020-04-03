@@ -46,7 +46,6 @@ HEADERS += \
     mangaindextraverser.h \
     readingprogress.h \
     result.h \
-    resulttypes.h \
     sizes.h \
     staticsettings.h \
     ultimatemangareadercore.h \

@@ -45,7 +45,7 @@ void DownloadScaledImageJob::downloadFileFinished()
         }
         else
         {
-            //            QFile::remove(filepath);
+            errorString = "Failed to load or rescale image.";
             emit downloadError();
         }
     }

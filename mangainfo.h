@@ -40,7 +40,6 @@ public:
 
     MangaChapterCollection chapters;
 
-    bool updating;
     QScopedPointer<QMutex> updateMutex;
 
     void updateCompeted(bool newchapters);

@@ -68,44 +68,47 @@ QSharedPointer<DownloadFileJob> AbstractMangaSource::downloadImage(
     return downloadManager->downloadAsScaledImage(descriptor.imageUrl, path);
 }
 
-QString AbstractMangaSource::downloadAwaitImage(
+Result<QString, QString> AbstractMangaSource::downloadAwaitImage(
     const DownloadImageDescriptor &descriptor)
 {
     QString path = getImagePath(descriptor);
 
     if (QFile::exists(path))
-        return path;
+        return Ok(path);
 
     auto job =
         downloadManager->downloadAsScaledImage(descriptor.imageUrl, path);
 
-    return job->await(5000) ? path : "";
+    if (job->await(5000))
+        return Ok(path);
+    else
+        return Err(job->errorString);
 }
 
-QSharedPointer<MangaInfo> AbstractMangaSource::loadMangaInfo(
+Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::loadMangaInfo(
     const QString &mangalink, const QString &mangatitle, bool update)
 {
     QString path(CONF.mangainfodir(name, mangatitle) + "mangainfo.dat");
     if (QFile::exists(path))
     {
-        QSharedPointer<MangaInfo> mi(MangaInfo::deserialize(this, path));
+        auto info = MangaInfo::deserialize(this, path);
         if (update)
-        {
-            mi->mangaSource->updateMangaInfo(mi);
-            mi->serialize();
-        }
-        return mi;
+            info->mangaSource->updateMangaInfoAsync(info);
+
+        return Ok(info);
     }
     else
     {
-        QSharedPointer<MangaInfo> mi(getMangaInfo(mangalink));
-        mi->serialize();
+        auto infoR = getMangaInfo(mangalink);
 
-        return mi;
+        if (infoR.isOk())
+            infoR.unwrap()->serialize();
+
+        return infoR;
     }
 }
 
-QSharedPointer<MangaInfo> AbstractMangaSource::getMangaInfo(
+Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::getMangaInfo(
     const QString &mangalink)
 {
     auto job = downloadManager->downloadAsString(mangalink);
@@ -117,23 +120,18 @@ QSharedPointer<MangaInfo> AbstractMangaSource::getMangaInfo(
 
     info->link = mangalink;
 
-    if (!job->await(3000))
-        return info;
+    if (!job->await(5000))
+        return Err(job->errorString);
 
     updateMangaInfoFinishedLoading(job, info);
 
-    downloadCover(info);
+    downloadCoverAsync(info);
 
-    return info;
+    return Ok(info);
 }
 
-void AbstractMangaSource::updateMangaInfo(QSharedPointer<MangaInfo> info)
+void AbstractMangaSource::updateMangaInfoAsync(QSharedPointer<MangaInfo> info)
 {
-    if (info->updating)
-        return;
-
-    info->updating = true;
-
     int oldnumchapters = info->chapters.count();
 
     auto job = downloadManager->downloadAsString(info->link);
@@ -148,7 +146,7 @@ void AbstractMangaSource::updateMangaInfo(QSharedPointer<MangaInfo> info)
 
         info->updateCompeted(newchapters);
 
-        downloadCover(info);
+        downloadCoverAsync(info);
         info->serialize();
     };
 
@@ -158,20 +156,26 @@ void AbstractMangaSource::updateMangaInfo(QSharedPointer<MangaInfo> info)
     executeOnJobCompletion(job, lambda);
 }
 
-bool AbstractMangaSource::updatePageList(QSharedPointer<MangaInfo> info,
-                                         int chapter)
+Result<void, QString> AbstractMangaSource::updatePageList(
+    QSharedPointer<MangaInfo> info, int chapter)
 {
-    if (chapter >= info->chapters.count())
-        return false;
+    if (chapter >= info->chapters.count() || chapter < 0)
+        return Err(QString("Chapter number out of bounds."));
 
     if (info->chapters[chapter].pagesLoaded)
-        return true;
+        return Ok();
 
-    auto newpagelist = getPageList(info->chapters[chapter].chapterUrl);
+    auto newpagelistR = getPageList(info->chapters[chapter].chapterUrl);
+
+    if (!newpagelistR.isOk())
+        return Err(newpagelistR.unwrapErr());
+
+    auto newpagelist = newpagelistR.unwrap();
+
     QMutexLocker locker(info->updateMutex.get());
 
-    if (chapter >= info->chapters.count())
-        return false;
+    if (chapter >= info->chapters.count() || chapter < 0)
+        return Err(QString("Chapter number out of bounds."));
     auto &ch = info->chapters[chapter];
 
     ch.pageUrlList = newpagelist;
@@ -182,7 +186,7 @@ bool AbstractMangaSource::updatePageList(QSharedPointer<MangaInfo> info,
         ch.numPages = 1;
         ch.pageUrlList.clear();
         ch.pageUrlList << "";
-        return false;
+        return Err(QString("Can't download chapter: pagelist empty."));
     }
     ch.numPages = ch.pageUrlList.count();
     ch.imageUrlList = QStringList();
@@ -190,7 +194,7 @@ bool AbstractMangaSource::updatePageList(QSharedPointer<MangaInfo> info,
         ch.imageUrlList.append("");
     ch.pagesLoaded = true;
 
-    return true;
+    return Ok();
 }
 
 void AbstractMangaSource::genrateCoverThumbnail(
@@ -208,7 +212,8 @@ void AbstractMangaSource::genrateCoverThumbnail(
     }
 }
 
-void AbstractMangaSource::downloadCover(QSharedPointer<MangaInfo> mangainfo)
+void AbstractMangaSource::downloadCoverAsync(
+    QSharedPointer<MangaInfo> mangainfo)
 {
     if (mangainfo->coverLink == "")
     {

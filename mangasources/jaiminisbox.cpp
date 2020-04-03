@@ -99,7 +99,7 @@ QSharedPointer<MangaInfo> JaiminisBox::getMangaInfo(const QString &mangalink)
 
     updateMangaInfoFinishedLoading(job, info);
 
-    downloadCover(info);
+    downloadCoverAsync(info);
 
     return info;
 }

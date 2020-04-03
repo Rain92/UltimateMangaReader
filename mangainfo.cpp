@@ -4,7 +4,6 @@ MangaInfo::MangaInfo(AbstractMangaSource *mangasource)
     : QObject(),
       updated(false),
       mangaSource(mangasource),
-      updating(false),
       updateMutex(new QMutex())
 {
 }
@@ -45,8 +44,6 @@ void MangaInfo::serialize()
 
 void MangaInfo::updateCompeted(bool newchapters)
 {
-    updating = false;
-
     if (newchapters)
         updated = true;
 
