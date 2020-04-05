@@ -24,15 +24,6 @@ public:
     QSharedPointer<MangaInfo> currentManga;
     MangaIndexTraverser currentIndex;
 
-signals:
-    void indexMovedOutOfBounds();
-    void error(const QString &error);
-    void currentMangaChanged(QSharedPointer<MangaInfo> mangaInfo);
-    void currentIndexChanged(const ReadingProgress &progress);
-    void currentImageChanged(const QString &imagePath);
-    void completedImagePreloadSignal(const QString &path);
-
-public slots:
     void setCurrentManga(QSharedPointer<MangaInfo> mangaInfo);
 
     void setCurrentIndex(const MangaIndex &index);
@@ -47,11 +38,17 @@ public slots:
     void preloadPopular();
     void cancelAllPreloads();
 
-private slots:
-    void completedImagePreload(const QString &path);
-    Result<void, QString> assurePagesLoaded();
+signals:
+    void indexMovedOutOfBounds();
+    void error(const QString &error);
+    void currentMangaChanged(QSharedPointer<MangaInfo> mangaInfo);
+    void currentIndexChanged(const ReadingProgress &progress);
+    void currentImageChanged(const QString &imagePath);
+    void completedImagePreloadSignal(const QString &path);
 
 private:
+    void completedImagePreload(const QString &path);
+    Result<void, QString> assurePagesLoaded();
     void currentIndexChangedInternal(bool preload);
     void updateCurrentImage();
     void deserializeProgress();

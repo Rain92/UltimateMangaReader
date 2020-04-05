@@ -58,8 +58,6 @@ public:
 
     QString htmlToPlainText(const QString &str);
 
-public slots:
-
     virtual void updateMangaInfoAsync(QSharedPointer<MangaInfo> mangainfo);
     void downloadCoverAsync(QSharedPointer<MangaInfo> mangainfo);
     Result<void, QString> updatePageList(QSharedPointer<MangaInfo> info,

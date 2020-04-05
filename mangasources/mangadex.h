@@ -15,7 +15,6 @@ public:
         QSharedPointer<MangaInfo> info) override;
     Result<QStringList, QString> getPageList(
         const QString &chapterlink) override;
-    Result<QString, QString> getImageLink(const QString &pagelink) override;
 
 private:
     void login();
