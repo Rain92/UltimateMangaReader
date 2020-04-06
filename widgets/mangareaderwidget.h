@@ -35,7 +35,6 @@ public:
                                  int comflight);
     void setFrontLightPanelState(int light, int comflight);
 
-public slots:
     void addImageToCache(const QString &path);
     void updateTime();
     void setSettings(Settings *settings);
@@ -66,8 +65,6 @@ private:
     bool gestureEvent(QGestureEvent *event);
 
     Ui::MangaReaderWidget *ui;
-
-    bool pagechanging;
 
     QQueue<QPair<QSharedPointer<QPixmap>, QString>> imgcache;
 

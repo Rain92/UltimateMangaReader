@@ -15,6 +15,7 @@ public:
 
     void setImage(const QString &path);
     void setImage(QSharedPointer<QPixmap> img);
+    void clearImage();
 
 protected:
     //    void mousePressEvent(QMouseEvent *event);

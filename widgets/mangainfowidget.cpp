@@ -67,12 +67,49 @@ inline void updateLabel(QLabel *caption, QLabel *content, const QString &text)
 
 void MangaInfoWidget::setManga(QSharedPointer<MangaInfo> manga)
 {
-    if (currentmanga.get() != manga.get())
+    if (currentmanga != manga)
     {
         currentmanga.clear();
         currentmanga = manga;
+
+        QObject::connect(currentmanga.get(), &MangaInfo::updatedSignal, this,
+                         &MangaInfoWidget::updateManga);
+
+        QObject::connect(currentmanga.get(), &MangaInfo::coverLoaded, this,
+                         &MangaInfoWidget::updateCover);
     }
 
+    updateInfos();
+    updateCover();
+}
+
+void MangaInfoWidget::updateManga(bool newchapters)
+{
+    Q_UNUSED(newchapters)
+
+    qDebug() << "updated" << currentmanga->title;
+
+    updateInfos();
+}
+
+void MangaInfoWidget::updateCover()
+{
+    if (!QFile::exists(currentmanga->coverPath))
+    {
+        ui->labelMangaInfoCover->clear();
+    }
+    else
+    {
+        QPixmap img;
+        img.load(currentmanga->coverPath);
+        ui->labelMangaInfoCover->setPixmap(
+            img.scaled(coversize, coversize, Qt::KeepAspectRatio,
+                       Qt::SmoothTransformation));
+    }
+}
+
+void MangaInfoWidget::updateInfos()
+{
     QStringListModel *model = new QStringListModel(this);
     model->setStringList(currentmanga->chapters.getMangaTitlesReversed());
 
@@ -102,40 +139,6 @@ void MangaInfoWidget::setManga(QSharedPointer<MangaInfo> manga)
     ui->pushButtonReadContinue->setEnabled(enable);
     ui->pushButtonReadFirst->setEnabled(enable);
     ui->pushButtonReadLatest->setEnabled(enable);
-
-    updateCover();
-
-    QObject::connect(currentmanga.get(), &MangaInfo::updatedSignal, this,
-                     &MangaInfoWidget::updateManga);
-
-    QObject::connect(currentmanga.get(), &MangaInfo::coverLoaded, this,
-                     &MangaInfoWidget::updateCover);
-}
-
-void MangaInfoWidget::updateManga(bool newchapters)
-{
-    Q_UNUSED(newchapters)
-
-    qDebug() << "updated" << currentmanga->title;
-    ui->labelMangaInfoLabelStaus->setText(currentmanga->status);
-    static_cast<QStringListModel *>(ui->listViewChapters->model())
-        ->setStringList(currentmanga->chapters.getMangaTitlesReversed());
-}
-
-void MangaInfoWidget::updateCover()
-{
-    if (!QFile::exists(currentmanga->coverPath))
-    {
-        ui->labelMangaInfoCover->clear();
-    }
-    else
-    {
-        QPixmap img;
-        img.load(currentmanga->coverPath);
-        ui->labelMangaInfoCover->setPixmap(
-            img.scaled(coversize, coversize, Qt::KeepAspectRatio,
-                       Qt::SmoothTransformation));
-    }
 }
 
 void MangaInfoWidget::setFavoriteButtonState(bool state)

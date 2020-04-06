@@ -110,6 +110,8 @@ void DownloadStringJob::onError(QNetworkReply::NetworkError)
 void DownloadStringJob::timeout()
 {
     errorString = "Download error: timeout";
+    QObject::disconnect(reply.get(), &QNetworkReply::finished, this,
+                        &DownloadStringJob::downloadStringFinished);
     reply->abort();
 }
 
@@ -141,7 +143,7 @@ bool DownloadStringJob::await(int timeout, bool retry)
         }
     }
     if (rem <= 20)
-        errorString = "Retry limit reached: " + errorString;
+        errorString = "Download Error: Retry limit reached.";
 
     return isCompleted;
 }

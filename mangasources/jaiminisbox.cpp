@@ -8,7 +8,7 @@ JaiminisBox::JaiminisBox(QObject *parent, DownloadManager *dm)
 
     QUrlQuery postdata;
     postdata.addQueryItem("adult", "true");
-    postdatastr = postdata.query().toUtf8();
+    mangaInfoPostDataStr = postdata.query().toUtf8();
 }
 
 MangaList JaiminisBox::getMangaList()
@@ -83,28 +83,6 @@ MangaList JaiminisBox::getMangaList()
     return mangas;
 }
 
-Result<QSharedPointer<MangaInfo>, QString> JaiminisBox::getMangaInfo(
-    const QString &mangalink)
-{
-    auto job = downloadManager->downloadAsStringPost(mangalink, postdatastr);
-
-    auto info = QSharedPointer<MangaInfo>(new MangaInfo(this));
-
-    info->mangaSource = this;
-    info->hostname = name;
-
-    info->link = mangalink;
-
-    if (!job->await(5000))
-        return Err(job->errorString);
-
-    updateMangaInfoFinishedLoading(job, info);
-
-    downloadCoverAsync(info);
-
-    return Ok(info);
-}
-
 void JaiminisBox::updateMangaInfoFinishedLoading(
     QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info)
 {
@@ -136,8 +114,8 @@ Result<QStringList, QString> JaiminisBox::getPageList(
     QRegularExpression encodedrx(R"(JSON.parse\(atob\("([^"]*))");
     QRegularExpression imagelinksrx(R"("url":"([^"]*))");
 
-    auto job =
-        downloadManager->downloadAsStringPost(chapterlink, postdatastr, -1);
+    auto job = downloadManager->downloadAsString(chapterlink, 6000,
+                                                 mangaInfoPostDataStr);
 
     if (!job->await(7000))
         return Err(job->errorString);

@@ -33,7 +33,7 @@ void MangaDex::login()
         }
     };
 
-    auto job = downloadManager->downloadAsStringPost(loginurl, query);
+    auto job = downloadManager->downloadAsString(loginurl, 6000, query);
 
     executeOnJobCompletion(job, lambda);
 }

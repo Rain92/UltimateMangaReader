@@ -9,7 +9,6 @@
 MangaReaderWidget::MangaReaderWidget(QWidget *parent)
     : QWidget(parent),
       ui(new Ui::MangaReaderWidget),
-      pagechanging(false),
       imgcache(),
       settings(nullptr)
 {
@@ -132,7 +131,7 @@ bool MangaReaderWidget::gestureEvent(QGestureEvent *event)
 {
     if (QGesture *gesture = event->gesture(Qt::SwipeGesture))
     {
-        if (gesture->state() != Qt::GestureFinished || pagechanging)
+        if (gesture->state() != Qt::GestureFinished)
             return true;
 
         auto swipe = static_cast<QSwipeGesture *>(gesture);
@@ -147,7 +146,6 @@ bool MangaReaderWidget::gestureEvent(QGestureEvent *event)
         }
         else if (angle > 155 && angle < 205)
         {
-            //            pagechanging = true;
             emit advancPageClicked(conditionalReverse(
                 Forward, settings && settings->reverseSwipeDirection));
         }
@@ -168,7 +166,7 @@ bool MangaReaderWidget::gestureEvent(QGestureEvent *event)
     {
         auto pos = this->mapFromGlobal(gesture->hotSpot().toPoint());
 
-        if (gesture->state() != Qt::GestureFinished || pagechanging)
+        if (gesture->state() != Qt::GestureFinished)
             return true;
 
         if (ui->readerNavigationBar->isVisible())
@@ -183,7 +181,6 @@ bool MangaReaderWidget::gestureEvent(QGestureEvent *event)
         }
         else
         {
-            //            pagechanging = true;
             PageTurnDirection direction =
                 pos.x() > this->width() * readerpreviouspagethreshold
                     ? Forward
@@ -201,7 +198,7 @@ void MangaReaderWidget::updateTime()
     ui->labelTime->setText(now.toString("hh:mm"));
 
     int msecsleft = (60 - now.second()) * 1000 - now.msec();
-    QTimer::singleShot(msecsleft, this, SLOT(updateTime()));
+    QTimer::singleShot(msecsleft, this, &MangaReaderWidget::updateTime);
 }
 
 void MangaReaderWidget::updateCurrentIndex(const ReadingProgress &progress)
@@ -218,15 +215,10 @@ void MangaReaderWidget::updateCurrentIndex(const ReadingProgress &progress)
 
 void MangaReaderWidget::on_pushButtonReaderHome_clicked()
 {
-    pagechanging = false;
     emit changeView(HomeTab);
 }
 
-void MangaReaderWidget::on_pushButtonReaderBack_clicked()
-{
-    pagechanging = false;
-    emit back();
-}
+void MangaReaderWidget::on_pushButtonReaderBack_clicked() { emit back(); }
 
 void MangaReaderWidget::on_pushButtonReaderClose_clicked() { emit closeApp(); }
 
@@ -251,8 +243,10 @@ void MangaReaderWidget::showImage(const QString &path)
             ui->mangaImageContainer->setImage(imgcache[i].first);
         }
     }
-
-    pagechanging = false;
+    else
+    {
+        ui->mangaImageContainer->clearImage();
+    }
 }
 
 void MangaReaderWidget::addImageToCache(const QString &path)

@@ -4,9 +4,9 @@
 #include <QIcon>
 #include <QWidget>
 
-#include "sizes.h"
 #include "mangaindex.h"
 #include "mangainfo.h"
+#include "sizes.h"
 
 namespace Ui
 {
@@ -51,6 +51,8 @@ private:
     QIcon isnotfavoriteicon;
 
     void adjustSizes();
+
+    void updateInfos();
 };
 
 #endif  // MANGAINFOWIDGET_H

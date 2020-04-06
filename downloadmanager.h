@@ -31,10 +31,9 @@ public:
 
     QNetworkAccessManager *networkAccessManager();
 
-    QSharedPointer<DownloadStringJob> downloadAsString(const QString &url,
-                                                       int timeout = 6000);
-    QSharedPointer<DownloadStringJob> downloadAsStringPost(
-        const QString &url, const QByteArray &postdata, int timeout = 6000);
+    QSharedPointer<DownloadStringJob> downloadAsString(
+        const QString &url, int timeout = 6000,
+        const QByteArray &postData = QByteArray());
     QSharedPointer<DownloadFileJob> downloadAsFile(const QString &url,
                                                    const QString &localPath);
     QSharedPointer<DownloadFileJob> downloadAsScaledImage(

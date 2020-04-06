@@ -57,25 +57,12 @@ bool DownloadManager::connected()
 }
 
 QSharedPointer<DownloadStringJob> DownloadManager::downloadAsString(
-    const QString &url, int timeout)
+    const QString &url, int timeout, const QByteArray &postData)
 {
     qDebug() << "downloading:" << url;
 
     auto job = QSharedPointer<DownloadStringJob>(
-        new DownloadStringJob(networkManager, url, timeout),
-        &QObject::deleteLater);
-
-    job->start();
-    return job;
-}
-
-QSharedPointer<DownloadStringJob> DownloadManager::downloadAsStringPost(
-    const QString &url, const QByteArray &postdata, int timeout)
-{
-    qDebug() << "downloading:" << url;
-
-    auto job = QSharedPointer<DownloadStringJob>(
-        new DownloadStringJob(networkManager, url, timeout, postdata),
+        new DownloadStringJob(networkManager, url, timeout, postData),
         &QObject::deleteLater);
 
     job->start();

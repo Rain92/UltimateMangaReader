@@ -83,10 +83,10 @@ MainWidget::MainWidget(QWidget *parent)
         });
 
     QObject::connect(ui->mangaInfoWidget, &MangaInfoWidget::readMangaClicked,
-                     core->mangaController, &MangaController::setCurrentIndex);
-
-    QObject::connect(ui->mangaInfoWidget, &MangaInfoWidget::readMangaClicked,
-                     [this]() { setWidgetTab(MangaReaderTab); });
+                     [this](auto index) {
+                         setWidgetTab(MangaReaderTab);
+                         core->mangaController->setCurrentIndex(index);
+                     });
 
     QObject::connect(ui->mangaInfoWidget,
                      &MangaInfoWidget::readMangaContinueClicked,
@@ -211,6 +211,7 @@ void MainWidget::setWidgetTab(WidgetTab tab)
 
     if (tab == MangaReaderTab)
     {
+        ui->mangaReaderWidget->showImage("");
         ui->navigationBar->setVisible(false);
         ui->stackedWidget->setCurrentIndex(tab);
     }

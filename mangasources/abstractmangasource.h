@@ -68,6 +68,8 @@ signals:
     void updateError(QString);
 
 protected:
+    QByteArray mangaInfoPostDataStr;
+
     DownloadManager *downloadManager;
     QTextDocument htmlConverter;
 
