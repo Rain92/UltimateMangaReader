@@ -34,7 +34,7 @@ public slots:
     void updateCover();
 
 private slots:
-    void on_pushButtonMangaInfoAddFavorites_clicked();
+    void on_toolButtonAddFavorites_clicked();
 
     void on_listViewChapters_clicked(const QModelIndex &index);
 

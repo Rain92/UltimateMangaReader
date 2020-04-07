@@ -19,6 +19,9 @@
         <file>images/mangahostlogos/mangaowl.png</file>
         <file>images/icons/error.jpg</file>
         <file>images/icons/keyboardicons.svg</file>
+        <file>images/icons/home.png</file>
+        <file>images/icons/wifi.png</file>
+        <file>images/icons/no-wifi.png</file>
+        <file>images/icons/menue.png</file>
     </qresource>
-    <qresource prefix="/"/>
 </RCC>

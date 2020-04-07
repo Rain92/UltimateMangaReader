@@ -9,6 +9,7 @@
 #include "clearcachedialog.h"
 #include "clineedit.h"
 #include "cscrollbar.h"
+#include "menuedialog.h"
 #include "sizes.h"
 #include "staticsettings.h"
 #include "ultimatemangareadercore.h"
@@ -47,6 +48,8 @@ private slots:
     void updateError(const QString &error);
     void clearCacheDialogButtonClicked(int level);
 
+    void on_toolButtonMenue_clicked();
+
 private:
     Ui::HomeWidget *ui;
 
@@ -66,8 +69,9 @@ private:
     QList<QStandardItem *> listViewItemfromMangaSource(
         AbstractMangaSource *source);
     QProgressBar *updateProgressBar;
-    UpdateDialog *updatedialog;
-    ClearCacheDialog *clearcachedialog;
+    UpdateDialog *updateDialog;
+    ClearCacheDialog *clearCacheDialog;
+    MenueDialog *menueDialog;
 };
 
 #endif  // HOMEWIDGET_H

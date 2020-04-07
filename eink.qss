@@ -193,7 +193,7 @@ QToolButton
 }
 QToolButton:checked
 {
-    border: 1px solid black;
+    border: 0px solid black;
 }
 RotationDlg QToolButton
 {
@@ -202,12 +202,12 @@ RotationDlg QToolButton
     border-radius: 1em;
 }
 QToolButton:focus {
-    border: 3px solid black;
+    border: 0px solid black;
     padding: 2px;
 }
 QToolButton:pressed {
-    border: 4px solid black;
-    padding: 1px;
+    border: 0px solid black;
+    padding: 2px;
 }
 
 QSlider::groove:horizontal {
@@ -252,17 +252,4 @@ QScrollBar::sub-line {
 QDialog {
     border: 2px solid black;
     background: white;
-}
-
-QPushButton#pushButtonMangaInfoAddFavorites {
-    background: white;
-    border: none;
-    color: black;
-    outline: none;
-}
-QPushButton:focus#pushButtonMangaInfoAddFavorites {
-    border: none;
-}
-QPushButton:pressed#pushButtonMangaInfoAddFavorites {
-    border: none;
 }

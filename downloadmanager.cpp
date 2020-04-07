@@ -26,6 +26,7 @@ QNetworkAccessManager *DownloadManager::networkAccessManager()
 bool DownloadManager::connect()
 {
     bool connected = true;
+    return true;
 #ifdef KOBO
     if (!KoboPlatformFunctions::testInternetConnection(500))
     {

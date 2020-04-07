@@ -11,7 +11,13 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string/>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QWidget#ErrorMessageWidget
+{
+border: 2px solid black;
+}</string>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="1,2,1">
    <property name="spacing">
@@ -31,6 +37,12 @@
    </property>
    <item>
     <widget class="QLabel" name="labelErrorImage">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="text">
       <string/>
      </property>
@@ -44,12 +56,21 @@
      <property name="text">
       <string>Error</string>
      </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
     </widget>
    </item>
    <item>
     <widget class="QPushButton" name="buttonHide">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="text">
-      <string>Hide</string>
+      <string> Hide </string>
      </property>
     </widget>
    </item>

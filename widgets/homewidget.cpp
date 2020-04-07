@@ -14,16 +14,19 @@ HomeWidget::HomeWidget(QWidget *parent)
     ui->setupUi(this);
     adjustSizes();
 
-    updatedialog = new UpdateDialog(this);
-    clearcachedialog = new ClearCacheDialog(this);
+    updateDialog = new UpdateDialog(this);
+    clearCacheDialog = new ClearCacheDialog(this);
+    menueDialog = new MenueDialog(this);
 
     QObject::connect(ui->lineEditFilter, &CLineEdit::returnPressed, this,
                      &HomeWidget::on_pushButtonFilter_clicked);
 
-    QObject::connect(updatedialog, &UpdateDialog::retry, this,
+    QObject::connect(updateDialog, &UpdateDialog::retry, this,
                      &HomeWidget::on_pushButtonUpdate_clicked);
-    QObject::connect(clearcachedialog, &ClearCacheDialog::clearCache, this,
+    QObject::connect(clearCacheDialog, &ClearCacheDialog::clearCache, this,
                      &HomeWidget::clearCacheDialogButtonClicked);
+
+    ui->batteryIcon->updateIcon();
 }
 
 HomeWidget::~HomeWidget() { delete ui; }
@@ -52,6 +55,15 @@ void HomeWidget::adjustSizes()
     ui->listViewMangas->setHorizontalScrollBar(
         new CScrollBar(Qt::Horizontal, ui->listViewMangas));
     ui->listViewMangas->setFocusPolicy(Qt::FocusPolicy::NoFocus);
+
+    ui->toolButtonMenue->setFixedSize(QSize(menueiconsize, menueiconsize));
+    //    ui->toolButtonMenu->setIconSize(QSize(resourceiconsize,
+    //    resourceiconsize));
+    ui->labelWifiIcon->setFixedSize(QSize(resourceiconsize, resourceiconsize));
+
+    //    ui->labelSpacer->setFixedSize(ui->batteryIcon->size());
+
+    ui->labelTitle->setStyleSheet("font-size: 18pt");
 }
 
 void HomeWidget::setupSourcesList()
@@ -82,9 +94,9 @@ void HomeWidget::updateError(const QString &error)
 {
     AbstractMangaSource *src = dynamic_cast<AbstractMangaSource *>(sender());
     if (src != nullptr)
-        updatedialog->error("Error updating " + src->name + ": \n" + error);
+        updateDialog->error("Error updating " + src->name + ": \n" + error);
     else
-        updatedialog->error("Error updating: \n" + error);
+        updateDialog->error("Error updating: \n" + error);
 }
 
 void HomeWidget::updateProgress(int progress)
@@ -94,21 +106,21 @@ void HomeWidget::updateProgress(int progress)
     int sum =
         std::accumulate(sourcesprogress.begin(), sourcesprogress.end(), 0);
 
-    updatedialog->updateProgress(sum);
+    updateDialog->updateProgress(sum);
 }
 
 void HomeWidget::on_pushButtonUpdate_clicked()
 {
     sourcesprogress.clear();
 
-    updatedialog->setup(core->activeMangaSources.count() * 100,
+    updateDialog->setup(core->activeMangaSources.count() * 100,
                         "Updating Mangalists");
 
-    updatedialog->show();
+    updateDialog->show();
 
     for (auto ms : core->activeMangaSources)
     {
-        updatedialog->setLabelText("Updating " + ms->name);
+        updateDialog->setLabelText("Updating " + ms->name);
         auto mangaList = ms->getMangaList();
         if (mangaList.nominalSize == mangaList.actualSize)
         {
@@ -206,8 +218,8 @@ void HomeWidget::clearCacheDialogButtonClicked(int level)
 
 void HomeWidget::on_pushButtonClearCache_clicked()
 {
-    clearcachedialog->show();
-    clearcachedialog->getCacheSize();
+    clearCacheDialog->show();
+    clearCacheDialog->getCacheSize();
 }
 
 void HomeWidget::on_listViewSources_clicked(const QModelIndex &index)
@@ -302,4 +314,10 @@ void HomeWidget::on_listViewMangas_clicked(const QModelIndex &index)
                              : core->currentMangaSource->mangaList.titles[idx];
 
     emit mangaClicked(mangalink, mangatitle);
+}
+
+void HomeWidget::on_toolButtonMenue_clicked()
+{
+    menueDialog->move(this->mapToGlobal({0, 0}));
+    menueDialog->open();
 }

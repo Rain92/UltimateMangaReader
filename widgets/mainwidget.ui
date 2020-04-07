@@ -43,6 +43,9 @@
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
      <widget class="HomeWidget" name="homeWidget">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -58,6 +61,7 @@
        <string notr="true">background-color:white;</string>
       </property>
      </widget>
+     <widget class="SettingsWidget" name="settingsWidget"/>
     </widget>
    </item>
    <item>
@@ -125,6 +129,10 @@
         <property name="text">
          <string>Home</string>
         </property>
+        <property name="icon">
+         <iconset resource="../images.qrc">
+          <normaloff>:/resources/images/icons/home.png</normaloff>:/resources/images/icons/home.png</iconset>
+        </property>
        </widget>
       </item>
       <item>
@@ -137,6 +145,10 @@
         </property>
         <property name="text">
          <string>Favorites</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../images.qrc">
+          <normaloff>:/resources/images/icons/favourite-star.png</normaloff>:/resources/images/icons/favourite-star.png</iconset>
         </property>
        </widget>
       </item>
@@ -186,7 +198,15 @@
    <header>mangareaderwidget.h</header>
    <container>1</container>
   </customwidget>
+  <customwidget>
+   <class>SettingsWidget</class>
+   <extends>QWidget</extends>
+   <header>settingswidget.h</header>
+   <container>1</container>
+  </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="../images.qrc"/>
+ </resources>
  <connections/>
 </ui>

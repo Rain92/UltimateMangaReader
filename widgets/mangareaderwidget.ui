@@ -184,7 +184,7 @@
           </widget>
          </item>
          <item row="0" column="2">
-          <widget class="QLabel" name="labelBattery">
+          <widget class="BatteryIcon" name="batteryIcon">
            <property name="text">
             <string/>
            </property>
@@ -310,6 +310,11 @@
              <property name="text">
               <string>Home</string>
              </property>
+             <property name="icon">
+              <iconset>
+               <normalon>:/resources/images/icons/home.png</normalon>
+              </iconset>
+             </property>
             </widget>
            </item>
            <item>
@@ -349,6 +354,11 @@
   </layout>
  </widget>
  <customwidgets>
+  <customwidget>
+   <class>BatteryIcon</class>
+   <extends>QLabel</extends>
+   <header>batteryicon.h</header>
+  </customwidget>
   <customwidget>
    <class>MangaImageContainer</class>
    <extends>QFrame</extends>

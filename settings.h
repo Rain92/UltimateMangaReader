@@ -26,6 +26,8 @@ public:
 
     bool doublePageFullscreen;
 
+    QList<QPair<QString, bool>> mangaSourcesEnabled;
+
 private:
     QTimer timer;
 };

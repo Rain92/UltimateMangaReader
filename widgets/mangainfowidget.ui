@@ -40,7 +40,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>TextLabel</string>
+        <string>Manga Title</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
@@ -48,15 +48,23 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButtonMangaInfoAddFavorites">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
+      <widget class="QToolButton" name="toolButtonAddFavorites">
        <property name="text">
-        <string>+</string>
+        <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset resource="../images.qrc">
+         <normaloff>:/resources/images/icons/favourite-star.png</normaloff>
+         <normalon>:/resources/images/icons/favourite-star-full.png</normalon>:/resources/images/icons/favourite-star.png</iconset>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+       <property name="popupMode">
+        <enum>QToolButton::InstantPopup</enum>
        </property>
       </widget>
      </item>
@@ -390,6 +398,8 @@ bla</string>
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../images.qrc"/>
+ </resources>
  <connections/>
 </ui>

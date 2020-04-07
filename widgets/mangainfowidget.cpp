@@ -21,12 +21,12 @@ void MangaInfoWidget::adjustSizes()
     ui->pushButtonReadContinue->setFixedHeight(buttonsize);
     ui->pushButtonReadFirst->setFixedHeight(buttonsize);
     ui->pushButtonReadLatest->setFixedHeight(buttonsize);
-    ui->pushButtonMangaInfoAddFavorites->setFixedSize(buttonsizeaddfavorite,
-                                                      buttonsizeaddfavorite);
-    ui->pushButtonMangaInfoAddFavorites->setFocusPolicy(Qt::NoFocus);
-    ui->pushButtonMangaInfoAddFavorites->setText("");
-    ui->pushButtonMangaInfoAddFavorites->setIconSize(
-        QSize(buttonsizeaddfavorite * 0.7, buttonsizeaddfavorite * 0.7));
+
+    ui->toolButtonAddFavorites->setFixedSize(buttonsizeaddfavorite,
+                                             buttonsizeaddfavorite);
+    ui->toolButtonAddFavorites->setIconSize(
+        QSize(buttonsizeaddfavorite * 0.8, buttonsizeaddfavorite * 0.8));
+    ui->toolButtonAddFavorites->setFocusPolicy(Qt::NoFocus);
 
     isfavoriteicon = QIcon(
         QPixmap(":/resources/images/icons/favourite-star-full.png")
@@ -143,13 +143,10 @@ void MangaInfoWidget::updateInfos()
 
 void MangaInfoWidget::setFavoriteButtonState(bool state)
 {
-    if (state)
-        ui->pushButtonMangaInfoAddFavorites->setIcon(isfavoriteicon);
-    else
-        ui->pushButtonMangaInfoAddFavorites->setIcon(isnotfavoriteicon);
+    ui->toolButtonAddFavorites->setChecked(state);
 }
 
-void MangaInfoWidget::on_pushButtonMangaInfoAddFavorites_clicked()
+void MangaInfoWidget::on_toolButtonAddFavorites_clicked()
 {
     if (!currentmanga.isNull())
         emit toggleFavoriteClicked(currentmanga);

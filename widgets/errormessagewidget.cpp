@@ -9,6 +9,7 @@ ErrorMessageWidget::ErrorMessageWidget(QWidget* parent)
       timeout(5000)
 {
     ui->setupUi(this);
+
     QPixmap pixmap(":/resources/images/icons/error.jpg");
     ui->labelErrorImage->setPixmap(pixmap.scaled(ui->labelErrorImage->size(),
                                                  Qt::KeepAspectRatio,

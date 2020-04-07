@@ -71,16 +71,6 @@ void MangaReaderWidget::adjustSizes()
     ui->labelMoreComfLight->setPixmap(
         p4.scaledToHeight(resourceiconsize, Qt::SmoothTransformation));
 
-    batteryicons[0] =
-        QPixmap(":/resources/images/icons/batteryfull.png")
-            .scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
-    batteryicons[1] =
-        QPixmap(":/resources/images/icons/batterycharging.png")
-            .scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
-    batteryicons[2] =
-        QPixmap(":/resources/images/icons/batteryempty.png")
-            .scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
-
     QString sliderstylesheet =
         "QSlider::groove:horizontal {       "
         "     border: 1px solid black;      "
@@ -340,52 +330,6 @@ void MangaReaderWidget::on_pushButtonReaderGoto_clicked()
     }
 }
 
-void MangaReaderWidget::setBatteryIcon()
-{
-    QPair<int, bool> batterystate = getBatteryState();
-    int bat = batterystate.first;
-    bool charging = batterystate.second;
-
-    if (bat >= 98)
-    {
-        ui->labelBattery->setPixmap(batteryicons[0]);
-    }
-    else if (charging)
-    {
-        ui->labelBattery->setPixmap(batteryicons[1]);
-    }
-    else
-    {
-        batteryicons[3] = QPixmap(":/resources/images/icons/batteryempty.png");
-
-        QPainter painter(&batteryicons[3]);
-        QBrush brush(Qt::black);
-
-        if (bat > 90)
-        {
-            int w = (bat - 90) / 2;
-            painter.fillRect(7 + (5 - w), 12, w, 8, brush);
-        }
-
-        int w = qMin(45, bat / 2);
-        painter.fillRect(12 + (45 - w), 6, w, 20, brush);
-
-        painter.end();
-        ui->labelBattery->setPixmap(batteryicons[3].scaledToHeight(
-            batteryiconsize, Qt::SmoothTransformation));
-    }
-}
-
-QPair<int, bool> MangaReaderWidget::getBatteryState()
-{
-#ifdef KOBO
-    return QPair<int, bool>(KoboPlatformFunctions::getBatteryLevel(),
-                            KoboPlatformFunctions::isBatteryCharging());
-#endif
-
-    return QPair<int, bool>(100, false);
-}
-
 void MangaReaderWidget::showMenuBar(bool show)
 {
     if (!show && ui->readerNavigationBar->isVisible())
@@ -395,7 +339,7 @@ void MangaReaderWidget::showMenuBar(bool show)
     }
     else if (show && !ui->readerNavigationBar->isVisible())
     {
-        setBatteryIcon();
+        ui->batteryIcon->updateIcon();
         ui->readerNavigationBar->setVisible(true);
         ui->readerFrontLightBar->setVisible(true);
     }

@@ -35,6 +35,8 @@ FORMS += \
     widgets/mangainfowidget.ui \
     widgets/mangareaderwidget.ui \
     widgets/gotodialog.ui \
+    widgets/menuedialog.ui \
+    widgets/settingswidget.ui \
     widgets/updatedialog.ui \
     widgets/numpadwidget.ui \
     widgets/clearcachedialog.ui
@@ -49,6 +51,7 @@ HEADERS += \
     sizes.h \
     staticsettings.h \
     ultimatemangareadercore.h \
+    widgets/batteryicon.h \
     widgets/customgesturerecognizer.h \
     downloadimagedescriptor.h \
     downloadjobbase.h \
@@ -81,6 +84,8 @@ HEADERS += \
     favorite.h \
     favoritesmanager.h \
     widgets/gotodialog.h \
+    widgets/menuedialog.h \
+    widgets/settingswidget.h \
     widgets/updatedialog.h \
     settings.h \
     widgets/numpadwidget.h \
@@ -93,6 +98,7 @@ SOURCES += \
     mangaindextraverser.cpp \
     readingprogress.cpp \
     ultimatemangareadercore.cpp \
+    widgets/batteryicon.cpp \
     widgets/customgesturerecognizer.cpp \
     downloadjobbase.cpp \
     downloadqueue.cpp \
@@ -124,6 +130,8 @@ SOURCES += \
     favorite.cpp \
     favoritesmanager.cpp \
     widgets/gotodialog.cpp \
+    widgets/menuedialog.cpp \
+    widgets/settingswidget.cpp \
     widgets/updatedialog.cpp \
     settings.cpp \
     widgets/numpadwidget.cpp \

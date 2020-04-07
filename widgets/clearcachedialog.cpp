@@ -7,8 +7,7 @@ ClearCacheDialog::ClearCacheDialog(QWidget* parent)
 {
     ui->setupUi(this);
 
-    setWindowFlags(Qt::FramelessWindowHint | Qt::Dialog);
-    setWindowModality(Qt::WindowModal);
+    setWindowFlags(Qt::Popup);
 
     ui->pushButtonCancel->setFixedHeight(buttonsize);
     ui->pushButtonClear1->setFixedHeight(buttonsize);

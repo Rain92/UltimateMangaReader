@@ -21,6 +21,7 @@
 
 #define resourceiconsize mm_to_px(6)
 #define batteryiconsize mm_to_px(3)
+#define menueiconsize mm_to_px(9)
 
 #define scrollbarsliderminlength mm_to_px(8)
 #define scrollbarwidth mm_to_px(6)

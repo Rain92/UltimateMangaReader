@@ -2,9 +2,6 @@
 #define MANGAREADERWIDGET_H
 
 #include <QGesture>
-#include <QPainter>
-#include <QPair>
-#include <QWidget>
 
 #include "customgesturerecognizer.h"
 #include "enums.h"
@@ -68,16 +65,12 @@ private:
 
     QQueue<QPair<QSharedPointer<QPixmap>, QString>> imgcache;
 
-    QPixmap batteryicons[4];
-
     GotoDialog *gotodialog;
 
     Settings *settings;
 
     void adjustSizes();
 
-    void setBatteryIcon();
-    QPair<int, bool> getBatteryState();
     int searchCache(const QString &path) const;
 
     void showMenuBar(bool show);
