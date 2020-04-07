@@ -15,18 +15,12 @@ HomeWidget::HomeWidget(QWidget *parent)
     adjustSizes();
 
     updateDialog = new UpdateDialog(this);
-    clearCacheDialog = new ClearCacheDialog(this);
-    menueDialog = new MenueDialog(this);
 
     QObject::connect(ui->lineEditFilter, &CLineEdit::returnPressed, this,
                      &HomeWidget::on_pushButtonFilter_clicked);
 
     QObject::connect(updateDialog, &UpdateDialog::retry, this,
                      &HomeWidget::on_pushButtonUpdate_clicked);
-    QObject::connect(clearCacheDialog, &ClearCacheDialog::clearCache, this,
-                     &HomeWidget::clearCacheDialogButtonClicked);
-
-    ui->batteryIcon->updateIcon();
 }
 
 HomeWidget::~HomeWidget() { delete ui; }
@@ -41,12 +35,10 @@ void HomeWidget::setCore(UltimateMangaReaderCore *core)
 void HomeWidget::adjustSizes()
 {
     ui->pushButtonFilter->setFixedHeight(buttonsize);
-    ui->pushButtonUpdate->setFixedHeight(buttonsize);
-    ui->pushButtonClearCache->setFixedHeight(buttonsize);
     ui->pushButtonFilterClear->setFixedHeight(buttonsize);
     ui->lineEditFilter->setFixedHeight(buttonsize);
 
-    ui->listViewSources->setFixedSize(listsourceswidth, listsourcesheight);
+    ui->listViewSources->setFixedHeight(listsourcesheight);
 
     ui->listViewSources->setVerticalScrollBar(
         new CScrollBar(Qt::Vertical, ui->listViewSources));
@@ -55,15 +47,6 @@ void HomeWidget::adjustSizes()
     ui->listViewMangas->setHorizontalScrollBar(
         new CScrollBar(Qt::Horizontal, ui->listViewMangas));
     ui->listViewMangas->setFocusPolicy(Qt::FocusPolicy::NoFocus);
-
-    ui->toolButtonMenue->setFixedSize(QSize(menueiconsize, menueiconsize));
-    //    ui->toolButtonMenu->setIconSize(QSize(resourceiconsize,
-    //    resourceiconsize));
-    ui->labelWifiIcon->setFixedSize(QSize(resourceiconsize, resourceiconsize));
-
-    //    ui->labelSpacer->setFixedSize(ui->batteryIcon->size());
-
-    ui->labelTitle->setStyleSheet("font-size: 18pt");
 }
 
 void HomeWidget::setupSourcesList()
@@ -149,77 +132,6 @@ QList<QStandardItem *> HomeWidget::listViewItemfromMangaSource(
     items.append(item);
 
     return items;
-}
-
-bool removeDir(const QString &dirName, const QString &ignore = "")
-{
-    bool result = true;
-    QDir dir(dirName);
-
-    if (dir.exists())
-    {
-        foreach (
-            QFileInfo info,
-            dir.entryInfoList(QDir::NoDotAndDotDot | QDir::System |
-                                  QDir::Hidden | QDir::AllDirs | QDir::Files,
-                              QDir::DirsFirst))
-        {
-            if (info.isDir())
-            {
-                result = removeDir(info.absoluteFilePath(), ignore);
-            }
-            else
-            {
-                if (ignore == "" || !info.absoluteFilePath().endsWith(ignore))
-                    result = QFile::remove(info.absoluteFilePath());
-            }
-
-            if (!result)
-            {
-                return result;
-            }
-        }
-        // result = dir.rmdir(dirName);
-    }
-    return result;
-}
-
-void HomeWidget::clearCacheDialogButtonClicked(int level)
-{
-    switch (level)
-    {
-        case 1:
-            for (auto ms : core->activeMangaSources)
-            {
-                foreach (
-                    QFileInfo info,
-                    QDir(CONF.cacheDir + ms->name)
-                        .entryInfoList(QDir::NoDotAndDotDot | QDir::System |
-                                       QDir::Hidden | QDir::AllDirs))
-                    removeDir(info.absoluteFilePath() + "/images");
-            }
-            break;
-
-        case 2:
-            for (auto ms : core->activeMangaSources)
-                removeDir(CONF.cacheDir + ms->name, "progress.dat");
-
-            break;
-
-        case 3:
-            removeDir(CONF.cacheDir, "mangaList.dat");
-            emit favoritesCleared();
-            break;
-
-        default:
-            break;
-    }
-}
-
-void HomeWidget::on_pushButtonClearCache_clicked()
-{
-    clearCacheDialog->show();
-    clearCacheDialog->getCacheSize();
 }
 
 void HomeWidget::on_listViewSources_clicked(const QModelIndex &index)
@@ -314,10 +226,4 @@ void HomeWidget::on_listViewMangas_clicked(const QModelIndex &index)
                              : core->currentMangaSource->mangaList.titles[idx];
 
     emit mangaClicked(mangalink, mangatitle);
-}
-
-void HomeWidget::on_toolButtonMenue_clicked()
-{
-    menueDialog->move(this->mapToGlobal({0, 0}));
-    menueDialog->open();
 }

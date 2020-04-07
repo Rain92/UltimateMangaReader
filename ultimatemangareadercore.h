@@ -12,6 +12,7 @@
 #include "mangaowl.h"
 #include "mangapanda.h"
 #include "settings.h"
+#include "utils.h"
 
 class UltimateMangaReaderCore : public QObject
 {
@@ -33,11 +34,15 @@ public:
 
     Settings settings;
 
-public slots:
+public:
     void setImageSize(const QSize &size);
 
     void setCurrentMangaSource(AbstractMangaSource *mangaSource);
     void setCurrentManga(const QString &mangalink, const QString &mangatitle);
+
+    long getCacheSize();
+    long getFreeSpace();
+    void clearCache(ClearCacheLevel level);
 
 signals:
     void currentMangaSourceChanged();

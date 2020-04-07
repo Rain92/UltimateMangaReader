@@ -16,4 +16,11 @@ enum WidgetTab
     SettingsTab = 4
 };
 
+enum ClearCacheLevel
+{
+    ClearImages = 3,
+    ClearInfos,
+    ClearAll
+};
+
 #endif  // ENUMS_H

@@ -56,3 +56,56 @@ PageTurnDirection conditionalReverse(PageTurnDirection dir, bool condition)
             return Forward;
     }
 }
+
+long dirSize(const QString& path)
+{
+    long size = 0;
+    QDir dir(path);
+    // calculate total size of current directories' files
+    QDir::Filters fileFilters = QDir::Files | QDir::System | QDir::Hidden;
+    for (const auto& filePath : dir.entryList(fileFilters))
+    {
+        QFileInfo fi(dir, filePath);
+        size += fi.size();
+    }
+    // add size of child directories recursively
+    QDir::Filters dirFilters =
+        QDir::Dirs | QDir::NoDotAndDotDot | QDir::System | QDir::Hidden;
+
+    for (const auto& childDirPath : dir.entryList(dirFilters))
+        size += dirSize(path + QDir::separator() + childDirPath);
+    return size;
+}
+
+bool removeDir(const QString& path, const QString& ignore)
+{
+    bool result = true;
+    QDir dir(path);
+
+    if (dir.exists())
+    {
+        foreach (
+            QFileInfo info,
+            dir.entryInfoList(QDir::NoDotAndDotDot | QDir::System |
+                                  QDir::Hidden | QDir::AllDirs | QDir::Files,
+                              QDir::DirsFirst))
+        {
+            if (info.isDir())
+            {
+                result = removeDir(info.absoluteFilePath(), ignore);
+            }
+            else
+            {
+                if (ignore == "" || !info.absoluteFilePath().endsWith(ignore))
+                    result = QFile::remove(info.absoluteFilePath());
+            }
+
+            if (!result)
+            {
+                return result;
+            }
+        }
+        // result = dir.rmdir(dirName);
+    }
+    return result;
+}

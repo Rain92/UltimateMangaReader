@@ -17,15 +17,26 @@ MainWidget::MainWidget(QWidget *parent)
 {
     ui->setupUi(this);
     adjustSizes();
+    ui->batteryIcon->updateIcon();
     setupVirtualKeyboard();
 
-    ui->mangaReaderWidget->setSettings(&core->settings);
+    // Dialogs
+    updateDialog = new UpdateDialog(this);
+    clearCacheDialog = new ClearCacheDialog(this);
+    menueDialog = new MenueDialog(this);
+
+    QObject::connect(menueDialog, &MenueDialog::finished, [this](int b) {
+        menueDialogButtonPressed(static_cast<MenueButton>(b));
+    });
+
+    QObject::connect(clearCacheDialog, &MenueDialog::finished, [this](int l) {
+        core->clearCache(static_cast<ClearCacheLevel>(l));
+    });
 
     // DownloadManager
     core->downloadManager->setImageRescaleSize(this->size());
 
     // Core
-
     QObject::connect(core, &UltimateMangaReaderCore::error, [this](auto msg) {
         if (!core->settings.hideErrorMessages)
             errorMessageWidget->showError(msg);
@@ -103,6 +114,8 @@ MainWidget::MainWidget(QWidget *parent)
                      });
 
     // MangaReaderWidget
+    ui->mangaReaderWidget->setSettings(&core->settings);
+
     QObject::connect(ui->mangaReaderWidget, &MangaReaderWidget::changeView,
                      this, &MainWidget::setWidgetTab);
 
@@ -145,6 +158,15 @@ void MainWidget::adjustSizes()
     ui->pushButtonClose->setFixedHeight(buttonsize);
     ui->pushButtonFavorites->setFixedHeight(buttonsize);
     ui->pushButtonHome->setFixedHeight(buttonsize);
+
+    ui->toolButtonMenue->setFixedSize(QSize(menueiconsize, menueiconsize));
+    //    ui->toolButtonMenu->setIconSize(QSize(resourceiconsize,
+    //    resourceiconsize));
+    ui->labelWifiIcon->setFixedSize(QSize(resourceiconsize, resourceiconsize));
+
+    //    ui->labelSpacer->setFixedSize(ui->batteryIcon->size());
+
+    ui->labelTitle->setStyleSheet("font-size: 18pt");
 }
 
 void MainWidget::enableVirtualKeyboard(bool enabled)
@@ -209,27 +231,36 @@ void MainWidget::setWidgetTab(WidgetTab tab)
     if (tab == ui->stackedWidget->currentIndex())
         return;
 
-    if (tab == MangaReaderTab)
+    switch (tab)
     {
-        ui->mangaReaderWidget->showImage("");
-        ui->navigationBar->setVisible(false);
-        ui->stackedWidget->setCurrentIndex(tab);
-    }
-    else
-    {
-        if (tab == MangaInfoTab)
-        {
-            lastTab = MangaInfoTab;
-        }
-        else if (tab == FavoritesTab)
-        {
+        case HomeTab:
+            ui->navigationBar->setVisible(true);
+            ui->frameHeader->setVisible(true);
+            lastTab = HomeTab;
+            break;
+        case FavoritesTab:
             ui->favoritesWidget->showFavoritesList();
+            ui->navigationBar->setVisible(true);
+            ui->frameHeader->setVisible(true);
             lastTab = FavoritesTab;
-        }
-
-        ui->navigationBar->setVisible(true);
-        ui->stackedWidget->setCurrentIndex(tab);
+            break;
+        case MangaInfoTab:
+            ui->navigationBar->setVisible(true);
+            ui->frameHeader->setVisible(false);
+            lastTab = MangaInfoTab;
+            break;
+        case MangaReaderTab:
+            ui->navigationBar->setVisible(false);
+            ui->frameHeader->setVisible(false);
+            break;
+        case SettingsTab:
+            ui->navigationBar->setVisible(true);
+            ui->frameHeader->setVisible(true);
+            break;
     }
+
+    ui->batteryIcon->updateIcon();
+    ui->stackedWidget->setCurrentIndex(tab);
 }
 
 void MainWidget::readerGoBack() { setWidgetTab(lastTab); }
@@ -254,4 +285,30 @@ bool MainWidget::eventFilter(QObject *obj, QEvent *ev)
     return false;
 
     Q_UNUSED(obj)
+}
+
+void MainWidget::on_toolButtonMenue_clicked()
+{
+    menueDialog->move(this->mapToGlobal({0, 0}));
+    menueDialog->open();
+}
+
+void MainWidget::menueDialogButtonPressed(MenueButton button)
+{
+    switch (button)
+    {
+        case ExitButton:
+            close();
+            break;
+        case SettingsButton:
+            setWidgetTab(SettingsTab);
+            break;
+        case ClearDownloadsButton:
+            clearCacheDialog->setValues(core->getCacheSize(),
+                                        core->getFreeSpace());
+            clearCacheDialog->open();
+            break;
+        case UpdateMangaListsButton:
+            break;
+    }
 }

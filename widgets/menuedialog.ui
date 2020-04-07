@@ -60,16 +60,16 @@
     </spacer>
    </item>
    <item>
-    <widget class="QPushButton" name="pushButtonUpdateMangaList">
+    <widget class="QPushButton" name="pushButtonSettings">
      <property name="text">
-      <string>Update Manga Catalogue</string>
+      <string>Settings</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QPushButton" name="pushButtonSettings">
+    <widget class="QPushButton" name="pushButtonUpdateMangaList">
      <property name="text">
-      <string>Settings</string>
+      <string>Update Manga Lists</string>
      </property>
     </widget>
    </item>

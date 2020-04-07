@@ -19,3 +19,16 @@ MenueDialog::MenueDialog(QWidget *parent)
 MenueDialog::~MenueDialog() { delete ui; }
 
 void MenueDialog::on_toolButtonMenu_clicked() { close(); }
+
+void MenueDialog::on_pushButtonExit_clicked() { done(ExitButton); }
+
+void MenueDialog::on_pushButtonSettings_clicked() { done(SettingsButton); }
+
+void MenueDialog::on_pushButtonClearDownloads_clicked()
+{
+    done(ClearDownloadsButton);
+}
+void MenueDialog::on_pushButtonUpdateMangaList_clicked()
+{
+    done(UpdateMangaListsButton);
+}

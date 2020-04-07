@@ -17,50 +17,19 @@ ClearCacheDialog::ClearCacheDialog(QWidget* parent)
 
 ClearCacheDialog::~ClearCacheDialog() { delete ui; }
 
-long dirSize(QString dirPath)
+void ClearCacheDialog::setValues(long chacheSize, long freeSpace)
 {
-    long size = 0;
-    QDir dir(dirPath);
-    // calculate total size of current directories' files
-    QDir::Filters fileFilters = QDir::Files | QDir::System | QDir::Hidden;
-    for (const auto& filePath : dir.entryList(fileFilters))
-    {
-        QFileInfo fi(dir, filePath);
-        size += fi.size();
-    }
-    // add size of child directories recursively
-    QDir::Filters dirFilters =
-        QDir::Dirs | QDir::NoDotAndDotDot | QDir::System | QDir::Hidden;
-
-    for (const auto& childDirPath : dir.entryList(dirFilters))
-        size += dirSize(dirPath + QDir::separator() + childDirPath);
-    return size;
-}
-
-void ClearCacheDialog::getCacheSize()
-{
-    long size = dirSize(CONF.cacheDir) / 1024 / 1024;
-
-    ui->labelCacheSize->setText("The cache takes up " + QString::number(size) +
-                                " MB.");
+    QString str =
+        QString("Downloads take up %1 MB. \n%2 MB of free space remaining.")
+            .arg(chacheSize)
+            .arg(freeSpace);
+    ui->labelCacheSize->setText(str);
 }
 
 void ClearCacheDialog::on_pushButtonCancel_clicked() { close(); }
 
-void ClearCacheDialog::on_pushButtonClear1_clicked()
-{
-    close();
-    emit clearCache(1);
-}
+void ClearCacheDialog::on_pushButtonClear1_clicked() { finished(ClearImages); }
 
-void ClearCacheDialog::on_pushButtonClear2_clicked()
-{
-    close();
-    emit clearCache(2);
-}
+void ClearCacheDialog::on_pushButtonClear2_clicked() { finished(ClearInfos); }
 
-void ClearCacheDialog::on_pushButtonClear3_clicked()
-{
-    close();
-    emit clearCache(3);
-}
+void ClearCacheDialog::on_pushButtonClear3_clicked() { finished(ClearAll); }

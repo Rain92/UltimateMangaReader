@@ -6,10 +6,8 @@
 #include <QStandardItemModel>
 
 #include "abstractmangasource.h"
-#include "clearcachedialog.h"
 #include "clineedit.h"
 #include "cscrollbar.h"
-#include "menuedialog.h"
 #include "sizes.h"
 #include "staticsettings.h"
 #include "ultimatemangareadercore.h"
@@ -39,16 +37,12 @@ signals:
 
 private slots:
     void on_pushButtonUpdate_clicked();
-    void on_pushButtonClearCache_clicked();
     void on_listViewSources_clicked(const QModelIndex &index);
     void on_pushButtonFilter_clicked();
     void on_pushButtonFilterClear_clicked();
     void on_listViewMangas_clicked(const QModelIndex &index);
     void updateProgress(int progress);
     void updateError(const QString &error);
-    void clearCacheDialogButtonClicked(int level);
-
-    void on_toolButtonMenue_clicked();
 
 private:
     Ui::HomeWidget *ui;
@@ -64,14 +58,11 @@ private:
     void refreshMangaListView();
     void setupSourcesList();
     void adjustSizes();
-    void setupClearCacheDialog();
 
     QList<QStandardItem *> listViewItemfromMangaSource(
         AbstractMangaSource *source);
     QProgressBar *updateProgressBar;
     UpdateDialog *updateDialog;
-    ClearCacheDialog *clearCacheDialog;
-    MenueDialog *menueDialog;
 };
 
 #endif  // HOMEWIDGET_H

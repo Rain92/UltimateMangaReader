@@ -9,8 +9,7 @@
 
 #define mm_to_px(mm) (mm * screen_dpi * 0.0393701)
 
-#define listsourceswidth mm_to_px(62)
-#define listsourcesheight mm_to_px(42)
+#define listsourcesheight mm_to_px(22)
 #define mangasourceiconsize mm_to_px(13)
 #define mangasourceitemwidth mm_to_px(20)
 #define mangasourceitemheight mm_to_px(20)

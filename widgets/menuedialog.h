@@ -5,6 +5,14 @@
 
 #include "sizes.h"
 
+enum MenueButton
+{
+    ExitButton = 3,
+    SettingsButton,
+    ClearDownloadsButton,
+    UpdateMangaListsButton
+};
+
 namespace Ui
 {
 class MenueDialog;
@@ -20,6 +28,10 @@ public:
 
 private slots:
     void on_toolButtonMenu_clicked();
+    void on_pushButtonExit_clicked();
+    void on_pushButtonSettings_clicked();
+    void on_pushButtonClearDownloads_clicked();
+    void on_pushButtonUpdateMangaList_clicked();
 
 private:
     Ui::MenueDialog *ui;

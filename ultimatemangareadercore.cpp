@@ -71,3 +71,52 @@ void UltimateMangaReaderCore::setupDirectories()
     if (!QDir(CONF.mangaListDir).exists())
         QDir().mkpath(CONF.mangaListDir);
 }
+
+long UltimateMangaReaderCore::getCacheSize()
+{
+    long size = dirSize(CONF.cacheDir) / 1024 / 1024;
+
+    return size;
+}
+
+long UltimateMangaReaderCore::getFreeSpace()
+{
+    QStorageInfo info(CONF.cacheDir);
+
+    long space = info.bytesAvailable() / 1024 / 1024;
+    return space;
+}
+
+void UltimateMangaReaderCore::clearCache(ClearCacheLevel level)
+{
+    switch (level)
+    {
+        case 1:
+            for (auto ms : mangaSources)
+            {
+                foreach (
+                    QFileInfo info,
+                    QDir(CONF.cacheDir + ms->name)
+                        .entryInfoList(QDir::NoDotAndDotDot | QDir::System |
+                                       QDir::Hidden | QDir::AllDirs))
+                    removeDir(info.absoluteFilePath() + "/images");
+            }
+            break;
+
+        case 2:
+            for (auto ms : mangaSources)
+                removeDir(CONF.cacheDir + ms->name, "progress.dat");
+
+            break;
+
+        case 3:
+            removeDir(CONF.cacheDir, "mangaList.dat");
+
+            // TODO
+            //            favoritesManager->infosUpdated();
+            break;
+
+        default:
+            break;
+    }
+}

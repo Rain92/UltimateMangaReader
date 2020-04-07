@@ -91,4 +91,8 @@ void executeOnJobCompletion(
 
 PageTurnDirection conditionalReverse(PageTurnDirection dir, bool condition);
 
+long dirSize(const QString& path);
+
+bool removeDir(const QString& path, const QString& ignore = "");
+
 #endif  // UTILS_H

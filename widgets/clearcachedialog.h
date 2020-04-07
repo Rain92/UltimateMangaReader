@@ -2,10 +2,9 @@
 #define CLEARCACHEDIALOG_H
 
 #include <QDialog>
-#include <QDir>
 
+#include "enums.h"
 #include "sizes.h"
-#include "staticsettings.h"
 
 namespace Ui
 {
@@ -20,7 +19,7 @@ public:
     explicit ClearCacheDialog(QWidget *parent = 0);
     ~ClearCacheDialog();
 
-    void getCacheSize();
+    void setValues(long chachSize, long freeSpace);
 
 private slots:
     void on_pushButtonCancel_clicked();
@@ -30,9 +29,6 @@ private slots:
     void on_pushButtonClear2_clicked();
 
     void on_pushButtonClear3_clicked();
-
-signals:
-    bool clearCache(int level);
 
 private:
     Ui::ClearCacheDialog *ui;
