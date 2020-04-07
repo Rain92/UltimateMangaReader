@@ -94,11 +94,10 @@ void UltimateMangaReaderCore::clearCache(ClearCacheLevel level)
         case 1:
             for (auto ms : mangaSources)
             {
-                foreach (
-                    QFileInfo info,
-                    QDir(CONF.cacheDir + ms->name)
-                        .entryInfoList(QDir::NoDotAndDotDot | QDir::System |
-                                       QDir::Hidden | QDir::AllDirs))
+                for (auto& info :
+                     QDir(CONF.cacheDir + ms->name)
+                         .entryInfoList(QDir::NoDotAndDotDot | QDir::System |
+                                        QDir::Hidden | QDir::AllDirs))
                     removeDir(info.absoluteFilePath() + "/images");
             }
             break;
