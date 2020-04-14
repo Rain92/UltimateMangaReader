@@ -5,6 +5,7 @@
 #ifdef KOBO
 #include "../koboplatformintegrationplugin/koboplatformfunctions.h"
 #endif
+#include "../koboplatformintegrationplugin/kobokey.h"
 
 MangaReaderWidget::MangaReaderWidget(QWidget *parent)
     : QWidget(parent),
@@ -114,7 +115,23 @@ bool MangaReaderWidget::event(QEvent *event)
 {
     if (event->type() == QEvent::Gesture)
         return gestureEvent(static_cast<QGestureEvent *>(event));
+    else if (event->type() == QEvent::KeyPress)
+        return buttonPressEvent(static_cast<QKeyEvent *>(event));
     return QWidget::event(event);
+}
+
+bool MangaReaderWidget::buttonPressEvent(QKeyEvent *event)
+{
+    if (event->key() == Qt::Key_PageUp)
+        emit advancPageClicked(conditionalReverse(
+            Forward, settings && settings->reverseButtonDirection));
+    else if (event->key() == Qt::Key_PageDown)
+        emit advancPageClicked(conditionalReverse(
+            Forward, settings && settings->reverseButtonDirection));
+    else
+        return false;
+
+    return true;
 }
 
 bool MangaReaderWidget::gestureEvent(QGestureEvent *event)
@@ -141,7 +158,6 @@ bool MangaReaderWidget::gestureEvent(QGestureEvent *event)
         }
         else if (angle > 335 || angle < 25)
         {
-            //            pagechanging = true;
             emit advancPageClicked(conditionalReverse(
                 Backward, settings && settings->reverseSwipeDirection));
         }

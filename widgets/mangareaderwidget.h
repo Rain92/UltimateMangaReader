@@ -60,6 +60,7 @@ protected:
 
 private:
     bool gestureEvent(QGestureEvent *event);
+    bool buttonPressEvent(QKeyEvent *event);
 
     Ui::MangaReaderWidget *ui;
 

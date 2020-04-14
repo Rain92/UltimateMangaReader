@@ -28,7 +28,6 @@ void Settings::scheduleSerialize() { timer.start(1000); }
 void Settings::serialize()
 {
     timer.stop();
-    qDebug() << "saving settings";
     QFile file(QString(CONF.cacheDir) + "/settings.dat");
     if (!file.open(QIODevice::WriteOnly))
         return;
