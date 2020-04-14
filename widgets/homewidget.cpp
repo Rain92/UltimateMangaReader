@@ -39,6 +39,7 @@ void HomeWidget::adjustSizes()
     ui->lineEditFilter->setFixedHeight(buttonsize);
 
     ui->listViewSources->setFixedHeight(listsourcesheight);
+    ui->listViewMangas->setUniformItemSizes(true);
 
     ui->listViewSources->setVerticalScrollBar(
         new CScrollBar(Qt::Vertical, ui->listViewSources));
@@ -196,6 +197,9 @@ void HomeWidget::refreshMangaListView()
 {
     if (core->currentMangaSource == nullptr)
         return;
+
+    QElapsedTimer t;
+    t.start();
 
     QStringListModel *model = new QStringListModel(this);
 
