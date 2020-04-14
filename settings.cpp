@@ -9,7 +9,6 @@ Settings::Settings()
       doublePageFullscreen(false),
       timer()
 {
-    timer.setSingleShot(true);
     QObject::connect(&timer, &QTimer::timeout, [this]() { this->serialize(); });
 }
 
@@ -24,10 +23,12 @@ void Settings::deserialize()
     file.close();
 }
 
-void Settings::scheduleSerialize() { timer.start(500); }
+void Settings::scheduleSerialize() { timer.start(1000); }
 
 void Settings::serialize()
 {
+    timer.stop();
+    qDebug() << "saving settings";
     QFile file(QString(CONF.cacheDir) + "/settings.dat");
     if (!file.open(QIODevice::WriteOnly))
         return;
@@ -41,16 +42,18 @@ QDataStream &operator<<(QDataStream &str, const Settings &m)
 {
     str << (qint32)m.lightValue << (qint32)m.comflightValue
         << m.hideErrorMessages << m.reverseSwipeDirection
-        << m.reverseButtonDirection << m.doublePageFullscreen;
+        << m.reverseButtonDirection << m.doublePageFullscreen
+        << m.enabledMangaSources;
 
     return str;
 }
 
 QDataStream &operator>>(QDataStream &str, Settings &m)
 {
+    m.enabledMangaSources.clear();
     str >> m.lightValue >> m.comflightValue >> m.hideErrorMessages >>
         m.reverseSwipeDirection >> m.reverseButtonDirection >>
-        m.doublePageFullscreen;
+        m.doublePageFullscreen >> m.enabledMangaSources;
 
     return str;
 }

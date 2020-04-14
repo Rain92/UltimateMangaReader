@@ -6,6 +6,19 @@ SettingsWidget::SettingsWidget(QWidget *parent)
     : QWidget(parent), ui(new Ui::SettingsWidget)
 {
     ui->setupUi(this);
+
+    QObject::connect(ui->checkBoxDoublePages, &QCheckBox::clicked, this,
+                     &SettingsWidget::updateSettings);
+
+    QLayoutItem *item;
+    int i = 0;
+    while ((item = ui->verticalLayout->itemAt(i++)) != nullptr)
+    {
+        auto *checkbox = dynamic_cast<QCheckBox *>(item->widget());
+        if (checkbox != nullptr)
+            QObject::connect(checkbox, &QCheckBox::clicked, this,
+                             &SettingsWidget::updateSettings);
+    }
 }
 
 SettingsWidget::~SettingsWidget() { delete ui; }
@@ -13,8 +26,6 @@ SettingsWidget::~SettingsWidget() { delete ui; }
 void SettingsWidget::setSettings(Settings *settings)
 {
     this->settings = settings;
-    setupSourcesList();
-    updateUI();
 }
 
 void SettingsWidget::updateUI()
@@ -25,21 +36,15 @@ void SettingsWidget::updateUI()
         settings->reverseSwipeDirection);
     ui->checkBoxReverseButtonDirection->setChecked(
         settings->reverseButtonDirection);
+
+    setupSourcesList();
 }
 
-void SettingsWidget::updateActiveMangasSettings()
+void SettingsWidget::updateActiveMangasSettings(const QString &name,
+                                                bool enabled)
 {
-    settings->mangaSourcesEnabled.clear();
-
-    for (int i = 0; i < settings->mangaSourcesEnabled.count(); i++)
-    {
-        auto name = ui->tableWidgetMangaSourcesEnabled->item(i, 0)->text();
-        auto enabled = static_cast<QCheckBox *>(
-                           ui->tableWidgetMangaSourcesEnabled->cellWidget(i, 0))
-                           ->isChecked();
-
-        settings->mangaSourcesEnabled.append({name, enabled});
-    }
+    settings->enabledMangaSources[name] = enabled;
+    settings->scheduleSerialize();
 
     emit activeMangasChanged();
 }
@@ -52,29 +57,33 @@ void SettingsWidget::updateSettings()
         ui->checkBoxReverseSwipeDirection->isChecked();
     settings->reverseButtonDirection =
         ui->checkBoxReverseButtonDirection->isChecked();
+
+    settings->scheduleSerialize();
 }
 
 void SettingsWidget::setupSourcesList()
 {
-    ui->tableWidgetMangaSourcesEnabled->clear();
+    auto layout = ui->frameEnabledSources->layout();
 
-    for (int i = 0; i < settings->mangaSourcesEnabled.count(); i++)
+    QLayoutItem *item;
+    while ((item = layout->takeAt(0)) != nullptr)
     {
-        ui->tableWidgetMangaSourcesEnabled->insertRow(i);
+        if (item->widget())
+            item->widget()->setParent(nullptr);
+        delete item;
+    }
 
-        QTableWidgetItem *nameItem =
-            new QTableWidgetItem(settings->mangaSourcesEnabled[i].first);
+    for (auto ms : settings->enabledMangaSources.keys())
+    {
+        bool enabled = settings->enabledMangaSources[ms];
 
-        bool enabled = settings->mangaSourcesEnabled[i].second;
+        QCheckBox *checkbox = new QCheckBox(ms, ui->frameEnabledSources);
+        checkbox->setChecked(enabled);
+        QObject::connect(
+            checkbox, &QCheckBox::clicked, this, [this, checkbox, ms]() {
+                updateActiveMangasSettings(ms, checkbox->isChecked());
+            });
 
-        QCheckBox *enabledCheckbox =
-            new QCheckBox(ui->tableWidgetMangaSourcesEnabled);
-        enabledCheckbox->setChecked(enabled);
-        QObject::connect(enabledCheckbox, &QCheckBox::clicked, this,
-                         &SettingsWidget::updateActiveMangasSettings);
-
-        ui->tableWidgetMangaSourcesEnabled->setItem(i, 0, nameItem);
-        ui->tableWidgetMangaSourcesEnabled->setCellWidget(i, 1,
-                                                          enabledCheckbox);
+        layout->addWidget(checkbox);
     }
 }

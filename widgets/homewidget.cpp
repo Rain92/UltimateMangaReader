@@ -29,7 +29,7 @@ void HomeWidget::setCore(UltimateMangaReaderCore *core)
 {
     this->core = core;
 
-    setupSourcesList();
+    updateSourcesList();
 }
 
 void HomeWidget::adjustSizes()
@@ -48,20 +48,22 @@ void HomeWidget::adjustSizes()
     ui->listViewMangas->setHorizontalScrollBar(
         new CScrollBar(Qt::Horizontal, ui->listViewMangas));
     ui->listViewMangas->setFocusPolicy(Qt::FocusPolicy::NoFocus);
-}
 
-void HomeWidget::setupSourcesList()
-{
     ui->listViewSources->setViewMode(QListView::IconMode);
-    QStandardItemModel *model = new QStandardItemModel(this);
-
-    for (auto ms : core->activeMangaSources)
-        model->appendRow(listViewItemfromMangaSource(ms));
-
     ui->listViewSources->setIconSize(
         QSize(mangasourceiconsize, mangasourceiconsize));
 
     ui->listViewSources->setStyleSheet("font-size: 8pt");
+}
+
+void HomeWidget::updateSourcesList()
+{
+    if (ui->listViewSources->model() != nullptr)
+        ui->listViewSources->model()->deleteLater();
+    QStandardItemModel *model = new QStandardItemModel(this);
+
+    for (auto ms : core->activeMangaSources)
+        model->appendRow(listViewItemfromMangaSource(ms));
 
     ui->listViewSources->setModel(model);
 
@@ -72,6 +74,7 @@ void HomeWidget::setupSourcesList()
         QObject::connect(ms, &AbstractMangaSource::updateError, this,
                          &HomeWidget::updateError);
     }
+    refreshMangaListView();
 }
 
 void HomeWidget::updateError(const QString &error)
@@ -127,8 +130,8 @@ QList<QStandardItem *> HomeWidget::listViewItemfromMangaSource(
     QList<QStandardItem *> items;
     QStandardItem *item = new QStandardItem(source->name);
     item->setData(source->name);
-    item->setIcon(QIcon(QPixmap(":/resources/images/mangahostlogos/" +
-                                source->name.toLower() + ".png")));
+    item->setIcon(QIcon(
+        QPixmap(":/images/mangahostlogos/" + source->name.toLower() + ".png")));
     item->setSizeHint(QSize(mangasourceitemwidth, mangasourceitemheight));
     items.append(item);
 
@@ -196,7 +199,13 @@ void HomeWidget::on_pushButtonFilterClear_clicked()
 void HomeWidget::refreshMangaListView()
 {
     if (core->currentMangaSource == nullptr)
+    {
+        if (ui->listViewMangas->model() != nullptr &&
+            ui->listViewMangas->model()->rowCount() > 0)
+            ui->listViewMangas->model()->removeRows(
+                0, ui->listViewMangas->model()->rowCount());
         return;
+    }
 
     QElapsedTimer t;
     t.start();

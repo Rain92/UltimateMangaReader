@@ -32,10 +32,26 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
     for (auto ms : mangaSources)
         ms->deserializeMangaList();
 
-    for (auto ms : mangaSources)
-        activeMangaSources.insert(ms->name, ms.get());
+    updateActiveScources();
 
     favoritesManager->loadInfos();
+}
+
+void UltimateMangaReaderCore::updateActiveScources()
+{
+    activeMangaSources.clear();
+    for (auto ms : mangaSources)
+    {
+        if (!settings.enabledMangaSources.contains(ms->name))
+            settings.enabledMangaSources.insert(ms->name, true);
+
+        if (settings.enabledMangaSources[ms->name])
+            activeMangaSources.insert(ms->name, ms.get());
+    }
+
+    this->currentMangaSource = nullptr;
+
+    emit activeMangaSourcesChanged();
 }
 
 void UltimateMangaReaderCore::setImageSize(const QSize& size)
@@ -91,7 +107,7 @@ void UltimateMangaReaderCore::clearCache(ClearCacheLevel level)
 {
     switch (level)
     {
-        case 1:
+        case ClearImages:
             for (auto ms : mangaSources)
             {
                 for (auto& info :
@@ -102,17 +118,15 @@ void UltimateMangaReaderCore::clearCache(ClearCacheLevel level)
             }
             break;
 
-        case 2:
+        case ClearInfos:
             for (auto ms : mangaSources)
                 removeDir(CONF.cacheDir + ms->name, "progress.dat");
 
             break;
 
-        case 3:
+        case ClearAll:
             removeDir(CONF.cacheDir, "mangaList.dat");
-
-            // TODO
-            //            favoritesManager->infosUpdated();
+            favoritesManager->clearFavorites();
             break;
 
         default:

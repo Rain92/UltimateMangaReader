@@ -26,37 +26,21 @@ QMenu::indicator
 }
 QMenu::indicator:exclusive:checked 
 {
-    image: url(:/checked.png);
+    image: url(:/images/icons/checkbox-checked.png);
 }
 
-QCheckBox 
+QCheckBox::indicator
 {
-  padding: 3px;
-}
-QCheckBox:focus
-{
-  padding: 1px;
-  outline: none;
-}
-QCheckBox::indicator 
-{
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border: 1px solid black;
   margin: 3px;
   border-radius:5px;
 }
-QCheckBox::indicator:checked 
+
+QCheckBox::indicator:checked
 {
-  image: url(:/checked.png);
-}
-QCheckBox::indicator:unchecked 
-{
-}
-QCheckBox::indicator:focus
-{
-  border: 3px solid black;
-  margin: 2px;
+  image: url(:/images/icons/checkbox-checked.png);
 }
 
 QLineEdit, QSpinBox, QDoubleSpinBox

@@ -25,7 +25,7 @@ VirtualKeyboard::VirtualKeyboard(QWidget* parent)
       isEnableCapsLock(false),
       isProcessCursorKeys(true),
       isPersistent(false),
-      svgRenderer(QString(":/resources/images/icons/keyboardicons.svg")),
+      svgRenderer(QString(":/images/icons/keyboardicons.svg")),
       layoutNo(0)
 {
     setFocusPolicy(Qt::NoFocus);

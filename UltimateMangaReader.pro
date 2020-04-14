@@ -25,7 +25,7 @@ DEPENDPATH  += $$PWD/widgets $$PWD/mangasources
 
 
 RESOURCES += \
-    images.qrc
+    resources.qrc
 
 FORMS += \
     widgets/errormessagewidget.ui \

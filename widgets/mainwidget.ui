@@ -87,7 +87,7 @@
         </property>
         <property name="icon">
          <iconset>
-          <normalon>:/resources/images/icons/menue.png</normalon>
+          <normalon>:/images/icons/menue.png</normalon>
          </iconset>
         </property>
         <property name="iconSize">
@@ -177,7 +177,7 @@
          <string/>
         </property>
         <property name="pixmap">
-         <pixmap resource="../images.qrc">:/resources/images/icons/wifi.png</pixmap>
+         <pixmap resource="../images.qrc">:/images/icons/wifi.png</pixmap>
         </property>
         <property name="scaledContents">
          <bool>true</bool>
@@ -281,7 +281,7 @@
         </property>
         <property name="icon">
          <iconset resource="../images.qrc">
-          <normaloff>:/resources/images/icons/home.png</normaloff>:/resources/images/icons/home.png</iconset>
+          <normaloff>:/images/icons/home.png</normaloff>:/images/icons/home.png</iconset>
         </property>
        </widget>
       </item>
@@ -298,7 +298,7 @@
         </property>
         <property name="icon">
          <iconset resource="../images.qrc">
-          <normaloff>:/resources/images/icons/favourite-star.png</normaloff>:/resources/images/icons/favourite-star.png</iconset>
+          <normaloff>:/images/icons/favourite-star.png</normaloff>:/images/icons/favourite-star.png</iconset>
         </property>
        </widget>
       </item>

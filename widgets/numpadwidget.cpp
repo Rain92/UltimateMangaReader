@@ -20,7 +20,7 @@ void NumpadWidget::setupButtons()
         {
             btn->setProperty("key", Qt::Key_Backspace);
             QIcon icon = QIcon(
-                QPixmap(":/resources/images/icons/backspace.png")
+                QPixmap(":/images/icons/backspace.png")
                     .scaledToHeight(buttonsize, Qt::SmoothTransformation));
             btn->setIconSize(QSize(buttonsize * 0.5, buttonsize * 0.5));
             btn->setIcon(icon);

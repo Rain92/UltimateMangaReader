@@ -136,6 +136,13 @@ MainWidget::MainWidget(QWidget *parent)
     QObject::connect(ui->mangaReaderWidget, &MangaReaderWidget::gotoIndex,
                      core->mangaController, &MangaController::setCurrentIndex);
 
+    // SettingsWidget
+    ui->settingsWidget->setSettings(&core->settings);
+    QObject::connect(ui->settingsWidget, &SettingsWidget::activeMangasChanged,
+                     core, &UltimateMangaReaderCore::updateActiveScources);
+    QObject::connect(ui->settingsWidget, &SettingsWidget::activeMangasChanged,
+                     ui->homeWidget, &HomeWidget::updateSourcesList);
+
     // FrontLight
     setupFrontLight();
     restorefrontlighttimer.setSingleShot(true);
@@ -254,6 +261,7 @@ void MainWidget::setWidgetTab(WidgetTab tab)
             ui->frameHeader->setVisible(false);
             break;
         case SettingsTab:
+            ui->settingsWidget->updateUI();
             ui->navigationBar->setVisible(true);
             ui->frameHeader->setVisible(true);
             break;

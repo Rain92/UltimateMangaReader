@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
     mainwidget.resize(dev.width, dev.height);
 #endif
 
-    QFile stylesheetFile(":/resources/eink.qss");
+    QFile stylesheetFile(":/eink.qss");
     stylesheetFile.open(QFile::ReadOnly);
     QString styleSheet = QLatin1String(stylesheetFile.readAll());
     stylesheetFile.close();

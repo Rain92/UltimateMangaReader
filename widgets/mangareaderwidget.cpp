@@ -47,27 +47,27 @@ void MangaReaderWidget::adjustSizes()
 
     ui->labelLessLight->setFixedSize(QSize(resourceiconsize, resourceiconsize));
 
-    QPixmap p(":/resources/images/icons/darker.png");
+    QPixmap p(":/images/icons/darker.png");
     ui->labelLessLight->setPixmap(
         p.scaledToHeight(resourceiconsize, Qt::SmoothTransformation));
 
     ui->labelMoreLight->setFixedSize(QSize(resourceiconsize, resourceiconsize));
 
-    QPixmap p2(":/resources/images/icons/lighter.png");
+    QPixmap p2(":/images/icons/lighter.png");
     ui->labelMoreLight->setPixmap(
         p2.scaledToHeight(resourceiconsize, Qt::SmoothTransformation));
 
     ui->labelLessComfLight->setFixedSize(
         QSize(resourceiconsize, resourceiconsize));
 
-    QPixmap p3(":/resources/images/icons/moon.png");
+    QPixmap p3(":/images/icons/moon.png");
     ui->labelLessComfLight->setPixmap(
         p3.scaledToHeight(resourceiconsize, Qt::SmoothTransformation));
 
     ui->labelMoreComfLight->setFixedSize(
         QSize(resourceiconsize, resourceiconsize));
 
-    QPixmap p4(":/resources/images/icons/sun.png");
+    QPixmap p4(":/images/icons/sun.png");
     ui->labelMoreComfLight->setPixmap(
         p4.scaledToHeight(resourceiconsize, Qt::SmoothTransformation));
 

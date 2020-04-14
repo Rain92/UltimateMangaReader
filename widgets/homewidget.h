@@ -29,6 +29,7 @@ public:
     void setCore(UltimateMangaReaderCore *core);
 
     void currentMangaSourceChanged();
+    void updateSourcesList();
 
 signals:
     void mangaSourceClicked(AbstractMangaSource *source);
@@ -56,7 +57,6 @@ private:
     bool filteractive;
 
     void refreshMangaListView();
-    void setupSourcesList();
     void adjustSizes();
 
     QList<QStandardItem *> listViewItemfromMangaSource(

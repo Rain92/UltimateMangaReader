@@ -43,11 +43,14 @@ public:
     long getCacheSize();
     long getFreeSpace();
     void clearCache(ClearCacheLevel level);
+    void updateActiveScources();
 
 signals:
     void currentMangaSourceChanged();
     void currentMangaChanged();
     void currentMangaIndexChanged();
+
+    void activeMangaSourcesChanged();
 
     void error(const QString &error);
 

@@ -312,7 +312,7 @@
              </property>
              <property name="icon">
               <iconset>
-               <normalon>:/resources/images/icons/home.png</normalon>
+               <normalon>:/images/icons/home.png</normalon>
               </iconset>
              </property>
             </widget>

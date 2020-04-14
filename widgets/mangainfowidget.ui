@@ -54,8 +54,8 @@
        </property>
        <property name="icon">
         <iconset resource="../images.qrc">
-         <normaloff>:/resources/images/icons/favourite-star.png</normaloff>
-         <normalon>:/resources/images/icons/favourite-star-full.png</normalon>:/resources/images/icons/favourite-star.png</iconset>
+         <normaloff>:/images/icons/favourite-star.png</normaloff>
+         <normalon>:/images/icons/favourite-star-full.png</normalon>:/images/icons/favourite-star.png</iconset>
        </property>
        <property name="checkable">
         <bool>true</bool>

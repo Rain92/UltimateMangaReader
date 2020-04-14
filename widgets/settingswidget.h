@@ -29,7 +29,7 @@ private:
     Ui::SettingsWidget *ui;
 
     void updateSettings();
-    void updateActiveMangasSettings();
+    void updateActiveMangasSettings(const QString &name, bool enabled);
 
     void setupSourcesList();
 

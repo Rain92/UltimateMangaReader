@@ -23,7 +23,7 @@
        </property>
        <property name="icon">
         <iconset resource="../images.qrc">
-         <normaloff>:/resources/images/icons/menue.png</normaloff>:/resources/images/icons/menue.png</iconset>
+         <normaloff>:/images/icons/menue.png</normaloff>:/images/icons/menue.png</iconset>
        </property>
        <property name="iconSize">
         <size>
