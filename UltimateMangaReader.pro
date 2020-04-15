@@ -31,10 +31,11 @@ FORMS += \
     widgets/mangareaderwidget.ui \
     widgets/gotodialog.ui \
     widgets/menudialog.ui \
-    widgets/settingswidget.ui \
+    widgets/settingsdialog.ui \
     widgets/updatedialog.ui \
     widgets/numpadwidget.ui \
-    widgets/clearcachedialog.ui
+    widgets/clearcachedialog.ui \
+    widgets/updatemangalistsdialog.ui
 
 HEADERS += \
     enums.h \
@@ -79,11 +80,12 @@ HEADERS += \
     favoritesmanager.h \
     widgets/gotodialog.h \
     widgets/menudialog.h \
-    widgets/settingswidget.h \
+    widgets/settingsdialog.h \
     widgets/updatedialog.h \
     settings.h \
     widgets/numpadwidget.h \
     widgets/clearcachedialog.h \
+    widgets/updatemangalistsdialog.h \
     widgets/virtualkeyboard.h
 
 SOURCES += \
@@ -124,11 +126,12 @@ SOURCES += \
     favoritesmanager.cpp \
     widgets/gotodialog.cpp \
     widgets/menudialog.cpp \
-    widgets/settingswidget.cpp \
+    widgets/settingsdialog.cpp \
     widgets/updatedialog.cpp \
     settings.cpp \
     widgets/numpadwidget.cpp \
     widgets/clearcachedialog.cpp \
+    widgets/updatemangalistsdialog.cpp \
     widgets/virtualkeyboard.cpp
 
 

@@ -1,10 +1,10 @@
 #include "mainwidget.h"
 
+#include "ui_mainwidget.h"
+
 #ifdef KOBO
 #include "../koboplatformintegrationplugin/koboplatformfunctions.h"
 #endif
-
-#include "ui_mainwidget.h"
 
 MainWidget::MainWidget(QWidget *parent)
     : QWidget(parent),
@@ -21,9 +21,12 @@ MainWidget::MainWidget(QWidget *parent)
     setupVirtualKeyboard();
 
     // Dialogs
-    updateDialog = new UpdateDialog(this);
-    clearCacheDialog = new ClearCacheDialog(this);
     menuDialog = new MenuDialog(this);
+    settingsDialog = new SettingsDialog(this);
+    updateDialog = new UpdateMangaListsDialog(this);
+    clearCacheDialog = new ClearCacheDialog(this);
+
+    updateDialog->setSettings(&core->settings);
 
     QObject::connect(menuDialog, &MenuDialog::finished,
                      [this](int b) { menuDialogButtonPressed(static_cast<MenuButton>(b)); });
@@ -125,11 +128,11 @@ MainWidget::MainWidget(QWidget *parent)
     QObject::connect(ui->mangaReaderWidget, &MangaReaderWidget::gotoIndex, core->mangaController,
                      &MangaController::setCurrentIndex);
 
-    // SettingsWidget
-    ui->settingsWidget->setSettings(&core->settings);
-    QObject::connect(ui->settingsWidget, &SettingsWidget::activeMangasChanged, core,
+    // SettingsDialog
+    settingsDialog->setSettings(&core->settings);
+    QObject::connect(settingsDialog, &SettingsDialog::activeMangasChanged, core,
                      &UltimateMangaReaderCore::updateActiveScources);
-    QObject::connect(ui->settingsWidget, &SettingsWidget::activeMangasChanged, ui->homeWidget,
+    QObject::connect(settingsDialog, &SettingsDialog::activeMangasChanged, ui->homeWidget,
                      &HomeWidget::updateSourcesList);
 
     // FrontLight
@@ -256,11 +259,6 @@ void MainWidget::setWidgetTab(WidgetTab tab)
             ui->navigationBar->setVisible(false);
             ui->frameHeader->setVisible(false);
             break;
-        case SettingsTab:
-            ui->settingsWidget->updateUI();
-            ui->navigationBar->setVisible(true);
-            ui->frameHeader->setVisible(true);
-            break;
     }
     ui->frameHeader->repaint();
 
@@ -309,13 +307,16 @@ void MainWidget::menuDialogButtonPressed(MenuButton button)
             close();
             break;
         case SettingsButton:
-            setWidgetTab(SettingsTab);
+            settingsDialog->resetUI();
+            settingsDialog->open();
             break;
         case ClearDownloadsButton:
             clearCacheDialog->setValues(core->getCacheSize(), core->getFreeSpace());
             clearCacheDialog->open();
             break;
         case UpdateMangaListsButton:
+            updateDialog->resetUI();
+            updateDialog->open();
             break;
     }
 }

@@ -13,8 +13,9 @@
 #include "homewidget.h"
 #include "mangareaderwidget.h"
 #include "menudialog.h"
+#include "settingsdialog.h"
 #include "ultimatemangareadercore.h"
-#include "updatedialog.h"
+#include "updatemangalistsdialog.h"
 #include "virtualkeyboard.h"
 
 namespace Ui
@@ -70,9 +71,10 @@ private:
     VirtualKeyboard *virtualKeyboard;
     ErrorMessageWidget *errorMessageWidget;
 
-    UpdateDialog *updateDialog;
-    ClearCacheDialog *clearCacheDialog;
     MenuDialog *menuDialog;
+    SettingsDialog *settingsDialog;
+    UpdateMangaListsDialog *updateDialog;
+    ClearCacheDialog *clearCacheDialog;
 };
 
 #endif  // MAINWIDGET_H

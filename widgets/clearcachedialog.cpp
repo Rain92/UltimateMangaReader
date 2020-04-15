@@ -5,18 +5,22 @@
 ClearCacheDialog::ClearCacheDialog(QWidget* parent) : QDialog(parent), ui(new Ui::ClearCacheDialog)
 {
     ui->setupUi(this);
-
+    adjustSizes();
     setWindowFlags(Qt::Popup);
-
-    ui->pushButtonCancel->setFixedHeight(buttonsize);
-    ui->pushButtonClear1->setFixedHeight(buttonsize);
-    ui->pushButtonClear2->setFixedHeight(buttonsize);
-    ui->pushButtonClear3->setFixedHeight(buttonsize);
 }
 
 ClearCacheDialog::~ClearCacheDialog()
 {
     delete ui;
+}
+
+void ClearCacheDialog::adjustSizes()
+{
+    ui->pushButtonCancel->setFixedHeight(buttonsize);
+    ui->pushButtonClear1->setFixedHeight(buttonsize);
+    ui->pushButtonClear2->setFixedHeight(buttonsize);
+    ui->pushButtonClear3->setFixedHeight(buttonsize);
+    ui->labelTitle->setStyleSheet("font-size: 15pt");
 }
 
 void ClearCacheDialog::setValues(long chacheSize, long freeSpace)

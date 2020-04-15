@@ -12,8 +12,7 @@ enum WidgetTab
     HomeTab = 0,
     MangaInfoTab = 1,
     FavoritesTab = 2,
-    MangaReaderTab = 3,
-    SettingsTab = 4
+    MangaReaderTab = 3
 };
 
 enum ClearDownloadCacheLevel

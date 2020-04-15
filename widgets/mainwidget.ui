@@ -240,7 +240,6 @@
        <string notr="true">background-color:white;</string>
       </property>
      </widget>
-     <widget class="SettingsWidget" name="settingsWidget"/>
     </widget>
    </item>
    <item>
@@ -372,12 +371,6 @@
    <class>MangaReaderWidget</class>
    <extends>QWidget</extends>
    <header>mangareaderwidget.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>SettingsWidget</class>
-   <extends>QWidget</extends>
-   <header>settingswidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

@@ -5,6 +5,15 @@ QWidget {
     font-size: 10pt;
 }
 
+QFrame#frameMangaScources
+{
+    border: 1px solid black;
+}
+QFrame#frameProgress
+{
+    border: 1px solid black;
+}
+
 QMenu 
 {
   border: 2px solid black;

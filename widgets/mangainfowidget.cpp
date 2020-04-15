@@ -36,7 +36,7 @@ void MangaInfoWidget::adjustSizes()
     ui->listViewChapters->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     ui->listViewChapters->setUniformItemSizes(true);
 
-    ui->labelMangaInfoTitle->setStyleSheet("font-size: 18pt");
+    ui->labelMangaInfoTitle->setStyleSheet("font-size: 16pt");
 
     activateScroller(ui->scrollAreaMangaInfoSummary);
     activateScroller(ui->listViewChapters);
