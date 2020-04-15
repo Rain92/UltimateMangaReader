@@ -5,6 +5,7 @@
 #include <QPainter>
 #include <QPair>
 #include <QPixmap>
+#include <QToolTip>
 
 #include "sizes.h"
 
@@ -16,6 +17,9 @@ public:
     BatteryIcon(QWidget *parent = 0);
 
     void updateIcon();
+
+protected:
+    void mousePressEvent(QMouseEvent *);
 
 private:
     QPixmap batteryicons[4];

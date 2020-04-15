@@ -7,14 +7,17 @@
 BatteryIcon::BatteryIcon(QWidget *parent) : QLabel(parent)
 {
     batteryicons[0] =
-        QPixmap(":/images/icons/batteryfull.png")
-            .scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
-    batteryicons[1] =
-        QPixmap(":/images/icons/batterycharging.png")
-            .scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
+        QPixmap(":/images/icons/batteryfull.png").scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
+    batteryicons[1] = QPixmap(":/images/icons/batterycharging.png")
+                          .scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
     batteryicons[2] =
-        QPixmap(":/images/icons/batteryempty.png")
-            .scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
+        QPixmap(":/images/icons/batteryempty.png").scaledToHeight(batteryiconsize, Qt::SmoothTransformation);
+}
+
+void BatteryIcon::mousePressEvent(QMouseEvent *)
+{
+    int level = KoboPlatformFunctions::getBatteryLevel();
+    QToolTip::showText(this->mapToGlobal(QPoint(0, 0)), QString::number(level) + "%");
 }
 
 void BatteryIcon::updateIcon()
@@ -48,8 +51,7 @@ void BatteryIcon::updateIcon()
         painter.fillRect(12 + (45 - w), 6, w, 20, brush);
 
         painter.end();
-        setPixmap(batteryicons[3].scaledToHeight(batteryiconsize,
-                                                 Qt::SmoothTransformation));
+        setPixmap(batteryicons[3].scaledToHeight(batteryiconsize, Qt::SmoothTransformation));
     }
 }
 
