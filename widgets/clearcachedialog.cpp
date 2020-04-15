@@ -2,8 +2,7 @@
 
 #include "ui_clearcachedialog.h"
 
-ClearCacheDialog::ClearCacheDialog(QWidget* parent)
-    : QDialog(parent), ui(new Ui::ClearCacheDialog)
+ClearCacheDialog::ClearCacheDialog(QWidget* parent) : QDialog(parent), ui(new Ui::ClearCacheDialog)
 {
     ui->setupUi(this);
 
@@ -15,21 +14,37 @@ ClearCacheDialog::ClearCacheDialog(QWidget* parent)
     ui->pushButtonClear3->setFixedHeight(buttonsize);
 }
 
-ClearCacheDialog::~ClearCacheDialog() { delete ui; }
+ClearCacheDialog::~ClearCacheDialog()
+{
+    delete ui;
+}
 
 void ClearCacheDialog::setValues(long chacheSize, long freeSpace)
 {
     QString str =
-        QString("Downloads take up %1 MB. \n%2 MB of free space remaining.")
-            .arg(chacheSize)
-            .arg(freeSpace);
+        QString("Downloads take up %1 MB. \n%2 MB of free space remaining.").arg(chacheSize).arg(freeSpace);
     ui->labelCacheSize->setText(str);
 }
 
-void ClearCacheDialog::on_pushButtonCancel_clicked() { close(); }
+void ClearCacheDialog::on_pushButtonCancel_clicked()
+{
+    close();
+}
 
-void ClearCacheDialog::on_pushButtonClear1_clicked() { finished(ClearImages); }
+void ClearCacheDialog::on_pushButtonClear1_clicked()
+{
+    finished(ClearImages);
+    close();
+}
 
-void ClearCacheDialog::on_pushButtonClear2_clicked() { finished(ClearInfos); }
+void ClearCacheDialog::on_pushButtonClear2_clicked()
+{
+    finished(ClearInfos);
+    close();
+}
 
-void ClearCacheDialog::on_pushButtonClear3_clicked() { finished(ClearAll); }
+void ClearCacheDialog::on_pushButtonClear3_clicked()
+{
+    finished(ClearAll);
+    close();
+}

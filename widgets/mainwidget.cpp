@@ -262,6 +262,7 @@ void MainWidget::setWidgetTab(WidgetTab tab)
             ui->frameHeader->setVisible(true);
             break;
     }
+    ui->frameHeader->repaint();
 
     ui->batteryIcon->updateIcon();
     ui->stackedWidget->setCurrentIndex(tab);

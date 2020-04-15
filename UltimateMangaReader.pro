@@ -75,7 +75,6 @@ HEADERS += \
     widgets/homewidget.h \
     widgets/mangainfowidget.h \
     widgets/mangareaderwidget.h \
-    widgets/cscrollbar.h \
     favorite.h \
     favoritesmanager.h \
     widgets/gotodialog.h \
@@ -121,7 +120,6 @@ SOURCES += \
     widgets/homewidget.cpp \
     widgets/mangainfowidget.cpp \
     widgets/mangareaderwidget.cpp \
-    widgets/cscrollbar.cpp \
     favorite.cpp \
     favoritesmanager.cpp \
     widgets/gotodialog.cpp \

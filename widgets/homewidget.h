@@ -7,7 +7,6 @@
 
 #include "abstractmangasource.h"
 #include "clineedit.h"
-#include "cscrollbar.h"
 #include "sizes.h"
 #include "staticsettings.h"
 #include "ultimatemangareadercore.h"

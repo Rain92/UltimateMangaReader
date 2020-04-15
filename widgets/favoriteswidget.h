@@ -5,7 +5,6 @@
 #include <QLabel>
 #include <QWidget>
 
-#include "cscrollbar.h"
 #include "favoritesmanager.h"
 #include "readingprogress.h"
 #include "sizes.h"
@@ -41,8 +40,7 @@ private:
     void adjustSizes();
     void moveFavoriteToFront(int i);
 
-    QWidget *makeIconTextWidget(const QString &path, const QString &text,
-                                const QSize &iconsize);
+    QWidget *makeIconTextWidget(const QString &path, const QString &text, const QSize &iconsize);
 };
 
 #endif  // FAVORITESWIDGET_H

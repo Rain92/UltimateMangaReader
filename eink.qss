@@ -213,14 +213,16 @@ QSlider::handle:horizontal::focus {
 QScrollBar {
     background: white;
 }
+QScrollBar:vertical {
+    width: 50px
+}
+QScrollBar:vertical {
+    height: 50px
+}
 QScrollBar::handle {
     background: gray;
     min-height: 50px;
-}
-QScrollBar::handle:vertical {
-    min-height: 47px;
-    height: 47px;
-    width:10px;
+    min-width: 50px;
 }
 QScrollBar::add-line {
     width: 0px;

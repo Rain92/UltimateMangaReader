@@ -2,12 +2,8 @@
 
 #include "mangainfo.h"
 
-AbstractMangaSource::AbstractMangaSource(QObject *parent,
-                                         DownloadManager *downloadmanager)
-    : QObject(parent),
-      mangaInfoPostDataStr(),
-      downloadManager(downloadmanager),
-      htmlConverter()
+AbstractMangaSource::AbstractMangaSource(QObject *parent, DownloadManager *downloadmanager)
+    : QObject(parent), mangaInfoPostDataStr(), downloadManager(downloadmanager), htmlConverter()
 {
 }
 
@@ -48,39 +44,34 @@ bool AbstractMangaSource::deserializeMangaList()
     return true;
 }
 
-QString AbstractMangaSource::getImagePath(
-    const DownloadImageDescriptor &descriptor)
+QString AbstractMangaSource::getImagePath(const DownloadImageDescriptor &descriptor)
 {
     int ind = descriptor.imageUrl.indexOf('?');
     if (ind == -1)
         ind = descriptor.imageUrl.length();
     QString filetype = descriptor.imageUrl.mid(ind - 4, 4);
 
-    QString path = CONF.mangaimagesdir(name, descriptor.title) +
-                   QString::number(descriptor.chapter) + "_" +
+    QString path = CONF.mangaimagesdir(name, descriptor.title) + QString::number(descriptor.chapter) + "_" +
                    QString::number(descriptor.page) + filetype;
 
     return path;
 }
 
-QSharedPointer<DownloadFileJob> AbstractMangaSource::downloadImage(
-    const DownloadImageDescriptor &descriptor)
+QSharedPointer<DownloadFileJob> AbstractMangaSource::downloadImage(const DownloadImageDescriptor &descriptor)
 {
     QString path = getImagePath(descriptor);
 
     return downloadManager->downloadAsScaledImage(descriptor.imageUrl, path);
 }
 
-Result<QString, QString> AbstractMangaSource::downloadAwaitImage(
-    const DownloadImageDescriptor &descriptor)
+Result<QString, QString> AbstractMangaSource::downloadAwaitImage(const DownloadImageDescriptor &descriptor)
 {
     QString path = getImagePath(descriptor);
 
     if (QFile::exists(path))
         return Ok(path);
 
-    auto job =
-        downloadManager->downloadAsScaledImage(descriptor.imageUrl, path);
+    auto job = downloadManager->downloadAsScaledImage(descriptor.imageUrl, path);
 
     if (job->await(5000))
         return Ok(path);
@@ -88,42 +79,44 @@ Result<QString, QString> AbstractMangaSource::downloadAwaitImage(
         return Err(job->errorString);
 }
 
-Result<QString, QString> AbstractMangaSource::getImageLink(
-    const QString &pagelink)
+Result<QString, QString> AbstractMangaSource::getImageLink(const QString &pagelink)
 {
     // Default implementation:
     // pagelinks are actually already imagelinks
     return Ok(pagelink);
 }
 
-Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::loadMangaInfo(
-    const QString &mangalink, const QString &mangatitle, bool update)
+Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::loadMangaInfo(const QString &mangalink,
+                                                                              const QString &mangatitle,
+                                                                              bool update)
 {
     QString path(CONF.mangainfodir(name, mangatitle) + "mangainfo.dat");
     if (QFile::exists(path))
     {
-        auto info = MangaInfo::deserialize(this, path);
-        if (update)
-            info->mangaSource->updateMangaInfoAsync(info);
+        try
+        {
+            auto info = MangaInfo::deserialize(this, path);
+            if (update)
+                info->mangaSource->updateMangaInfoAsync(info);
 
-        return Ok(info);
+            return Ok(info);
+        }
+        catch (QException)
+        {
+        }
     }
-    else
-    {
-        auto infoR = getMangaInfo(mangalink);
 
-        if (infoR.isOk())
-            infoR.unwrap()->serialize();
+    auto infoR = getMangaInfo(mangalink);
 
-        return infoR;
-    }
+    if (infoR.isOk())
+        infoR.unwrap()->serialize();
+
+    return infoR;
 }
 
-Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::getMangaInfo(
-    const QString &mangalink)
+Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::getMangaInfo(const QString &mangalink)
 {
-    auto job = downloadManager->downloadAsString(mangalink, 6000,
-                                                 mangaInfoPostDataStr);
+    auto job = downloadManager->downloadAsString(mangalink, 6000, mangaInfoPostDataStr);
 
     auto info = QSharedPointer<MangaInfo>(new MangaInfo(this));
 
@@ -146,8 +139,7 @@ void AbstractMangaSource::updateMangaInfoAsync(QSharedPointer<MangaInfo> info)
 {
     int oldnumchapters = info->chapters.count();
 
-    auto job = downloadManager->downloadAsString(info->link, 6000,
-                                                 mangaInfoPostDataStr);
+    auto job = downloadManager->downloadAsString(info->link, 6000, mangaInfoPostDataStr);
 
     auto lambda = [oldnumchapters, info, job, this] {
         bool newchapters = info->chapters.count() > oldnumchapters;
@@ -169,8 +161,7 @@ void AbstractMangaSource::updateMangaInfoAsync(QSharedPointer<MangaInfo> info)
     executeOnJobCompletion(job, lambda);
 }
 
-Result<void, QString> AbstractMangaSource::updatePageList(
-    QSharedPointer<MangaInfo> info, int chapter)
+Result<void, QString> AbstractMangaSource::updatePageList(QSharedPointer<MangaInfo> info, int chapter)
 {
     if (chapter >= info->chapters.count() || chapter < 0)
         return Err(QString("Chapter number out of bounds."));
@@ -210,8 +201,7 @@ Result<void, QString> AbstractMangaSource::updatePageList(
     return Ok();
 }
 
-void AbstractMangaSource::genrateCoverThumbnail(
-    QSharedPointer<MangaInfo> mangainfo)
+void AbstractMangaSource::genrateCoverThumbnail(QSharedPointer<MangaInfo> mangainfo)
 {
     QString scpath = mangainfo->coverThumbnailPath();
 
@@ -219,14 +209,13 @@ void AbstractMangaSource::genrateCoverThumbnail(
     {
         QImage img;
         img.load(mangainfo->coverPath);
-        img = img.scaled(favoritecoverwidth, favoritecoverheight,
-                         Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        img = img.scaled(favoritecoverwidth, favoritecoverheight, Qt::KeepAspectRatio,
+                         Qt::SmoothTransformation);
         img.save(scpath);
     }
 }
 
-void AbstractMangaSource::downloadCoverAsync(
-    QSharedPointer<MangaInfo> mangainfo)
+void AbstractMangaSource::downloadCoverAsync(QSharedPointer<MangaInfo> mangainfo)
 {
     if (mangainfo->coverLink == "")
     {
@@ -239,12 +228,10 @@ void AbstractMangaSource::downloadCoverAsync(
         if (ind == -1)
             ind = mangainfo->coverLink.length();
         QString filetype = mangainfo->coverLink.mid(ind - 4, 4);
-        mangainfo->coverPath =
-            CONF.mangainfodir(name, mangainfo->title) + "cover" + filetype;
+        mangainfo->coverPath = CONF.mangainfodir(name, mangainfo->title) + "cover" + filetype;
     }
 
-    auto coverjob = downloadManager->downloadAsFile(mangainfo->coverLink,
-                                                    mangainfo->coverPath);
+    auto coverjob = downloadManager->downloadAsFile(mangainfo->coverLink, mangainfo->coverPath);
 
     auto lambda = [this, mangainfo]() {
         genrateCoverThumbnail(mangainfo);
@@ -263,12 +250,13 @@ QString AbstractMangaSource::htmlToPlainText(const QString &str)
     return htmlConverter.toPlainText();
 }
 
-void AbstractMangaSource::fillMangaInfo(
-    QSharedPointer<MangaInfo> info, const QString &buffer,
-    const QRegularExpression &titlerx, const QRegularExpression &authorrx,
-    const QRegularExpression &artistrx, const QRegularExpression &statusrx,
-    const QRegularExpression &yearrx, const QRegularExpression &genresrx,
-    const QRegularExpression &summaryrx, const QRegularExpression &coverrx)
+void AbstractMangaSource::fillMangaInfo(QSharedPointer<MangaInfo> info, const QString &buffer,
+                                        const QRegularExpression &titlerx, const QRegularExpression &authorrx,
+                                        const QRegularExpression &artistrx,
+                                        const QRegularExpression &statusrx, const QRegularExpression &yearrx,
+                                        const QRegularExpression &genresrx,
+                                        const QRegularExpression &summaryrx,
+                                        const QRegularExpression &coverrx)
 {
     auto titlerxmatch = titlerx.match(buffer);
     auto authorrxmatch = authorrx.match(buffer);
@@ -290,10 +278,7 @@ void AbstractMangaSource::fillMangaInfo(
     if (yearrxmatch.hasMatch())
         info->releaseYear = htmlToPlainText(yearrxmatch.captured(1));
     if (genresrxmatch.hasMatch())
-        info->genres = htmlToPlainText(genresrxmatch.captured(1))
-                           .trimmed()
-                           .remove('\n')
-                           .remove(',');
+        info->genres = htmlToPlainText(genresrxmatch.captured(1)).trimmed().remove('\n').remove(',');
     if (summaryrxmatch.hasMatch())
         info->summary = htmlToPlainText(summaryrxmatch.captured(1));
     if (coverrxmatch.hasMatch())

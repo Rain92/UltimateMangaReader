@@ -25,7 +25,8 @@ HomeWidget::HomeWidget(QWidget *parent)
 
     updateDialog = new UpdateDialog(this);
 
-    QObject::connect(ui->lineEditFilter, &CLineEdit::returnPressed, this, &HomeWidget::on_pushButtonFilter_clicked);
+    QObject::connect(ui->lineEditFilter, &CLineEdit::returnPressed, this,
+                     &HomeWidget::on_pushButtonFilter_clicked);
 }
 
 HomeWidget::~HomeWidget()
@@ -56,9 +57,6 @@ void HomeWidget::adjustSizes()
     ui->listViewSources->setStyleSheet("font-size: 8pt");
     ui->listViewMangas->setUniformItemSizes(true);
 
-    ui->listViewSources->setVerticalScrollBar(new CScrollBar(Qt::Vertical, ui->listViewSources));
-    ui->listViewMangas->setVerticalScrollBar(new CScrollBar(Qt::Vertical, ui->listViewMangas));
-    ui->listViewMangas->setHorizontalScrollBar(new CScrollBar(Qt::Horizontal, ui->listViewMangas));
     ui->listViewMangas->setFocusPolicy(Qt::FocusPolicy::NoFocus);
 }
 
@@ -111,8 +109,8 @@ void HomeWidget::on_pushButtonUpdate_clicked()
         }
         else
         {
-            updateError("Number of mangas does not match.\n" + QString::number(mangaList.actualSize) + " vs " +
-                        QString::number(mangaList.nominalSize));
+            updateError("Number of mangas does not match.\n" + QString::number(mangaList.actualSize) +
+                        " vs " + QString::number(mangaList.nominalSize));
         }
     }
 }
@@ -203,12 +201,14 @@ void HomeWidget::on_listViewMangas_clicked(const QModelIndex &index)
 {
     int idx = index.row();
 
-    QString mangalink = filteractive ? filteredmangalinks[idx] : core->currentMangaSource->mangaList.links[idx];
+    QString mangalink =
+        filteractive ? filteredmangalinks[idx] : core->currentMangaSource->mangaList.links[idx];
 
     if (!core->currentMangaSource->mangaList.absoluteUrls)
         mangalink.prepend(core->currentMangaSource->baseurl);
 
-    QString mangatitle = filteractive ? filteredmangatitles[idx] : core->currentMangaSource->mangaList.titles[idx];
+    QString mangatitle =
+        filteractive ? filteredmangatitles[idx] : core->currentMangaSource->mangaList.titles[idx];
 
     emit mangaClicked(mangalink, mangatitle);
 }
