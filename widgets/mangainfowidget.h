@@ -7,6 +7,7 @@
 #include "mangaindex.h"
 #include "mangainfo.h"
 #include "sizes.h"
+#include "utils.h"
 
 namespace Ui
 {

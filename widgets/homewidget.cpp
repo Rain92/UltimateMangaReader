@@ -16,6 +16,8 @@ HomeWidget::HomeWidget(QWidget *parent)
 
     ui->listViewSources->setModel(new QStandardItemModel(this));
     ui->listViewMangas->setModel(new QStringListModel(this));
+    activateScroller(ui->listViewSources);
+    activateScroller(ui->listViewMangas);
 
     //    for (auto ms : core->activeMangaSources)
     //    {
@@ -195,6 +197,8 @@ void HomeWidget::refreshMangaListView()
         model->setStringList(core->currentMangaSource->mangaList.titles);
     else
         model->setStringList(filteredmangatitles);
+
+    ui->listViewMangas->verticalScrollBar()->setValue(0);
 }
 
 void HomeWidget::on_listViewMangas_clicked(const QModelIndex &index)

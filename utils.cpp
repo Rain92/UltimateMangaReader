@@ -1,7 +1,6 @@
 #include "utils.h"
 
-QList<QRegularExpressionMatch> getAllRxMatches(const QRegularExpression& rx,
-                                               const QString& text, int spos,
+QList<QRegularExpressionMatch> getAllRxMatches(const QRegularExpression& rx, const QString& text, int spos,
                                                int epos)
 {
     QList<QRegularExpressionMatch> rxlist;
@@ -29,15 +28,13 @@ QString makePathLegal(QString filename)
     return ret;
 }
 
-void executeOnJobCompletion(QSharedPointer<DownloadJobBase> job,
-                            std::function<void()> lambda)
+void executeOnJobCompletion(QSharedPointer<DownloadJobBase> job, std::function<void()> lambda)
 {
     new BindingClass(job, lambda);
 }
 
-void executeOnJobCompletion(
-    QSharedPointer<DownloadJobBase> job,
-    std::function<void(QSharedPointer<DownloadJobBase>)> lambda)
+void executeOnJobCompletion(QSharedPointer<DownloadJobBase> job,
+                            std::function<void(QSharedPointer<DownloadJobBase>)> lambda)
 {
     new BindingClass(job, lambda);
 }
@@ -69,8 +66,7 @@ long dirSize(const QString& path)
         size += fi.size();
     }
     // add size of child directories recursively
-    QDir::Filters dirFilters =
-        QDir::Dirs | QDir::NoDotAndDotDot | QDir::System | QDir::Hidden;
+    QDir::Filters dirFilters = QDir::Dirs | QDir::NoDotAndDotDot | QDir::System | QDir::Hidden;
 
     for (const auto& childDirPath : dir.entryList(dirFilters))
         size += dirSize(path + QDir::separator() + childDirPath);
@@ -84,11 +80,9 @@ bool removeDir(const QString& path, const QString& ignore)
 
     if (dir.exists())
     {
-        foreach (
-            QFileInfo info,
-            dir.entryInfoList(QDir::NoDotAndDotDot | QDir::System |
-                                  QDir::Hidden | QDir::AllDirs | QDir::Files,
-                              QDir::DirsFirst))
+        foreach (QFileInfo info, dir.entryInfoList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden |
+                                                       QDir::AllDirs | QDir::Files,
+                                                   QDir::DirsFirst))
         {
             if (info.isDir())
             {
@@ -108,4 +102,17 @@ bool removeDir(const QString& path, const QString& ignore)
         // result = dir.rmdir(dirName);
     }
     return result;
+}
+
+void activateScroller(QAbstractScrollArea* pArea)
+{
+    if (pArea)
+    {
+        QScroller* scroller = QScroller::scroller(pArea);
+        QScrollerProperties prop = scroller->scrollerProperties();
+        prop.setScrollMetric(QScrollerProperties::MaximumClickThroughVelocity, 0);
+        prop.setScrollMetric(QScrollerProperties::MousePressEventDelay, 0.5);
+        scroller->setScrollerProperties(prop);
+        scroller->grabGesture(pArea, QScroller::LeftMouseButtonGesture);
+    }
 }

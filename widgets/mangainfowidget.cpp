@@ -38,11 +38,8 @@ void MangaInfoWidget::adjustSizes()
 
     ui->labelMangaInfoTitle->setStyleSheet("font-size: 18pt");
 
-#ifdef KOBO
-    // TODO
-//    activate_scroller(qobject_cast<QAbstractScrollArea
-//    *>(ui->scrollAreaMangaInfoSummary));
-#endif
+    activateScroller(ui->scrollAreaMangaInfoSummary);
+    activateScroller(ui->listViewChapters);
 }
 
 inline void updateLabel(QLabel *caption, QLabel *content, const QString &text)
@@ -113,8 +110,8 @@ void MangaInfoWidget::updateInfos()
 
     ui->labelMangaInfoLabelSummaryContent->setText(currentmanga->summary);
 
-    //    ui->scrollAreaMangaInfoSummary->verticalScrollBar()->setValue(0);
-    //    ui->listViewChapters->verticalScrollBar()->setValue(0);
+    ui->scrollAreaMangaInfoSummary->verticalScrollBar()->setValue(0);
+    ui->listViewChapters->verticalScrollBar()->setValue(0);
 
     bool enable = currentmanga->chapters.count() > 0;
 

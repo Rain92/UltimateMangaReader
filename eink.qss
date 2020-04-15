@@ -214,10 +214,10 @@ QScrollBar {
     background: white;
 }
 QScrollBar:vertical {
-    width: 50px
+    width: 60px
 }
 QScrollBar:vertical {
-    height: 50px
+    height: 60px
 }
 QScrollBar::handle {
     background: gray;

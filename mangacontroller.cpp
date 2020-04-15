@@ -1,7 +1,6 @@
 #include "mangacontroller.h"
 
-MangaController::MangaController(DownloadManager *downloadManager,
-                                 QObject *parent)
+MangaController::MangaController(DownloadManager *downloadManager, QObject *parent)
     : QObject(parent),
       currentIndex(nullptr, 0, 0),
       downloadManager(downloadManager),
@@ -33,14 +32,12 @@ Result<void, QString> MangaController::assurePagesLoaded()
     if (currentManga->chapters.count() == 0)
         return Err(QString("Manga has no chapters."));
 
-    if (currentIndex.chapter >= currentManga->chapters.count() ||
-        currentIndex.chapter < 0)
+    if (currentIndex.chapter >= currentManga->chapters.count() || currentIndex.chapter < 0)
         currentIndex.chapter = qMax(0, currentManga->chapters.count() - 1);
 
     if (!currentIndex.currentChapter().pagesLoaded)
     {
-        auto res = currentManga->mangaSource->updatePageList(
-            currentManga, currentIndex.chapter);
+        auto res = currentManga->mangaSource->updatePageList(currentManga, currentIndex.chapter);
 
         if (!res.isOk())
             return res;
@@ -48,8 +45,7 @@ Result<void, QString> MangaController::assurePagesLoaded()
         currentManga->serialize();
     }
 
-    if (currentIndex.chapter >= currentManga->chapters.count() ||
-        currentIndex.chapter < 0)
+    if (currentIndex.chapter >= currentManga->chapters.count() || currentIndex.chapter < 0)
         return Err(QString("Chapter number out of bounds."));
 
     if (currentIndex.page >= currentIndex.currentChapter().numPages)
@@ -71,8 +67,8 @@ Result<QString, QString> MangaController::getCoverpathScaled() const
         qDebug() << "generating scaled:" << currentManga->title;
         QImage img;
         img.load(currentManga->coverPath);
-        img = img.scaled(favoritecoverwidth, favoritecoverheight,
-                         Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        img = img.scaled(favoritecoverwidth, favoritecoverheight, Qt::KeepAspectRatio,
+                         Qt::SmoothTransformation);
         img.save(scpath);
     }
 
@@ -100,8 +96,7 @@ Result<QString, QString> MangaController::getImageLink(const MangaIndex &index)
     }
 
     if (index.chapter >= currentManga->chapters.count() ||
-        currentManga->chapters[index.chapter].imageUrlList.count() <=
-            index.page)
+        currentManga->chapters[index.chapter].imageUrlList.count() <= index.page)
         return Err(QString("Page index out of bounds."));
     ;
 
@@ -111,30 +106,26 @@ Result<QString, QString> MangaController::getImageLink(const MangaIndex &index)
             currentManga->chapters[index.chapter].pageUrlList.at(index.page));
         if (!res.isOk())
             return Err(res.unwrapErr());
-        currentManga->chapters[index.chapter].imageUrlList[index.page] =
-            res.unwrap();
+        currentManga->chapters[index.chapter].imageUrlList[index.page] = res.unwrap();
     }
 
     return Ok(currentManga->chapters[index.chapter].imageUrlList[index.page]);
 }
 void MangaController::currentIndexChangedInternal(bool preload)
 {
-    emit currentIndexChanged({currentIndex, currentManga->chapters.count(),
-                              currentIndex.currentChapter().numPages});
+    emit currentIndexChanged(
+        {currentIndex, currentManga->chapters.count(), currentIndex.currentChapter().numPages});
 
     updateCurrentImage();
 
     serializeProgress();
 
     if (preload)
-        QTimer::singleShot(50, [this]() {
-            preloadNeighbours(CONF.forwardPreloads, CONF.backwardPreloads);
-        });
+        QTimer::singleShot(50, [this]() { preloadNeighbours(CONF.forwardPreloads, CONF.backwardPreloads); });
 }
 
 void MangaController::updateCurrentImage()
 {
-    // TODO rewrite
     auto imageLink = getImageLink(currentIndex);
 
     if (!imageLink.isOk())
@@ -143,8 +134,8 @@ void MangaController::updateCurrentImage()
         return;
     }
 
-    auto dd = DownloadImageDescriptor(imageLink.unwrap(), currentManga->title,
-                                      currentIndex.chapter, currentIndex.page);
+    auto dd = DownloadImageDescriptor(imageLink.unwrap(), currentManga->title, currentIndex.chapter,
+                                      currentIndex.page);
 
     auto imagePath = currentManga->mangaSource->downloadAwaitImage(dd);
 
@@ -200,8 +191,7 @@ void MangaController::preloadImage(const MangaIndex &index)
         return;
     }
 
-    DownloadImageDescriptor imageinfo(imageLink.unwrap(), currentManga->title,
-                                      index.chapter, index.page);
+    DownloadImageDescriptor imageinfo(imageLink.unwrap(), currentManga->title, index.chapter, index.page);
     auto path = currentManga->mangaSource->getImagePath(imageinfo);
 
     if (QFile::exists(path))
@@ -217,8 +207,7 @@ void MangaController::preloadPopular()
     if (currentManga->chapters.count() == 0)
         return;
 
-    if (currentManga->chapters.count() > 1 &&
-        currentIndex.chapter != currentManga->chapters.count() - 1)
+    if (currentManga->chapters.count() > 1 && currentIndex.chapter != currentManga->chapters.count() - 1)
         preloadImage({currentManga->chapters.count() - 1, 0});
 }
 
@@ -259,7 +248,10 @@ void MangaController::preloadNeighbours(int forward, int backward)
     }
 }
 
-void MangaController::cancelAllPreloads() { preloadQueue.clearQuene(); }
+void MangaController::cancelAllPreloads()
+{
+    preloadQueue.clearQuene();
+}
 
 void MangaController::completedImagePreload(const QString &path)
 {
@@ -268,8 +260,7 @@ void MangaController::completedImagePreload(const QString &path)
 
 void MangaController::serializeProgress()
 {
-    ReadingProgress c(currentIndex, currentManga->chapters.count(),
-                      currentIndex.currentChapter().numPages);
+    ReadingProgress c(currentIndex, currentManga->chapters.count(), currentIndex.currentChapter().numPages);
     c.serialize(currentManga->hostname, currentManga->title);
 }
 

@@ -2,20 +2,19 @@
 #define UTILS_H
 
 #include <QRegularExpression>
+#include <QScrollArea>
+#include <QScroller>
 #include <QtCore>
 
 #include "downloadmanager.h"
 #include "enums.h"
 
-QList<QRegularExpressionMatch> getAllRxMatches(const QRegularExpression& rx,
-                                               const QString& text,
+QList<QRegularExpressionMatch> getAllRxMatches(const QRegularExpression& rx, const QString& text,
                                                int spos = 0, int epos = -1);
 
 QString makePathLegal(QString filename);
 
-inline bool awaitSignal(QObject* object,
-                        const QVector<const char*>& completionSignals,
-                        int timeout)
+inline bool awaitSignal(QObject* object, const QVector<const char*>& completionSignals, int timeout)
 {
     QEventLoop loop;
 
@@ -35,8 +34,7 @@ class BindingClass : public QObject
 {
     Q_OBJECT
 public:
-    BindingClass(QSharedPointer<DownloadJobBase> job,
-                 std::function<void()> lambda)
+    BindingClass(QSharedPointer<DownloadJobBase> job, std::function<void()> lambda)
         : QObject(), job(job), lambda(lambda), lambda2(nullptr)
     {
         connect(job);
@@ -59,10 +57,8 @@ private:
     {
         if (!job->isCompleted)
         {
-            QObject::connect(job.get(), &DownloadJobBase::completed, this,
-                             &BindingClass::action);
-            QObject::connect(job.get(), &DownloadJobBase::downloadError, this,
-                             &BindingClass::deleteLater);
+            QObject::connect(job.get(), &DownloadJobBase::completed, this, &BindingClass::action);
+            QObject::connect(job.get(), &DownloadJobBase::downloadError, this, &BindingClass::deleteLater);
         }
         else
         {
@@ -82,17 +78,16 @@ private:
     }
 };
 
-void executeOnJobCompletion(QSharedPointer<DownloadJobBase> job,
-                            std::function<void()> lambda);
+void executeOnJobCompletion(QSharedPointer<DownloadJobBase> job, std::function<void()> lambda);
 
-void executeOnJobCompletion(
-    QSharedPointer<DownloadJobBase> job,
-    std::function<void(QSharedPointer<DownloadJobBase>)> lambda);
+void executeOnJobCompletion(QSharedPointer<DownloadJobBase> job,
+                            std::function<void(QSharedPointer<DownloadJobBase>)> lambda);
 
 PageTurnDirection conditionalReverse(PageTurnDirection dir, bool condition);
 
 long dirSize(const QString& path);
 
 bool removeDir(const QString& path, const QString& ignore = "");
+void activateScroller(QAbstractScrollArea* pArea);
 
 #endif  // UTILS_H
