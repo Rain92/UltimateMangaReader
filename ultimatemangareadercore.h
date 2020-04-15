@@ -42,7 +42,7 @@ public:
 
     long getCacheSize();
     long getFreeSpace();
-    void clearCache(ClearCacheLevel level);
+    void clearDownloadCache(ClearDownloadCacheLevel level);
     void updateActiveScources();
 
 signals:

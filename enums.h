@@ -16,7 +16,7 @@ enum WidgetTab
     SettingsTab = 4
 };
 
-enum ClearCacheLevel
+enum ClearDownloadCacheLevel
 {
     ClearImages = 3,
     ClearInfos,

@@ -29,7 +29,7 @@ MainWidget::MainWidget(QWidget *parent)
                      [this](int b) { menuDialogButtonPressed(static_cast<MenuButton>(b)); });
 
     QObject::connect(clearCacheDialog, &MenuDialog::finished,
-                     [this](int l) { core->clearCache(static_cast<ClearCacheLevel>(l)); });
+                     [this](int l) { core->clearDownloadCache(static_cast<ClearDownloadCacheLevel>(l)); });
 
     // DownloadManager
     core->downloadManager->setImageRescaleSize(this->size());

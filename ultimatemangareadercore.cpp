@@ -34,10 +34,11 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
 
     timer.setInterval(1000 * 60);
     connect(&timer, &QTimer::timeout, this, &UltimateMangaReaderCore::timerTick);
-    QTimer::singleShot(1000 * 60 - QTime::currentTime().second() * 1000 - QTime::currentTime().msec(), [this]() {
-        timer.start();
-        timerTick();
-    });
+    QTimer::singleShot(1000 * 60 - QTime::currentTime().second() * 1000 - QTime::currentTime().msec(),
+                       [this]() {
+                           timer.start();
+                           timerTick();
+                       });
 }
 
 void UltimateMangaReaderCore::timerTick()
@@ -109,7 +110,7 @@ long UltimateMangaReaderCore::getFreeSpace()
     return space;
 }
 
-void UltimateMangaReaderCore::clearCache(ClearCacheLevel level)
+void UltimateMangaReaderCore::clearDownloadCache(ClearDownloadCacheLevel level)
 {
     switch (level)
     {
@@ -130,7 +131,9 @@ void UltimateMangaReaderCore::clearCache(ClearCacheLevel level)
             break;
 
         case ClearAll:
-            removeDir(CONF.cacheDir, "mangaList.dat");
+            for (auto ms : mangaSources)
+                removeDir(CONF.cacheDir + ms->name);
+            QFile::remove(CONF.cacheDir + "favorites.dat");
             favoritesManager->clearFavorites();
             break;
 
