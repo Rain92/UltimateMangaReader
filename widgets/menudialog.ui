@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MenueDialog</class>
- <widget class="QDialog" name="MenueDialog">
+ <class>MenuDialog</class>
+ <widget class="QDialog" name="MenuDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -14,6 +14,18 @@
    <string>Dialog</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="leftMargin">
+    <number>9</number>
+   </property>
+   <property name="topMargin">
+    <number>9</number>
+   </property>
+   <property name="rightMargin">
+    <number>8</number>
+   </property>
+   <property name="bottomMargin">
+    <number>8</number>
+   </property>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
@@ -22,8 +34,8 @@
         <string>...</string>
        </property>
        <property name="icon">
-        <iconset resource="../images.qrc">
-         <normaloff>:/images/icons/menue.png</normaloff>:/images/icons/menue.png</iconset>
+        <iconset resource="../resources.qrc">
+         <normaloff>:/images/icons/menu.png</normaloff>:/images/icons/menu.png</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -92,7 +104,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="../images.qrc"/>
+  <include location="../resources.qrc"/>
  </resources>
  <connections/>
 </ui>

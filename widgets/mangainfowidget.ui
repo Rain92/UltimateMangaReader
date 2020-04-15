@@ -53,7 +53,7 @@
         <string>...</string>
        </property>
        <property name="icon">
-        <iconset resource="../images.qrc">
+        <iconset resource="../resources.qrc">
          <normaloff>:/images/icons/favourite-star.png</normaloff>
          <normalon>:/images/icons/favourite-star-full.png</normalon>:/images/icons/favourite-star.png</iconset>
        </property>
@@ -399,7 +399,7 @@ bla</string>
   </layout>
  </widget>
  <resources>
-  <include location="../images.qrc"/>
+  <include location="../resources.qrc"/>
  </resources>
  <connections/>
 </ui>

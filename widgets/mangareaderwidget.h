@@ -27,13 +27,12 @@ public:
     void showImage(const QString &path);
     void updateCurrentIndex(const ReadingProgress &progress);
 
-    void setFrontLightPanelState(int lightmin, int lightmax, int light,
-                                 int comflightmin, int comflightmax,
+    void setFrontLightPanelState(int lightmin, int lightmax, int light, int comflightmin, int comflightmax,
                                  int comflight);
     void setFrontLightPanelState(int light, int comflight);
 
     void addImageToCache(const QString &path);
-    void updateTime();
+    void updateMenuBar();
     void setSettings(Settings *settings);
 
 signals:
@@ -47,7 +46,7 @@ signals:
 private slots:
     void on_pushButtonReaderHome_clicked();
     void on_pushButtonReaderBack_clicked();
-    void on_pushButtonReaderClose_clicked();
+    void on_pushButtonReaderFavorites_clicked();
 
     void on_horizontalSliderLight_valueChanged(int value);
 

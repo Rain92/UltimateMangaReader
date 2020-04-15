@@ -177,14 +177,9 @@ QToolButton
 }
 QToolButton:checked
 {
-    border: 0px solid black;
+    border: 2px solid black;
 }
-RotationDlg QToolButton
-{
-    background: white;
-    border: 1px solid black;
-    border-radius: 1em;
-}
+
 QToolButton:focus {
     border: 0px solid black;
     padding: 2px;

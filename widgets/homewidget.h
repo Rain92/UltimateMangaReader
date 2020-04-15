@@ -45,6 +45,8 @@ private slots:
     void updateProgress(int progress);
     void updateError(const QString &error);
 
+    void showEvent(QShowEvent *event) override;
+
 private:
     Ui::HomeWidget *ui;
 
@@ -59,8 +61,7 @@ private:
     void refreshMangaListView();
     void adjustSizes();
 
-    QList<QStandardItem *> listViewItemfromMangaSource(
-        AbstractMangaSource *source);
+    QList<QStandardItem *> listViewItemfromMangaSource(AbstractMangaSource *source);
     QProgressBar *updateProgressBar;
     UpdateDialog *updateDialog;
 };

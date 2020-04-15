@@ -1,11 +1,11 @@
-#ifndef MENUEDIALOG_H
-#define MENUEDIALOG_H
+#ifndef MENUDIALOG_H
+#define MENUDIALOG_H
 
 #include <QDialog>
 
 #include "sizes.h"
 
-enum MenueButton
+enum MenuButton
 {
     ExitButton = 3,
     SettingsButton,
@@ -15,16 +15,16 @@ enum MenueButton
 
 namespace Ui
 {
-class MenueDialog;
+class MenuDialog;
 }
 
-class MenueDialog : public QDialog
+class MenuDialog : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit MenueDialog(QWidget *parent = nullptr);
-    ~MenueDialog();
+    explicit MenuDialog(QWidget *parent = nullptr);
+    ~MenuDialog();
 
 private slots:
     void on_toolButtonMenu_clicked();
@@ -34,7 +34,7 @@ private slots:
     void on_pushButtonUpdateMangaList_clicked();
 
 private:
-    Ui::MenueDialog *ui;
+    Ui::MenuDialog *ui;
 };
 
-#endif  // MENUEDIALOG_H
+#endif  // MENUDIALOG_H

@@ -18,9 +18,9 @@
 #define buttonsize mm_to_px(8)
 #define buttonsizeaddfavorite mm_to_px(8)
 
-#define resourceiconsize mm_to_px(6)
+#define resourceiconsize mm_to_px(5)
 #define batteryiconsize mm_to_px(3)
-#define menueiconsize mm_to_px(9)
+#define menuiconsize mm_to_px(10)
 
 #define scrollbarsliderminlength mm_to_px(8)
 #define scrollbarwidth mm_to_px(6)
@@ -35,7 +35,7 @@
 #define favoritecoverwidth mm_to_px(16)
 
 #define readerpreviouspagethreshold 0.3
-#define readerbottommenuethreshold 0.1
+#define readerbottommenuthreshold 0.1
 
 #define frontlightslidergrooveheight mm_to_px(5)
 #define frontlightsliderhandlewidth mm_to_px(7)

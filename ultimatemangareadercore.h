@@ -54,7 +54,12 @@ signals:
 
     void error(const QString &error);
 
+    void timeTick();
+
 private:
+    QTimer timer;
+    void timerTick();
+
     void setupDirectories();
 };
 

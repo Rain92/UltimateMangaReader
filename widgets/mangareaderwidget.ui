@@ -310,10 +310,18 @@
              <property name="text">
               <string>Home</string>
              </property>
-             <property name="icon">
-              <iconset>
-               <normalon>:/images/icons/home.png</normalon>
-              </iconset>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButtonReaderFavorites">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>Favorites</string>
              </property>
             </widget>
            </item>
@@ -327,19 +335,6 @@
              </property>
              <property name="text">
               <string>Back</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="pushButtonReaderClose">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="text">
-              <string>Close</string>
              </property>
             </widget>
            </item>

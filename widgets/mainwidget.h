@@ -12,7 +12,7 @@
 #include "favoriteswidget.h"
 #include "homewidget.h"
 #include "mangareaderwidget.h"
-#include "menuedialog.h"
+#include "menudialog.h"
 #include "ultimatemangareadercore.h"
 #include "updatedialog.h"
 #include "virtualkeyboard.h"
@@ -45,11 +45,11 @@ private slots:
     void on_pushButtonClose_clicked();
     void on_pushButtonFavorites_clicked();
 
-    void on_toolButtonMenue_clicked();
+    void on_toolButtonMenu_clicked();
 
     void restoreFrontLight();
 
-    void menueDialogButtonPressed(MenueButton button);
+    void menuDialogButtonPressed(MenuButton button);
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
@@ -72,7 +72,7 @@ private:
 
     UpdateDialog *updateDialog;
     ClearCacheDialog *clearCacheDialog;
-    MenueDialog *menueDialog;
+    MenuDialog *menuDialog;
 };
 
 #endif  // MAINWIDGET_H

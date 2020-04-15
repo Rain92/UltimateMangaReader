@@ -22,7 +22,7 @@
         <file>images/icons/home.png</file>
         <file>images/icons/wifi.png</file>
         <file>images/icons/no-wifi.png</file>
-        <file>images/icons/menue.png</file>
+        <file>images/icons/menu.png</file>
         <file>images/icons/checkbox-checked.png</file>
         <file>images/icons/checkbox-unchecked.png</file>
     </qresource>

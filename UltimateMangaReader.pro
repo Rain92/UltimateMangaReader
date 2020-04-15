@@ -1,18 +1,13 @@
 
-windows {
-    DEFINES += DESKTOP WINDOWS
-}
-
-desktop {
-    DEFINES += DESKTOP
-}
-
 kobo {
     DEFINES += KOBO
     DEFINES -= DESKTOP
 
     target.path = /mnt/onboard/.adds/UltimateMangaReader
     INSTALLS += target
+}
+else { # default is desktop
+    DEFINES += DESKTOP
 }
 
 QT       += core gui widgets network svg
@@ -35,7 +30,7 @@ FORMS += \
     widgets/mangainfowidget.ui \
     widgets/mangareaderwidget.ui \
     widgets/gotodialog.ui \
-    widgets/menuedialog.ui \
+    widgets/menudialog.ui \
     widgets/settingswidget.ui \
     widgets/updatedialog.ui \
     widgets/numpadwidget.ui \
@@ -84,7 +79,7 @@ HEADERS += \
     favorite.h \
     favoritesmanager.h \
     widgets/gotodialog.h \
-    widgets/menuedialog.h \
+    widgets/menudialog.h \
     widgets/settingswidget.h \
     widgets/updatedialog.h \
     settings.h \
@@ -130,7 +125,7 @@ SOURCES += \
     favorite.cpp \
     favoritesmanager.cpp \
     widgets/gotodialog.cpp \
-    widgets/menuedialog.cpp \
+    widgets/menudialog.cpp \
     widgets/settingswidget.cpp \
     widgets/updatedialog.cpp \
     settings.cpp \

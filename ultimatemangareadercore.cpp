@@ -9,23 +9,19 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
       downloadManager(new DownloadManager(this)),
       mangaController(new MangaController(downloadManager, this)),
       favoritesManager(new FavoritesManager(activeMangaSources, this)),
-      settings()
+      settings(),
+      timer()
 {
     setupDirectories();
     settings.deserialize();
 
     downloadManager->connect();
 
-    mangaSources.append(QSharedPointer<AbstractMangaSource>(
-        new MangaPanda(this, downloadManager)));
-    mangaSources.append(QSharedPointer<AbstractMangaSource>(
-        new JaiminisBox(this, downloadManager)));
-    mangaSources.append(QSharedPointer<AbstractMangaSource>(
-        new MangaDex(this, downloadManager)));
-    mangaSources.append(QSharedPointer<AbstractMangaSource>(
-        new MangaHub(this, downloadManager)));
-    mangaSources.append(QSharedPointer<AbstractMangaSource>(
-        new MangaOwl(this, downloadManager)));
+    mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaPanda(this, downloadManager)));
+    mangaSources.append(QSharedPointer<AbstractMangaSource>(new JaiminisBox(this, downloadManager)));
+    mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaDex(this, downloadManager)));
+    mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaHub(this, downloadManager)));
+    mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaOwl(this, downloadManager)));
 
     currentMangaSource = mangaSources.first().get();
 
@@ -35,6 +31,18 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
     updateActiveScources();
 
     favoritesManager->loadInfos();
+
+    timer.setInterval(1000 * 60);
+    connect(&timer, &QTimer::timeout, this, &UltimateMangaReaderCore::timerTick);
+    QTimer::singleShot(1000 * 60 - QTime::currentTime().second() * 1000 - QTime::currentTime().msec(), [this]() {
+        timer.start();
+        timerTick();
+    });
+}
+
+void UltimateMangaReaderCore::timerTick()
+{
+    emit timeTick();
 }
 
 void UltimateMangaReaderCore::updateActiveScources()
@@ -59,8 +67,7 @@ void UltimateMangaReaderCore::setImageSize(const QSize& size)
     downloadManager->setImageRescaleSize(size);
 }
 
-void UltimateMangaReaderCore::setCurrentMangaSource(
-    AbstractMangaSource* mangaSource)
+void UltimateMangaReaderCore::setCurrentMangaSource(AbstractMangaSource* mangaSource)
 {
     if (mangaSource && this->currentMangaSource != mangaSource)
     {
@@ -69,8 +76,7 @@ void UltimateMangaReaderCore::setCurrentMangaSource(
     }
 }
 
-void UltimateMangaReaderCore::setCurrentManga(const QString& mangalink,
-                                              const QString& mangatitle)
+void UltimateMangaReaderCore::setCurrentManga(const QString& mangalink, const QString& mangatitle)
 {
     auto res = currentMangaSource->loadMangaInfo(mangalink, mangatitle);
     if (res.isOk())
@@ -112,8 +118,7 @@ void UltimateMangaReaderCore::clearCache(ClearCacheLevel level)
             {
                 for (auto& info :
                      QDir(CONF.cacheDir + ms->name)
-                         .entryInfoList(QDir::NoDotAndDotDot | QDir::System |
-                                        QDir::Hidden | QDir::AllDirs))
+                         .entryInfoList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden | QDir::AllDirs))
                     removeDir(info.absoluteFilePath() + "/images");
             }
             break;
