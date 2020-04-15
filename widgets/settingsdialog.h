@@ -26,6 +26,9 @@ public:
 signals:
     void activeMangasChanged();
 
+private slots:
+    void on_pushButtonOk_clicked();
+
 private:
     Ui::SettingsDialog *ui;
     Settings *settings;

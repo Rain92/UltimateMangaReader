@@ -14,6 +14,9 @@
    <string>Dialog</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>9</number>
+   </property>
    <item>
     <widget class="QLabel" name="labelTitle">
      <property name="sizePolicy">
@@ -54,6 +57,9 @@ This operation will take several minutes.</string>
       <enum>QFrame::Raised</enum>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
+      <property name="spacing">
+       <number>9</number>
+      </property>
       <item>
        <widget class="QCheckBox" name="checkBox">
         <property name="text">
@@ -108,6 +114,9 @@ This operation will take several minutes.</string>
       <enum>QFrame::Raised</enum>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_3">
+      <property name="spacing">
+       <number>9</number>
+      </property>
       <item>
        <widget class="QLabel" name="label_3">
         <property name="text">
@@ -149,6 +158,9 @@ This operation will take several minutes.</string>
    </item>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
+     <property name="spacing">
+      <number>9</number>
+     </property>
      <item>
       <spacer name="horizontalSpacer">
        <property name="orientation">

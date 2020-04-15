@@ -17,7 +17,9 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     {
         auto *checkbox = dynamic_cast<QCheckBox *>(item->widget());
         if (checkbox != nullptr)
+        {
             QObject::connect(checkbox, &QCheckBox::clicked, this, &SettingsDialog::updateSettings);
+        }
     }
 }
 
@@ -88,4 +90,9 @@ void SettingsDialog::setupSourcesList()
 
         layout->addWidget(checkbox);
     }
+}
+
+void SettingsDialog::on_pushButtonOk_clicked()
+{
+    close();
 }
