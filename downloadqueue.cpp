@@ -1,21 +1,25 @@
 #include "downloadqueue.h"
 
-DownloadQueue::DownloadQueue(
-    DownloadManager* downloadmanager, const QList<QString>& urls,
-    int parallelDownloads,
-    std::function<void(QSharedPointer<DownloadStringJob>)> lambda,
-    int individualTimeout)
+#include "utils.h"
+
+DownloadQueue::DownloadQueue(DownloadManager* downloadmanager, const QList<QString>& urls,
+                             int parallelDownloads,
+                             std::function<void(QSharedPointer<DownloadStringJob>)> lambda,
+                             bool cancelOnError, int individualTimeout)
     : QObject(),
       completed(0),
       errors(0),
+      lastErrorMessage(""),
+      cancelOnError(cancelOnError),
       downloadmanager(downloadmanager),
       parallelDownloads(parallelDownloads),
       urlQueue(),
       lambda(lambda),
-      individualTimeout(individualTimeout)
+      individualTimeout(individualTimeout),
+      cancellationToken(nullptr)
 {
+    totalJobs = urls.count();
     this->urlQueue.append(urls);
-    totalJobs = urls.size();
 }
 
 void DownloadQueue::start()
@@ -46,8 +50,7 @@ void DownloadQueue::startSingle()
     }
 }
 
-void DownloadQueue::downloadFinished(QSharedPointer<DownloadStringJob> job,
-                                     bool success)
+void DownloadQueue::downloadFinished(QSharedPointer<DownloadStringJob> job, bool success)
 {
     completed++;
     if (success)
@@ -57,8 +60,17 @@ void DownloadQueue::downloadFinished(QSharedPointer<DownloadStringJob> job,
     }
     else
     {
-        emit singleDownloadFailed();
         errors++;
+        lastErrorMessage = job->errorString;
+        clearQuene();
+        emit singleDownloadFailed();
+    }
+
+    if (cancellationToken != nullptr && *cancellationToken)
+    {
+        errors++;
+        lastErrorMessage = "Download cancelled";
+        clearQuene();
     }
 
     job->disconnect();
@@ -71,4 +83,19 @@ void DownloadQueue::downloadFinished(QSharedPointer<DownloadStringJob> job,
         startSingle();
 }
 
-void DownloadQueue::clearQuene() { urlQueue.clear(); }
+void DownloadQueue::clearQuene()
+{
+    int c = urlQueue.count();
+    urlQueue.clear();
+    totalJobs -= c;
+}
+bool DownloadQueue::awaitCompletion()
+{
+    awaitSignal(this, {SIGNAL(allCompleted())}, -1);
+
+    return errors == 0;
+}
+void DownloadQueue::setCancellationToken(bool* token)
+{
+    cancellationToken = token;
+}

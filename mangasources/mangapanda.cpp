@@ -1,13 +1,12 @@
 #include "mangapanda.h"
 
-MangaPanda::MangaPanda(QObject *parent, DownloadManager *dm)
-    : AbstractMangaSource(parent, dm)
+MangaPanda::MangaPanda(DownloadManager *dm) : AbstractMangaSource(dm)
 {
     name = "MangaPanda";
     baseurl = "http://www.mangapanda.com";
 }
 
-MangaList MangaPanda::getMangaList()
+bool MangaPanda::uptareMangaList(UpdateProgressToken *token)
 {
     QRegularExpression mangarx(R"lit(<li><a href="([^"]*)"[^>]*>([^<]*))lit");
 
@@ -17,11 +16,11 @@ MangaList MangaPanda::getMangaList()
 
     if (!job->await(10000))
     {
-        emit updateError(job->errorString);
-        return mangas;
+        token->sendError(job->errorString);
+        return false;
     }
 
-    emit updateProgress(30);
+    token->sendProgress(30);
 
     QElapsedTimer timer;
     timer.start();
@@ -33,44 +32,39 @@ MangaList MangaPanda::getMangaList()
     {
         mangas.links.append(match.captured(1));
         mangas.titles.append(htmlToPlainText(match.captured(2)));
-        mangas.actualSize++;
+        mangas.size++;
     }
-    mangas.nominalSize = mangas.actualSize;
 
-    qDebug() << "mangas:" << mangas.actualSize << "time:" << timer.elapsed();
+    qDebug() << "mangas:" << mangas.size << "time:" << timer.elapsed();
 
-    emit updateProgress(100);
+    token->sendProgress(100);
 
-    return mangas;
+    return true;
 }
 
-void MangaPanda::updateMangaInfoFinishedLoading(
-    QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info)
+void MangaPanda::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
+                                                QSharedPointer<MangaInfo> info)
 {
     QRegularExpression titlerx(R"(<h2 class="aname">([^<]*))");
     QRegularExpression authorrx("Author:</td>[^>]*>([^<]*)");
     QRegularExpression artistrx("Artist:</td>[^>]*>([^<]*)");
     QRegularExpression statusrx("Status:</td>[^>]*>([^<]*)");
     QRegularExpression yearrx("Year of Release:</td>[^>]*>([^<]*)");
-    QRegularExpression genresrx("Genre:</td>(.*?)</td>",
-                                QRegularExpression::DotMatchesEverythingOption);
-    QRegularExpression summaryrx(
-        R"(<div id="readmangasum">.*?<p>(.*?)</p>)",
-        QRegularExpression::DotMatchesEverythingOption);
+    QRegularExpression genresrx("Genre:</td>(.*?)</td>", QRegularExpression::DotMatchesEverythingOption);
+    QRegularExpression summaryrx(R"(<div id="readmangasum">.*?<p>(.*?)</p>)",
+                                 QRegularExpression::DotMatchesEverythingOption);
     QRegularExpression coverrx(R"(<div id="mangaimg"><img src="([^"]*))");
 
-    QRegularExpression chapterrx(
-        R"lit(<a href="([^"]*)"[^>]*>([^<]*)</a>([^<]*))lit");
+    QRegularExpression chapterrx(R"lit(<a href="([^"]*)"[^>]*>([^<]*)</a>([^<]*))lit");
 
-    fillMangaInfo(info, job->buffer, titlerx, authorrx, artistrx, statusrx,
-                  yearrx, genresrx, summaryrx, coverrx);
+    fillMangaInfo(info, job->buffer, titlerx, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx,
+                  coverrx);
 
     int spos = job->buffer.indexOf(R"(<div id="chapterlist">)");
     int epos = job->buffer.indexOf(R"(<div id="adfooter">)", spos);
 
     MangaChapterCollection newchapters;
-    for (auto &chapterrxmatch :
-         getAllRxMatches(chapterrx, job->buffer, spos, epos))
+    for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->buffer, spos, epos))
     {
         auto ctitle = chapterrxmatch.captured(2);
         if (chapterrxmatch.captured(3) != " : ")

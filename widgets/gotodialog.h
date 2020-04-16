@@ -18,7 +18,7 @@ class GotoDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit GotoDialog(QWidget *parent = 0);
+    explicit GotoDialog(QWidget *parent = nullptr);
     ~GotoDialog();
 
     void setup(const ReadingProgress &progress);

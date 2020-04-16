@@ -17,7 +17,7 @@ class NumpadWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit NumpadWidget(QWidget *parent = 0);
+    explicit NumpadWidget(QWidget *parent = nullptr);
     ~NumpadWidget();
 
     void setupButtons();

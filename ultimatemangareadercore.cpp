@@ -17,11 +17,11 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
 
     downloadManager->connect();
 
-    mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaPanda(this, downloadManager)));
-    mangaSources.append(QSharedPointer<AbstractMangaSource>(new JaiminisBox(this, downloadManager)));
-    mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaDex(this, downloadManager)));
-    mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaHub(this, downloadManager)));
-    mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaOwl(this, downloadManager)));
+    mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaPanda(downloadManager)));
+    mangaSources.append(QSharedPointer<AbstractMangaSource>(new JaiminisBox(downloadManager)));
+    mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaDex(downloadManager)));
+    mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaHub(downloadManager)));
+    mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaOwl(downloadManager)));
 
     currentMangaSource = mangaSources.first().get();
 
@@ -60,7 +60,7 @@ void UltimateMangaReaderCore::updateActiveScources()
 
     this->currentMangaSource = nullptr;
 
-    emit activeMangaSourcesChanged();
+    emit activeMangaSourcesChanged(activeMangaSources.values());
 }
 
 void UltimateMangaReaderCore::setImageSize(const QSize& size)
@@ -73,7 +73,7 @@ void UltimateMangaReaderCore::setCurrentMangaSource(AbstractMangaSource* mangaSo
     if (mangaSource && this->currentMangaSource != mangaSource)
     {
         this->currentMangaSource = mangaSource;
-        emit currentMangaSourceChanged();
+        emit currentMangaSourceChanged(mangaSource);
     }
 }
 
@@ -140,4 +140,26 @@ void UltimateMangaReaderCore::clearDownloadCache(ClearDownloadCacheLevel level)
         default:
             break;
     }
+}
+
+void UltimateMangaReaderCore::updateMangaLists(QSharedPointer<UpdateProgressToken> progressToken)
+{
+    for (auto name : progressToken->sourcesProgress.keys())
+    {
+        if (progressToken->sourcesProgress[name] == 100)
+            continue;
+
+        progressToken->currentSourceName = name;
+        auto ms = activeMangaSources[name];
+        if (ms->uptareMangaList(progressToken.get()))
+        {
+            ms->mangaList.sortAndFilter();
+            ms->serializeMangaList();
+        }
+        else
+        {
+            return;
+        }
+    }
+    progressToken->sendFinished();
 }

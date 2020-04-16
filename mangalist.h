@@ -8,38 +8,35 @@ struct MangaList
     QStringList titles;
     QStringList links;
     bool absoluteUrls = false;
-    int nominalSize = 0;
-    int actualSize = 0;
+    int size = 0;
 
     void sortAndFilter()
     {
-        Q_ASSERT(titles.size() == links.size() && actualSize == titles.size());
+        Q_ASSERT(titles.size() == links.size() && size == titles.size());
 
-        for (int i = 0; i < actualSize; ++i)
+        for (int i = 0; i < size; ++i)
         {
             if (titles[i] == "")
             {
                 titles.removeAt(i);
                 links.removeAt(i);
-                nominalSize--;
-                actualSize--;
+                size--;
             }
         }
 
-        QVector<int> indices(actualSize);
-        QVector<int> indicesInv(actualSize);
-        for (int i = 0; i < actualSize; ++i)
+        QVector<int> indices(size);
+        QVector<int> indicesInv(size);
+        for (int i = 0; i < size; ++i)
             indices[i] = i;
 
         std::sort(indices.begin(), indices.end(), [this](int a, int b) {
-            return QString::compare(this->titles[a], this->titles[b],
-                                    Qt::CaseInsensitive) < 0;
+            return QString::compare(this->titles[a], this->titles[b], Qt::CaseInsensitive) < 0;
         });
 
-        for (int i = 0; i < actualSize; ++i)
+        for (int i = 0; i < size; ++i)
             indicesInv[indices[i]] = i;
 
-        for (int i = 0; i < actualSize; i++)
+        for (int i = 0; i < size; i++)
             while (i != indicesInv[i])
             {
                 int j = indicesInv[i];

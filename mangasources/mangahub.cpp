@@ -1,29 +1,28 @@
 #include "mangahub.h"
 
-MangaHub::MangaHub(QObject *parent, DownloadManager *dm)
-    : AbstractMangaSource(parent, dm)
+MangaHub::MangaHub(DownloadManager *dm) : AbstractMangaSource(dm)
 {
     name = "MangaHub";
     baseurl = "https://mangahub.io/";
     dicturl = "https://mangahub.io/search/page/";
 }
 
-MangaList MangaHub::getMangaList()
+bool MangaHub::uptareMangaList(UpdateProgressToken *token)
 {
-    QRegularExpression mangarx(
-        R"lit(<a href="(https://mangahub.io/manga/[^"]+)">([^<]+)<)lit");
+    QRegularExpression mangarx(R"lit(<a href="(https://mangahub.io/manga/[^"]+)">([^<]+)<)lit");
 
     MangaList mangas;
+    mangas.absoluteUrls = true;
 
     auto job = downloadManager->downloadAsString(dicturl + "1");
 
     if (!job->await(7000))
     {
-        emit updateError(job->errorString);
-        return mangas;
+        token->sendError(job->errorString);
+        return true;
     }
 
-    emit updateProgress(10);
+    token->sendProgress(10);
 
     QElapsedTimer timer;
     timer.start();
@@ -39,17 +38,15 @@ MangaList MangaHub::getMangaList()
         for (auto &match : getAllRxMatches(mangarx, sjob->buffer))
         {
             mangas.links.append(match.captured(1));
-            mangas.titles.append(
-                htmlToPlainText(htmlToPlainText(match.captured(2))));
+            mangas.titles.append(htmlToPlainText(htmlToPlainText(match.captured(2))));
             matches++;
         }
-        mangas.actualSize += matches;
+        mangas.size += matches;
 
         if (matches == 0)
             noMatchCounter++;
 
-        emit updateProgress(10 +
-                            90 * (mangas.actualSize / matchesPerPage) / pages);
+        token->sendProgress(10 + 90 * (mangas.size / matchesPerPage) / pages);
 
         qDebug() << "matches:" << matches;
     };
@@ -65,27 +62,29 @@ MangaList MangaHub::getMangaList()
         for (int i = oldPages + 1; i <= pages; i++)
             urls.append(dicturl + QString::number(i));
 
-        DownloadQueue queue(downloadManager, urls, CONF.parallelDownloadsHigh,
-                            lambda, 12000);
+        DownloadQueue queue(downloadManager, urls, CONF.parallelDownloadsHigh, lambda, true);
+        queue.setCancellationToken(&token->canceled);
         queue.start();
-        awaitSignal(&queue, {SIGNAL(allCompleted())}, 1700000);
-
+        if (!queue.awaitCompletion())
+        {
+            token->sendError(queue.lastErrorMessage);
+            return false;
+        }
         oldPages = pages;
         pages += 50;
     }
 
-    mangas.nominalSize = mangas.actualSize;
-    mangas.absoluteUrls = true;
+    this->mangaList = mangas;
 
-    qDebug() << "mangas:" << mangas.actualSize << "time:" << timer.elapsed();
+    qDebug() << "mangas:" << mangas.size << "time:" << timer.elapsed();
 
-    emit updateProgress(100);
+    token->sendProgress(100);
 
-    return mangas;
+    return true;
 }
 
-void MangaHub::updateMangaInfoFinishedLoading(
-    QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info)
+void MangaHub::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
+                                              QSharedPointer<MangaInfo> info)
 {
     QRegularExpression titlerx(R"(<li class="active"><span>([^<]*)<)");
     QRegularExpression authorrx(R"(Author</span><span>([^<]*)</span>)");
@@ -93,10 +92,8 @@ void MangaHub::updateMangaInfoFinishedLoading(
     QRegularExpression statusrx(R"(Status</span><span>([^<]*)</span>)");
     QRegularExpression yearrx;
     QRegularExpression genresrx(R"(genre-label">(.*?)</div>)");
-    QRegularExpression summaryrx(
-        R"lit(<meta name="description" content="([^"]*)")lit");
-    QRegularExpression coverrx(
-        R"lit(<meta property="og:image" content="([^"]*)")lit");
+    QRegularExpression summaryrx(R"lit(<meta name="description" content="([^"]*)")lit");
+    QRegularExpression coverrx(R"lit(<meta property="og:image" content="([^"]*)")lit");
 
     QRegularExpression chapterrx(
         R"lit(<a href="(https://mangahub.io/chapter/[^"]+)"[^>]*>(.*?)</span></span>)lit");
@@ -104,8 +101,8 @@ void MangaHub::updateMangaInfoFinishedLoading(
     for (auto &c : job->getCookies())
         downloadManager->addCookie(c.domain(), c.name(), c.value());
 
-    fillMangaInfo(info, job->buffer, titlerx, authorrx, artistrx, statusrx,
-                  yearrx, genresrx, summaryrx, coverrx);
+    fillMangaInfo(info, job->buffer, titlerx, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx,
+                  coverrx);
 
     // fix genres spacing
     for (int i = 1; i < info->genres.size(); i++)
@@ -121,25 +118,20 @@ void MangaHub::updateMangaInfoFinishedLoading(
     auto epos = job->buffer.indexOf(R"(<section id="comments">)");
 
     MangaChapterCollection newchapters;
-    for (auto &chapterrxmatch :
-         getAllRxMatches(chapterrx, job->buffer, spos, epos))
+    for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->buffer, spos, epos))
         newchapters.insert(
-            0, MangaChapter(htmlToPlainText(chapterrxmatch.captured(2)),
-                            chapterrxmatch.captured(1)));
+            0, MangaChapter(htmlToPlainText(chapterrxmatch.captured(2)), chapterrxmatch.captured(1)));
     info->chapters.mergeChapters(newchapters);
 }
 
-int MangaHub::binarySearchNumPages(const QRegularExpressionMatch &imagerxmatch,
-                                   int lowerBound, int upperBound,
-                                   bool upperChecked)
+int MangaHub::binarySearchNumPages(const QRegularExpressionMatch &imagerxmatch, int lowerBound,
+                                   int upperBound, bool upperChecked)
 {
     if (!upperChecked)
     {
-        bool valid =
-            downloadManager->urlExists(buildImgUrl(imagerxmatch, upperBound));
+        bool valid = downloadManager->urlExists(buildImgUrl(imagerxmatch, upperBound));
         if (valid)
-            return binarySearchNumPages(imagerxmatch, lowerBound,
-                                        upperBound * 2, false);
+            return binarySearchNumPages(imagerxmatch, lowerBound, upperBound * 2, false);
     }
 
     if (upperBound - lowerBound == 1)

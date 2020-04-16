@@ -7,15 +7,13 @@
 class JaiminisBox : public AbstractMangaSource
 {
 public:
-    JaiminisBox(QObject *parent, DownloadManager *dm);
+    explicit JaiminisBox(DownloadManager *dm);
 
-    MangaList getMangaList() override;
+    bool uptareMangaList(UpdateProgressToken *token) override;
 
-    void updateMangaInfoFinishedLoading(
-        QSharedPointer<DownloadStringJob> job,
-        QSharedPointer<MangaInfo> info) override;
-    Result<QStringList, QString> getPageList(
-        const QString &chapterlink) override;
+    void updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
+                                        QSharedPointer<MangaInfo> info) override;
+    Result<QStringList, QString> getPageList(const QString &chapterlink) override;
 };
 
 #endif  // JAIMINISBOX_H

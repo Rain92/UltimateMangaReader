@@ -1,7 +1,6 @@
 #include "jaiminisbox.h"
 
-JaiminisBox::JaiminisBox(QObject *parent, DownloadManager *dm)
-    : AbstractMangaSource(parent, dm)
+JaiminisBox::JaiminisBox(DownloadManager *dm) : AbstractMangaSource(dm)
 {
     name = "JaiminisBox";
     baseurl = "https://jaiminisbox.com/";
@@ -11,14 +10,14 @@ JaiminisBox::JaiminisBox(QObject *parent, DownloadManager *dm)
     mangaInfoPostDataStr = postdata.query().toUtf8();
 }
 
-MangaList JaiminisBox::getMangaList()
+bool JaiminisBox::uptareMangaList(UpdateProgressToken *token)
 {
-    QRegularExpression mangarx(
-        R"lit(<div class="title"><a href="([^"]*)"[^"]*"([^"]*)")lit");
+    QRegularExpression mangarx(R"lit(<div class="title"><a href="([^"]*)"[^"]*"([^"]*)")lit");
 
     QRegularExpression numpagesrx(R"(/directory/(\d+)/">Last)");
 
     MangaList mangas;
+    mangas.absoluteUrls = true;
 
     QString readerlink = baseurl + "reader/directory/";
 
@@ -26,11 +25,11 @@ MangaList JaiminisBox::getMangaList()
 
     if (!job->await(7000))
     {
-        emit updateError(job->errorString);
-        return mangas;
+        token->sendError(job->errorString);
+        return false;
     }
 
-    emit updateProgress(10);
+    token->sendProgress(10);
 
     QElapsedTimer timer;
     timer.start();
@@ -52,10 +51,9 @@ MangaList JaiminisBox::getMangaList()
             mangas.titles.append(htmlToPlainText(match.captured(2)).trimmed());
             matches++;
         }
-        mangas.actualSize += matches;
+        mangas.size += matches;
 
-        emit updateProgress(10 +
-                            90 * (mangas.actualSize / matchesPerPage) / pages);
+        token->sendProgress(10 + 90 * (mangas.size / matchesPerPage) / pages);
 
         qDebug() << "matches:" << matches;
     };
@@ -66,25 +64,25 @@ MangaList JaiminisBox::getMangaList()
     for (int i = 2; i <= pages; i++)
         urls.append(readerlink + QString::number(i));
 
-    DownloadQueue queue(downloadManager, urls, CONF.parallelDownloadsLow,
-                        lambda);
-
+    DownloadQueue queue(downloadManager, urls, CONF.parallelDownloadsLow, lambda, true);
+    queue.setCancellationToken(&token->canceled);
     queue.start();
+    if (!queue.awaitCompletion())
+    {
+        token->sendError(queue.lastErrorMessage);
+        return false;
+    }
+    this->mangaList = mangas;
 
-    awaitSignal(&queue, {SIGNAL(allCompleted())}, 1700000);
+    qDebug() << "mangas:" << mangas.size << "time:" << timer.elapsed();
 
-    mangas.nominalSize = mangas.actualSize;
-    mangas.absoluteUrls = true;
+    token->sendProgress(100);
 
-    qDebug() << "mangas:" << mangas.actualSize << "time:" << timer.elapsed();
-
-    emit updateProgress(100);
-
-    return mangas;
+    return true;
 }
 
-void JaiminisBox::updateMangaInfoFinishedLoading(
-    QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info)
+void JaiminisBox::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
+                                                 QSharedPointer<MangaInfo> info)
 {
     QRegularExpression titlerx(R"(<h1 class="title">\s+([^<]*))");
     QRegularExpression authorrx("Author</b>:([^<]*)");
@@ -95,27 +93,23 @@ void JaiminisBox::updateMangaInfoFinishedLoading(
     QRegularExpression summaryrx("Synopsis</b>:(.*)</div>");
     QRegularExpression coverrx(R"(<div class="thumbnail">[^"]*"([^"]*))");
 
-    QRegularExpression chapterrx(
-        "<div class=\"title\"><a href=\"([^\"]*)\"\\s+title=\"([^\"]*)");
+    QRegularExpression chapterrx("<div class=\"title\"><a href=\"([^\"]*)\"\\s+title=\"([^\"]*)");
 
-    fillMangaInfo(info, job->buffer, titlerx, authorrx, artistrx, statusrx,
-                  yearrx, genresrx, summaryrx, coverrx);
+    fillMangaInfo(info, job->buffer, titlerx, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx,
+                  coverrx);
 
     MangaChapterCollection newchapters;
     for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->buffer))
-        newchapters.insert(0, MangaChapter(chapterrxmatch.captured(2),
-                                           chapterrxmatch.captured(1)));
+        newchapters.insert(0, MangaChapter(chapterrxmatch.captured(2), chapterrxmatch.captured(1)));
     info->chapters.mergeChapters(newchapters);
 }
 
-Result<QStringList, QString> JaiminisBox::getPageList(
-    const QString &chapterlink)
+Result<QStringList, QString> JaiminisBox::getPageList(const QString &chapterlink)
 {
     QRegularExpression encodedrx(R"(JSON.parse\(atob\("([^"]*))");
     QRegularExpression imagelinksrx(R"("url":"([^"]*))");
 
-    auto job = downloadManager->downloadAsString(chapterlink, 6000,
-                                                 mangaInfoPostDataStr);
+    auto job = downloadManager->downloadAsString(chapterlink, 6000, mangaInfoPostDataStr);
 
     if (!job->await(7000))
         return Err(job->errorString);

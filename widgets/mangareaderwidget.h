@@ -21,7 +21,7 @@ class MangaReaderWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit MangaReaderWidget(QWidget *parent = 0);
+    explicit MangaReaderWidget(QWidget *parent = nullptr);
     ~MangaReaderWidget();
 
     void showImage(const QString &path);

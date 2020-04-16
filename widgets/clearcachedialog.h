@@ -16,7 +16,7 @@ class ClearCacheDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit ClearCacheDialog(QWidget *parent = 0);
+    explicit ClearCacheDialog(QWidget *parent = nullptr);
     ~ClearCacheDialog();
 
     void setValues(long chachSize, long freeSpace);

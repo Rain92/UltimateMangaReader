@@ -7,14 +7,12 @@
 class MangaDex : public AbstractMangaSource
 {
 public:
-    MangaDex(QObject *parent, DownloadManager *dm);
+    explicit MangaDex(DownloadManager *dm);
 
-    MangaList getMangaList() override;
-    void updateMangaInfoFinishedLoading(
-        QSharedPointer<DownloadStringJob> job,
-        QSharedPointer<MangaInfo> info) override;
-    Result<QStringList, QString> getPageList(
-        const QString &chapterlink) override;
+    bool uptareMangaList(UpdateProgressToken *token) override;
+    void updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
+                                        QSharedPointer<MangaInfo> info) override;
+    Result<QStringList, QString> getPageList(const QString &chapterlink) override;
 
 private:
     void login();

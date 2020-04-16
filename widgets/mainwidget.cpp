@@ -23,16 +23,19 @@ MainWidget::MainWidget(QWidget *parent)
     // Dialogs
     menuDialog = new MenuDialog(this);
     settingsDialog = new SettingsDialog(this);
-    updateDialog = new UpdateMangaListsDialog(this);
+    updateMangaListsDialog = new UpdateMangaListsDialog(this);
     clearCacheDialog = new ClearCacheDialog(this);
 
-    updateDialog->setSettings(&core->settings);
+    updateMangaListsDialog->setSettings(&core->settings);
 
     QObject::connect(menuDialog, &MenuDialog::finished,
                      [this](int b) { menuDialogButtonPressed(static_cast<MenuButton>(b)); });
 
     QObject::connect(clearCacheDialog, &MenuDialog::finished,
                      [this](int l) { core->clearDownloadCache(static_cast<ClearDownloadCacheLevel>(l)); });
+
+    QObject::connect(updateMangaListsDialog, &UpdateMangaListsDialog::updateClicked, core,
+                     &UltimateMangaReaderCore::updateMangaLists);
 
     // DownloadManager
     core->downloadManager->setImageRescaleSize(this->size());
@@ -47,6 +50,9 @@ MainWidget::MainWidget(QWidget *parent)
         ui->batteryIcon->updateIcon();
         ui->mangaReaderWidget->updateMenuBar();
     });
+
+    QObject::connect(core, &UltimateMangaReaderCore::activeMangaSourcesChanged, ui->homeWidget,
+                     &HomeWidget::updateSourcesList);
 
     // MangaController
     QObject::connect(core->mangaController, &MangaController::currentMangaChanged, [this](auto info) {
@@ -74,8 +80,6 @@ MainWidget::MainWidget(QWidget *parent)
     });
 
     // HomeWidget
-    ui->homeWidget->setCore(core);
-
     QObject::connect(ui->homeWidget, &HomeWidget::mangaSourceClicked, core,
                      &UltimateMangaReaderCore::setCurrentMangaSource);
 
@@ -132,9 +136,6 @@ MainWidget::MainWidget(QWidget *parent)
     settingsDialog->setSettings(&core->settings);
     QObject::connect(settingsDialog, &SettingsDialog::activeMangasChanged, core,
                      &UltimateMangaReaderCore::updateActiveScources);
-    QObject::connect(settingsDialog, &SettingsDialog::activeMangasChanged, ui->homeWidget,
-                     &HomeWidget::updateSourcesList);
-
     // FrontLight
     setupFrontLight();
     restorefrontlighttimer.setSingleShot(true);
@@ -144,14 +145,6 @@ MainWidget::MainWidget(QWidget *parent)
 MainWidget::~MainWidget()
 {
     delete ui;
-}
-
-void MainWidget::setupVirtualKeyboard()
-{
-    virtualKeyboard->hide();
-    ui->verticalLayoutKeyboardContainer->insertWidget(0, virtualKeyboard);
-
-    ui->homeWidget->installEventFilter(this);
 }
 
 void MainWidget::adjustSizes()
@@ -169,6 +162,20 @@ void MainWidget::adjustSizes()
     ui->labelSpacer->setFixedSize(ui->batteryIcon->size());
 
     ui->labelTitle->setStyleSheet("font-size: 18pt");
+}
+
+void MainWidget::showEvent(QShowEvent *event)
+{
+    QWidget::showEvent(event);
+    core->updateActiveScources();
+}
+
+void MainWidget::setupVirtualKeyboard()
+{
+    virtualKeyboard->hide();
+    ui->verticalLayoutKeyboardContainer->insertWidget(0, virtualKeyboard);
+
+    ui->homeWidget->installEventFilter(this);
 }
 
 void MainWidget::enableVirtualKeyboard(bool enabled)
@@ -315,8 +322,8 @@ void MainWidget::menuDialogButtonPressed(MenuButton button)
             clearCacheDialog->open();
             break;
         case UpdateMangaListsButton:
-            updateDialog->resetUI();
-            updateDialog->open();
+            updateMangaListsDialog->resetUI();
+            updateMangaListsDialog->open();
             break;
     }
 }

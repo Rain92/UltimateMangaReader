@@ -14,7 +14,7 @@ class BatteryIcon : public QLabel
     Q_OBJECT
 
 public:
-    BatteryIcon(QWidget *parent = 0);
+    BatteryIcon(QWidget *parent = nullptr);
 
     void updateIcon();
 

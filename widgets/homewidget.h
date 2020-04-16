@@ -10,7 +10,6 @@
 #include "sizes.h"
 #include "staticsettings.h"
 #include "ultimatemangareadercore.h"
-#include "updatedialog.h"
 
 namespace Ui
 {
@@ -22,13 +21,11 @@ class HomeWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit HomeWidget(QWidget *parent = 0);
+    explicit HomeWidget(QWidget *parent = nullptr);
     ~HomeWidget();
 
-    void setCore(UltimateMangaReaderCore *core);
-
-    void currentMangaSourceChanged();
-    void updateSourcesList();
+    void currentMangaSourceChanged(AbstractMangaSource *source);
+    void updateSourcesList(const QList<AbstractMangaSource *> &sources);
 
 signals:
     void mangaSourceClicked(AbstractMangaSource *source);
@@ -36,33 +33,24 @@ signals:
     void favoritesCleared();
 
 private slots:
-    void on_pushButtonUpdate_clicked();
     void on_listViewSources_clicked(const QModelIndex &index);
     void on_pushButtonFilter_clicked();
     void on_pushButtonFilterClear_clicked();
     void on_listViewMangas_clicked(const QModelIndex &index);
-    void updateProgress(int progress);
-    void updateError(const QString &error);
-
-    void showEvent(QShowEvent *event) override;
 
 private:
     Ui::HomeWidget *ui;
 
-    UltimateMangaReaderCore *core;
+    AbstractMangaSource *currentMangaSource;
 
-    QMap<AbstractMangaSource *, int> sourcesprogress;
-
-    QStringList filteredmangatitles;
-    QStringList filteredmangalinks;
+    QStringList filteredMangaTitles;
+    QStringList filteredMangaLinks;
     bool filteractive;
 
     void refreshMangaListView();
     void adjustSizes();
 
     QList<QStandardItem *> listViewItemfromMangaSource(AbstractMangaSource *source);
-    QProgressBar *updateProgressBar;
-    UpdateDialog *updateDialog;
 };
 
 #endif  // HOMEWIDGET_H

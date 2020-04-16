@@ -5,6 +5,7 @@
 
 #include "settings.h"
 #include "sizes.h"
+#include "updateprogresstoken.h"
 
 namespace Ui
 {
@@ -26,12 +27,20 @@ private slots:
     void on_pushButtonOk_clicked();
 
     void on_pushButtonCancel_clicked();
+    void on_pushButtonFinish_clicked();
+
+signals:
+    void updateClicked(QSharedPointer<UpdateProgressToken> token);
 
 private:
     Ui::UpdateMangaListsDialog *ui;
     Settings *settings;
+    QSharedPointer<UpdateProgressToken> progressToken;
 
     void setupSourcesList();
+    void updateFinished();
+    void updateProgress();
+    void updateError(const QString &message);
 };
 
 #endif  // UPDATEMANGALISTSDIALOG_H

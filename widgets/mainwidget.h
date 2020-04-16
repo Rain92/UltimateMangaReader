@@ -55,6 +55,7 @@ private slots:
 protected:
     void resizeEvent(QResizeEvent *event) override;
     bool eventFilter(QObject *obj, QEvent *ev) override;
+    void showEvent(QShowEvent *event) override;
 
 private:
     void setupVirtualKeyboard();
@@ -73,7 +74,7 @@ private:
 
     MenuDialog *menuDialog;
     SettingsDialog *settingsDialog;
-    UpdateMangaListsDialog *updateDialog;
+    UpdateMangaListsDialog *updateMangaListsDialog;
     ClearCacheDialog *clearCacheDialog;
 };
 

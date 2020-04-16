@@ -22,8 +22,11 @@ inline bool awaitSignal(QObject* object, const QVector<const char*>& completionS
         QObject::connect(object, signal, &loop, SLOT(quit()));
 
     QTimer timer;
-    QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
-    timer.start(timeout);
+    if (timeout > 0)
+    {
+        QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+        timer.start(timeout);
+    }
 
     loop.exec();
 

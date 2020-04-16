@@ -45,12 +45,14 @@ public:
     void clearDownloadCache(ClearDownloadCacheLevel level);
     void updateActiveScources();
 
+    void updateMangaLists(QSharedPointer<UpdateProgressToken> progressToken);
+
 signals:
-    void currentMangaSourceChanged();
+    void currentMangaSourceChanged(AbstractMangaSource *source);
     void currentMangaChanged();
     void currentMangaIndexChanged();
 
-    void activeMangaSourcesChanged();
+    void activeMangaSourcesChanged(const QList<AbstractMangaSource *> &sources);
 
     void error(const QString &error);
 

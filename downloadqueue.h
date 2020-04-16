@@ -7,16 +7,21 @@ class DownloadQueue : public QObject
 {
     Q_OBJECT
 public:
-    explicit DownloadQueue(
-        DownloadManager *downloadmanager, const QList<QString> &urlQueue,
-        int parallelDownloads,
-        std::function<void(QSharedPointer<DownloadStringJob>)> lambda,
-        int individualTimeout = 8000);
+    explicit DownloadQueue(DownloadManager *downloadmanager, const QList<QString> &urlQueue,
+                           int parallelDownloads,
+                           std::function<void(QSharedPointer<DownloadStringJob>)> lambda, bool cancelOnError,
+                           int individualTimeout = 16000);
+
+    int totalJobs;
+    int completed;
+    int errors;
+    QString lastErrorMessage;
+    bool cancelOnError;
 
     void start();
     void clearQuene();
-    int completed;
-    int errors;
+    bool awaitCompletion();
+    void setCancellationToken(bool *token);
 
 signals:
     void singleDownloadCompleted();
@@ -28,9 +33,9 @@ private:
 
     int parallelDownloads;
     QQueue<QString> urlQueue;
-    int totalJobs;
     std::function<void(QSharedPointer<DownloadStringJob>)> lambda;
     int individualTimeout;
+    bool *cancellationToken;
 
     void startSingle();
     void downloadFinished(QSharedPointer<DownloadStringJob> job, bool success);

@@ -32,7 +32,6 @@ FORMS += \
     widgets/gotodialog.ui \
     widgets/menudialog.ui \
     widgets/settingsdialog.ui \
-    widgets/updatedialog.ui \
     widgets/numpadwidget.ui \
     widgets/clearcachedialog.ui \
     widgets/updatemangalistsdialog.ui
@@ -42,6 +41,7 @@ HEADERS += \
     mangachaptercollection.h \
     mangacontroller.h \
     mangaindextraverser.h \
+    mangasources/updateprogresstoken.h \
     readingprogress.h \
     result.h \
     sizes.h \
@@ -81,7 +81,6 @@ HEADERS += \
     widgets/gotodialog.h \
     widgets/menudialog.h \
     widgets/settingsdialog.h \
-    widgets/updatedialog.h \
     settings.h \
     widgets/numpadwidget.h \
     widgets/clearcachedialog.h \
@@ -92,6 +91,7 @@ SOURCES += \
     mangachaptercollection.cpp \
     mangacontroller.cpp \
     mangaindextraverser.cpp \
+    mangasources/updateprogresstoken.cpp \
     readingprogress.cpp \
     ultimatemangareadercore.cpp \
     widgets/batteryicon.cpp \
@@ -127,7 +127,6 @@ SOURCES += \
     widgets/gotodialog.cpp \
     widgets/menudialog.cpp \
     widgets/settingsdialog.cpp \
-    widgets/updatedialog.cpp \
     settings.cpp \
     widgets/numpadwidget.cpp \
     widgets/clearcachedialog.cpp \

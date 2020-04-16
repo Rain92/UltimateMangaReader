@@ -62,10 +62,8 @@ void MangaInfoWidget::setManga(QSharedPointer<MangaInfo> manga)
     updateCover();
 }
 
-void MangaInfoWidget::updateManga(bool newchapters)
+void MangaInfoWidget::updateManga(bool)
 {
-    Q_UNUSED(newchapters)
-
     qDebug() << "updated" << currentmanga->title;
 
     updateInfos();

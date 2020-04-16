@@ -19,7 +19,7 @@ class FavoritesWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit FavoritesWidget(QWidget *parent = 0);
+    explicit FavoritesWidget(QWidget *parent = nullptr);
     ~FavoritesWidget();
 
     void showFavoritesList();

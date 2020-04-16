@@ -19,7 +19,7 @@ class MangaInfoWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit MangaInfoWidget(QWidget *parent = 0);
+    explicit MangaInfoWidget(QWidget *parent = nullptr);
     ~MangaInfoWidget();
 
     void setManga(QSharedPointer<MangaInfo> manga);

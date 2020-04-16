@@ -2,8 +2,8 @@
 
 #include "mangainfo.h"
 
-AbstractMangaSource::AbstractMangaSource(QObject *parent, DownloadManager *downloadmanager)
-    : QObject(parent), mangaInfoPostDataStr(), downloadManager(downloadmanager), htmlConverter()
+AbstractMangaSource::AbstractMangaSource(DownloadManager *downloadmanager)
+    : mangaInfoPostDataStr(), downloadManager(downloadmanager), htmlConverter()
 {
 }
 
@@ -16,8 +16,7 @@ bool AbstractMangaSource::serializeMangaList()
     out << mangaList.titles;
     out << mangaList.links;
     out << mangaList.absoluteUrls;
-    out << mangaList.nominalSize;
-    out << mangaList.actualSize;
+    out << mangaList.size;
 
     file.close();
 
@@ -36,8 +35,7 @@ bool AbstractMangaSource::deserializeMangaList()
     in >> mangaList.titles;
     in >> mangaList.links;
     in >> mangaList.absoluteUrls;
-    in >> mangaList.nominalSize;
-    in >> mangaList.actualSize;
+    in >> mangaList.size;
 
     file.close();
 

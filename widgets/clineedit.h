@@ -9,7 +9,7 @@ class CLineEdit : public QLineEdit
     Q_OBJECT
 
 public:
-    CLineEdit(QWidget *parent = 0);
+    CLineEdit(QWidget *parent = nullptr);
 
 protected:
     virtual void focusInEvent(QFocusEvent *e);

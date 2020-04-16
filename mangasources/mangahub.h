@@ -7,25 +7,21 @@
 class MangaHub : public AbstractMangaSource
 {
 public:
-    MangaHub(QObject *parent, DownloadManager *dm);
+    explicit MangaHub(DownloadManager *dm);
 
-    MangaList getMangaList() override;
-    void updateMangaInfoFinishedLoading(
-        QSharedPointer<DownloadStringJob> job,
-        QSharedPointer<MangaInfo> info) override;
-    Result<QStringList, QString> getPageList(
-        const QString &chapterlink) override;
+    bool uptareMangaList(UpdateProgressToken *token) override;
+    void updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
+                                        QSharedPointer<MangaInfo> info) override;
+    Result<QStringList, QString> getPageList(const QString &chapterlink) override;
 
 private:
     QString dicturl;
-    int binarySearchNumPages(const QRegularExpressionMatch &imagerxmatch,
-                             int lowerBound, int upperBound, bool upperChecked);
+    int binarySearchNumPages(const QRegularExpressionMatch &imagerxmatch, int lowerBound, int upperBound,
+                             bool upperChecked);
 
-    inline QString buildImgUrl(const QRegularExpressionMatch &imagerxmatch,
-                               int i)
+    inline QString buildImgUrl(const QRegularExpressionMatch &imagerxmatch, int i)
     {
-        return imagerxmatch.captured(1) + QString::number(i) +
-               imagerxmatch.captured(2);
+        return imagerxmatch.captured(1) + QString::number(i) + imagerxmatch.captured(2);
     }
 };
 
