@@ -140,21 +140,17 @@ void AbstractMangaSource::updateMangaInfoAsync(QSharedPointer<MangaInfo> info)
     auto job = downloadManager->downloadAsString(info->link, 6000, mangaInfoPostDataStr);
 
     auto lambda = [oldnumchapters, info, job, this] {
-        bool newchapters = info->chapters.count() > oldnumchapters;
-
         {
             QMutexLocker locker(info->updateMutex.get());
             updateMangaInfoFinishedLoading(job, info);
         }
 
+        bool newchapters = info->chapters.count() > oldnumchapters;
         info->updateCompeted(newchapters);
 
         downloadCoverAsync(info);
         info->serialize();
     };
-
-    //    job->await(3000);
-    //    lambda();
 
     executeOnJobCompletion(job, lambda);
 }
@@ -235,9 +231,6 @@ void AbstractMangaSource::downloadCoverAsync(QSharedPointer<MangaInfo> mangainfo
         genrateCoverThumbnail(mangainfo);
         mangainfo->sendCoverLoaded();
     };
-
-    //    coverjob->await(1000);
-    //    lambda();
 
     executeOnJobCompletion(coverjob, lambda);
 }

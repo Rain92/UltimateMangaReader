@@ -64,8 +64,8 @@ void FavoritesWidget::insertRow(const QSharedPointer<MangaInfo> &fav, int row)
 
     ReadingProgress progress(fav->hostname, fav->title);
 
-    QString statusstring = (fav->updated ? "Updated!\n" : fav->status + "\n") +
-                           "Chapters: " + QString::number(progress.numChapters);
+    QString statusstring = (fav->updated ? "New chapters!\n" : fav->status + "\n") +
+                           "Chapters: " + QString::number(fav->chapters.size());
     QTableWidgetItem *chapters = new QTableWidgetItem(statusstring);
     chapters->setTextAlignment(Qt::AlignCenter);
 

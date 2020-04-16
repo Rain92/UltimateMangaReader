@@ -101,6 +101,7 @@ void JaiminisBox::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJo
     MangaChapterCollection newchapters;
     for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->buffer))
         newchapters.insert(0, MangaChapter(chapterrxmatch.captured(2), chapterrxmatch.captured(1)));
+
     info->chapters.mergeChapters(newchapters);
 }
 
