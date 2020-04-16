@@ -50,12 +50,18 @@
      <item>
       <widget class="QToolButton" name="toolButtonAddFavorites">
        <property name="text">
-        <string>...</string>
+        <string/>
        </property>
        <property name="icon">
         <iconset resource="../resources.qrc">
          <normaloff>:/images/icons/favourite-star.png</normaloff>
          <normalon>:/images/icons/favourite-star-full.png</normalon>:/images/icons/favourite-star.png</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>32</width>
+         <height>32</height>
+        </size>
        </property>
        <property name="checkable">
         <bool>true</bool>

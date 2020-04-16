@@ -17,7 +17,6 @@
         <file>images/icons/batteryfull.png</file>
         <file>images/mangahostlogos/mangahub.png</file>
         <file>images/mangahostlogos/mangaowl.png</file>
-        <file>images/icons/error.jpg</file>
         <file>images/icons/keyboardicons.svg</file>
         <file>images/icons/home.png</file>
         <file>images/icons/wifi.png</file>
@@ -25,5 +24,6 @@
         <file>images/icons/menu.png</file>
         <file>images/icons/checkbox-checked.png</file>
         <file>images/icons/checkbox-unchecked.png</file>
+        <file>images/icons/error.png</file>
     </qresource>
 </RCC>

@@ -48,9 +48,6 @@ private:
 
     QSharedPointer<MangaInfo> currentmanga;
 
-    QIcon isfavoriteicon;
-    QIcon isnotfavoriteicon;
-
     void adjustSizes();
 
     void updateInfos();

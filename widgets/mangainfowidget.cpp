@@ -28,11 +28,6 @@ void MangaInfoWidget::adjustSizes()
     ui->toolButtonAddFavorites->setIconSize(QSize(buttonsizeaddfavorite * 0.8, buttonsizeaddfavorite * 0.8));
     ui->toolButtonAddFavorites->setFocusPolicy(Qt::NoFocus);
 
-    isfavoriteicon = QIcon(QPixmap(":/images/icons/favourite-star-full.png")
-                               .scaledToHeight(buttonsizeaddfavorite, Qt::SmoothTransformation));
-    isnotfavoriteicon = QIcon(QPixmap(":/images/icons/favourite-star.png")
-                                  .scaledToHeight(buttonsizeaddfavorite, Qt::SmoothTransformation));
-
     ui->listViewChapters->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     ui->listViewChapters->setUniformItemSizes(true);
 
