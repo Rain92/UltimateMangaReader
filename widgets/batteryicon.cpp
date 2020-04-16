@@ -16,7 +16,10 @@ BatteryIcon::BatteryIcon(QWidget *parent) : QLabel(parent)
 
 void BatteryIcon::mousePressEvent(QMouseEvent *)
 {
-    int level = KoboPlatformFunctions::getBatteryLevel();
+    int level = 100;
+#ifdef KOBO
+    level = KoboPlatformFunctions::getBatteryLevel();
+#endif
     QToolTip::showText(this->mapToGlobal(QPoint(0, 0)), QString::number(level) + "%");
 }
 
