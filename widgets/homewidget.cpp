@@ -68,7 +68,7 @@ QList<QStandardItem *> HomeWidget::listViewItemfromMangaSource(AbstractMangaSour
 
 void HomeWidget::on_listViewSources_clicked(const QModelIndex &index)
 {
-    auto clickedsource = static_cast<AbstractMangaSource *>(index.data().value<void *>());
+    auto clickedsource = static_cast<AbstractMangaSource *>(index.data(Qt::UserRole + 1).value<void *>());
 
     emit mangaSourceClicked(clickedsource);
 }
@@ -76,6 +76,7 @@ void HomeWidget::on_listViewSources_clicked(const QModelIndex &index)
 void HomeWidget::currentMangaSourceChanged(AbstractMangaSource *source)
 {
     currentMangaSource = source;
+
     refreshMangaListView();
     if (ui->lineEditFilter->text() != "")
         on_pushButtonFilter_clicked();
