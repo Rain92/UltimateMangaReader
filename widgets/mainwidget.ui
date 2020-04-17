@@ -176,7 +176,7 @@
          <string/>
         </property>
         <property name="pixmap">
-         <pixmap resource="../resources.qrc">:/images/icons/wifi.png</pixmap>
+         <pixmap resource="../resources.qrc">:/images/icons/no-wifi.png</pixmap>
         </property>
         <property name="scaledContents">
          <bool>true</bool>

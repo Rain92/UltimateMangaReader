@@ -8,6 +8,7 @@
 
 DownloadManager::DownloadManager(QObject *parent)
     : QObject(parent),
+      connected(false),
       networkManager(new QNetworkAccessManager(this)),
       cookies(),
       fileDownloads()
@@ -25,19 +26,16 @@ QNetworkAccessManager *DownloadManager::networkAccessManager()
 
 bool DownloadManager::connect()
 {
-    bool connected = true;
-    return true;
 #ifdef KOBO
-    if (!KoboPlatformFunctions::testInternetConnection(500))
+    if (!checkConnection())
     {
         qDebug() << "Connecting to Wifi...";
         QElapsedTimer t;
         t.start();
         KoboPlatformFunctions::enableWiFiConnection();
-        connected = KoboPlatformFunctions::testInternetConnection(500);
-        qDebug() << "Connected"
-                 << (connected ? "successfully" : "unsuccessfully") << "in"
-                 << t.elapsed() << "ms.";
+        checkConnection();
+        qDebug() << "Connected" << (connected ? "successfully" : "unsuccessfully") << "in" << t.elapsed()
+                 << "ms.";
     }
     else
     {
@@ -48,30 +46,33 @@ bool DownloadManager::connect()
     return connected;
 }
 
-bool DownloadManager::connected()
+bool DownloadManager::checkConnection()
 {
+    bool oldstatus = connected;
 #ifdef KOBO
-//    return Platform::get()->isNetworkActive();
+    connected = KoboPlatformFunctions::KoboPlatformFunctions::testInternetConnection(500);
+#else
+    connected = true;
 #endif
+    if (oldstatus != connected)
+        emit connectionStatusChanged(connected);
 
-    return true;
+    return connected;
 }
 
-QSharedPointer<DownloadStringJob> DownloadManager::downloadAsString(
-    const QString &url, int timeout, const QByteArray &postData)
+QSharedPointer<DownloadStringJob> DownloadManager::downloadAsString(const QString &url, int timeout,
+                                                                    const QByteArray &postData)
 {
     qDebug() << "downloading:" << url;
 
     auto job = QSharedPointer<DownloadStringJob>(
-        new DownloadStringJob(networkManager, url, timeout, postData),
-        &QObject::deleteLater);
+        new DownloadStringJob(networkManager, url, timeout, postData), &QObject::deleteLater);
 
     job->start();
     return job;
 }
 
-QSharedPointer<DownloadFileJob> DownloadManager::downloadAsFile(
-    const QString &url, const QString &localPath)
+QSharedPointer<DownloadFileJob> DownloadManager::downloadAsFile(const QString &url, const QString &localPath)
 {
     if (fileDownloads.contains(url))
     {
@@ -82,12 +83,11 @@ QSharedPointer<DownloadFileJob> DownloadManager::downloadAsFile(
             fileDownloads.remove(url);
     }
 
-    auto job = QSharedPointer<DownloadFileJob>(
-        new DownloadFileJob(networkManager, url, localPath),
-        [this](DownloadFileJob *j) {
-            this->fileDownloads.remove(j->originalUrl);
-            j->deleteLater();
-        });
+    auto job = QSharedPointer<DownloadFileJob>(new DownloadFileJob(networkManager, url, localPath),
+                                               [this](DownloadFileJob *j) {
+                                                   this->fileDownloads.remove(j->originalUrl);
+                                                   j->deleteLater();
+                                               });
 
     job->start();
 
@@ -96,8 +96,8 @@ QSharedPointer<DownloadFileJob> DownloadManager::downloadAsFile(
     return job;
 }
 
-QSharedPointer<DownloadFileJob> DownloadManager::downloadAsScaledImage(
-    const QString &url, const QString &localPath)
+QSharedPointer<DownloadFileJob> DownloadManager::downloadAsScaledImage(const QString &url,
+                                                                       const QString &localPath)
 {
     if (fileDownloads.contains(url))
     {
@@ -108,8 +108,7 @@ QSharedPointer<DownloadFileJob> DownloadManager::downloadAsScaledImage(
             fileDownloads.remove(url);
     }
     auto job = QSharedPointer<DownloadFileJob>(
-        new DownloadScaledImageJob(networkManager, url, localPath,
-                                   imageRescaleSize),
+        new DownloadScaledImageJob(networkManager, url, localPath, imageRescaleSize),
         [this](DownloadFileJob *j) {
             this->fileDownloads.remove(j->originalUrl);
             j->deleteLater();
@@ -127,12 +126,10 @@ void DownloadManager::setImageRescaleSize(const QSize &size)
     imageRescaleSize = size;
 }
 
-void DownloadManager::addCookie(const QString &domain, const char *key,
-                                const char *value)
+void DownloadManager::addCookie(const QString &domain, const char *key, const char *value)
 {
     for (int i = 0; i < cookies.cookies.count(); i++)
-        if (cookies.cookies[i].name() == QByteArray(key) &&
-            cookies.cookies[i].domain() == domain)
+        if (cookies.cookies[i].name() == QByteArray(key) && cookies.cookies[i].domain() == domain)
         {
             cookies.cookies.removeAt(i);
             break;
@@ -173,8 +170,7 @@ bool DownloadManager::urlExists(const QString &url)
     awaitSignal(reply, {SIGNAL(finished())}, 2000);
 
     bool result = false;
-    int status =
-        reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
 
     if (status == 200)
         result = true;

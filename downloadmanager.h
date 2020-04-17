@@ -31,25 +31,25 @@ public:
 
     QNetworkAccessManager *networkAccessManager();
 
-    QSharedPointer<DownloadStringJob> downloadAsString(
-        const QString &url, int timeout = 6000,
-        const QByteArray &postData = QByteArray());
-    QSharedPointer<DownloadFileJob> downloadAsFile(const QString &url,
-                                                   const QString &localPath);
-    QSharedPointer<DownloadFileJob> downloadAsScaledImage(
-        const QString &url, const QString &localPath);
+    QSharedPointer<DownloadStringJob> downloadAsString(const QString &url, int timeout = 6000,
+                                                       const QByteArray &postData = QByteArray());
+    QSharedPointer<DownloadFileJob> downloadAsFile(const QString &url, const QString &localPath);
+    QSharedPointer<DownloadFileJob> downloadAsScaledImage(const QString &url, const QString &localPath);
 
     void setImageRescaleSize(const QSize &size);
 
     void addCookie(const QString &domain, const char *key, const char *value);
 
-    bool connected();
+    bool checkConnection();
     bool connect();
 
     static void loadCertificates(const QString &certsPath);
     bool urlExists(const QString &url_string);
 
+    bool connected;
+
 signals:
+    void connectionStatusChanged(bool connected);
 
 public slots:
 

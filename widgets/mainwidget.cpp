@@ -25,6 +25,7 @@ MainWidget::MainWidget(QWidget *parent)
     settingsDialog = new SettingsDialog(this);
     updateMangaListsDialog = new UpdateMangaListsDialog(this);
     clearCacheDialog = new ClearCacheDialog(this);
+    wifiDialog = new WifiDialog(this, core->downloadManager);
 
     updateMangaListsDialog->setSettings(&core->settings);
 
@@ -39,6 +40,11 @@ MainWidget::MainWidget(QWidget *parent)
 
     // DownloadManager
     core->downloadManager->setImageRescaleSize(this->size());
+    QObject::connect(core->downloadManager, &DownloadManager::connectionStatusChanged,
+                     [this](bool connected) {
+                         auto pic = connected ? ":/images/icons/wifi.png" : ":/images/icons/no-wifi.png";
+                         ui->labelWifiIcon->setPixmap(QPixmap(pic));
+                     });
 
     // Core
     QObject::connect(core, &UltimateMangaReaderCore::error, [this](auto msg) {
@@ -168,6 +174,12 @@ void MainWidget::showEvent(QShowEvent *event)
 {
     QWidget::showEvent(event);
     core->updateActiveScources();
+
+    wifiDialog->connect();
+    QTimer::singleShot(200, [this]() {
+        if (!core->downloadManager->connected)
+            wifiDialog->open();
+    });
 }
 
 void MainWidget::setupVirtualKeyboard()

@@ -17,6 +17,7 @@
 #include "ultimatemangareadercore.h"
 #include "updatemangalistsdialog.h"
 #include "virtualkeyboard.h"
+#include "wifidialog.h"
 
 namespace Ui
 {
@@ -76,6 +77,7 @@ private:
     SettingsDialog *settingsDialog;
     UpdateMangaListsDialog *updateMangaListsDialog;
     ClearCacheDialog *clearCacheDialog;
+    WifiDialog *wifiDialog;
 };
 
 #endif  // MAINWIDGET_H

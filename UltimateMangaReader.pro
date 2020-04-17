@@ -34,7 +34,8 @@ FORMS += \
     widgets/settingsdialog.ui \
     widgets/numpadwidget.ui \
     widgets/clearcachedialog.ui \
-    widgets/updatemangalistsdialog.ui
+    widgets/updatemangalistsdialog.ui \
+    widgets/wifidialog.ui
 
 HEADERS += \
     enums.h \
@@ -85,7 +86,8 @@ HEADERS += \
     widgets/numpadwidget.h \
     widgets/clearcachedialog.h \
     widgets/updatemangalistsdialog.h \
-    widgets/virtualkeyboard.h
+    widgets/virtualkeyboard.h \
+    widgets/wifidialog.h
 
 SOURCES += \
     mangachaptercollection.cpp \
@@ -131,6 +133,7 @@ SOURCES += \
     widgets/numpadwidget.cpp \
     widgets/clearcachedialog.cpp \
     widgets/updatemangalistsdialog.cpp \
-    widgets/virtualkeyboard.cpp
+    widgets/virtualkeyboard.cpp \
+    widgets/wifidialog.cpp
 
 
