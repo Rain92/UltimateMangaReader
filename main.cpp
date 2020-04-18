@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
 
     QFile stylesheetFile(":/eink.qss");
     stylesheetFile.open(QFile::ReadOnly);
-    QString styleSheet = QLatin1String(stylesheetFile.readAll());
+    QString styleSheet(stylesheetFile.readAll());
     stylesheetFile.close();
     mainwidget.setStyleSheet(styleSheet);
 

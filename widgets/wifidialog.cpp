@@ -3,13 +3,15 @@
 #include "ui_wifidialog.h"
 
 WifiDialog::WifiDialog(QWidget *parent, DownloadManager *downloadManager)
-    : QDialog(parent), ui(new Ui::WifiDialog), downloadManager(downloadManager)
+    : QDialog(parent), ui(new Ui::WifiDialog), downloadManager(downloadManager), lastConnection()
 {
     ui->setupUi(this);
 }
 
 WifiDialog::~WifiDialog()
 {
+    if (lastConnection.isRunning())
+        lastConnection.waitForFinished();
     delete ui;
 }
 
@@ -18,8 +20,8 @@ void WifiDialog::connect()
     ui->labelInfo->setText("Connecting to WiFi...");
     ui->pushButtonRetry->hide();
 
-    QtConcurrent::run([this]() {
-        downloadManager->connect();
+    lastConnection = QtConcurrent::run([this]() {
+        downloadManager->connectWifi();
         if (downloadManager->connected)
         {
             close();

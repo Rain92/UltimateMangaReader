@@ -40,8 +40,9 @@ public:
 
     void addCookie(const QString &domain, const char *key, const char *value);
 
-    bool checkConnection();
-    bool connect();
+    bool checkInternetConnection();
+    bool connectWifi();
+    bool disconnectWifi();
 
     static void loadCertificates(const QString &certsPath);
     bool urlExists(const QString &url_string);

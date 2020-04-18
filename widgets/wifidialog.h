@@ -29,6 +29,7 @@ private slots:
 private:
     Ui::WifiDialog* ui;
     DownloadManager* downloadManager;
+    QFuture<void> lastConnection;
 };
 
 #endif  // WIFIDIALOG_H

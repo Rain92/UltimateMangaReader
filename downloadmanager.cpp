@@ -24,29 +24,44 @@ QNetworkAccessManager *DownloadManager::networkAccessManager()
     return this->networkManager;
 }
 
-bool DownloadManager::connect()
+bool DownloadManager::connectWifi()
 {
-#ifdef KOBO
-    if (!checkConnection())
+    if (!checkInternetConnection())
     {
+#ifdef KOBO
         qDebug() << "Connecting to Wifi...";
         QElapsedTimer t;
         t.start();
         KoboPlatformFunctions::enableWiFiConnection();
-        checkConnection();
+        checkInternetConnection();
         qDebug() << "Connected" << (connected ? "successfully" : "unsuccessfully") << "in" << t.elapsed()
                  << "ms.";
+#endif
     }
     else
     {
         qDebug() << "Already connected to Wifi.";
     }
-#endif
 
     return connected;
 }
 
-bool DownloadManager::checkConnection()
+bool DownloadManager::disconnectWifi()
+{
+    if (!connected)
+        return true;
+
+#ifdef KOBO
+    QElapsedTimer t;
+    t.start();
+    KoboPlatformFunctions::disableWiFiConnection();
+    qDebug() << "Disconnected in" << t.elapsed() << "ms.";
+#endif
+
+    return true;
+}
+
+bool DownloadManager::checkInternetConnection()
 {
     bool oldstatus = connected;
 #ifdef KOBO

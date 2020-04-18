@@ -3,7 +3,13 @@
 #include "ui_mainwidget.h"
 
 #ifdef KOBO
+#include "../koboplatformintegrationplugin/kobokey.h"
 #include "../koboplatformintegrationplugin/koboplatformfunctions.h"
+#define POWERBUTTON KoboKey::Key_Power
+#define SLEEPCOVERBUTTON KoboKey::Key_SleepCover
+#else
+#define POWERBUTTON Qt::Key_F1
+#define SLEEPCOVERBUTTON Qt::Key_F2
 #endif
 
 MainWidget::MainWidget(QWidget *parent)
@@ -11,14 +17,17 @@ MainWidget::MainWidget(QWidget *parent)
       ui(new Ui::MainWidget),
       core(new UltimateMangaReaderCore(this)),
       lastTab(MangaInfoTab),
-      restorefrontlighttimer(),
       virtualKeyboard(new VirtualKeyboard(this)),
-      errorMessageWidget(new ErrorMessageWidget(this))
+      errorMessageWidget(new ErrorMessageWidget(this)),
+      powerButtonTimer(new QTimer(this)),
+      suspendManager(new SuspendManager(this))
 {
     ui->setupUi(this);
     adjustSizes();
     ui->batteryIcon->updateIcon();
     setupVirtualKeyboard();
+
+    QObject::connect(powerButtonTimer, &QTimer::timeout, this, &MainWidget::close);
 
     // Dialogs
     menuDialog = new MenuDialog(this);
@@ -26,6 +35,7 @@ MainWidget::MainWidget(QWidget *parent)
     updateMangaListsDialog = new UpdateMangaListsDialog(this);
     clearCacheDialog = new ClearCacheDialog(this);
     wifiDialog = new WifiDialog(this, core->downloadManager);
+    screensaverDialog = new ScreensaverDialog(this);
 
     updateMangaListsDialog->setSettings(&core->settings);
 
@@ -142,10 +152,11 @@ MainWidget::MainWidget(QWidget *parent)
     settingsDialog->setSettings(&core->settings);
     QObject::connect(settingsDialog, &SettingsDialog::activeMangasChanged, core,
                      &UltimateMangaReaderCore::updateActiveScources);
-    // FrontLight
-    setupFrontLight();
-    restorefrontlighttimer.setSingleShot(true);
-    QObject::connect(&restorefrontlighttimer, &QTimer::timeout, this, &MainWidget::restoreFrontLight);
+
+    // SuspendManager
+
+    QObject::connect(suspendManager, &SuspendManager::suspending, this, &MainWidget::onSuspend);
+    QObject::connect(suspendManager, &SuspendManager::resuming, this, &MainWidget::onResume);
 }
 
 MainWidget::~MainWidget()
@@ -175,8 +186,83 @@ void MainWidget::showEvent(QShowEvent *event)
     QWidget::showEvent(event);
     core->updateActiveScources();
 
+    QTimer::singleShot(100, this, &MainWidget::onResume);
+}
+
+bool MainWidget::event(QEvent *event)
+{
+    if (event->type() == QEvent::KeyPress)
+        return buttonPressEvent(static_cast<QKeyEvent *>(event));
+    else if (event->type() == QEvent::KeyRelease)
+        return buttonReleaseEvent(static_cast<QKeyEvent *>(event));
+    return QWidget::event(event);
+}
+
+bool MainWidget::buttonReleaseEvent(QKeyEvent *event)
+{
+    QTime::currentTime().msec();
+
+    if (event->key() == POWERBUTTON)
+    {
+        qDebug() << "Powerkey release";
+        powerButtonTimer->stop();
+
+        if (!suspendManager->sleeping)
+            suspendManager->suspend();
+        else
+            suspendManager->resume();
+    }
+    else if (event->key() == SLEEPCOVERBUTTON)
+    {
+        qDebug() << "Sleepcover opened";
+        //        suspendManager->resume();
+
+        return true;
+    }
+
+    return false;
+}
+
+bool MainWidget::buttonPressEvent(QKeyEvent *event)
+{
+    if (event->key() == POWERBUTTON)
+    {
+        qDebug() << "Powerkey press";
+        powerButtonTimer->start(2000);
+
+        return true;
+    }
+    else if (event->key() == SLEEPCOVERBUTTON)
+    {
+        qDebug() << "Sleepcover closed";
+        suspendManager->suspend();
+
+        return true;
+    }
+
+    return false;
+}
+
+void MainWidget::onSuspend()
+{
+    core->enableTimer(false);
+
+    screensaverDialog->showRandomScreensaver();
+
+    disableFrontLight();
+
+    core->downloadManager->disconnectWifi();
+}
+
+void MainWidget::onResume()
+{
+    screensaverDialog->close();
+
+    core->enableTimer(true);
+
     wifiDialog->connect();
     QTimer::singleShot(200, [this]() {
+        setupFrontLight();
         if (!core->downloadManager->connected)
             wifiDialog->open();
     });
@@ -202,6 +288,12 @@ void MainWidget::enableVirtualKeyboard(bool enabled)
 #endif
 }
 
+void MainWidget::disableFrontLight()
+{
+#ifdef KOBO
+    KoboPlatformFunctions::setFrontlightLevel(0, 0);
+#endif
+}
 void MainWidget::setupFrontLight()
 {
     setFrontLight(core->settings.lightValue, core->settings.comflightValue);
@@ -243,8 +335,7 @@ void MainWidget::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
 
-    errorMessageWidget->setMinimumWidth(this->width());
-    errorMessageWidget->setMaximumWidth(this->width());
+    errorMessageWidget->setFixedWidth(this->width());
 
     core->downloadManager->setImageRescaleSize(this->size());
 }
@@ -290,12 +381,7 @@ void MainWidget::readerGoBack()
     setWidgetTab(lastTab);
 }
 
-void MainWidget::restoreFrontLight()
-{
-    setFrontLight(core->settings.lightValue, core->settings.comflightValue);
-}
-
-bool MainWidget::eventFilter(QObject *obj, QEvent *ev)
+bool MainWidget::eventFilter(QObject *, QEvent *ev)
 {
     if (ev->type() == QEvent::RequestSoftwareInputPanel + 1000)
     {
@@ -308,8 +394,6 @@ bool MainWidget::eventFilter(QObject *obj, QEvent *ev)
         return true;
     }
     return false;
-
-    Q_UNUSED(obj)
 }
 
 void MainWidget::on_toolButtonMenu_clicked()

@@ -23,6 +23,7 @@ public:
 
     QString cacheDir;
     QString mangaListDir;
+    QString screensaverDir;
     int imageCacheSize;
     int parallelDownloadsLow;
     int parallelDownloadsHigh;
@@ -42,6 +43,7 @@ private:
     StaticSettings()
     {
         cacheDir = QCoreApplication::applicationDirPath() + "/cache/";
+        screensaverDir = QCoreApplication::applicationDirPath() + "/screensavers/";
         mangaListDir = cacheDir + "mangalists/";
         imageCacheSize = 10;
         parallelDownloadsLow = 4;

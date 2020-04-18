@@ -32,11 +32,26 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
 
     timer.setInterval(1000 * 60);
     connect(&timer, &QTimer::timeout, this, &UltimateMangaReaderCore::timerTick);
-    QTimer::singleShot(1000 * 60 - QTime::currentTime().second() * 1000 - QTime::currentTime().msec(),
-                       [this]() {
-                           timer.start();
-                           timerTick();
-                       });
+}
+
+void UltimateMangaReaderCore::enableTimer(bool enabled)
+{
+    if (enabled == timer.isActive())
+        return;
+
+    if (enabled)
+    {
+        timerTick();
+        QTimer::singleShot(1000 * 60 - QTime::currentTime().second() * 1000 - QTime::currentTime().msec(),
+                           [this]() {
+                               timer.start();
+                               timerTick();
+                           });
+    }
+    else
+    {
+        timer.stop();
+    }
 }
 
 void UltimateMangaReaderCore::timerTick()
@@ -91,6 +106,9 @@ void UltimateMangaReaderCore::setupDirectories()
 
     if (!QDir(CONF.mangaListDir).exists())
         QDir().mkpath(CONF.mangaListDir);
+
+    if (!QDir(CONF.screensaverDir).exists())
+        QDir().mkpath(CONF.screensaverDir);
 }
 
 long UltimateMangaReaderCore::getCacheSize()

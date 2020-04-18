@@ -47,6 +47,8 @@ public:
 
     void updateMangaLists(QSharedPointer<UpdateProgressToken> progressToken);
 
+    void enableTimer(bool enabled);
+
 signals:
     void currentMangaSourceChanged(AbstractMangaSource *source);
     void currentMangaChanged();
