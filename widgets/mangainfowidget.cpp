@@ -26,7 +26,8 @@ void MangaInfoWidget::adjustSizes()
 
     ui->toolButtonAddFavorites->setFixedSize(buttonsizeaddfavorite, buttonsizeaddfavorite);
     ui->toolButtonAddFavorites->setIconSize(QSize(buttonsizeaddfavorite * 0.8, buttonsizeaddfavorite * 0.8));
-    ui->toolButtonAddFavorites->setFocusPolicy(Qt::NoFocus);
+    ui->toolButtonDownload->setFixedSize(buttonsizeaddfavorite, buttonsizeaddfavorite);
+    ui->toolButtonDownload->setIconSize(QSize(buttonsizeaddfavorite * 0.8, buttonsizeaddfavorite * 0.8));
 
     ui->listViewChapters->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     ui->listViewChapters->setUniformItemSizes(true);
@@ -142,4 +143,10 @@ void MangaInfoWidget::on_pushButtonReadContinue_clicked()
 void MangaInfoWidget::on_pushButtonReadFirst_clicked()
 {
     emit readMangaClicked({0, 0});
+}
+
+void MangaInfoWidget::on_toolButtonDownload_clicked()
+{
+    if (!currentmanga.isNull())
+        emit downloadMangaClicked(currentmanga);
 }

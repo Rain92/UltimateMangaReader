@@ -25,5 +25,6 @@
         <file>images/icons/checkbox-checked.png</file>
         <file>images/icons/checkbox-unchecked.png</file>
         <file>images/icons/error.png</file>
+        <file>images/icons/download.png</file>
     </qresource>
 </RCC>
