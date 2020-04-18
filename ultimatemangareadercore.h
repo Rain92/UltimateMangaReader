@@ -4,6 +4,7 @@
 #include <QObject>
 
 #include "downloadmanager.h"
+#include "downloadqueue.h"
 #include "favoritesmanager.h"
 #include "jaiminisbox.h"
 #include "mangacontroller.h"
@@ -33,6 +34,7 @@ public:
     FavoritesManager *favoritesManager;
 
     Settings settings;
+    DownloadQueue backgroundDownloader;
 
 public:
     void setImageSize(const QSize &size);
@@ -48,6 +50,8 @@ public:
     void updateMangaLists(QSharedPointer<UpdateProgressToken> progressToken);
 
     void enableTimer(bool enabled);
+
+    void downloadMangaChapters(QSharedPointer<MangaInfo> mangaInfo, int fromChapter, int toChapter);
 
 signals:
     void currentMangaSourceChanged(AbstractMangaSource *source);

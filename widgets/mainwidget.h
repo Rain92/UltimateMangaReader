@@ -8,6 +8,7 @@
 
 #include "clearcachedialog.h"
 #include "downloadmanager.h"
+#include "downloadmangachaptersdialog.h"
 #include "errormessagewidget.h"
 #include "favoriteswidget.h"
 #include "homewidget.h"
@@ -86,6 +87,7 @@ private:
     ClearCacheDialog *clearCacheDialog;
     WifiDialog *wifiDialog;
     ScreensaverDialog *screensaverDialog;
+    DownloadMangaChaptersDialog *downloadMangaChaptersDialog;
 
     SuspendManager *suspendManager;
 };

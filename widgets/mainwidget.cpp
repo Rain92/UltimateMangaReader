@@ -36,6 +36,7 @@ MainWidget::MainWidget(QWidget *parent)
     clearCacheDialog = new ClearCacheDialog(this);
     wifiDialog = new WifiDialog(this, core->downloadManager);
     screensaverDialog = new ScreensaverDialog(this);
+    downloadMangaChaptersDialog = new DownloadMangaChaptersDialog(this);
 
     updateMangaListsDialog->setSettings(&core->settings);
 
@@ -118,6 +119,9 @@ MainWidget::MainWidget(QWidget *parent)
 
     QObject::connect(ui->mangaInfoWidget, &MangaInfoWidget::readMangaContinueClicked,
                      [this]() { setWidgetTab(MangaReaderTab); });
+
+    QObject::connect(ui->mangaInfoWidget, &MangaInfoWidget::downloadMangaClicked, downloadMangaChaptersDialog,
+                     &DownloadMangaChaptersDialog::show);
 
     // FavoritesWidget
     ui->favoritesWidget->favoritesmanager = core->favoritesManager;

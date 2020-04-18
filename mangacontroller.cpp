@@ -4,9 +4,9 @@ MangaController::MangaController(DownloadManager *downloadManager, QObject *pare
     : QObject(parent),
       currentIndex(nullptr, 0, 0),
       downloadManager(downloadManager),
-      preloadQueue(downloadManager)
+      preloadQueue(downloadManager, {}, 2, false)
 {
-    QObject::connect(&preloadQueue, &PreloadQueue::completedDownload, this,
+    QObject::connect(&preloadQueue, &DownloadQueue::singleDownloadCompleted, this,
                      &MangaController::completedImagePreload);
 }
 
@@ -199,7 +199,7 @@ void MangaController::preloadImage(const MangaIndex &index)
 
     //    qDebug() << "preload page" << index.page;
 
-    preloadQueue.addJob({imageLink.unwrap(), path});
+    preloadQueue.appendDownload(FileDownloadDescriptor(imageLink.unwrap(), path));
 }
 
 void MangaController::preloadPopular()
@@ -253,7 +253,7 @@ void MangaController::cancelAllPreloads()
     preloadQueue.clearQuene();
 }
 
-void MangaController::completedImagePreload(const QString &path)
+void MangaController::completedImagePreload(const QString &, const QString &path)
 {
     emit completedImagePreloadSignal(path);
 }

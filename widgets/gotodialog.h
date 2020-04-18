@@ -23,8 +23,6 @@ public:
 
     void setup(const ReadingProgress &progress);
 
-    void moveCursorRight(int steps = 4);
-
     MangaIndex selectedindex;
     MangaIndex currentindex;
 

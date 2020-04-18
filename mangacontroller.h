@@ -4,11 +4,11 @@
 #include <QImage>
 
 #include "downloadimagedescriptor.h"
+#include "downloadqueue.h"
 #include "enums.h"
 #include "mangachapter.h"
 #include "mangaindextraverser.h"
 #include "mangainfo.h"
-#include "preloadqueue.h"
 #include "readingprogress.h"
 #include "result.h"
 #include "staticsettings.h"
@@ -18,8 +18,7 @@ class MangaController : public QObject
     Q_OBJECT
 
 public:
-    MangaController(DownloadManager *downloadManager,
-                    QObject *parent = nullptr);
+    MangaController(DownloadManager *downloadManager, QObject *parent = nullptr);
 
     QSharedPointer<MangaInfo> currentManga;
     MangaIndexTraverser currentIndex;
@@ -47,14 +46,14 @@ signals:
     void completedImagePreloadSignal(const QString &path);
 
 private:
-    void completedImagePreload(const QString &path);
+    void completedImagePreload(const QString &, const QString &path);
     Result<void, QString> assurePagesLoaded();
     void currentIndexChangedInternal(bool preload);
     void updateCurrentImage();
     void deserializeProgress();
     void serializeProgress();
     DownloadManager *downloadManager;
-    PreloadQueue preloadQueue;
+    DownloadQueue preloadQueue;
 };
 
 #endif  // MANGACONTROLLER_H

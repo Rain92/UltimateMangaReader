@@ -10,6 +10,7 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
       mangaController(new MangaController(downloadManager, this)),
       favoritesManager(new FavoritesManager(activeMangaSources, this)),
       settings(),
+      backgroundDownloader(downloadManager, {}, 4, false),
       timer()
 {
     setupDirectories();
@@ -178,4 +179,20 @@ void UltimateMangaReaderCore::updateMangaLists(QSharedPointer<UpdateProgressToke
         }
     }
     progressToken->sendFinished();
+}
+
+void UltimateMangaReaderCore::downloadMangaChapters(QSharedPointer<MangaInfo> mangaInfo, int fromChapter,
+                                                    int toChapter)
+{
+    for (int i = fromChapter; i <= toChapter; i++)
+    {
+        auto res = mangaInfo->mangaSource->updatePageList(mangaInfo, i);
+        if (!res.isOk())
+        {
+            return;
+        }
+    }
+    for (int i = fromChapter; i <= toChapter; i++)
+    {
+    }
 }

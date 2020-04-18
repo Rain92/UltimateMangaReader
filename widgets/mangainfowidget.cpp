@@ -149,4 +149,5 @@ void MangaInfoWidget::on_toolButtonDownload_clicked()
 {
     if (!currentmanga.isNull())
         emit downloadMangaClicked(currentmanga);
+    qDebug() << "Download clicked";
 }

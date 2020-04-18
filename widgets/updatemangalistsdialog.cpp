@@ -74,8 +74,7 @@ void UpdateMangaListsDialog::setupSourcesList()
     QLayoutItem *item;
     while ((item = layout->takeAt(0)) != nullptr)
     {
-        if (item->widget())
-            item->widget()->setParent(nullptr);
+        delete item->widget();
         delete item;
     }
 

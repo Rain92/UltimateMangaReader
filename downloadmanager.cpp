@@ -82,6 +82,10 @@ QSharedPointer<DownloadStringJob> DownloadManager::downloadAsString(const QStrin
 
     auto job = QSharedPointer<DownloadStringJob>(
         new DownloadStringJob(networkManager, url, timeout, postData), &QObject::deleteLater);
+    //                [](DownloadStringJob *j) {
+    //            j->disconnect();
+    //            j->deleteLater();
+    //        });
 
     job->start();
     return job;
@@ -124,7 +128,7 @@ QSharedPointer<DownloadFileJob> DownloadManager::downloadAsScaledImage(const QSt
     }
     auto job = QSharedPointer<DownloadFileJob>(
         new DownloadScaledImageJob(networkManager, url, localPath, imageRescaleSize),
-        [this](DownloadFileJob *j) {
+        [this](DownloadScaledImageJob *j) {
             this->fileDownloads.remove(j->originalUrl);
             j->deleteLater();
         });

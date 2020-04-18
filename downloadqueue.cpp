@@ -2,6 +2,7 @@
 
 #include "utils.h"
 
+// Download as strings
 DownloadQueue::DownloadQueue(DownloadManager* downloadmanager, const QList<QString>& urls,
                              int parallelDownloads,
                              std::function<void(QSharedPointer<DownloadStringJob>)> lambda,
@@ -12,30 +13,63 @@ DownloadQueue::DownloadQueue(DownloadManager* downloadmanager, const QList<QStri
       lastErrorMessage(""),
       cancelOnError(cancelOnError),
       downloadmanager(downloadmanager),
+      runningJobs(0),
+      type(DownloadTypeString),
       parallelDownloads(parallelDownloads),
-      urlQueue(),
+      jobDescriptorQueue(),
       lambda(lambda),
       individualTimeout(individualTimeout),
       cancellationToken(nullptr)
 {
     totalJobs = urls.count();
-    this->urlQueue.append(urls);
+
+    std::transform(urls.begin(), urls.end(), std::back_inserter(jobDescriptorQueue),
+                   [](const QString& s) { return FileDownloadDescriptor(s, ""); });
+}
+
+// Download as images
+DownloadQueue::DownloadQueue(DownloadManager* downloadmanager,
+                             const QList<FileDownloadDescriptor>& urlAndPaths, int parallelDownloads,
+                             bool cancelOnError)
+    : QObject(),
+      completed(0),
+      errors(0),
+      lastErrorMessage(""),
+      cancelOnError(cancelOnError),
+      downloadmanager(downloadmanager),
+      type(DownloadTypeScaledImage),
+      parallelDownloads(parallelDownloads),
+      jobDescriptorQueue(),
+      lambda(nullptr),
+      individualTimeout(-1),
+      cancellationToken(nullptr)
+{
+    totalJobs = urlAndPaths.count();
+
+    this->jobDescriptorQueue.append(urlAndPaths);
 }
 
 void DownloadQueue::start()
 {
-    for (int i = 0; i < parallelDownloads; i++)
+    while (!jobDescriptorQueue.empty() && runningJobs < parallelDownloads)
         startSingle();
 }
 
 void DownloadQueue::startSingle()
 {
-    if (urlQueue.empty())
+    if (jobDescriptorQueue.empty())
         return;
 
-    auto url = urlQueue.dequeue();
+    runningJobs++;
 
-    auto job = downloadmanager->downloadAsString(url, individualTimeout);
+    auto descriptor = jobDescriptorQueue.dequeue();
+
+    QSharedPointer<DownloadJobBase> job;
+
+    if (type == DownloadTypeString)
+        job = downloadmanager->downloadAsString(descriptor.url, individualTimeout);
+    else  // if (type == DownloadTypeScaledImage)
+        job = downloadmanager->downloadAsScaledImage(descriptor.url, descriptor.path);
 
     if (!job->isCompleted)
     {
@@ -50,20 +84,27 @@ void DownloadQueue::startSingle()
     }
 }
 
-void DownloadQueue::downloadFinished(QSharedPointer<DownloadStringJob> job, bool success)
+void DownloadQueue::downloadFinished(QSharedPointer<DownloadJobBase> job, bool success)
 {
-    completed++;
     if (success)
     {
-        lambda(job);
-        emit singleDownloadCompleted();
+        if (lambda != nullptr)
+        {
+            auto jobS = job.dynamicCast<DownloadStringJob>();
+            if (jobS != nullptr)
+                lambda(jobS);
+            else
+                qDebug() << "Job lambda cast failed";
+        }
+        auto jobF = job.dynamicCast<DownloadFileJob>();
+        emit singleDownloadCompleted(job->originalUrl, jobF ? jobF->filepath : "");
     }
     else
     {
         errors++;
         lastErrorMessage = job->errorString;
         clearQuene();
-        emit singleDownloadFailed();
+        emit singleDownloadFailed(job->originalUrl);
     }
 
     if (cancellationToken != nullptr && *cancellationToken)
@@ -75,6 +116,10 @@ void DownloadQueue::downloadFinished(QSharedPointer<DownloadStringJob> job, bool
 
     job->disconnect();
 
+    completed++;
+    runningJobs--;
+    emit progress(completed, totalJobs, errors);
+
     if (completed == totalJobs)
     {
         emit allCompleted();
@@ -83,10 +128,26 @@ void DownloadQueue::downloadFinished(QSharedPointer<DownloadStringJob> job, bool
         startSingle();
 }
 
+void DownloadQueue::appendDownload(const FileDownloadDescriptor& urlAndPaths)
+{
+    totalJobs++;
+
+    this->jobDescriptorQueue.append(urlAndPaths);
+    start();
+}
+
+void DownloadQueue::appendDownloads(const QList<FileDownloadDescriptor>& urlAndPaths)
+{
+    totalJobs += urlAndPaths.count();
+
+    this->jobDescriptorQueue.append(urlAndPaths);
+    start();
+}
+
 void DownloadQueue::clearQuene()
 {
-    int c = urlQueue.count();
-    urlQueue.clear();
+    int c = jobDescriptorQueue.count();
+    jobDescriptorQueue.clear();
     totalJobs -= c;
 }
 bool DownloadQueue::awaitCompletion()

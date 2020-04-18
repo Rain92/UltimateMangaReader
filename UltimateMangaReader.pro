@@ -23,6 +23,7 @@ RESOURCES += \
     resources.qrc
 
 FORMS += \
+    widgets/downloadmangachaptersdialog.ui \
     widgets/errormessagewidget.ui \
     widgets/favoriteswidget.ui \
     widgets/mainwidget.ui \
@@ -64,6 +65,7 @@ HEADERS += \
     mangasources/jaiminisbox.h \
     utils.h \
     widgets/clineedit.h \
+    widgets/downloadmangachaptersdialog.h \
     widgets/errormessagewidget.h \
     widgets/favoriteswidget.h \
     widgets/mainwidget.h \
@@ -75,7 +77,6 @@ HEADERS += \
     mangachapter.h \
     mangaindex.h \
     mangainfo.h \
-    preloadqueue.h \
     widgets/homewidget.h \
     widgets/mangainfowidget.h \
     widgets/mangareaderwidget.h \
@@ -112,6 +113,7 @@ SOURCES += \
     mangasources/jaiminisbox.cpp \
     utils.cpp \
     widgets/clineedit.cpp \
+    widgets/downloadmangachaptersdialog.cpp \
     widgets/errormessagewidget.cpp \
     widgets/favoriteswidget.cpp \
     widgets/mainwidget.cpp \
@@ -124,7 +126,6 @@ SOURCES += \
     mangachapter.cpp \
     mangaindex.cpp \
     mangainfo.cpp \
-    preloadqueue.cpp \
     widgets/homewidget.cpp \
     widgets/mangainfowidget.cpp \
     widgets/mangareaderwidget.cpp \
