@@ -278,6 +278,12 @@ bool MainWidget::buttonPressEvent(QKeyEvent *event)
 
 void MainWidget::timerTick()
 {
+#ifdef KOBO
+    // low battery guard
+    if (KoboPlatformFunctions::getBatteryLevel() < 10)
+        close();
+#endif
+
     if (!suspendManager->sleeping)
     {
         ui->batteryIcon->updateIcon();
