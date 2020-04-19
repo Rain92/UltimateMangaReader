@@ -6,7 +6,7 @@ MangaChapterDownloadManager::MangaChapterDownloadManager(NetworkManager *network
       running(false),
       downloadJobs(),
       networkManager(networkManager),
-      downloadQueue(networkManager, {}, 4, false)
+      downloadQueue(networkManager, {}, 2, false)
 {
     connect(&downloadQueue, &DownloadQueue::progress,
             [this](int c, int t, int e) { emit downloadImagesProgress(c, t, e); });

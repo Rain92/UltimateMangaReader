@@ -64,7 +64,7 @@
      <item>
       <widget class="QPushButton" name="pushButtonRetry">
        <property name="text">
-        <string>Retry</string>
+        <string> Retry </string>
        </property>
       </widget>
      </item>
@@ -74,7 +74,7 @@
         <bool>true</bool>
        </property>
        <property name="text">
-        <string>Close</string>
+        <string> Close </string>
        </property>
       </widget>
      </item>

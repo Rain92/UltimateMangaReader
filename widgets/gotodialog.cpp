@@ -7,6 +7,7 @@ GotoDialog::GotoDialog(QWidget *parent)
 
 {
     ui->setupUi(this);
+    setWindowFlags(Qt::Popup);
 
     ui->pushButtonGoChapter->setFixedHeight(buttonsize);
     ui->pushButtonGoPage->setFixedHeight(buttonsize);
@@ -18,7 +19,7 @@ GotoDialog::GotoDialog(QWidget *parent)
     ui->spinBoxChapter->installEventFilter(this);
     ui->spinBoxPage->installEventFilter(this);
 
-    //    this->setMinimumSize(QSize(mm_to_px(50), mm_to_px(40)));
+    ui->numpadWidget->setFixedHeight(numpadheight);
 }
 
 GotoDialog::~GotoDialog()
@@ -38,8 +39,6 @@ void GotoDialog::setup(const ReadingProgress &progress)
     ui->spinBoxPage->setValue(currentindex.page + 1);
 
     ui->spinBoxChapter->setCorrectionMode(QAbstractSpinBox::CorrectToNearestValue);
-
-    this->setMinimumSize(this->parentWidget()->width() * 0.8, this->parentWidget()->height() * 0.6);
 }
 
 bool GotoDialog::eventFilter(QObject *obj, QEvent *event)

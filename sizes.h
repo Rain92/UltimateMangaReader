@@ -18,6 +18,8 @@
 #define buttonsize mm_to_px(8)
 #define buttonsizeaddfavorite mm_to_px(8)
 
+#define numpadheight mm_to_px(35)
+
 #define resourceiconsize mm_to_px(5)
 #define batteryiconsize mm_to_px(3)
 #define menuiconsize mm_to_px(10)

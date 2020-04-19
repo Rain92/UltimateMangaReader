@@ -17,6 +17,9 @@ void DownloadMangaChaptersDialog::adjustSizes()
     ui->labelTitle->setStyleSheet("font-size: 12pt");
     ui->pushButtonConfirm->setFixedHeight(buttonsize);
     ui->pushButtonCancel->setFixedHeight(buttonsize);
+    ui->spinBoxFrom->setFixedHeight(buttonsize);
+    ui->spinBoxTo->setFixedHeight(buttonsize);
+    ui->numpadWidget->setMinimumHeight(numpadheight);
 }
 
 DownloadMangaChaptersDialog::~DownloadMangaChaptersDialog()

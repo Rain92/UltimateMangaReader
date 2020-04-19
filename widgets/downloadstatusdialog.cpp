@@ -11,6 +11,11 @@ DownloadStatusDialog::DownloadStatusDialog(QWidget *parent)
 {
     ui->setupUi(this);
     adjustSizes();
+
+#ifdef KOBO
+    // disabe background download
+    ui->pushButtonHide->hide();
+#endif
 }
 
 void DownloadStatusDialog::adjustSizes()
@@ -18,6 +23,7 @@ void DownloadStatusDialog::adjustSizes()
     ui->labelTitle->setStyleSheet("font-size: 13pt");
     ui->pushButtonCancel->setFixedHeight(buttonsize);
     ui->pushButtonHide->setFixedHeight(buttonsize);
+    this->setMinimumSize(mm_to_px(80), mm_to_px(60));
 }
 
 DownloadStatusDialog::~DownloadStatusDialog()
@@ -30,6 +36,7 @@ void DownloadStatusDialog::downloadStart(const QString &mangaTitle)
     ui->labelMangaTitle->setText(mangaTitle);
     ui->labelStep->setText("");
     ui->labelStatus->setText("");
+    ui->progressBar->setValue(0);
     pageDownloadErrors = 0;
     imageDownloadErrors = 0;
     cancelled = false;

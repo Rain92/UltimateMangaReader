@@ -2,15 +2,17 @@
 
 #include "ui_numpadwidget.h"
 
-NumpadWidget::NumpadWidget(QWidget *parent)
-    : QWidget(parent), ui(new Ui::NumpadWidget)
+NumpadWidget::NumpadWidget(QWidget *parent) : QWidget(parent), ui(new Ui::NumpadWidget)
 {
     ui->setupUi(this);
 
     setupButtons();
 }
 
-NumpadWidget::~NumpadWidget() { delete ui; }
+NumpadWidget::~NumpadWidget()
+{
+    delete ui;
+}
 
 void NumpadWidget::setupButtons()
 {
@@ -20,8 +22,7 @@ void NumpadWidget::setupButtons()
         {
             btn->setProperty("key", Qt::Key_Backspace);
             QIcon icon = QIcon(
-                QPixmap(":/images/icons/backspace.png")
-                    .scaledToHeight(buttonsize, Qt::SmoothTransformation));
+                QPixmap(":/images/icons/backspace.png").scaledToHeight(buttonsize, Qt::SmoothTransformation));
             btn->setIconSize(QSize(buttonsize * 0.5, buttonsize * 0.5));
             btn->setIcon(icon);
             btn->setText("");
@@ -33,11 +34,11 @@ void NumpadWidget::setupButtons()
 
         btn->setFocusPolicy(Qt::NoFocus);
         btn->setFixedHeight(buttonsize);
+        btn->setFixedWidth(buttonsize * 2);
     }
 
     QObject::connect(ui->buttonGroupAllButtons,
-                     static_cast<void (QButtonGroup::*)(QAbstractButton *)>(
-                         &QButtonGroup::buttonPressed),
+                     static_cast<void (QButtonGroup::*)(QAbstractButton *)>(&QButtonGroup::buttonPressed),
                      this, &NumpadWidget::numButtonPressed);
 }
 
@@ -49,10 +50,8 @@ void NumpadWidget::numButtonPressed(QAbstractButton *button)
 
     QWidget *target = qApp->focusWidget();
 
-    QKeyEvent *pressEvent =
-        new QKeyEvent(QEvent::KeyPress, key, Qt::NoModifier, repr);
-    QKeyEvent *releaseEvent =
-        new QKeyEvent(QEvent::KeyRelease, key, Qt::NoModifier, repr);
+    QKeyEvent *pressEvent = new QKeyEvent(QEvent::KeyPress, key, Qt::NoModifier, repr);
+    QKeyEvent *releaseEvent = new QKeyEvent(QEvent::KeyRelease, key, Qt::NoModifier, repr);
     qApp->postEvent(target, pressEvent);
     qApp->postEvent(target, releaseEvent);
 }
