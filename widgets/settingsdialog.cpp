@@ -2,8 +2,8 @@
 
 #include "ui_settingsdialog.h"
 
-SettingsDialog::SettingsDialog(QWidget *parent)
-    : QDialog(parent), ui(new Ui::SettingsDialog), settings(nullptr)
+SettingsDialog::SettingsDialog(Settings *settings, QWidget *parent)
+    : QDialog(parent), ui(new Ui::SettingsDialog), settings(settings)
 {
     ui->setupUi(this);
     adjustSizes();
@@ -28,15 +28,16 @@ SettingsDialog::~SettingsDialog()
     delete ui;
 }
 
-void SettingsDialog::setSettings(Settings *settings)
-{
-    this->settings = settings;
-}
-
 void SettingsDialog::adjustSizes()
 {
     ui->labelTitle->setStyleSheet("font-size: 15pt");
     ui->pushButtonOk->setFixedHeight(buttonsize);
+}
+
+void SettingsDialog::open()
+{
+    resetUI();
+    QDialog::open();
 }
 
 void SettingsDialog::resetUI()

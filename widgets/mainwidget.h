@@ -7,13 +7,14 @@
 #include <QStringListModel>
 
 #include "clearcachedialog.h"
-#include "downloadmanager.h"
 #include "downloadmangachaptersdialog.h"
+#include "downloadstatusdialog.h"
 #include "errormessagewidget.h"
 #include "favoriteswidget.h"
 #include "homewidget.h"
 #include "mangareaderwidget.h"
 #include "menudialog.h"
+#include "networkmanager.h"
 #include "screensaverdialog.h"
 #include "settingsdialog.h"
 #include "suspendmanager.h"
@@ -68,6 +69,7 @@ private:
     void adjustSizes();
     void disableFrontLight();
 
+    void timerTick();
     void onSuspend();
     void onResume();
 
@@ -88,6 +90,7 @@ private:
     WifiDialog *wifiDialog;
     ScreensaverDialog *screensaverDialog;
     DownloadMangaChaptersDialog *downloadMangaChaptersDialog;
+    DownloadStatusDialog *downloadStatusDialog;
 
     SuspendManager *suspendManager;
 };

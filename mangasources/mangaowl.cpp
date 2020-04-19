@@ -1,6 +1,6 @@
 #include "mangaowl.h"
 
-MangaOwl::MangaOwl(DownloadManager *dm) : AbstractMangaSource(dm)
+MangaOwl::MangaOwl(NetworkManager *dm) : AbstractMangaSource(dm)
 {
     name = "MangaOwl";
     baseurl = "https://mangaowl.net/";
@@ -17,7 +17,7 @@ bool MangaOwl::uptareMangaList(UpdateProgressToken *token)
 
     MangaList mangas;
 
-    auto job = downloadManager->downloadAsString(dicturl + "1");
+    auto job = networkManager->downloadAsString(dicturl + "1");
 
     if (!job->await(7000))
     {
@@ -62,7 +62,7 @@ bool MangaOwl::uptareMangaList(UpdateProgressToken *token)
     for (int i = 2; i <= pages; i++)
         urls.append(dicturl + QString::number(i));
 
-    DownloadQueue queue(downloadManager, urls, CONF.parallelDownloadsHigh, lambda, true);
+    DownloadQueue queue(networkManager, urls, CONF.parallelDownloadsHigh, lambda, true);
     queue.setCancellationToken(&token->canceled);
     queue.start();
     if (!queue.awaitCompletion())
@@ -113,7 +113,7 @@ Result<QStringList, QString> MangaOwl::getPageList(const QString &chapterlink)
 {
     QRegularExpression pagerx(R"lit(<img[^>]*class="owl-lazy"[^>]*data-src="([^"]*)")lit");
 
-    auto job = downloadManager->downloadAsString(chapterlink);
+    auto job = networkManager->downloadAsString(chapterlink);
 
     if (!job->await(7000))
         return Err(job->errorString);

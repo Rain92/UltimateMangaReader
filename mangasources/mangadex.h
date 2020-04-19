@@ -7,7 +7,7 @@
 class MangaDex : public AbstractMangaSource
 {
 public:
-    explicit MangaDex(DownloadManager *dm);
+    explicit MangaDex(NetworkManager *dm);
 
     bool uptareMangaList(UpdateProgressToken *token) override;
     void updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,

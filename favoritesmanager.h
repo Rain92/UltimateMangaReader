@@ -2,7 +2,7 @@
 #define READINGSTATEMANAGER_H
 
 #include "abstractmangasource.h"
-#include "downloadmanager.h"
+#include "networkmanager.h"
 #include "favorite.h"
 
 class FavoritesManager : public QObject

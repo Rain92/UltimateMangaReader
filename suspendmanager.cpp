@@ -1,6 +1,6 @@
 #include "suspendmanager.h"
 
-SuspendManager::SuspendManager(QObject *parent) : QObject(parent), sleeping(false), numUnexpectedWakups(0) {}
+SuspendManager::SuspendManager(QObject *parent) : QObject(parent), sleeping(false) {}
 
 void printPowerStates()
 {
@@ -31,10 +31,13 @@ void printPowerStates()
     file2.close();
 }
 
-bool SuspendManager::suspend()
+bool SuspendManager::suspend(bool silent)
 {
-    emit suspending();
-    qApp->processEvents();
+    if (!silent)
+    {
+        emit suspending();
+        qApp->processEvents();
+    }
 
 #ifdef KOBO
     qDebug() << QTime::currentTime().toString("hh:mm:ss") << "Going to sleep...";
@@ -82,7 +85,6 @@ bool SuspendManager::suspend()
     }
 
     close(handleS);
-    // UIManager:scheduleIn(15, check_unexpected_wakeup)
 #endif
 
     sleeping = true;
@@ -95,8 +97,6 @@ bool SuspendManager::resume()
     qDebug() << QTime::currentTime().toString("hh:mm:ss") << "Waking up...";
 
 #ifdef KOBO
-    numUnexpectedWakups = 0;
-    //    require("ui/uimanager"):unschedule(check_unexpected_wakeup)
 
     int handleSE = open("/sys/power/state-extended", O_RDWR);
     if (!handleSE)

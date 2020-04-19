@@ -1,6 +1,6 @@
 #include "mangahub.h"
 
-MangaHub::MangaHub(DownloadManager *dm) : AbstractMangaSource(dm)
+MangaHub::MangaHub(NetworkManager *dm) : AbstractMangaSource(dm)
 {
     name = "MangaHub";
     baseurl = "https://mangahub.io/";
@@ -14,7 +14,7 @@ bool MangaHub::uptareMangaList(UpdateProgressToken *token)
     MangaList mangas;
     mangas.absoluteUrls = true;
 
-    auto job = downloadManager->downloadAsString(dicturl + "1");
+    auto job = networkManager->downloadAsString(dicturl + "1");
 
     if (!job->await(7000))
     {
@@ -62,7 +62,7 @@ bool MangaHub::uptareMangaList(UpdateProgressToken *token)
         for (int i = oldPages + 1; i <= pages; i++)
             urls.append(dicturl + QString::number(i));
 
-        DownloadQueue queue(downloadManager, urls, CONF.parallelDownloadsHigh, lambda, true);
+        DownloadQueue queue(networkManager, urls, CONF.parallelDownloadsHigh, lambda, true);
         queue.setCancellationToken(&token->canceled);
         queue.start();
         if (!queue.awaitCompletion())
@@ -99,7 +99,7 @@ void MangaHub::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> 
         R"lit(<a href="(https://mangahub.io/chapter/[^"]+)"[^>]*>(.*?)</span></span>)lit");
 
     for (auto &c : job->getCookies())
-        downloadManager->addCookie(c.domain(), c.name(), c.value());
+        networkManager->addCookie(c.domain(), c.name(), c.value());
 
     fillMangaInfo(info, job->buffer, titlerx, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx,
                   coverrx);
@@ -129,7 +129,7 @@ int MangaHub::binarySearchNumPages(const QRegularExpressionMatch &imagerxmatch, 
 {
     if (!upperChecked)
     {
-        bool valid = downloadManager->urlExists(buildImgUrl(imagerxmatch, upperBound));
+        bool valid = networkManager->urlExists(buildImgUrl(imagerxmatch, upperBound));
         if (valid)
             return binarySearchNumPages(imagerxmatch, lowerBound, upperBound * 2, false);
     }
@@ -139,7 +139,7 @@ int MangaHub::binarySearchNumPages(const QRegularExpressionMatch &imagerxmatch, 
 
     int mid = (lowerBound + upperBound + 1) / 2;
 
-    bool valid = downloadManager->urlExists(buildImgUrl(imagerxmatch, mid));
+    bool valid = networkManager->urlExists(buildImgUrl(imagerxmatch, mid));
     if (valid)
         return binarySearchNumPages(imagerxmatch, mid, upperBound, true);
     else
@@ -152,7 +152,7 @@ Result<QStringList, QString> MangaHub::getPageList(const QString &chapterlink)
 
     QRegularExpression numimagesrx(R"lit(>1/(\d+)<)lit");
 
-    auto job = downloadManager->downloadAsString(chapterlink);
+    auto job = networkManager->downloadAsString(chapterlink);
 
     if (!job->await(7000))
         return Err(job->errorString);

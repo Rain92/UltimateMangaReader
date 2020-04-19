@@ -1,7 +1,7 @@
 #ifndef DOWNLOADQUEUE_H
 #define DOWNLOADQUEUE_H
 
-#include "downloadmanager.h"
+#include "networkmanager.h"
 
 enum DownloadType
 {
@@ -20,12 +20,11 @@ class DownloadQueue : public QObject
 {
     Q_OBJECT
 public:
-    explicit DownloadQueue(DownloadManager *downloadmanager, const QList<QString> &urls,
-                           int parallelDownloads,
+    explicit DownloadQueue(NetworkManager *downloadmanager, const QList<QString> &urls, int parallelDownloads,
                            std::function<void(QSharedPointer<DownloadStringJob>)> lambda, bool cancelOnError,
                            int individualTimeout = 16000);
 
-    explicit DownloadQueue(DownloadManager *downloadmanager, const QList<FileDownloadDescriptor> &urlAndPaths,
+    explicit DownloadQueue(NetworkManager *downloadmanager, const QList<FileDownloadDescriptor> &urlAndPaths,
                            int parallelDownloads, bool cancelOnError);
 
     int totalJobs;
@@ -38,17 +37,18 @@ public:
     void appendDownload(const FileDownloadDescriptor &urlAndPaths);
     void appendDownloads(const QList<FileDownloadDescriptor> &urlAndPaths);
     void clearQuene();
+    void resetJobCount();
     bool awaitCompletion();
     void setCancellationToken(bool *token);
 
 signals:
     void singleDownloadCompleted(const QString &url, const QString &path);
-    void singleDownloadFailed(const QString &url);
+    void singleDownloadFailed(const QString &url, const QString &error);
     void allCompleted();
     void progress(int completed, int total, int failed);
 
 private:
-    DownloadManager *downloadmanager;
+    NetworkManager *networkManager;
 
     QAtomicInt runningJobs;
 

@@ -2,8 +2,8 @@
 
 #include "ui_wifidialog.h"
 
-WifiDialog::WifiDialog(QWidget *parent, DownloadManager *downloadManager)
-    : QDialog(parent), ui(new Ui::WifiDialog), downloadManager(downloadManager), lastConnection()
+WifiDialog::WifiDialog(QWidget *parent, NetworkManager *networkManager)
+    : QDialog(parent), ui(new Ui::WifiDialog), networkManager(networkManager), lastConnection()
 {
     ui->setupUi(this);
 }
@@ -21,8 +21,8 @@ void WifiDialog::connect()
     ui->pushButtonRetry->hide();
 
     lastConnection = QtConcurrent::run([this]() {
-        downloadManager->connectWifi();
-        if (downloadManager->connected)
+        networkManager->connectWifi();
+        if (networkManager->connected)
         {
             close();
         }

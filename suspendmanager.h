@@ -15,9 +15,8 @@ class SuspendManager : public QObject
 public:
     SuspendManager(QObject* parent = nullptr);
 
-    bool suspend();
+    bool suspend(bool silent = false);
     bool resume();
-    //    bool checkUnexpectedWakeup();
 
     bool sleeping;
 
@@ -26,7 +25,6 @@ signals:
     void resuming();
 
 private:
-    int numUnexpectedWakups;
 };
 
 #endif  // SUSPENDMANAGER_H

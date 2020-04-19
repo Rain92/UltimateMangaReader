@@ -7,7 +7,7 @@
 class MangaHub : public AbstractMangaSource
 {
 public:
-    explicit MangaHub(DownloadManager *dm);
+    explicit MangaHub(NetworkManager *dm);
 
     bool uptareMangaList(UpdateProgressToken *token) override;
     void updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,

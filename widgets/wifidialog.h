@@ -4,7 +4,7 @@
 #include <QDialog>
 #include <QtConcurrent/QtConcurrent>
 
-#include "downloadmanager.h"
+#include "networkmanager.h"
 
 namespace Ui
 {
@@ -16,7 +16,7 @@ class WifiDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit WifiDialog(QWidget* parent, DownloadManager* downloadManager);
+    explicit WifiDialog(QWidget* parent, NetworkManager* networkManager);
     ~WifiDialog();
 
     void connect();
@@ -28,7 +28,7 @@ private slots:
 
 private:
     Ui::WifiDialog* ui;
-    DownloadManager* downloadManager;
+    NetworkManager* networkManager;
     QFuture<void> lastConnection;
 };
 

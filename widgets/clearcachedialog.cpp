@@ -23,11 +23,14 @@ void ClearCacheDialog::adjustSizes()
     ui->labelTitle->setStyleSheet("font-size: 15pt");
 }
 
-void ClearCacheDialog::setValues(long chacheSize, long freeSpace)
+void ClearCacheDialog::open()
 {
-    QString str =
-        QString("Downloads take up %1 MB. \n%2 MB of free space remaining.").arg(chacheSize).arg(freeSpace);
+    QString str = QString("Downloads take up %1 MB. \n%2 MB of free space remaining.")
+                      .arg(getCacheSize())
+                      .arg(getFreeSpace());
     ui->labelCacheSize->setText(str);
+
+    QDialog::open();
 }
 
 void ClearCacheDialog::on_pushButtonCancel_clicked()

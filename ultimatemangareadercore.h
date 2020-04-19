@@ -3,10 +3,9 @@
 
 #include <QObject>
 
-#include "downloadmanager.h"
-#include "downloadqueue.h"
 #include "favoritesmanager.h"
 #include "jaiminisbox.h"
+#include "mangachapterdownloadmanager.h"
 #include "mangacontroller.h"
 #include "mangadex.h"
 #include "mangahub.h"
@@ -29,12 +28,12 @@ public:
 
     QSharedPointer<MangaInfo> currentManga;
 
-    DownloadManager *downloadManager;
+    NetworkManager *networkManager;
     MangaController *mangaController;
     FavoritesManager *favoritesManager;
+    MangaChapterDownloadManager *mangaChapterDownloadManager;
 
     Settings settings;
-    DownloadQueue backgroundDownloader;
 
 public:
     void setImageSize(const QSize &size);
@@ -42,16 +41,12 @@ public:
     void setCurrentMangaSource(AbstractMangaSource *mangaSource);
     void setCurrentManga(const QString &mangalink, const QString &mangatitle);
 
-    long getCacheSize();
-    long getFreeSpace();
     void clearDownloadCache(ClearDownloadCacheLevel level);
     void updateActiveScources();
 
     void updateMangaLists(QSharedPointer<UpdateProgressToken> progressToken);
 
     void enableTimer(bool enabled);
-
-    void downloadMangaChapters(QSharedPointer<MangaInfo> mangaInfo, int fromChapter, int toChapter);
 
 signals:
     void currentMangaSourceChanged(AbstractMangaSource *source);

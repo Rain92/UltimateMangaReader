@@ -1,10 +1,10 @@
 #include "mangacontroller.h"
 
-MangaController::MangaController(DownloadManager *downloadManager, QObject *parent)
+MangaController::MangaController(NetworkManager *networkManager, QObject *parent)
     : QObject(parent),
       currentIndex(nullptr, 0, 0),
-      downloadManager(downloadManager),
-      preloadQueue(downloadManager, {}, 2, false)
+      networkManager(networkManager),
+      preloadQueue(networkManager, {}, 2, false)
 {
     QObject::connect(&preloadQueue, &DownloadQueue::singleDownloadCompleted, this,
                      &MangaController::completedImagePreload);

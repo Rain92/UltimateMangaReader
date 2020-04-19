@@ -1,4 +1,4 @@
-#include "downloadmanager.h"
+#include "networkmanager.h"
 
 #include "utils.h"
 
@@ -6,7 +6,7 @@
 #include "../koboplatformintegrationplugin/koboplatformfunctions.h"
 #endif
 
-DownloadManager::DownloadManager(QObject *parent)
+NetworkManager::NetworkManager(QObject *parent)
     : QObject(parent),
       connected(false),
       networkManager(new QNetworkAccessManager(this)),
@@ -19,12 +19,12 @@ DownloadManager::DownloadManager(QObject *parent)
 #endif
 }
 
-QNetworkAccessManager *DownloadManager::networkAccessManager()
+QNetworkAccessManager *NetworkManager::networkAccessManager()
 {
     return this->networkManager;
 }
 
-bool DownloadManager::connectWifi()
+bool NetworkManager::connectWifi()
 {
     if (!checkInternetConnection())
     {
@@ -46,7 +46,7 @@ bool DownloadManager::connectWifi()
     return connected;
 }
 
-bool DownloadManager::disconnectWifi()
+bool NetworkManager::disconnectWifi()
 {
     if (!connected)
         return true;
@@ -61,7 +61,7 @@ bool DownloadManager::disconnectWifi()
     return true;
 }
 
-bool DownloadManager::checkInternetConnection()
+bool NetworkManager::checkInternetConnection()
 {
     bool oldstatus = connected;
 #ifdef KOBO
@@ -75,23 +75,19 @@ bool DownloadManager::checkInternetConnection()
     return connected;
 }
 
-QSharedPointer<DownloadStringJob> DownloadManager::downloadAsString(const QString &url, int timeout,
-                                                                    const QByteArray &postData)
+QSharedPointer<DownloadStringJob> NetworkManager::downloadAsString(const QString &url, int timeout,
+                                                                   const QByteArray &postData)
 {
-    qDebug() << "downloading:" << url;
+    qDebug() << "Downloading as string:" << url;
 
     auto job = QSharedPointer<DownloadStringJob>(
         new DownloadStringJob(networkManager, url, timeout, postData), &QObject::deleteLater);
-    //                [](DownloadStringJob *j) {
-    //            j->disconnect();
-    //            j->deleteLater();
-    //        });
 
     job->start();
     return job;
 }
 
-QSharedPointer<DownloadFileJob> DownloadManager::downloadAsFile(const QString &url, const QString &localPath)
+QSharedPointer<DownloadFileJob> NetworkManager::downloadAsFile(const QString &url, const QString &localPath)
 {
     if (fileDownloads.contains(url))
     {
@@ -101,6 +97,8 @@ QSharedPointer<DownloadFileJob> DownloadManager::downloadAsFile(const QString &u
         else
             fileDownloads.remove(url);
     }
+
+    qDebug() << "Downloading as file:" << url;
 
     auto job = QSharedPointer<DownloadFileJob>(new DownloadFileJob(networkManager, url, localPath),
                                                [this](DownloadFileJob *j) {
@@ -115,8 +113,8 @@ QSharedPointer<DownloadFileJob> DownloadManager::downloadAsFile(const QString &u
     return job;
 }
 
-QSharedPointer<DownloadFileJob> DownloadManager::downloadAsScaledImage(const QString &url,
-                                                                       const QString &localPath)
+QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const QString &url,
+                                                                      const QString &localPath)
 {
     if (fileDownloads.contains(url))
     {
@@ -126,6 +124,9 @@ QSharedPointer<DownloadFileJob> DownloadManager::downloadAsScaledImage(const QSt
         else
             fileDownloads.remove(url);
     }
+
+    qDebug() << "Downloading as image:" << url;
+
     auto job = QSharedPointer<DownloadFileJob>(
         new DownloadScaledImageJob(networkManager, url, localPath, imageRescaleSize),
         [this](DownloadScaledImageJob *j) {
@@ -140,12 +141,12 @@ QSharedPointer<DownloadFileJob> DownloadManager::downloadAsScaledImage(const QSt
     return job;
 }
 
-void DownloadManager::setImageRescaleSize(const QSize &size)
+void NetworkManager::setImageRescaleSize(const QSize &size)
 {
     imageRescaleSize = size;
 }
 
-void DownloadManager::addCookie(const QString &domain, const char *key, const char *value)
+void NetworkManager::addCookie(const QString &domain, const char *key, const char *value)
 {
     for (int i = 0; i < cookies.cookies.count(); i++)
         if (cookies.cookies[i].name() == QByteArray(key) && cookies.cookies[i].domain() == domain)
@@ -157,7 +158,7 @@ void DownloadManager::addCookie(const QString &domain, const char *key, const ch
     cookies.addCookie(domain, key, value);
 }
 
-void DownloadManager::loadCertificates(const QString &certsPath)
+void NetworkManager::loadCertificates(const QString &certsPath)
 {
     auto sslConfig = QSslConfiguration::defaultConfiguration();
     sslConfig.setProtocol(QSsl::SecureProtocols);
@@ -180,7 +181,7 @@ void DownloadManager::loadCertificates(const QString &certsPath)
     QSslConfiguration::setDefaultConfiguration(sslConfig);
 }
 
-bool DownloadManager::urlExists(const QString &url)
+bool NetworkManager::urlExists(const QString &url)
 {
     QNetworkRequest request(url);
 

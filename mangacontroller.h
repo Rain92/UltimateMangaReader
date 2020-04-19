@@ -18,7 +18,7 @@ class MangaController : public QObject
     Q_OBJECT
 
 public:
-    MangaController(DownloadManager *downloadManager, QObject *parent = nullptr);
+    MangaController(NetworkManager *networkManager, QObject *parent = nullptr);
 
     QSharedPointer<MangaInfo> currentManga;
     MangaIndexTraverser currentIndex;
@@ -52,7 +52,7 @@ private:
     void updateCurrentImage();
     void deserializeProgress();
     void serializeProgress();
-    DownloadManager *downloadManager;
+    NetworkManager *networkManager;
     DownloadQueue preloadQueue;
 };
 

@@ -22,6 +22,9 @@
      <property name="alignment">
       <set>Qt::AlignCenter</set>
      </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
     </widget>
    </item>
    <item>
@@ -171,7 +174,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButtonOk">
+      <widget class="QPushButton" name="pushButtonConfirm">
        <property name="text">
         <string>Ok</string>
        </property>

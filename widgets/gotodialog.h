@@ -36,6 +36,8 @@ private slots:
 
     void on_pushButtonGoPage_clicked();
 
+    void on_pushButtonCancel_clicked();
+
 private:
     Ui::GotoDialog *ui;
 };

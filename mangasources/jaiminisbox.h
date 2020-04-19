@@ -7,7 +7,7 @@
 class JaiminisBox : public AbstractMangaSource
 {
 public:
-    explicit JaiminisBox(DownloadManager *dm);
+    explicit JaiminisBox(NetworkManager *dm);
 
     bool uptareMangaList(UpdateProgressToken *token) override;
 

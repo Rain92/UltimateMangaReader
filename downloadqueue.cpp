@@ -3,7 +3,7 @@
 #include "utils.h"
 
 // Download as strings
-DownloadQueue::DownloadQueue(DownloadManager* downloadmanager, const QList<QString>& urls,
+DownloadQueue::DownloadQueue(NetworkManager* networkManager, const QList<QString>& urls,
                              int parallelDownloads,
                              std::function<void(QSharedPointer<DownloadStringJob>)> lambda,
                              bool cancelOnError, int individualTimeout)
@@ -12,7 +12,7 @@ DownloadQueue::DownloadQueue(DownloadManager* downloadmanager, const QList<QStri
       errors(0),
       lastErrorMessage(""),
       cancelOnError(cancelOnError),
-      downloadmanager(downloadmanager),
+      networkManager(networkManager),
       runningJobs(0),
       type(DownloadTypeString),
       parallelDownloads(parallelDownloads),
@@ -28,15 +28,14 @@ DownloadQueue::DownloadQueue(DownloadManager* downloadmanager, const QList<QStri
 }
 
 // Download as images
-DownloadQueue::DownloadQueue(DownloadManager* downloadmanager,
-                             const QList<FileDownloadDescriptor>& urlAndPaths, int parallelDownloads,
-                             bool cancelOnError)
+DownloadQueue::DownloadQueue(NetworkManager* networkManager, const QList<FileDownloadDescriptor>& urlAndPaths,
+                             int parallelDownloads, bool cancelOnError)
     : QObject(),
       completed(0),
       errors(0),
       lastErrorMessage(""),
       cancelOnError(cancelOnError),
-      downloadmanager(downloadmanager),
+      networkManager(networkManager),
       type(DownloadTypeScaledImage),
       parallelDownloads(parallelDownloads),
       jobDescriptorQueue(),
@@ -67,9 +66,9 @@ void DownloadQueue::startSingle()
     QSharedPointer<DownloadJobBase> job;
 
     if (type == DownloadTypeString)
-        job = downloadmanager->downloadAsString(descriptor.url, individualTimeout);
+        job = networkManager->downloadAsString(descriptor.url, individualTimeout);
     else  // if (type == DownloadTypeScaledImage)
-        job = downloadmanager->downloadAsScaledImage(descriptor.url, descriptor.path);
+        job = networkManager->downloadAsScaledImage(descriptor.url, descriptor.path);
 
     if (!job->isCompleted)
     {
@@ -103,8 +102,9 @@ void DownloadQueue::downloadFinished(QSharedPointer<DownloadJobBase> job, bool s
     {
         errors++;
         lastErrorMessage = job->errorString;
-        clearQuene();
-        emit singleDownloadFailed(job->originalUrl);
+        if (cancelOnError)
+            clearQuene();
+        emit singleDownloadFailed(job->originalUrl, job->errorString);
     }
 
     if (cancellationToken != nullptr && *cancellationToken)
@@ -150,12 +150,21 @@ void DownloadQueue::clearQuene()
     jobDescriptorQueue.clear();
     totalJobs -= c;
 }
+
+void DownloadQueue::resetJobCount()
+{
+    errors = 0;
+    totalJobs = 0;
+    completed = 0;
+}
+
 bool DownloadQueue::awaitCompletion()
 {
     awaitSignal(this, {SIGNAL(allCompleted())}, -1);
 
     return errors == 0;
 }
+
 void DownloadQueue::setCancellationToken(bool* token)
 {
     cancellationToken = token;

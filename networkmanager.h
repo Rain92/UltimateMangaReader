@@ -22,12 +22,12 @@ public:
     QList<QNetworkCookie> cookies;
 };
 
-class DownloadManager : public QObject
+class NetworkManager : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit DownloadManager(QObject *parent = nullptr);
+    explicit NetworkManager(QObject *parent = nullptr);
 
     QNetworkAccessManager *networkAccessManager();
 

@@ -2,8 +2,8 @@
 
 #include "mangainfo.h"
 
-AbstractMangaSource::AbstractMangaSource(DownloadManager *downloadmanager)
-    : mangaInfoPostDataStr(), downloadManager(downloadmanager), htmlConverter()
+AbstractMangaSource::AbstractMangaSource(NetworkManager *networkManager)
+    : mangaInfoPostDataStr(), networkManager(networkManager), htmlConverter()
 {
 }
 
@@ -59,7 +59,7 @@ QSharedPointer<DownloadFileJob> AbstractMangaSource::downloadImage(const Downloa
 {
     QString path = getImagePath(descriptor);
 
-    return downloadManager->downloadAsScaledImage(descriptor.imageUrl, path);
+    return networkManager->downloadAsScaledImage(descriptor.imageUrl, path);
 }
 
 Result<QString, QString> AbstractMangaSource::downloadAwaitImage(const DownloadImageDescriptor &descriptor)
@@ -69,7 +69,7 @@ Result<QString, QString> AbstractMangaSource::downloadAwaitImage(const DownloadI
     if (QFile::exists(path))
         return Ok(path);
 
-    auto job = downloadManager->downloadAsScaledImage(descriptor.imageUrl, path);
+    auto job = networkManager->downloadAsScaledImage(descriptor.imageUrl, path);
 
     if (job->await(5000))
         return Ok(path);
@@ -114,7 +114,7 @@ Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::loadMangaInfo(co
 
 Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::getMangaInfo(const QString &mangalink)
 {
-    auto job = downloadManager->downloadAsString(mangalink, 6000, mangaInfoPostDataStr);
+    auto job = networkManager->downloadAsString(mangalink, 6000, mangaInfoPostDataStr);
 
     auto info = QSharedPointer<MangaInfo>(new MangaInfo(this));
 
@@ -137,7 +137,7 @@ void AbstractMangaSource::updateMangaInfoAsync(QSharedPointer<MangaInfo> info)
 {
     int oldnumchapters = info->chapters.count();
 
-    auto job = downloadManager->downloadAsString(info->link, 6000, mangaInfoPostDataStr);
+    auto job = networkManager->downloadAsString(info->link, 6000, mangaInfoPostDataStr);
 
     auto lambda = [oldnumchapters, info, job, this] {
         {
@@ -225,7 +225,7 @@ void AbstractMangaSource::downloadCoverAsync(QSharedPointer<MangaInfo> mangainfo
         mangainfo->coverPath = CONF.mangainfodir(name, mangainfo->title) + "cover" + filetype;
     }
 
-    auto coverjob = downloadManager->downloadAsFile(mangainfo->coverLink, mangainfo->coverPath);
+    auto coverjob = networkManager->downloadAsFile(mangainfo->coverLink, mangainfo->coverPath);
 
     auto lambda = [this, mangainfo]() {
         genrateCoverThumbnail(mangainfo);

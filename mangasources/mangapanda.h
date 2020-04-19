@@ -7,7 +7,7 @@
 class MangaPanda : public AbstractMangaSource
 {
 public:
-    explicit MangaPanda(DownloadManager *dm);
+    explicit MangaPanda(NetworkManager *dm);
 
     bool uptareMangaList(UpdateProgressToken *token) override;
     void updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,

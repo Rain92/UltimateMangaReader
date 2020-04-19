@@ -1,6 +1,6 @@
 #include "jaiminisbox.h"
 
-JaiminisBox::JaiminisBox(DownloadManager *dm) : AbstractMangaSource(dm)
+JaiminisBox::JaiminisBox(NetworkManager *dm) : AbstractMangaSource(dm)
 {
     name = "JaiminisBox";
     baseurl = "https://jaiminisbox.com/";
@@ -21,7 +21,7 @@ bool JaiminisBox::uptareMangaList(UpdateProgressToken *token)
 
     QString readerlink = baseurl + "reader/directory/";
 
-    auto job = downloadManager->downloadAsString(readerlink + "1", -1);
+    auto job = networkManager->downloadAsString(readerlink + "1", -1);
 
     if (!job->await(7000))
     {
@@ -64,7 +64,7 @@ bool JaiminisBox::uptareMangaList(UpdateProgressToken *token)
     for (int i = 2; i <= pages; i++)
         urls.append(readerlink + QString::number(i));
 
-    DownloadQueue queue(downloadManager, urls, CONF.parallelDownloadsLow, lambda, true);
+    DownloadQueue queue(networkManager, urls, CONF.parallelDownloadsLow, lambda, true);
     queue.setCancellationToken(&token->canceled);
     queue.start();
     if (!queue.awaitCompletion())
@@ -110,7 +110,7 @@ Result<QStringList, QString> JaiminisBox::getPageList(const QString &chapterlink
     QRegularExpression encodedrx(R"(JSON.parse\(atob\("([^"]*))");
     QRegularExpression imagelinksrx(R"("url":"([^"]*))");
 
-    auto job = downloadManager->downloadAsString(chapterlink, 6000, mangaInfoPostDataStr);
+    auto job = networkManager->downloadAsString(chapterlink, 6000, mangaInfoPostDataStr);
 
     if (!job->await(7000))
         return Err(job->errorString);

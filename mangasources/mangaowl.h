@@ -7,7 +7,7 @@
 class MangaOwl : public AbstractMangaSource
 {
 public:
-    explicit MangaOwl(DownloadManager *dm);
+    explicit MangaOwl(NetworkManager *dm);
 
     bool uptareMangaList(UpdateProgressToken *token) override;
     void updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,

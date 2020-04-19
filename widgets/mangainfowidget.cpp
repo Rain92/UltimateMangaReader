@@ -112,6 +112,8 @@ void MangaInfoWidget::updateInfos()
     ui->pushButtonReadContinue->setEnabled(enable);
     ui->pushButtonReadFirst->setEnabled(enable);
     ui->pushButtonReadLatest->setEnabled(enable);
+    ui->toolButtonDownload->setVisible(enable);
+    ui->toolButtonAddFavorites->setVisible(enable);
 }
 
 void MangaInfoWidget::setFavoriteButtonState(bool state)
@@ -148,6 +150,5 @@ void MangaInfoWidget::on_pushButtonReadFirst_clicked()
 void MangaInfoWidget::on_toolButtonDownload_clicked()
 {
     if (!currentmanga.isNull())
-        emit downloadMangaClicked(currentmanga);
-    qDebug() << "Download clicked";
+        emit downloadMangaClicked();
 }

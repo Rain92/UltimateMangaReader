@@ -16,12 +16,10 @@ class SettingsDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit SettingsDialog(QWidget *parent = nullptr);
+    explicit SettingsDialog(Settings *settings, QWidget *parent = nullptr);
     ~SettingsDialog();
 
-    void setSettings(Settings *settings);
-
-    void resetUI();
+    void open() override;
 
 signals:
     void activeMangasChanged();
@@ -33,6 +31,7 @@ private:
     Ui::SettingsDialog *ui;
     Settings *settings;
 
+    void resetUI();
     void adjustSizes();
 
     void updateSettings();

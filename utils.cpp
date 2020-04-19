@@ -1,5 +1,7 @@
 #include "utils.h"
 
+#include "staticsettings.h"
+
 QList<QRegularExpressionMatch> getAllRxMatches(const QRegularExpression& rx, const QString& text, int spos,
                                                int epos)
 {
@@ -115,4 +117,19 @@ void activateScroller(QAbstractScrollArea* pArea)
         scroller->setScrollerProperties(prop);
         scroller->grabGesture(pArea, QScroller::LeftMouseButtonGesture);
     }
+}
+
+long getCacheSize()
+{
+    long size = dirSize(CONF.cacheDir) / 1024 / 1024;
+
+    return size;
+}
+
+long getFreeSpace()
+{
+    QStorageInfo info(CONF.cacheDir);
+
+    long space = info.bytesAvailable() / 1024 / 1024;
+    return space;
 }

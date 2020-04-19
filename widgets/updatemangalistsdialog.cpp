@@ -22,6 +22,12 @@ void UpdateMangaListsDialog::setSettings(Settings *settings)
     this->settings = settings;
 }
 
+void UpdateMangaListsDialog::open()
+{
+    resetUI();
+    QDialog::open();
+}
+
 void UpdateMangaListsDialog::resetUI()
 {
     setupSourcesList();

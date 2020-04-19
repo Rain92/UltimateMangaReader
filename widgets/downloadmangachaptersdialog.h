@@ -18,7 +18,7 @@ public:
     explicit DownloadMangaChaptersDialog(QWidget *parent = nullptr);
     ~DownloadMangaChaptersDialog();
 
-    void show(QSharedPointer<MangaInfo> mangaInfo);
+    void show(QSharedPointer<MangaInfo> mangaInfo, int chapterFrom = 0);
 
 signals:
     void downloadConfirmed(QSharedPointer<MangaInfo> mangaInfo, int chapterFrom, int chapterTo);
@@ -27,9 +27,9 @@ protected:
     bool eventFilter(QObject *obj, QEvent *ev);
 
 private slots:
-    void on_pushButtonOk_clicked();
-
     void on_pushButtonCancel_clicked();
+
+    void on_pushButtonConfirm_clicked();
 
 private:
     void adjustSizes();

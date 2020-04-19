@@ -2,13 +2,9 @@
 
 #include "utils.h"
 
-DownloadStringJob::DownloadStringJob(QNetworkAccessManager *networkManager,
-                                     const QString &url, int timeout,
+DownloadStringJob::DownloadStringJob(QNetworkAccessManager *networkManager, const QString &url, int timeout,
                                      const QByteArray &postdata)
-    : DownloadJobBase(networkManager, url),
-      timeoutTime(timeout),
-      postData(postdata),
-      buffer("")
+    : DownloadJobBase(networkManager, url), timeoutTime(timeout), postData(postdata), buffer("")
 {
 }
 
@@ -21,26 +17,20 @@ void DownloadStringJob::start()
     }
     else
     {
-        request.setHeader(QNetworkRequest::ContentTypeHeader,
-                          "application/x-www-form-urlencoded");
+        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
         reply.reset(networkManager->post(request, postData));
     }
     reply->setParent(nullptr);
 
-    QObject::connect(reply.get(), &QNetworkReply::finished, this,
-                     &DownloadStringJob::downloadStringFinished);
-    QObject::connect(
-        reply.get(),
-        static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(
-            &QNetworkReply::error),
-        this, &DownloadStringJob::onError);
-    QObject::connect(reply.get(), &QNetworkReply::sslErrors, this,
-                     &DownloadJobBase::onSslErrors);
+    QObject::connect(reply.get(), &QNetworkReply::finished, this, &DownloadStringJob::downloadStringFinished);
+    QObject::connect(reply.get(),
+                     static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
+                     this, &DownloadStringJob::onError);
+    QObject::connect(reply.get(), &QNetworkReply::sslErrors, this, &DownloadJobBase::onSslErrors);
 
     if (timeoutTime > 0)
     {
-        QObject::connect(&timeoutTimer, &QTimer::timeout, this,
-                         &DownloadStringJob::timeout);
+        QObject::connect(&timeoutTimer, &QTimer::timeout, this, &DownloadStringJob::timeout);
         timeoutTimer.start(timeoutTime);
     }
 }
@@ -57,15 +47,14 @@ void DownloadStringJob::restart()
 void DownloadStringJob::downloadStringReadyRead()
 {
     // read it all at once when finished
-    //    buffer.append(reply->readAll());
+    // buffer.append(reply->readAll());
 }
 
 void DownloadStringJob::downloadStringFinished()
 {
     timeoutTimer.stop();
 
-    QUrl redirect =
-        reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
+    QUrl redirect = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
     if (redirect.isValid() && reply->url() != redirect)
     {
         if (redirect.host() != "")
@@ -84,7 +73,8 @@ void DownloadStringJob::downloadStringFinished()
 
     if (errorString != "" || (reply->error() != QNetworkReply::NoError))
     {
-        //        emit downloadError();
+        // already handled
+        // emit downloadError();
     }
     else
     {

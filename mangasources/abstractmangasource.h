@@ -6,7 +6,7 @@
 #include <QTextDocument>
 
 #include "downloadimagedescriptor.h"
-#include "downloadmanager.h"
+#include "networkmanager.h"
 #include "downloadqueue.h"
 #include "mangachapter.h"
 #include "mangalist.h"
@@ -26,7 +26,7 @@ public:
 
     MangaList mangaList;
 
-    AbstractMangaSource(DownloadManager *downloadManager);
+    AbstractMangaSource(NetworkManager *networkManager);
 
     virtual bool uptareMangaList(UpdateProgressToken *token) = 0;
 
@@ -59,7 +59,7 @@ public:
 protected:
     QByteArray mangaInfoPostDataStr;
 
-    DownloadManager *downloadManager;
+    NetworkManager *networkManager;
     QTextDocument htmlConverter;
 
     void genrateCoverThumbnail(QSharedPointer<MangaInfo> mangainfo);

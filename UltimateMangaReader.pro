@@ -24,6 +24,7 @@ RESOURCES += \
 
 FORMS += \
     widgets/downloadmangachaptersdialog.ui \
+    widgets/downloadstatusdialog.ui \
     widgets/errormessagewidget.ui \
     widgets/favoriteswidget.ui \
     widgets/mainwidget.ui \
@@ -42,9 +43,11 @@ FORMS += \
 HEADERS += \
     enums.h \
     mangachaptercollection.h \
+    mangachapterdownloadmanager.h \
     mangacontroller.h \
     mangaindextraverser.h \
     mangasources/updateprogresstoken.h \
+    networkmanager.h \
     readingprogress.h \
     result.h \
     sizes.h \
@@ -66,13 +69,13 @@ HEADERS += \
     utils.h \
     widgets/clineedit.h \
     widgets/downloadmangachaptersdialog.h \
+    widgets/downloadstatusdialog.h \
     widgets/errormessagewidget.h \
     widgets/favoriteswidget.h \
     widgets/mainwidget.h \
     widgets/mangaimagecontainer.h \
     downloadfilejob.h \
     downloadimageandrescalejob.h \
-    downloadmanager.h \
     downloadstringjob.h \
     mangachapter.h \
     mangaindex.h \
@@ -95,9 +98,11 @@ HEADERS += \
 
 SOURCES += \
     mangachaptercollection.cpp \
+    mangachapterdownloadmanager.cpp \
     mangacontroller.cpp \
     mangaindextraverser.cpp \
     mangasources/updateprogresstoken.cpp \
+    networkmanager.cpp \
     readingprogress.cpp \
     suspendmanager.cpp \
     ultimatemangareadercore.cpp \
@@ -114,13 +119,13 @@ SOURCES += \
     utils.cpp \
     widgets/clineedit.cpp \
     widgets/downloadmangachaptersdialog.cpp \
+    widgets/downloadstatusdialog.cpp \
     widgets/errormessagewidget.cpp \
     widgets/favoriteswidget.cpp \
     widgets/mainwidget.cpp \
     widgets/mangaimagecontainer.cpp \
     downloadfilejob.cpp \
     downloadimageandrescalejob.cpp \
-    downloadmanager.cpp \
     downloadstringjob.cpp \
     main.cpp \
     mangachapter.cpp \

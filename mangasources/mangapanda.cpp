@@ -1,6 +1,6 @@
 #include "mangapanda.h"
 
-MangaPanda::MangaPanda(DownloadManager *dm) : AbstractMangaSource(dm)
+MangaPanda::MangaPanda(NetworkManager *dm) : AbstractMangaSource(dm)
 {
     name = "MangaPanda";
     baseurl = "http://www.mangapanda.com";
@@ -12,7 +12,7 @@ bool MangaPanda::uptareMangaList(UpdateProgressToken *token)
 
     MangaList mangas;
 
-    auto job = downloadManager->downloadAsString(baseurl + "/alphabetical");
+    auto job = networkManager->downloadAsString(baseurl + "/alphabetical");
 
     if (!job->await(10000))
     {
@@ -79,7 +79,7 @@ Result<QStringList, QString> MangaPanda::getPageList(const QString &chapterlink)
 {
     QRegularExpression pagerx(R"lit(<option value="([^"]*)")lit");
 
-    auto job = downloadManager->downloadAsString(chapterlink);
+    auto job = networkManager->downloadAsString(chapterlink);
 
     if (!job->await(7000))
         return Err(job->errorString);
@@ -98,7 +98,7 @@ Result<QStringList, QString> MangaPanda::getPageList(const QString &chapterlink)
 
 Result<QString, QString> MangaPanda::getImageLink(const QString &pagelink)
 {
-    auto job = downloadManager->downloadAsString(pagelink);
+    auto job = networkManager->downloadAsString(pagelink);
 
     QRegularExpression imagerx(R"lit(<img id="img"[^>]*src="([^"]*)")lit");
 

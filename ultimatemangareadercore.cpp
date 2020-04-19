@@ -6,21 +6,21 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
       activeMangaSources(),
       currentMangaSource(nullptr),
       currentManga(),
-      downloadManager(new DownloadManager(this)),
-      mangaController(new MangaController(downloadManager, this)),
+      networkManager(new NetworkManager(this)),
+      mangaController(new MangaController(networkManager, this)),
       favoritesManager(new FavoritesManager(activeMangaSources, this)),
+      mangaChapterDownloadManager(new MangaChapterDownloadManager(networkManager, this)),
       settings(),
-      backgroundDownloader(downloadManager, {}, 4, false),
       timer()
 {
     setupDirectories();
     settings.deserialize();
 
-    mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaPanda(downloadManager)));
-    mangaSources.append(QSharedPointer<AbstractMangaSource>(new JaiminisBox(downloadManager)));
-    mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaDex(downloadManager)));
-    mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaHub(downloadManager)));
-    mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaOwl(downloadManager)));
+    mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaPanda(networkManager)));
+    mangaSources.append(QSharedPointer<AbstractMangaSource>(new JaiminisBox(networkManager)));
+    mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaDex(networkManager)));
+    mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaHub(networkManager)));
+    mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaOwl(networkManager)));
 
     currentMangaSource = mangaSources.first().get();
 
@@ -79,7 +79,7 @@ void UltimateMangaReaderCore::updateActiveScources()
 
 void UltimateMangaReaderCore::setImageSize(const QSize& size)
 {
-    downloadManager->setImageRescaleSize(size);
+    networkManager->setImageRescaleSize(size);
 }
 
 void UltimateMangaReaderCore::setCurrentMangaSource(AbstractMangaSource* mangaSource)
@@ -110,21 +110,6 @@ void UltimateMangaReaderCore::setupDirectories()
 
     if (!QDir(CONF.screensaverDir).exists())
         QDir().mkpath(CONF.screensaverDir);
-}
-
-long UltimateMangaReaderCore::getCacheSize()
-{
-    long size = dirSize(CONF.cacheDir) / 1024 / 1024;
-
-    return size;
-}
-
-long UltimateMangaReaderCore::getFreeSpace()
-{
-    QStorageInfo info(CONF.cacheDir);
-
-    long space = info.bytesAvailable() / 1024 / 1024;
-    return space;
 }
 
 void UltimateMangaReaderCore::clearDownloadCache(ClearDownloadCacheLevel level)
@@ -179,20 +164,4 @@ void UltimateMangaReaderCore::updateMangaLists(QSharedPointer<UpdateProgressToke
         }
     }
     progressToken->sendFinished();
-}
-
-void UltimateMangaReaderCore::downloadMangaChapters(QSharedPointer<MangaInfo> mangaInfo, int fromChapter,
-                                                    int toChapter)
-{
-    for (int i = fromChapter; i <= toChapter; i++)
-    {
-        auto res = mangaInfo->mangaSource->updatePageList(mangaInfo, i);
-        if (!res.isOk())
-        {
-            return;
-        }
-    }
-    for (int i = fromChapter; i <= toChapter; i++)
-    {
-    }
 }

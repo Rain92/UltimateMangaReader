@@ -31,14 +31,13 @@ MainWidget::MainWidget(QWidget *parent)
 
     // Dialogs
     menuDialog = new MenuDialog(this);
-    settingsDialog = new SettingsDialog(this);
+    settingsDialog = new SettingsDialog(&core->settings, this);
     updateMangaListsDialog = new UpdateMangaListsDialog(this);
     clearCacheDialog = new ClearCacheDialog(this);
-    wifiDialog = new WifiDialog(this, core->downloadManager);
+    wifiDialog = new WifiDialog(this, core->networkManager);
     screensaverDialog = new ScreensaverDialog(this);
     downloadMangaChaptersDialog = new DownloadMangaChaptersDialog(this);
-
-    updateMangaListsDialog->setSettings(&core->settings);
+    downloadStatusDialog = new DownloadStatusDialog(this);
 
     QObject::connect(menuDialog, &MenuDialog::finished,
                      [this](int b) { menuDialogButtonPressed(static_cast<MenuButton>(b)); });
@@ -49,13 +48,44 @@ MainWidget::MainWidget(QWidget *parent)
     QObject::connect(updateMangaListsDialog, &UpdateMangaListsDialog::updateClicked, core,
                      &UltimateMangaReaderCore::updateMangaLists);
 
-    // DownloadManager
-    core->downloadManager->setImageRescaleSize(this->size());
-    QObject::connect(core->downloadManager, &DownloadManager::connectionStatusChanged,
-                     [this](bool connected) {
-                         auto pic = connected ? ":/images/icons/wifi.png" : ":/images/icons/no-wifi.png";
-                         ui->labelWifiIcon->setPixmap(QPixmap(pic));
+    QObject::connect(downloadMangaChaptersDialog, &DownloadMangaChaptersDialog::downloadConfirmed,
+                     [this](auto m, auto f, auto t) {
+                         downloadStatusDialog->open();
+                         core->mangaChapterDownloadManager->downloadMangaChapters(m, f, t);
                      });
+
+    QObject::connect(downloadStatusDialog, &DownloadStatusDialog::abortDownloads,
+                     core->mangaChapterDownloadManager, &MangaChapterDownloadManager::cancelDownloads);
+
+    // NetworkManager
+    core->networkManager->setImageRescaleSize(this->size());
+    QObject::connect(core->networkManager, &NetworkManager::connectionStatusChanged, [this](bool connected) {
+        auto pic = connected ? ":/images/icons/wifi.png" : ":/images/icons/no-wifi.png";
+        ui->labelWifiIcon->setPixmap(QPixmap(pic));
+    });
+
+    // MangaChapterDownloadManager
+    QObject::connect(core->mangaChapterDownloadManager, &MangaChapterDownloadManager::error,
+                     [this](auto msg) {
+                         if (!core->settings.hideErrorMessages)
+                             errorMessageWidget->showError(msg);
+                     });
+
+    QObject::connect(core->mangaChapterDownloadManager, &MangaChapterDownloadManager::downloadStart,
+                     downloadStatusDialog, &DownloadStatusDialog::downloadStart);
+
+    QObject::connect(core->mangaChapterDownloadManager,
+                     &MangaChapterDownloadManager::downloadPagelistProgress, downloadStatusDialog,
+                     &DownloadStatusDialog::downloadPagelistProgress);
+
+    QObject::connect(core->mangaChapterDownloadManager, &MangaChapterDownloadManager::downloadPagesProgress,
+                     downloadStatusDialog, &DownloadStatusDialog::downloadPagesProgress);
+
+    QObject::connect(core->mangaChapterDownloadManager, &MangaChapterDownloadManager::downloadImagesProgress,
+                     downloadStatusDialog, &DownloadStatusDialog::downloadImagesProgress);
+
+    QObject::connect(core->mangaChapterDownloadManager, &MangaChapterDownloadManager::downloadCompleted,
+                     downloadStatusDialog, &DownloadStatusDialog::downloadCompleted);
 
     // Core
     QObject::connect(core, &UltimateMangaReaderCore::error, [this](auto msg) {
@@ -63,10 +93,7 @@ MainWidget::MainWidget(QWidget *parent)
             errorMessageWidget->showError(msg);
     });
 
-    QObject::connect(core, &UltimateMangaReaderCore::timeTick, [this]() {
-        ui->batteryIcon->updateIcon();
-        ui->mangaReaderWidget->updateMenuBar();
-    });
+    QObject::connect(core, &UltimateMangaReaderCore::timeTick, this, &MainWidget::timerTick);
 
     QObject::connect(core, &UltimateMangaReaderCore::activeMangaSourcesChanged, ui->homeWidget,
                      &HomeWidget::updateSourcesList);
@@ -120,8 +147,10 @@ MainWidget::MainWidget(QWidget *parent)
     QObject::connect(ui->mangaInfoWidget, &MangaInfoWidget::readMangaContinueClicked,
                      [this]() { setWidgetTab(MangaReaderTab); });
 
-    QObject::connect(ui->mangaInfoWidget, &MangaInfoWidget::downloadMangaClicked, downloadMangaChaptersDialog,
-                     &DownloadMangaChaptersDialog::show);
+    QObject::connect(ui->mangaInfoWidget, &MangaInfoWidget::downloadMangaClicked, [this]() {
+        downloadMangaChaptersDialog->show(core->mangaController->currentManga,
+                                          core->mangaController->currentIndex.chapter);
+    });
 
     // FavoritesWidget
     ui->favoritesWidget->favoritesmanager = core->favoritesManager;
@@ -153,7 +182,6 @@ MainWidget::MainWidget(QWidget *parent)
                      &MangaController::setCurrentIndex);
 
     // SettingsDialog
-    settingsDialog->setSettings(&core->settings);
     QObject::connect(settingsDialog, &SettingsDialog::activeMangasChanged, core,
                      &UltimateMangaReaderCore::updateActiveScources);
 
@@ -189,6 +217,7 @@ void MainWidget::showEvent(QShowEvent *event)
 {
     QWidget::showEvent(event);
     core->updateActiveScources();
+    core->enableTimer(true);
 
     QTimer::singleShot(100, this, &MainWidget::onResume);
 }
@@ -247,29 +276,43 @@ bool MainWidget::buttonPressEvent(QKeyEvent *event)
     return false;
 }
 
+void MainWidget::timerTick()
+{
+    if (!suspendManager->sleeping)
+    {
+        ui->batteryIcon->updateIcon();
+        ui->mangaReaderWidget->updateMenuBar();
+    }
+    else
+    {
+        if (core->networkManager->connected)
+            core->networkManager->disconnectWifi();
+
+        suspendManager->suspend(true);
+    }
+}
+
 void MainWidget::onSuspend()
 {
-    core->enableTimer(false);
-
     screensaverDialog->showRandomScreensaver();
 
     disableFrontLight();
 
-    core->downloadManager->disconnectWifi();
+    core->networkManager->disconnectWifi();
 }
 
 void MainWidget::onResume()
 {
     screensaverDialog->close();
 
-    core->enableTimer(true);
-
     wifiDialog->connect();
     QTimer::singleShot(200, [this]() {
         setupFrontLight();
-        if (!core->downloadManager->connected)
+        if (!core->networkManager->connected)
             wifiDialog->open();
     });
+
+    timerTick();
 }
 
 void MainWidget::setupVirtualKeyboard()
@@ -341,7 +384,7 @@ void MainWidget::resizeEvent(QResizeEvent *event)
 
     errorMessageWidget->setFixedWidth(this->width());
 
-    core->downloadManager->setImageRescaleSize(this->size());
+    core->networkManager->setImageRescaleSize(this->size());
 }
 
 void MainWidget::setWidgetTab(WidgetTab tab)
@@ -414,15 +457,12 @@ void MainWidget::menuDialogButtonPressed(MenuButton button)
             close();
             break;
         case SettingsButton:
-            settingsDialog->resetUI();
             settingsDialog->open();
             break;
         case ClearDownloadsButton:
-            clearCacheDialog->setValues(core->getCacheSize(), core->getFreeSpace());
             clearCacheDialog->open();
             break;
         case UpdateMangaListsButton:
-            updateMangaListsDialog->resetUI();
             updateMangaListsDialog->open();
             break;
     }

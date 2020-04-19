@@ -13,7 +13,7 @@ GotoDialog::GotoDialog(QWidget *parent)
     ui->spinBoxChapter->setFixedHeight(buttonsize);
     ui->spinBoxPage->setFixedHeight(buttonsize);
 
-    ui->buttonBox->buttons()[0]->setFixedHeight(buttonsize);
+    ui->pushButtonCancel->setFixedHeight(buttonsize);
 
     ui->spinBoxChapter->installEventFilter(this);
     ui->spinBoxPage->installEventFilter(this);
@@ -81,4 +81,9 @@ void GotoDialog::on_pushButtonGoPage_clicked()
 {
     this->selectedindex.page = ui->spinBoxPage->value() - 1;
     this->accept();
+}
+
+void GotoDialog::on_pushButtonCancel_clicked()
+{
+    close();
 }

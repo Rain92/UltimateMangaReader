@@ -1,13 +1,13 @@
 #include "mangadex.h"
 
-MangaDex::MangaDex(DownloadManager *dm) : AbstractMangaSource(dm)
+MangaDex::MangaDex(NetworkManager *dm) : AbstractMangaSource(dm)
 {
     name = "MangaDex";
     baseurl = "https://mangadex.org";
 
-    //    downloadmanager->addCookie(".mangadex.org", "mangadex_h_toggle", "1");
-    downloadManager->addCookie(".mangadex.org", "mangadex_title_mode", "2");
-    downloadManager->addCookie(".mangadex.org", "mangadex_filter_langs", "1");
+    //    networkManager->addCookie(".mangadex.org", "mangadex_h_toggle", "1");
+    networkManager->addCookie(".mangadex.org", "mangadex_title_mode", "2");
+    networkManager->addCookie(".mangadex.org", "mangadex_filter_langs", "1");
 
     //    login();
 }
@@ -27,11 +27,11 @@ void MangaDex::login()
         foreach (QNetworkCookie c, ncookies)
         {
             qDebug() << "Added cookie" << c.name() << c.value();
-            downloadManager->addCookie(".mangadex.org", c.name(), c.value());
+            networkManager->addCookie(".mangadex.org", c.name(), c.value());
         }
     };
 
-    auto job = downloadManager->downloadAsString(loginurl, 6000, query);
+    auto job = networkManager->downloadAsString(loginurl, 6000, query);
 
     executeOnJobCompletion(job, lambda);
 }
@@ -47,7 +47,7 @@ bool MangaDex::uptareMangaList(UpdateProgressToken *token)
 
     QString basedictlink = baseurl + "/titles/2/";
 
-    auto job = downloadManager->downloadAsString(basedictlink + "1", -1);
+    auto job = networkManager->downloadAsString(basedictlink + "1", -1);
 
     if (!job->await(7000))
     {
@@ -92,7 +92,7 @@ bool MangaDex::uptareMangaList(UpdateProgressToken *token)
     for (int i = 2; i <= pages; i++)
         urls.append(basedictlink + QString::number(i));
 
-    DownloadQueue queue(downloadManager, urls, 2, lambda, true);
+    DownloadQueue queue(networkManager, urls, 2, lambda, true);
     queue.setCancellationToken(&token->canceled);
     queue.start();
     if (!queue.awaitCompletion())
@@ -167,7 +167,7 @@ void MangaDex::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> 
         for (int i = 2; i <= pages; i++)
             urls.append(info->link + QString::number(i));
 
-        DownloadQueue queue(downloadManager, urls, CONF.parallelDownloadsLow, lambda, false);
+        DownloadQueue queue(networkManager, urls, CONF.parallelDownloadsLow, lambda, false);
         queue.start();
         queue.awaitCompletion();
     }
@@ -180,7 +180,7 @@ Result<QStringList, QString> MangaDex::getPageList(const QString &chapterlink)
     QRegularExpression datarx("var dataurl = '([^']*)'");
     QRegularExpression pagesrx("var page_array = \\[([^\\]]*)");
 
-    auto job = downloadManager->downloadAsString(chapterlink);
+    auto job = networkManager->downloadAsString(chapterlink);
 
     if (!job->await(7000))
         return Err(job->errorString);

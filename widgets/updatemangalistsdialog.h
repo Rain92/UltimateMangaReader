@@ -1,6 +1,7 @@
 #ifndef UPDATEMANGALISTSDIALOG_H
 #define UPDATEMANGALISTSDIALOG_H
 
+#include <QCheckBox>
 #include <QDialog>
 
 #include "settings.h"
@@ -21,7 +22,7 @@ public:
     ~UpdateMangaListsDialog();
 
     void setSettings(Settings *settings);
-    void resetUI();
+    void open() override;
 
 private slots:
     void on_pushButtonOk_clicked();
@@ -37,6 +38,7 @@ private:
     Settings *settings;
     QSharedPointer<UpdateProgressToken> progressToken;
 
+    void resetUI();
     void setupSourcesList();
     void updateFinished();
     void updateProgress();

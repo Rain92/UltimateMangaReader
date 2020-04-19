@@ -6,8 +6,8 @@
 #include <QScroller>
 #include <QtCore>
 
-#include "downloadmanager.h"
 #include "enums.h"
+#include "networkmanager.h"
 
 QList<QRegularExpressionMatch> getAllRxMatches(const QRegularExpression& rx, const QString& text,
                                                int spos = 0, int epos = -1);
@@ -92,5 +92,8 @@ long dirSize(const QString& path);
 
 bool removeDir(const QString& path, const QString& ignore = "");
 void activateScroller(QAbstractScrollArea* pArea);
+
+long getCacheSize();
+long getFreeSpace();
 
 #endif  // UTILS_H

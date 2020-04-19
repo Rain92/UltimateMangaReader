@@ -5,6 +5,7 @@
 
 #include "enums.h"
 #include "sizes.h"
+#include "utils.h"
 
 namespace Ui
 {
@@ -19,7 +20,7 @@ public:
     explicit ClearCacheDialog(QWidget *parent = nullptr);
     ~ClearCacheDialog();
 
-    void setValues(long chachSize, long freeSpace);
+    void open() override;
 
 private slots:
     void on_pushButtonCancel_clicked();

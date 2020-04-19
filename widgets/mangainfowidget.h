@@ -29,7 +29,7 @@ signals:
     void toggleFavoriteClicked(QSharedPointer<MangaInfo> manga);
     void readMangaClicked(const MangaIndex &index);
     void readMangaContinueClicked();
-    void downloadMangaClicked(QSharedPointer<MangaInfo> manga);
+    void downloadMangaClicked();
 
 public slots:
     void updateManga(bool newchapters);
