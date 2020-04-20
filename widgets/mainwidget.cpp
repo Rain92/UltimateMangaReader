@@ -62,8 +62,8 @@ MainWidget::MainWidget(QWidget *parent)
 
     QPixmap wifioff(":/images/icons/no-wifi.png");
     QPixmap wifion(":/images/icons/wifi.png");
-    wifiIcons[0] = QIcon(wifioff.scaledToHeight(SIZES.resourceIconSize, Qt::SmoothTransformation));
-    wifiIcons[1] = QIcon(wifion.scaledToHeight(SIZES.resourceIconSize, Qt::SmoothTransformation));
+    wifiIcons[0] = QIcon(wifioff.scaledToHeight(SIZES.wifiIconSize, Qt::SmoothTransformation));
+    wifiIcons[1] = QIcon(wifion.scaledToHeight(SIZES.wifiIconSize, Qt::SmoothTransformation));
 
     QObject::connect(core->networkManager, &NetworkManager::connectionStatusChanged, [this](bool connected) {
         auto icon = connected ? wifiIcons[1] : wifiIcons[0];
@@ -210,8 +210,7 @@ void MainWidget::adjustSizes()
 
     ui->toolButtonMenu->setFixedSize(QSize(SIZES.menuIconSize, SIZES.menuIconSize));
     ui->toolButtonMenu->setIconSize(QSize(SIZES.menuIconSize, SIZES.menuIconSize));
-    ui->toolButtonWifiIcon->setFixedSize(QSize(SIZES.resourceIconSize, SIZES.resourceIconSize));
-    ui->toolButtonWifiIcon->setIconSize(QSize(SIZES.resourceIconSize, SIZES.resourceIconSize));
+    ui->toolButtonWifiIcon->setIconSize(QSize(SIZES.wifiIconSize, SIZES.wifiIconSize));
 
     ui->labelSpacer->setFixedSize(ui->batteryIcon->size());
 

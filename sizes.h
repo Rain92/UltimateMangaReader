@@ -33,7 +33,8 @@ public:
     int numpadHeight;
 
     int resourceIconSize;
-    int batteryIconSize;
+    int batteryIconHeight;
+    int wifiIconSize;
     int menuIconSize;
 
     int coverSize;
@@ -83,7 +84,8 @@ private:
         numpadHeight = mmToPx(35);
 
         resourceIconSize = mmToPx(5);
-        batteryIconSize = mmToPx(3);
+        batteryIconHeight = mmToPx(3);
+        wifiIconSize = mmToPx(6);
         menuIconSize = mmToPx(10);
 
         coverSize = mmToPx(50);
