@@ -59,9 +59,15 @@ MainWidget::MainWidget(QWidget *parent)
 
     // NetworkManager
     core->networkManager->setImageRescaleSize(this->size());
+
+    QPixmap wifioff(":/images/icons/no-wifi.png");
+    QPixmap wifion(":/images/icons/wifi.png");
+    wifiIcons[0] = QIcon(wifioff.scaledToHeight(SIZES.resourceIconSize, Qt::SmoothTransformation));
+    wifiIcons[1] = QIcon(wifion.scaledToHeight(SIZES.resourceIconSize, Qt::SmoothTransformation));
+
     QObject::connect(core->networkManager, &NetworkManager::connectionStatusChanged, [this](bool connected) {
-        auto pic = connected ? ":/images/icons/wifi.png" : ":/images/icons/no-wifi.png";
-        ui->labelWifiIcon->setPixmap(QPixmap(pic));
+        auto icon = connected ? wifiIcons[1] : wifiIcons[0];
+        ui->toolButtonWifiIcon->setIcon(icon);
     });
 
     // MangaChapterDownloadManager
@@ -204,7 +210,8 @@ void MainWidget::adjustSizes()
 
     ui->toolButtonMenu->setFixedSize(QSize(SIZES.menuIconSize, SIZES.menuIconSize));
     ui->toolButtonMenu->setIconSize(QSize(SIZES.menuIconSize, SIZES.menuIconSize));
-    ui->labelWifiIcon->setFixedSize(QSize(SIZES.resourceIconSize, SIZES.resourceIconSize));
+    ui->toolButtonWifiIcon->setFixedSize(QSize(SIZES.resourceIconSize, SIZES.resourceIconSize));
+    ui->toolButtonWifiIcon->setIconSize(QSize(SIZES.resourceIconSize, SIZES.resourceIconSize));
 
     ui->labelSpacer->setFixedSize(ui->batteryIcon->size());
 
@@ -470,4 +477,10 @@ void MainWidget::menuDialogButtonPressed(MenuButton button)
             updateMangaListsDialog->open();
             break;
     }
+}
+
+void MainWidget::on_toolButtonWifiIcon_clicked()
+{
+    if (!core->networkManager->checkInternetConnection())
+        wifiDialog->open();
 }

@@ -54,7 +54,7 @@
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_2">
       <property name="spacing">
-       <number>10</number>
+       <number>14</number>
       </property>
       <property name="leftMargin">
        <number>9</number>
@@ -159,14 +159,14 @@
        </spacer>
       </item>
       <item>
-       <widget class="QLabel" name="labelWifiIcon">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
+       <widget class="QToolButton" name="toolButtonWifiIcon">
+        <property name="minimumSize">
+         <size>
+          <width>50</width>
+          <height>50</height>
+         </size>
         </property>
-        <property name="maximumSize">
+        <property name="baseSize">
          <size>
           <width>50</width>
           <height>50</height>
@@ -175,11 +175,18 @@
         <property name="text">
          <string/>
         </property>
-        <property name="pixmap">
-         <pixmap resource="../resources.qrc">:/images/icons/no-wifi.png</pixmap>
+        <property name="icon">
+         <iconset resource="../resources.qrc">
+          <normaloff>:/images/icons/no-wifi.png</normaloff>:/images/icons/no-wifi.png</iconset>
         </property>
-        <property name="scaledContents">
-         <bool>true</bool>
+        <property name="iconSize">
+         <size>
+          <width>50</width>
+          <height>50</height>
+         </size>
+        </property>
+        <property name="popupMode">
+         <enum>QToolButton::InstantPopup</enum>
         </property>
        </widget>
       </item>

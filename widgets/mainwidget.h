@@ -55,6 +55,8 @@ private slots:
 
     void menuDialogButtonPressed(MenuButton button);
 
+    void on_toolButtonWifiIcon_clicked();
+
 protected:
     void resizeEvent(QResizeEvent *event) override;
     bool eventFilter(QObject *obj, QEvent *ev) override;
@@ -93,6 +95,8 @@ private:
     DownloadStatusDialog *downloadStatusDialog;
 
     SuspendManager *suspendManager;
+
+    QIcon wifiIcons[2];
 };
 
 #endif  // MAINWIDGET_H
