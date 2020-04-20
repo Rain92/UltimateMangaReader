@@ -31,7 +31,7 @@ SettingsDialog::~SettingsDialog()
 void SettingsDialog::adjustSizes()
 {
     ui->labelTitle->setStyleSheet("font-size: 15pt");
-    ui->pushButtonOk->setFixedHeight(buttonsize);
+    ui->pushButtonOk->setFixedHeight(SIZES.buttonSize);
 }
 
 void SettingsDialog::open()

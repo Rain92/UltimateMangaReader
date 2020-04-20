@@ -22,8 +22,8 @@ void NumpadWidget::setupButtons()
         {
             btn->setProperty("key", Qt::Key_Backspace);
             QIcon icon = QIcon(
-                QPixmap(":/images/icons/backspace.png").scaledToHeight(buttonsize, Qt::SmoothTransformation));
-            btn->setIconSize(QSize(buttonsize * 0.5, buttonsize * 0.5));
+                QPixmap(":/images/icons/backspace.png").scaledToHeight(SIZES.buttonSize, Qt::SmoothTransformation));
+            btn->setIconSize(QSize(SIZES.buttonSize * 0.5, SIZES.buttonSize * 0.5));
             btn->setIcon(icon);
             btn->setText("");
         }
@@ -33,8 +33,8 @@ void NumpadWidget::setupButtons()
             btn->setProperty("key", Qt::Key_0 + btn->text().trimmed().toInt());
 
         btn->setFocusPolicy(Qt::NoFocus);
-        btn->setFixedHeight(buttonsize);
-        btn->setFixedWidth(buttonsize * 2);
+        btn->setFixedHeight(SIZES.buttonSize);
+        btn->setFixedWidth(SIZES.buttonSize * 2);
     }
 
     QObject::connect(ui->buttonGroupAllButtons,

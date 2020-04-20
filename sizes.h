@@ -1,48 +1,106 @@
 #ifndef SIZES_H
 #define SIZES_H
 
+#define SIZES DPIAwareSizes::get()
+class DPIAwareSizes
+{
+public:
+    static DPIAwareSizes &get()
+    {
+        static DPIAwareSizes instance;
+        return instance;
+    }
+    void setDPI(int dpi)
+    {
+        if (dpi > 0 && dpi != screenDPI)
+        {
+            screenDPI = dpi;
+            adjustSizes();
+        }
+    }
+
+    inline int mmToPx(float mm) { return (int)(mm * screenDPI * 0.0393701); }
+
+    int listSourcesHeight;
+    int mangasourceIconSize;
+    int mangasourceItemWidth;
+    int mangasourceItemHeight;
+    int mangasourceIconSpacing;
+
+    int buttonSize;
+    int buttonSizeToggleFavorite;
+
+    int numpadHeight;
+
+    int resourceIconSize;
+    int batteryIconSize;
+    int menuIconSize;
+
+    int coverSize;
+
+    int favoriteSectonHeight;
+    int favoriteCoverHeight;
+    int favoriteCoverWidth;
+
+    int frontlightSliderGrooveHeight;
+    int frontlightSliderHandleWidth;
+    int frontlightSliderHandleHeight;
+
+    int errormessageWidgetHeight;
+
+    int downloadStatusDialogWidth;
+    int downloadStatusDialogHeight;
+
+    float readerPreviousPageThreshold;
+    float readerBottomMenuThreshold;
+
+private:
+    int screenDPI;
+    DPIAwareSizes()
+    {
 #ifdef DESKTOP
-#define screen_dpi 108
+        screenDPI = 108;
 #else
-#define screen_dpi 300
+        screenDPI = 300;
 #endif
+        readerPreviousPageThreshold = 0.3;
+        readerBottomMenuThreshold = 0.1;
 
-#define mm_to_px(mm) (mm * screen_dpi * 0.0393701)
+        adjustSizes();
+    };
 
-#define listsourcesheight mm_to_px(22)
-#define mangasourceiconsize mm_to_px(13)
-#define mangasourceitemwidth mm_to_px(20)
-#define mangasourceitemheight mm_to_px(20)
-#define mangacourceiconspacing mm_to_px(2.5)
+    void adjustSizes()
+    {
+        listSourcesHeight = mmToPx(22);
+        mangasourceIconSize = mmToPx(13);
+        mangasourceItemWidth = mmToPx(20);
+        mangasourceItemHeight = mmToPx(20);
+        mangasourceIconSpacing = mmToPx(2.5);
 
-#define buttonsize mm_to_px(8)
-#define buttonsizeaddfavorite mm_to_px(8)
+        buttonSize = mmToPx(8);
+        buttonSizeToggleFavorite = mmToPx(8);
 
-#define numpadheight mm_to_px(35)
+        numpadHeight = mmToPx(35);
 
-#define resourceiconsize mm_to_px(5)
-#define batteryiconsize mm_to_px(3)
-#define menuiconsize mm_to_px(10)
+        resourceIconSize = mmToPx(5);
+        batteryIconSize = mmToPx(3);
+        menuIconSize = mmToPx(10);
 
-#define scrollbarsliderminlength mm_to_px(8)
-#define scrollbarwidth mm_to_px(6)
-#define scrollbarheight mm_to_px(4)
-#define summaryscrollbarwidth mm_to_px(5)
+        coverSize = mmToPx(50);
 
-#define coversize mm_to_px(50)
+        favoriteSectonHeight = mmToPx(20);
+        favoriteCoverHeight = mmToPx(16);
+        favoriteCoverWidth = mmToPx(16);
 
-#define favoritesectonheight mm_to_px(20)
-#define favoritesectionwidth mm_to_px(50)
-#define favoritecoverheight mm_to_px(16)
-#define favoritecoverwidth mm_to_px(16)
+        frontlightSliderGrooveHeight = mmToPx(5);
+        frontlightSliderHandleWidth = mmToPx(7);
+        frontlightSliderHandleHeight = mmToPx(6);
 
-#define readerpreviouspagethreshold 0.3
-#define readerbottommenuthreshold 0.1
+        errormessageWidgetHeight = mmToPx(8);
 
-#define frontlightslidergrooveheight mm_to_px(5)
-#define frontlightsliderhandlewidth mm_to_px(7)
-#define frontlightsliderhandleheight mm_to_px(6)
-
-#define errormessagewidgetheight mm_to_px(8)
+        downloadStatusDialogWidth = mmToPx(80);
+        downloadStatusDialogHeight = mmToPx(60);
+    }
+};
 
 #endif  // SIZES_H

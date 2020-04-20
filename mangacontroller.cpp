@@ -67,7 +67,7 @@ Result<QString, QString> MangaController::getCoverpathScaled() const
         qDebug() << "generating scaled:" << currentManga->title;
         QImage img;
         img.load(currentManga->coverPath);
-        img = img.scaled(favoritecoverwidth, favoritecoverheight, Qt::KeepAspectRatio,
+        img = img.scaled(SIZES.favoriteCoverWidth, SIZES.favoriteCoverHeight, Qt::KeepAspectRatio,
                          Qt::SmoothTransformation);
         img.save(scpath);
     }

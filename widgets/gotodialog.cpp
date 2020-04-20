@@ -9,17 +9,17 @@ GotoDialog::GotoDialog(QWidget *parent)
     ui->setupUi(this);
     setWindowFlags(Qt::Popup);
 
-    ui->pushButtonGoChapter->setFixedHeight(buttonsize);
-    ui->pushButtonGoPage->setFixedHeight(buttonsize);
-    ui->spinBoxChapter->setFixedHeight(buttonsize);
-    ui->spinBoxPage->setFixedHeight(buttonsize);
+    ui->pushButtonGoChapter->setFixedHeight(SIZES.buttonSize);
+    ui->pushButtonGoPage->setFixedHeight(SIZES.buttonSize);
+    ui->spinBoxChapter->setFixedHeight(SIZES.buttonSize);
+    ui->spinBoxPage->setFixedHeight(SIZES.buttonSize);
 
-    ui->pushButtonCancel->setFixedHeight(buttonsize);
+    ui->pushButtonCancel->setFixedHeight(SIZES.buttonSize);
 
     ui->spinBoxChapter->installEventFilter(this);
     ui->spinBoxPage->installEventFilter(this);
 
-    ui->numpadWidget->setFixedHeight(numpadheight);
+    ui->numpadWidget->setFixedHeight(SIZES.numpadHeight);
 }
 
 GotoDialog::~GotoDialog()

@@ -8,13 +8,13 @@ MenuDialog::MenuDialog(QWidget *parent) : QDialog(parent), ui(new Ui::MenuDialog
 
     setWindowFlags(Qt::Popup);
 
-    ui->toolButtonMenu->setFixedSize(QSize(menuiconsize, menuiconsize));
-    ui->toolButtonMenu->setIconSize(QSize(menuiconsize, menuiconsize));
+    ui->toolButtonMenu->setFixedSize(QSize(SIZES.menuIconSize, SIZES.menuIconSize));
+    ui->toolButtonMenu->setIconSize(QSize(SIZES.menuIconSize, SIZES.menuIconSize));
 
-    ui->pushButtonExit->setFixedHeight(buttonsize);
-    ui->pushButtonSettings->setFixedHeight(buttonsize);
-    ui->pushButtonClearDownloads->setFixedHeight(buttonsize);
-    ui->pushButtonUpdateMangaList->setFixedHeight(buttonsize);
+    ui->pushButtonExit->setFixedHeight(SIZES.buttonSize);
+    ui->pushButtonSettings->setFixedHeight(SIZES.buttonSize);
+    ui->pushButtonClearDownloads->setFixedHeight(SIZES.buttonSize);
+    ui->pushButtonUpdateMangaList->setFixedHeight(SIZES.buttonSize);
 }
 
 MenuDialog::~MenuDialog()

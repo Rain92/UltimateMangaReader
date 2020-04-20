@@ -11,9 +11,9 @@ ErrorMessageWidget::ErrorMessageWidget(QWidget* parent)
     ui->labelErrorImage->setPixmap(
         pixmap.scaled(ui->labelErrorImage->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
 
-    ui->buttonHide->setMinimumHeight(errormessagewidgetheight);
-    this->setMinimumHeight(errormessagewidgetheight);
-    this->setMaximumHeight(errormessagewidgetheight);
+    ui->buttonHide->setMinimumHeight(SIZES.errormessageWidgetHeight);
+    this->setMinimumHeight(SIZES.errormessageWidgetHeight);
+    this->setMaximumHeight(SIZES.errormessageWidgetHeight);
 
     this->setFocusPolicy(Qt::FocusPolicy::NoFocus);
     ui->buttonHide->setFocusPolicy(Qt::FocusPolicy::NoFocus);

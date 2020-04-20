@@ -198,15 +198,13 @@ MainWidget::~MainWidget()
 
 void MainWidget::adjustSizes()
 {
-    ui->pushButtonClose->setFixedHeight(buttonsize);
-    ui->pushButtonFavorites->setFixedHeight(buttonsize);
-    ui->pushButtonHome->setFixedHeight(buttonsize);
-    ui->pushButtonHome->setIconSize(QSize(mm_to_px(4), mm_to_px(4)));
-    ui->pushButtonFavorites->setIconSize(QSize(mm_to_px(4), mm_to_px(4)));
+    ui->pushButtonClose->setFixedHeight(SIZES.buttonSize);
+    ui->pushButtonFavorites->setFixedHeight(SIZES.buttonSize);
+    ui->pushButtonHome->setFixedHeight(SIZES.buttonSize);
 
-    ui->toolButtonMenu->setFixedSize(QSize(menuiconsize, menuiconsize));
-    ui->toolButtonMenu->setIconSize(QSize(menuiconsize, menuiconsize));
-    ui->labelWifiIcon->setFixedSize(QSize(resourceiconsize, resourceiconsize));
+    ui->toolButtonMenu->setFixedSize(QSize(SIZES.menuIconSize, SIZES.menuIconSize));
+    ui->toolButtonMenu->setIconSize(QSize(SIZES.menuIconSize, SIZES.menuIconSize));
+    ui->labelWifiIcon->setFixedSize(QSize(SIZES.resourceIconSize, SIZES.resourceIconSize));
 
     ui->labelSpacer->setFixedSize(ui->batteryIcon->size());
 

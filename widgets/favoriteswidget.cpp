@@ -25,7 +25,7 @@ void FavoritesWidget::adjustSizes()
     QHeaderView *verticalHeader = ui->tableWidget->verticalHeader();
 
     verticalHeader->setSectionResizeMode(QHeaderView::Fixed);
-    verticalHeader->setDefaultSectionSize(favoritesectonheight);
+    verticalHeader->setDefaultSectionSize(SIZES.favoriteSectonHeight);
 
     QHeaderView *horizontalHeader = ui->tableWidget->horizontalHeader();
     horizontalHeader->setSectionsClickable(false);
@@ -55,7 +55,7 @@ void FavoritesWidget::showFavoritesList()
 void FavoritesWidget::insertRow(const QSharedPointer<MangaInfo> &fav, int row)
 {
     QWidget *titlewidget = makeIconTextWidget(fav->coverThumbnailPath(), fav->title,
-                                              QSize(favoritecoverheight, favoritecoverheight));
+                                              QSize(SIZES.favoriteCoverHeight, SIZES.favoriteCoverHeight));
 
     ui->tableWidget->insertRow(row);
 
@@ -114,7 +114,7 @@ void FavoritesWidget::coverLoaded()
 
     QWidget *titlewidget = makeIconTextWidget(favoritesmanager->favoriteinfos.at(i)->coverThumbnailPath(),
                                               favoritesmanager->favoriteinfos.at(i)->title,
-                                              QSize(favoritecoverheight, favoritecoverheight));
+                                              QSize(SIZES.favoriteCoverHeight, SIZES.favoriteCoverHeight));
     ui->tableWidget->setCellWidget(i, 0, titlewidget);
 }
 

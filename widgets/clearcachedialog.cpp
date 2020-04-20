@@ -16,10 +16,10 @@ ClearCacheDialog::~ClearCacheDialog()
 
 void ClearCacheDialog::adjustSizes()
 {
-    ui->pushButtonCancel->setFixedHeight(buttonsize);
-    ui->pushButtonClear1->setFixedHeight(buttonsize);
-    ui->pushButtonClear2->setFixedHeight(buttonsize);
-    ui->pushButtonClear3->setFixedHeight(buttonsize);
+    ui->pushButtonCancel->setFixedHeight(SIZES.buttonSize);
+    ui->pushButtonClear1->setFixedHeight(SIZES.buttonSize);
+    ui->pushButtonClear2->setFixedHeight(SIZES.buttonSize);
+    ui->pushButtonClear3->setFixedHeight(SIZES.buttonSize);
     ui->labelTitle->setStyleSheet("font-size: 15pt");
 }
 

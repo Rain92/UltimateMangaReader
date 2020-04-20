@@ -29,13 +29,13 @@ HomeWidget::~HomeWidget()
 
 void HomeWidget::adjustSizes()
 {
-    ui->pushButtonFilter->setFixedHeight(buttonsize);
-    ui->pushButtonFilterClear->setFixedHeight(buttonsize);
-    ui->lineEditFilter->setFixedHeight(buttonsize);
+    ui->pushButtonFilter->setFixedHeight(SIZES.buttonSize);
+    ui->pushButtonFilterClear->setFixedHeight(SIZES.buttonSize);
+    ui->lineEditFilter->setFixedHeight(SIZES.buttonSize);
 
-    ui->listViewSources->setFixedHeight(listsourcesheight);
+    ui->listViewSources->setFixedHeight(SIZES.listSourcesHeight);
     ui->listViewSources->setViewMode(QListView::IconMode);
-    ui->listViewSources->setIconSize(QSize(mangasourceiconsize, mangasourceiconsize));
+    ui->listViewSources->setIconSize(QSize(SIZES.mangasourceIconSize, SIZES.mangasourceIconSize));
     ui->listViewSources->setStyleSheet("font-size: 8pt");
     ui->listViewMangas->setUniformItemSizes(true);
 
@@ -59,7 +59,7 @@ QList<QStandardItem *> HomeWidget::listViewItemfromMangaSource(AbstractMangaSour
     QStandardItem *item = new QStandardItem(source->name);
     item->setData(QVariant::fromValue(static_cast<void *>(source)));
     item->setIcon(QIcon(QPixmap(":/images/mangahostlogos/" + source->name.toLower() + ".png")));
-    item->setSizeHint(QSize(mangasourceitemwidth, mangasourceitemheight));
+    item->setSizeHint(QSize(SIZES.mangasourceItemWidth, SIZES.mangasourceItemHeight));
     item->setText(source->name);
     items.append(item);
 

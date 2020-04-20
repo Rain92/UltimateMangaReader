@@ -35,33 +35,33 @@ MangaReaderWidget::~MangaReaderWidget()
 
 void MangaReaderWidget::adjustSizes()
 {
-    ui->pushButtonReaderBack->setFixedHeight(buttonsize);
-    ui->pushButtonReaderFavorites->setFixedHeight(buttonsize);
-    ui->pushButtonReaderHome->setFixedHeight(buttonsize);
-    ui->pushButtonReaderGoto->setFixedHeight(buttonsize);
+    ui->pushButtonReaderBack->setFixedHeight(SIZES.buttonSize);
+    ui->pushButtonReaderFavorites->setFixedHeight(SIZES.buttonSize);
+    ui->pushButtonReaderHome->setFixedHeight(SIZES.buttonSize);
+    ui->pushButtonReaderGoto->setFixedHeight(SIZES.buttonSize);
 
-    ui->horizontalSliderLight->setFixedHeight(resourceiconsize);
-    ui->horizontalSliderComfLight->setFixedHeight(resourceiconsize);
+    ui->horizontalSliderLight->setFixedHeight(SIZES.resourceIconSize);
+    ui->horizontalSliderComfLight->setFixedHeight(SIZES.resourceIconSize);
 
-    ui->labelLessLight->setFixedSize(QSize(resourceiconsize, resourceiconsize));
+    ui->labelLessLight->setFixedSize(QSize(SIZES.resourceIconSize, SIZES.resourceIconSize));
 
     QPixmap p(":/images/icons/darker.png");
-    ui->labelLessLight->setPixmap(p.scaledToHeight(resourceiconsize, Qt::SmoothTransformation));
+    ui->labelLessLight->setPixmap(p.scaledToHeight(SIZES.resourceIconSize, Qt::SmoothTransformation));
 
-    ui->labelMoreLight->setFixedSize(QSize(resourceiconsize, resourceiconsize));
+    ui->labelMoreLight->setFixedSize(QSize(SIZES.resourceIconSize, SIZES.resourceIconSize));
 
     QPixmap p2(":/images/icons/lighter.png");
-    ui->labelMoreLight->setPixmap(p2.scaledToHeight(resourceiconsize, Qt::SmoothTransformation));
+    ui->labelMoreLight->setPixmap(p2.scaledToHeight(SIZES.resourceIconSize, Qt::SmoothTransformation));
 
-    ui->labelLessComfLight->setFixedSize(QSize(resourceiconsize, resourceiconsize));
+    ui->labelLessComfLight->setFixedSize(QSize(SIZES.resourceIconSize, SIZES.resourceIconSize));
 
     QPixmap p3(":/images/icons/moon.png");
-    ui->labelLessComfLight->setPixmap(p3.scaledToHeight(resourceiconsize, Qt::SmoothTransformation));
+    ui->labelLessComfLight->setPixmap(p3.scaledToHeight(SIZES.resourceIconSize, Qt::SmoothTransformation));
 
-    ui->labelMoreComfLight->setFixedSize(QSize(resourceiconsize, resourceiconsize));
+    ui->labelMoreComfLight->setFixedSize(QSize(SIZES.resourceIconSize, SIZES.resourceIconSize));
 
     QPixmap p4(":/images/icons/sun.png");
-    ui->labelMoreComfLight->setPixmap(p4.scaledToHeight(resourceiconsize, Qt::SmoothTransformation));
+    ui->labelMoreComfLight->setPixmap(p4.scaledToHeight(SIZES.resourceIconSize, Qt::SmoothTransformation));
 
     QString sliderstylesheet =
         "QSlider::groove:horizontal {       "
@@ -84,16 +84,16 @@ void MangaReaderWidget::adjustSizes()
         "     background: black;            "
         "}";
 
-    ui->horizontalSliderComfLight->setFixedHeight(frontlightsliderhandleheight + 10);
-    ui->horizontalSliderLight->setFixedHeight(frontlightsliderhandleheight + 10);
+    ui->horizontalSliderComfLight->setFixedHeight(SIZES.frontlightSliderHandleHeight + 10);
+    ui->horizontalSliderLight->setFixedHeight(SIZES.frontlightSliderHandleHeight + 10);
 
-    ui->horizontalSliderComfLight->setStyleSheet(sliderstylesheet.arg(frontlightslidergrooveheight)
-                                                     .arg(frontlightsliderhandlewidth)
-                                                     .arg(frontlightsliderhandleheight));
+    ui->horizontalSliderComfLight->setStyleSheet(sliderstylesheet.arg(SIZES.frontlightSliderGrooveHeight)
+                                                     .arg(SIZES.frontlightSliderHandleWidth)
+                                                     .arg(SIZES.frontlightSliderHandleHeight));
 
-    ui->horizontalSliderLight->setStyleSheet(sliderstylesheet.arg(frontlightslidergrooveheight)
-                                                 .arg(frontlightsliderhandlewidth)
-                                                 .arg(frontlightsliderhandleheight));
+    ui->horizontalSliderLight->setStyleSheet(sliderstylesheet.arg(SIZES.frontlightSliderGrooveHeight)
+                                                 .arg(SIZES.frontlightSliderHandleWidth)
+                                                 .arg(SIZES.frontlightSliderHandleHeight));
 
     ui->horizontalSliderComfLight->setInvertedAppearance(true);
 }
@@ -133,7 +133,7 @@ bool MangaReaderWidget::gestureEvent(QGestureEvent *event)
 
         if (ui->readerNavigationBar->isVisible())
         {
-            if (pos.y() > this->height() * readerbottommenuthreshold * 2)
+            if (pos.y() > this->height() * SIZES.readerBottomMenuThreshold * 2)
                 showMenuBar(false);
         }
         else if (angle > 155 && angle < 205)
@@ -144,7 +144,7 @@ bool MangaReaderWidget::gestureEvent(QGestureEvent *event)
         {
             emit advancPageClicked(conditionalReverse(Backward, settings && settings->reverseSwipeDirection));
         }
-        else if (swipe->hotSpot().y() < this->height() * readerbottommenuthreshold && angle > 245 &&
+        else if (swipe->hotSpot().y() < this->height() * SIZES.readerBottomMenuThreshold && angle > 245 &&
                  angle < 295)
         {
             showMenuBar(true);
@@ -159,18 +159,18 @@ bool MangaReaderWidget::gestureEvent(QGestureEvent *event)
 
         if (ui->readerNavigationBar->isVisible())
         {
-            if (pos.y() > this->height() * readerbottommenuthreshold * 2)
+            if (pos.y() > this->height() * SIZES.readerBottomMenuThreshold * 2)
                 showMenuBar(false);
         }
-        else if (pos.y() < this->height() * readerbottommenuthreshold ||
-                 pos.y() > this->height() * (1.0 - readerbottommenuthreshold))
+        else if (pos.y() < this->height() * SIZES.readerBottomMenuThreshold ||
+                 pos.y() > this->height() * (1.0 - SIZES.readerBottomMenuThreshold))
         {
             showMenuBar(true);
         }
         else
         {
             PageTurnDirection direction =
-                pos.x() > this->width() * readerpreviouspagethreshold ? Forward : Backward;
+                pos.x() > this->width() * SIZES.readerPreviousPageThreshold ? Forward : Backward;
             emit advancPageClicked(direction);
         }
     }

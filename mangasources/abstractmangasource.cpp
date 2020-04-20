@@ -203,7 +203,7 @@ void AbstractMangaSource::genrateCoverThumbnail(QSharedPointer<MangaInfo> mangai
     {
         QImage img;
         img.load(mangainfo->coverPath);
-        img = img.scaled(favoritecoverwidth, favoritecoverheight, Qt::KeepAspectRatio,
+        img = img.scaled(SIZES.favoriteCoverWidth, SIZES.favoriteCoverHeight, Qt::KeepAspectRatio,
                          Qt::SmoothTransformation);
         img.save(scpath);
     }

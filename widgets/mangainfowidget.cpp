@@ -20,14 +20,14 @@ MangaInfoWidget::~MangaInfoWidget()
 
 void MangaInfoWidget::adjustSizes()
 {
-    ui->pushButtonReadContinue->setFixedHeight(buttonsize);
-    ui->pushButtonReadFirst->setFixedHeight(buttonsize);
-    ui->pushButtonReadLatest->setFixedHeight(buttonsize);
+    ui->pushButtonReadContinue->setFixedHeight(SIZES.buttonSize);
+    ui->pushButtonReadFirst->setFixedHeight(SIZES.buttonSize);
+    ui->pushButtonReadLatest->setFixedHeight(SIZES.buttonSize);
 
-    ui->toolButtonAddFavorites->setFixedSize(buttonsizeaddfavorite, buttonsizeaddfavorite);
-    ui->toolButtonAddFavorites->setIconSize(QSize(buttonsizeaddfavorite * 0.8, buttonsizeaddfavorite * 0.8));
-    ui->toolButtonDownload->setFixedSize(buttonsizeaddfavorite, buttonsizeaddfavorite);
-    ui->toolButtonDownload->setIconSize(QSize(buttonsizeaddfavorite * 0.8, buttonsizeaddfavorite * 0.8));
+    ui->toolButtonAddFavorites->setFixedSize(SIZES.buttonSizeToggleFavorite, SIZES.buttonSizeToggleFavorite);
+    ui->toolButtonAddFavorites->setIconSize(QSize(SIZES.buttonSizeToggleFavorite * 0.8, SIZES.buttonSizeToggleFavorite * 0.8));
+    ui->toolButtonDownload->setFixedSize(SIZES.buttonSizeToggleFavorite, SIZES.buttonSizeToggleFavorite);
+    ui->toolButtonDownload->setIconSize(QSize(SIZES.buttonSizeToggleFavorite * 0.8, SIZES.buttonSizeToggleFavorite * 0.8));
 
     ui->listViewChapters->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     ui->listViewChapters->setUniformItemSizes(true);
@@ -81,7 +81,7 @@ void MangaInfoWidget::updateCover()
         QPixmap img;
         img.load(currentmanga->coverPath);
         ui->labelMangaInfoCover->setPixmap(
-            img.scaled(coversize, coversize, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+            img.scaled(SIZES.coverSize, SIZES.coverSize, Qt::KeepAspectRatio, Qt::SmoothTransformation));
     }
 }
 

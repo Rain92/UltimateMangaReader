@@ -7,8 +7,8 @@ UpdateMangaListsDialog::UpdateMangaListsDialog(QWidget *parent)
 {
     ui->setupUi(this);
 
-    ui->pushButtonCancel->setFixedHeight(buttonsize);
-    ui->pushButtonOk->setFixedHeight(buttonsize);
+    ui->pushButtonCancel->setFixedHeight(SIZES.buttonSize);
+    ui->pushButtonOk->setFixedHeight(SIZES.buttonSize);
     ui->labelTitle->setStyleSheet("font-size: 15pt");
 }
 

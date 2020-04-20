@@ -21,9 +21,9 @@ DownloadStatusDialog::DownloadStatusDialog(QWidget *parent)
 void DownloadStatusDialog::adjustSizes()
 {
     ui->labelTitle->setStyleSheet("font-size: 13pt");
-    ui->pushButtonCancel->setFixedHeight(buttonsize);
-    ui->pushButtonHide->setFixedHeight(buttonsize);
-    this->setMinimumSize(mm_to_px(80), mm_to_px(60));
+    ui->pushButtonCancel->setFixedHeight(SIZES.buttonSize);
+    ui->pushButtonHide->setFixedHeight(SIZES.buttonSize);
+    this->setMinimumSize(SIZES.downloadStatusDialogWidth, SIZES.downloadStatusDialogHeight);
 }
 
 DownloadStatusDialog::~DownloadStatusDialog()

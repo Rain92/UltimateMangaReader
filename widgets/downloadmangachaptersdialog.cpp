@@ -15,11 +15,11 @@ DownloadMangaChaptersDialog::DownloadMangaChaptersDialog(QWidget *parent)
 void DownloadMangaChaptersDialog::adjustSizes()
 {
     ui->labelTitle->setStyleSheet("font-size: 12pt");
-    ui->pushButtonConfirm->setFixedHeight(buttonsize);
-    ui->pushButtonCancel->setFixedHeight(buttonsize);
-    ui->spinBoxFrom->setFixedHeight(buttonsize);
-    ui->spinBoxTo->setFixedHeight(buttonsize);
-    ui->numpadWidget->setMinimumHeight(numpadheight);
+    ui->pushButtonConfirm->setFixedHeight(SIZES.buttonSize);
+    ui->pushButtonCancel->setFixedHeight(SIZES.buttonSize);
+    ui->spinBoxFrom->setFixedHeight(SIZES.buttonSize);
+    ui->spinBoxTo->setFixedHeight(SIZES.buttonSize);
+    ui->numpadWidget->setMinimumHeight(SIZES.numpadHeight);
 }
 
 DownloadMangaChaptersDialog::~DownloadMangaChaptersDialog()
