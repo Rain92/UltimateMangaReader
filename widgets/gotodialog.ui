@@ -37,6 +37,9 @@
      </item>
      <item row="0" column="2">
       <widget class="QPushButton" name="pushButtonGoChapter">
+       <property name="focusPolicy">
+        <enum>Qt::NoFocus</enum>
+       </property>
        <property name="text">
         <string>Go</string>
        </property>
@@ -44,6 +47,9 @@
      </item>
      <item row="1" column="2">
       <widget class="QPushButton" name="pushButtonGoPage">
+       <property name="focusPolicy">
+        <enum>Qt::NoFocus</enum>
+       </property>
        <property name="text">
         <string>Go</string>
        </property>
@@ -121,6 +127,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="pushButtonCancel">
+       <property name="focusPolicy">
+        <enum>Qt::NoFocus</enum>
+       </property>
        <property name="text">
         <string> Cancel </string>
        </property>

@@ -15,6 +15,7 @@ HomeWidget::HomeWidget(QWidget *parent)
 
     ui->listViewSources->setModel(new QStandardItemModel(this));
     ui->listViewMangas->setModel(new QStringListModel(this));
+
     activateScroller(ui->listViewSources);
     activateScroller(ui->listViewMangas);
 
@@ -36,7 +37,6 @@ void HomeWidget::adjustSizes()
     ui->listViewSources->setFixedHeight(SIZES.listSourcesHeight);
     ui->listViewSources->setViewMode(QListView::IconMode);
     ui->listViewSources->setIconSize(QSize(SIZES.mangasourceIconSize, SIZES.mangasourceIconSize));
-    ui->listViewSources->setStyleSheet("font-size: 8pt");
     ui->listViewMangas->setUniformItemSizes(true);
 
     ui->listViewMangas->setFocusPolicy(Qt::FocusPolicy::NoFocus);
@@ -51,6 +51,18 @@ void HomeWidget::updateSourcesList(const QList<AbstractMangaSource *> &sources)
         model->appendRow(listViewItemfromMangaSource(ms));
 
     refreshMangaListView();
+}
+
+void HomeWidget::updateMangaSourceSelection(int row)
+{
+    auto model = dynamic_cast<QStandardItemModel *>(ui->listViewSources->model());
+    for (int i = 0; i < model->rowCount(); i++)
+    {
+        QStandardItem *item = model->item(i);
+        auto f = item->font();
+        f.setUnderline(i == row);
+        item->setFont(f);
+    }
 }
 
 QList<QStandardItem *> HomeWidget::listViewItemfromMangaSource(AbstractMangaSource *source)
@@ -68,8 +80,9 @@ QList<QStandardItem *> HomeWidget::listViewItemfromMangaSource(AbstractMangaSour
 
 void HomeWidget::on_listViewSources_clicked(const QModelIndex &index)
 {
-    auto clickedsource = static_cast<AbstractMangaSource *>(index.data(Qt::UserRole + 1).value<void *>());
+    updateMangaSourceSelection(index.row());
 
+    auto clickedsource = static_cast<AbstractMangaSource *>(index.data(Qt::UserRole + 1).value<void *>());
     emit mangaSourceClicked(clickedsource);
 }
 

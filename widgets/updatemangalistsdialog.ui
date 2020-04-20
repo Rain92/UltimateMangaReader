@@ -134,6 +134,9 @@ This operation will take several minutes.</string>
      </item>
      <item>
       <widget class="QPushButton" name="pushButtonCancel">
+       <property name="focusPolicy">
+        <enum>Qt::NoFocus</enum>
+       </property>
        <property name="text">
         <string> Cancel </string>
        </property>
@@ -144,6 +147,9 @@ This operation will take several minutes.</string>
        <property name="enabled">
         <bool>true</bool>
        </property>
+       <property name="focusPolicy">
+        <enum>Qt::NoFocus</enum>
+       </property>
        <property name="text">
         <string> Ok </string>
        </property>
@@ -151,6 +157,9 @@ This operation will take several minutes.</string>
      </item>
      <item>
       <widget class="QPushButton" name="pushButtonFinish">
+       <property name="focusPolicy">
+        <enum>Qt::NoFocus</enum>
+       </property>
        <property name="text">
         <string>Sweet!</string>
        </property>

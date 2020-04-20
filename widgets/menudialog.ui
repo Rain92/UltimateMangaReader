@@ -75,6 +75,9 @@
    </item>
    <item>
     <widget class="QPushButton" name="pushButtonSettings">
+     <property name="focusPolicy">
+      <enum>Qt::NoFocus</enum>
+     </property>
      <property name="text">
       <string>Settings</string>
      </property>
@@ -82,6 +85,9 @@
    </item>
    <item>
     <widget class="QPushButton" name="pushButtonUpdateMangaList">
+     <property name="focusPolicy">
+      <enum>Qt::NoFocus</enum>
+     </property>
      <property name="text">
       <string>Update Manga Lists</string>
      </property>
@@ -89,6 +95,9 @@
    </item>
    <item>
     <widget class="QPushButton" name="pushButtonClearDownloads">
+     <property name="focusPolicy">
+      <enum>Qt::NoFocus</enum>
+     </property>
      <property name="text">
       <string>Clear Downloads</string>
      </property>
@@ -96,6 +105,9 @@
    </item>
    <item>
     <widget class="QPushButton" name="pushButtonExit">
+     <property name="focusPolicy">
+      <enum>Qt::NoFocus</enum>
+     </property>
      <property name="text">
       <string>Exit</string>
      </property>

@@ -187,6 +187,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="pushButtonCancel">
+       <property name="focusPolicy">
+        <enum>Qt::NoFocus</enum>
+       </property>
        <property name="text">
         <string> Cancel </string>
        </property>
@@ -194,6 +197,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="pushButtonConfirm">
+       <property name="focusPolicy">
+        <enum>Qt::NoFocus</enum>
+       </property>
        <property name="text">
         <string> Ok </string>
        </property>

@@ -5,10 +5,24 @@ QWidget {
     font-size: 10pt;
 }
 
-QFrame#frameMangaScources
+QFrame#listViewSources
 {
-    border: 1px solid black;
+    border: 0px solid black;
+    font-size: 8pt;
+    outline: 0;
 }
+QListView::item:selected#listViewSources
+{
+    background: white;
+    color: black;
+    /*border-bottom: 1px solid black;*/
+}
+QListView::item:focused#listViewSources
+{
+    background: white;
+    color: black;
+}
+
 QFrame#frameProgress
 {
     border: 1px solid black;
@@ -172,7 +186,7 @@ QPushButton
     font-size: 13pt;
 }
 QPushButton:focus {
-    border: 2px solid black;
+    border: 1px solid black;
     padding: 2px;
 }
 QPushButton:pressed {
@@ -183,7 +197,7 @@ QPushButton:pressed {
 QToolButton
 {
     background: transparent;
-    border: 1px transparent;
+    border: 0px transparent;
     color: black;
     padding: 2px;
     outline: none;

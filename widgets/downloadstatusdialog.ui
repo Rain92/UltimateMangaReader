@@ -167,6 +167,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="pushButtonCancel">
+       <property name="focusPolicy">
+        <enum>Qt::NoFocus</enum>
+       </property>
        <property name="text">
         <string> Abort All Downloads </string>
        </property>
@@ -174,6 +177,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="pushButtonHide">
+       <property name="focusPolicy">
+        <enum>Qt::NoFocus</enum>
+       </property>
        <property name="text">
         <string> Background </string>
        </property>

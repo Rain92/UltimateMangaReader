@@ -67,6 +67,9 @@
    </item>
    <item>
     <widget class="QPushButton" name="pushButtonClear1">
+     <property name="focusPolicy">
+      <enum>Qt::NoFocus</enum>
+     </property>
      <property name="text">
       <string>Delete all pages</string>
      </property>
@@ -74,6 +77,9 @@
    </item>
    <item>
     <widget class="QPushButton" name="pushButtonClear2">
+     <property name="focusPolicy">
+      <enum>Qt::NoFocus</enum>
+     </property>
      <property name="text">
       <string>+ covers and infos</string>
      </property>
@@ -81,6 +87,9 @@
    </item>
    <item>
     <widget class="QPushButton" name="pushButtonClear3">
+     <property name="focusPolicy">
+      <enum>Qt::NoFocus</enum>
+     </property>
      <property name="text">
       <string>+ progress and favorites</string>
      </property>
@@ -88,6 +97,9 @@
    </item>
    <item>
     <widget class="QPushButton" name="pushButtonCancel">
+     <property name="focusPolicy">
+      <enum>Qt::NoFocus</enum>
+     </property>
      <property name="text">
       <string>Cancel</string>
      </property>

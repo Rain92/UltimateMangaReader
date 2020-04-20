@@ -212,7 +212,7 @@ void MainWidget::adjustSizes()
     ui->toolButtonMenu->setIconSize(QSize(SIZES.menuIconSize, SIZES.menuIconSize));
     ui->toolButtonWifiIcon->setIconSize(QSize(SIZES.wifiIconSize, SIZES.wifiIconSize));
 
-    ui->labelSpacer->setFixedSize(ui->batteryIcon->size());
+    ui->labelSpacer->setFixedSize(0, 0);
 
     ui->labelTitle->setStyleSheet("font-size: 18pt");
 }
@@ -400,6 +400,7 @@ void MainWidget::resizeEvent(QResizeEvent *event)
 void MainWidget::setWidgetTab(WidgetTab tab)
 {
     enableVirtualKeyboard(false);
+    core->mangaController->cancelAllPreloads();
 
     if (tab == ui->stackedWidget->currentIndex())
         return;

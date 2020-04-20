@@ -25,14 +25,17 @@ void MangaInfoWidget::adjustSizes()
     ui->pushButtonReadLatest->setFixedHeight(SIZES.buttonSize);
 
     ui->toolButtonAddFavorites->setFixedSize(SIZES.buttonSizeToggleFavorite, SIZES.buttonSizeToggleFavorite);
-    ui->toolButtonAddFavorites->setIconSize(QSize(SIZES.buttonSizeToggleFavorite * 0.8, SIZES.buttonSizeToggleFavorite * 0.8));
+    ui->toolButtonAddFavorites->setIconSize(
+        QSize(SIZES.buttonSizeToggleFavorite * 0.8, SIZES.buttonSizeToggleFavorite * 0.8));
     ui->toolButtonDownload->setFixedSize(SIZES.buttonSizeToggleFavorite, SIZES.buttonSizeToggleFavorite);
-    ui->toolButtonDownload->setIconSize(QSize(SIZES.buttonSizeToggleFavorite * 0.8, SIZES.buttonSizeToggleFavorite * 0.8));
+    ui->toolButtonDownload->setIconSize(
+        QSize(SIZES.buttonSizeToggleFavorite * 0.8, SIZES.buttonSizeToggleFavorite * 0.8));
 
     ui->listViewChapters->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     ui->listViewChapters->setUniformItemSizes(true);
 
     ui->labelMangaInfoTitle->setStyleSheet("font-size: 16pt");
+    ui->scrollAreaMangaInfoSummary->setStyleSheet("border: none;");
 
     activateScroller(ui->scrollAreaMangaInfoSummary);
     activateScroller(ui->listViewChapters);

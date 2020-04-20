@@ -51,6 +51,7 @@ private:
     void adjustSizes();
 
     QList<QStandardItem *> listViewItemfromMangaSource(AbstractMangaSource *source);
+    void updateMangaSourceSelection(int row);
 };
 
 #endif  // HOMEWIDGET_H
