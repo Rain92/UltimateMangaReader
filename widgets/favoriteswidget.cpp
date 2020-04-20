@@ -22,6 +22,9 @@ void FavoritesWidget::adjustSizes()
                                                              << "Status"
                                                              << "My Progress");
     ui->tableWidget->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+
+    activateScroller(ui->tableWidget);
+
     QHeaderView *verticalHeader = ui->tableWidget->verticalHeader();
 
     verticalHeader->setSectionResizeMode(QHeaderView::Fixed);

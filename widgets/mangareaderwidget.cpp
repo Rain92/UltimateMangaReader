@@ -45,6 +45,8 @@ void MangaReaderWidget::adjustSizes()
 
     ui->labelLessLight->setFixedSize(QSize(SIZES.resourceIconSize, SIZES.resourceIconSize));
 
+    ui->labelTime->setStyleSheet("font-size: 13pt");
+
     QPixmap p(":/images/icons/darker.png");
     ui->labelLessLight->setPixmap(p.scaledToHeight(SIZES.resourceIconSize, Qt::SmoothTransformation));
 
