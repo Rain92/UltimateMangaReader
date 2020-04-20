@@ -88,12 +88,12 @@ void executeOnJobCompletion(QSharedPointer<DownloadJobBase> job,
 
 PageTurnDirection conditionalReverse(PageTurnDirection dir, bool condition);
 
-long dirSize(const QString& path);
+qint64 dirSize(const QString& path);
 
 bool removeDir(const QString& path, const QString& ignore = "");
 void activateScroller(QAbstractScrollArea* pArea);
 
-long getCacheSize();
-long getFreeSpace();
+qint64 getCacheSize();
+qint64 getFreeSpace();
 
 #endif  // UTILS_H

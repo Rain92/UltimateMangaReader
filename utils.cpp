@@ -56,9 +56,9 @@ PageTurnDirection conditionalReverse(PageTurnDirection dir, bool condition)
     }
 }
 
-long dirSize(const QString& path)
+qint64 dirSize(const QString& path)
 {
-    long size = 0;
+    qint64 size = 0;
     QDir dir(path);
     // calculate total size of current directories' files
     QDir::Filters fileFilters = QDir::Files | QDir::System | QDir::Hidden;
@@ -119,17 +119,17 @@ void activateScroller(QAbstractScrollArea* pArea)
     }
 }
 
-long getCacheSize()
+qint64 getCacheSize()
 {
-    long size = dirSize(CONF.cacheDir) / 1024 / 1024;
+    qint64 size = dirSize(CONF.cacheDir) / 1024 / 1024;
 
     return size;
 }
 
-long getFreeSpace()
+qint64 getFreeSpace()
 {
     QStorageInfo info(CONF.cacheDir);
 
-    long space = info.bytesAvailable() / 1024 / 1024;
+    qint64 space = info.bytesAvailable() / 1024 / 1024;
     return space;
 }
