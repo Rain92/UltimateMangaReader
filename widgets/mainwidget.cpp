@@ -23,7 +23,7 @@ MainWidget::MainWidget(QWidget *parent)
       suspendManager(new SuspendManager(this))
 {
     ui->setupUi(this);
-    adjustSizes();
+    adjustUI();
     ui->batteryIcon->updateIcon();
     setupVirtualKeyboard();
 
@@ -32,7 +32,7 @@ MainWidget::MainWidget(QWidget *parent)
     // Dialogs
     menuDialog = new MenuDialog(this);
     settingsDialog = new SettingsDialog(&core->settings, this);
-    updateMangaListsDialog = new UpdateMangaListsDialog(this);
+    updateMangaListsDialog = new UpdateMangaListsDialog(&core->settings, this);
     clearCacheDialog = new ClearCacheDialog(this);
     wifiDialog = new WifiDialog(this, core->networkManager);
     screensaverDialog = new ScreensaverDialog(this);
@@ -202,8 +202,12 @@ MainWidget::~MainWidget()
     delete ui;
 }
 
-void MainWidget::adjustSizes()
+void MainWidget::adjustUI()
 {
+    ui->pushButtonClose->setProperty("type", "borderless");
+    ui->pushButtonFavorites->setProperty("type", "borderless");
+    ui->pushButtonHome->setProperty("type", "borderless");
+
     ui->pushButtonClose->setFixedHeight(SIZES.buttonSize);
     ui->pushButtonFavorites->setFixedHeight(SIZES.buttonSize);
     ui->pushButtonHome->setFixedHeight(SIZES.buttonSize);

@@ -6,7 +6,7 @@ SettingsDialog::SettingsDialog(Settings *settings, QWidget *parent)
     : QDialog(parent), ui(new Ui::SettingsDialog), settings(settings)
 {
     ui->setupUi(this);
-    adjustSizes();
+    adjustUI();
     setWindowFlags(Qt::Popup);
 
     QObject::connect(ui->checkBoxDoublePages, &QCheckBox::clicked, this, &SettingsDialog::updateSettings);
@@ -28,7 +28,7 @@ SettingsDialog::~SettingsDialog()
     delete ui;
 }
 
-void SettingsDialog::adjustSizes()
+void SettingsDialog::adjustUI()
 {
     ui->labelTitle->setStyleSheet("font-size: 15pt");
     ui->pushButtonOk->setFixedHeight(SIZES.buttonSize);

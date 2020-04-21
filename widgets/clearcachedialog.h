@@ -34,7 +34,7 @@ private slots:
 private:
     Ui::ClearCacheDialog *ui;
 
-    void adjustSizes();
+    void adjustUI();
 };
 
 #endif  // CLEARCACHEDIALOG_H

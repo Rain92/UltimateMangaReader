@@ -51,10 +51,10 @@ This operation will take several minutes.</string>
    <item>
     <widget class="QFrame" name="frameMangaScources">
      <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
+      <enum>QFrame::NoFrame</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
+      <enum>QFrame::Plain</enum>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <property name="spacing">

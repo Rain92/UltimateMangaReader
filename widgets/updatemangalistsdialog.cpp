@@ -2,8 +2,8 @@
 
 #include "ui_updatemangalistsdialog.h"
 
-UpdateMangaListsDialog::UpdateMangaListsDialog(QWidget *parent)
-    : QDialog(parent), ui(new Ui::UpdateMangaListsDialog), progressToken(nullptr)
+UpdateMangaListsDialog::UpdateMangaListsDialog(Settings *settings, QWidget *parent)
+    : QDialog(parent), ui(new Ui::UpdateMangaListsDialog), settings(settings), progressToken(nullptr)
 {
     ui->setupUi(this);
 
@@ -15,11 +15,6 @@ UpdateMangaListsDialog::UpdateMangaListsDialog(QWidget *parent)
 UpdateMangaListsDialog::~UpdateMangaListsDialog()
 {
     delete ui;
-}
-
-void UpdateMangaListsDialog::setSettings(Settings *settings)
-{
-    this->settings = settings;
 }
 
 void UpdateMangaListsDialog::open()

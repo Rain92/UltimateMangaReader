@@ -69,7 +69,7 @@ private:
 
     Settings *settings;
 
-    void adjustSizes();
+    void adjustUI();
 
     int searchCache(const QString &path) const;
 

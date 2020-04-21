@@ -6,13 +6,13 @@ DownloadMangaChaptersDialog::DownloadMangaChaptersDialog(QWidget *parent)
     : QDialog(parent), ui(new Ui::DownloadMangaChaptersDialog)
 {
     ui->setupUi(this);
-    adjustSizes();
+    adjustUI();
 
     ui->spinBoxFrom->installEventFilter(this);
     ui->spinBoxTo->installEventFilter(this);
 }
 
-void DownloadMangaChaptersDialog::adjustSizes()
+void DownloadMangaChaptersDialog::adjustUI()
 {
     ui->labelTitle->setStyleSheet("font-size: 12pt");
     ui->pushButtonConfirm->setFixedHeight(SIZES.buttonSize);

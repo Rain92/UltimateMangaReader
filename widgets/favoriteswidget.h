@@ -37,7 +37,7 @@ private:
     Ui::FavoritesWidget *ui;
 
     void insertRow(const QSharedPointer<MangaInfo> &fav, int row);
-    void adjustSizes();
+    void adjustUI();
     void moveFavoriteToFront(int i);
 
     QWidget *makeIconTextWidget(const QString &path, const QString &text, const QSize &iconsize);

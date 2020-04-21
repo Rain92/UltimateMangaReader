@@ -51,7 +51,7 @@ private:
 
     QSharedPointer<MangaInfo> currentmanga;
 
-    void adjustSizes();
+    void adjustUI();
 
     void updateInfos();
 };

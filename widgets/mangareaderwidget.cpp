@@ -10,7 +10,7 @@ MangaReaderWidget::MangaReaderWidget(QWidget *parent)
     : QWidget(parent), ui(new Ui::MangaReaderWidget), imgcache(), settings(nullptr)
 {
     ui->setupUi(this);
-    adjustSizes();
+    adjustUI();
 
     setAttribute(Qt::WA_AcceptTouchEvents, true);
 
@@ -33,8 +33,12 @@ MangaReaderWidget::~MangaReaderWidget()
     delete ui;
 }
 
-void MangaReaderWidget::adjustSizes()
+void MangaReaderWidget::adjustUI()
 {
+    ui->pushButtonReaderBack->setProperty("type", "borderless");
+    ui->pushButtonReaderFavorites->setProperty("type", "borderless");
+    ui->pushButtonReaderHome->setProperty("type", "borderless");
+
     ui->pushButtonReaderBack->setFixedHeight(SIZES.buttonSize);
     ui->pushButtonReaderFavorites->setFixedHeight(SIZES.buttonSize);
     ui->pushButtonReaderHome->setFixedHeight(SIZES.buttonSize);

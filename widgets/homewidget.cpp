@@ -11,7 +11,7 @@ HomeWidget::HomeWidget(QWidget *parent)
       filteractive(false)
 {
     ui->setupUi(this);
-    adjustSizes();
+    adjustUI();
 
     ui->listViewSources->setModel(new QStandardItemModel(this));
     ui->listViewMangas->setModel(new QStringListModel(this));
@@ -28,11 +28,14 @@ HomeWidget::~HomeWidget()
     delete ui;
 }
 
-void HomeWidget::adjustSizes()
+void HomeWidget::adjustUI()
 {
+    ui->pushButtonFilter->setProperty("type", "borderless");
+    ui->pushButtonFilterClear->setProperty("type", "borderless");
+
     ui->pushButtonFilter->setFixedHeight(SIZES.buttonSize);
     ui->pushButtonFilterClear->setFixedHeight(SIZES.buttonSize);
-    ui->lineEditFilter->setFixedHeight(SIZES.buttonSize);
+    ui->lineEditFilter->setFixedHeight(SIZES.buttonSize + ui->frame->layout()->margin() * 2);
 
     ui->listViewSources->setFixedHeight(SIZES.listSourcesHeight);
     ui->listViewSources->setViewMode(QListView::IconMode);

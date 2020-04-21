@@ -36,7 +36,7 @@ private slots:
 
 private:
     Ui::DownloadStatusDialog *ui;
-    void adjustSizes();
+    void adjustUI();
     void checkFreeMem();
     int pageDownloadErrors;
     int imageDownloadErrors;

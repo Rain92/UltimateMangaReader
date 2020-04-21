@@ -10,7 +10,7 @@ DownloadStatusDialog::DownloadStatusDialog(QWidget *parent)
       cancelled(false)
 {
     ui->setupUi(this);
-    adjustSizes();
+    adjustUI();
 
 #ifdef KOBO
     // disabe background download
@@ -18,7 +18,7 @@ DownloadStatusDialog::DownloadStatusDialog(QWidget *parent)
 #endif
 }
 
-void DownloadStatusDialog::adjustSizes()
+void DownloadStatusDialog::adjustUI()
 {
     ui->labelTitle->setStyleSheet("font-size: 13pt");
     ui->pushButtonCancel->setFixedHeight(SIZES.buttonSize);

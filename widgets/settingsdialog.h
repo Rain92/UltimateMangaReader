@@ -32,7 +32,7 @@ private:
     Settings *settings;
 
     void resetUI();
-    void adjustSizes();
+    void adjustUI();
 
     void updateSettings();
     void updateActiveMangasSettings(const QString &name, bool enabled);

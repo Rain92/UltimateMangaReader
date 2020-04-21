@@ -48,7 +48,7 @@ private:
     bool filteractive;
 
     void refreshMangaListView();
-    void adjustSizes();
+    void adjustUI();
 
     QList<QStandardItem *> listViewItemfromMangaSource(AbstractMangaSource *source);
     void updateMangaSourceSelection(int row);

@@ -7,7 +7,7 @@ FavoritesWidget::FavoritesWidget(QWidget *parent)
 {
     ui->setupUi(this);
 
-    adjustSizes();
+    adjustUI();
 }
 
 FavoritesWidget::~FavoritesWidget()
@@ -15,7 +15,7 @@ FavoritesWidget::~FavoritesWidget()
     delete ui;
 }
 
-void FavoritesWidget::adjustSizes()
+void FavoritesWidget::adjustUI()
 {
     ui->tableWidget->setHorizontalHeaderLabels(QStringList() << "Manga"
                                                              << "Host"

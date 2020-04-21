@@ -10,7 +10,7 @@ MangaInfoWidget::MangaInfoWidget(QWidget *parent)
     : QWidget(parent), ui(new Ui::MangaInfoWidget), currentmanga()
 {
     ui->setupUi(this);
-    adjustSizes();
+    adjustUI();
 }
 
 MangaInfoWidget::~MangaInfoWidget()
@@ -18,8 +18,12 @@ MangaInfoWidget::~MangaInfoWidget()
     delete ui;
 }
 
-void MangaInfoWidget::adjustSizes()
+void MangaInfoWidget::adjustUI()
 {
+    ui->pushButtonReadContinue->setProperty("type", "borderless");
+    ui->pushButtonReadFirst->setProperty("type", "borderless");
+    ui->pushButtonReadLatest->setProperty("type", "borderless");
+
     ui->pushButtonReadContinue->setFixedHeight(SIZES.buttonSize);
     ui->pushButtonReadFirst->setFixedHeight(SIZES.buttonSize);
     ui->pushButtonReadLatest->setFixedHeight(SIZES.buttonSize);

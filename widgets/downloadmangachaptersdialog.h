@@ -32,7 +32,7 @@ private slots:
     void on_pushButtonConfirm_clicked();
 
 private:
-    void adjustSizes();
+    void adjustUI();
 
     Ui::DownloadMangaChaptersDialog *ui;
 

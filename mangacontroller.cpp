@@ -4,7 +4,7 @@ MangaController::MangaController(NetworkManager *networkManager, QObject *parent
     : QObject(parent),
       currentIndex(nullptr, 0, 0),
       networkManager(networkManager),
-      preloadQueue(networkManager, {}, 2, false)
+      preloadQueue(networkManager, {}, 1, false)
 {
     QObject::connect(&preloadQueue, &DownloadQueue::singleDownloadCompleted, this,
                      &MangaController::completedImagePreload);

@@ -68,7 +68,7 @@ protected:
 private:
     void setupVirtualKeyboard();
     void setupFrontLight();
-    void adjustSizes();
+    void adjustUI();
     void disableFrontLight();
 
     void timerTick();

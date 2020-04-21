@@ -18,10 +18,9 @@ class UpdateMangaListsDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit UpdateMangaListsDialog(QWidget *parent = nullptr);
+    explicit UpdateMangaListsDialog(Settings *settings, QWidget *parent);
     ~UpdateMangaListsDialog();
 
-    void setSettings(Settings *settings);
     void open() override;
 
 private slots:

@@ -15,7 +15,7 @@ public:
         if (dpi > 0 && dpi != screenDPI)
         {
             screenDPI = dpi;
-            adjustSizes();
+            adjustUI();
         }
     }
 
@@ -67,10 +67,10 @@ private:
         readerPreviousPageThreshold = 0.3;
         readerBottomMenuThreshold = 0.1;
 
-        adjustSizes();
+        adjustUI();
     };
 
-    void adjustSizes()
+    void adjustUI()
     {
         listSourcesHeight = mmToPx(22);
         mangasourceIconSize = mmToPx(13);
