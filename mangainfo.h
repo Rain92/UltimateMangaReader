@@ -21,7 +21,7 @@ public:
 
     void serialize();
     QString title;
-    QString link;
+    QString url;
 
     QString author;
     QString artist;
@@ -30,7 +30,7 @@ public:
     QString status;
     QString summary;
     QString coverPath;
-    QString coverLink;
+    QString coverUrl;
 
     QString hostname;
 

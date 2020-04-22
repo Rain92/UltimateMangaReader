@@ -4,7 +4,7 @@ MangaOwl::MangaOwl(NetworkManager *dm) : AbstractMangaSource(dm)
 {
     name = "MangaOwl";
     baseurl = "https://mangaowl.net/";
-    dicturl = "https://mangaowl.net/list/";
+    mangalistUrl = "https://mangaowl.net/list/";
 }
 
 bool MangaOwl::uptareMangaList(UpdateProgressToken *token)
@@ -15,7 +15,7 @@ bool MangaOwl::uptareMangaList(UpdateProgressToken *token)
         R"lit(<a href="(https://mangaowl.(?:net|com)/single/[^"]+)">.*?</td>.*?<td>([^<]+)</td>)lit",
         QRegularExpression::DotMatchesEverythingOption);
 
-    auto job = networkManager->downloadAsString(dicturl + "1");
+    auto job = networkManager->downloadAsString(mangalistUrl + "1");
 
     if (!job->await(7000))
     {
@@ -40,20 +40,18 @@ bool MangaOwl::uptareMangaList(UpdateProgressToken *token)
     qDebug() << "pages:" << pages;
 
     const int matchesPerPage = 36;
-
     auto lambda = [&](QSharedPointer<DownloadJobBase> job) {
         auto sjob = static_cast<DownloadStringJob *>(job.get());
         int matches = 0;
         for (auto &match : getAllRxMatches(mangarx, sjob->buffer))
         {
-            mangas.links.append(match.captured(1));
+            mangas.urls.append(match.captured(1));
             mangas.titles.append(htmlToPlainText(htmlToPlainText(match.captured(2))));
             matches++;
         }
         mangas.size += matches;
 
         token->sendProgress(10 + 90 * (mangas.size / matchesPerPage) / pages);
-
         qDebug() << "matches:" << matches;
     };
 
@@ -61,7 +59,7 @@ bool MangaOwl::uptareMangaList(UpdateProgressToken *token)
 
     QList<QString> urls;
     for (int i = 2; i <= pages; i++)
-        urls.append(dicturl + QString::number(i));
+        urls.append(mangalistUrl + QString::number(i));
 
     DownloadQueue queue(networkManager, urls, CONF.parallelDownloadsHigh, lambda, true);
     queue.setCancellationToken(&token->canceled);
@@ -110,20 +108,20 @@ void MangaOwl::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> 
     info->chapters.mergeChapters(newchapters);
 }
 
-Result<QStringList, QString> MangaOwl::getPageList(const QString &chapterlink)
+Result<QStringList, QString> MangaOwl::getPageList(const QString &chapterUrl)
 {
     QRegularExpression pagerx(R"lit(<img[^>]*class="owl-lazy"[^>]*data-src="([^"]*)")lit");
 
-    auto job = networkManager->downloadAsString(chapterlink);
+    auto job = networkManager->downloadAsString(chapterUrl);
 
     if (!job->await(7000))
         return Err(job->errorString);
 
-    QStringList imageLinks;
+    QStringList imageUrls;
     for (auto &match : getAllRxMatches(pagerx, job->buffer))
     {
-        imageLinks.append(match.captured(1));
+        imageUrls.append(match.captured(1));
     }
 
-    return Ok(imageLinks);
+    return Ok(imageUrls);
 }

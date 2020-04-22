@@ -30,7 +30,7 @@ bool MangaPanda::uptareMangaList(UpdateProgressToken *token)
 
     for (auto &match : getAllRxMatches(mangarx, job->buffer, spos, epos))
     {
-        mangas.links.append(match.captured(1));
+        mangas.urls.append(match.captured(1));
         mangas.titles.append(htmlToPlainText(match.captured(2)));
         mangas.size++;
     }
@@ -75,11 +75,11 @@ void MangaPanda::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob
     info->chapters.mergeChapters(newchapters);
 }
 
-Result<QStringList, QString> MangaPanda::getPageList(const QString &chapterlink)
+Result<QStringList, QString> MangaPanda::getPageList(const QString &chapterUrl)
 {
     QRegularExpression pagerx(R"lit(<option value="([^"]*)")lit");
 
-    auto job = networkManager->downloadAsString(chapterlink);
+    auto job = networkManager->downloadAsString(chapterUrl);
 
     if (!job->await(7000))
         return Err(job->errorString);
@@ -87,18 +87,18 @@ Result<QStringList, QString> MangaPanda::getPageList(const QString &chapterlink)
     int spos = job->buffer.indexOf(R"(<select id="pageMenu")");
     int epos = job->buffer.indexOf("</select>", spos);
 
-    QStringList pageLinks;
+    QStringList pageUrls;
     for (auto &match : getAllRxMatches(pagerx, job->buffer, spos, epos))
     {
-        pageLinks.append(baseurl + match.captured(1));
+        pageUrls.append(baseurl + match.captured(1));
     }
 
-    return Ok(pageLinks);
+    return Ok(pageUrls);
 }
 
-Result<QString, QString> MangaPanda::getImageLink(const QString &pagelink)
+Result<QString, QString> MangaPanda::getImageUrl(const QString &pageUrl)
 {
-    auto job = networkManager->downloadAsString(pagelink);
+    auto job = networkManager->downloadAsString(pageUrl);
 
     QRegularExpression imagerx(R"lit(<img id="img"[^>]*src="([^"]*)")lit");
 
@@ -110,7 +110,7 @@ Result<QString, QString> MangaPanda::getImageLink(const QString &pagelink)
     if (!match.hasMatch())
         return Err(QString("Error. Couldn't process pages/images."));
 
-    auto imageLink = match.captured(1);
+    auto imageUrl = match.captured(1);
 
-    return Ok(imageLink);
+    return Ok(imageUrl);
 }

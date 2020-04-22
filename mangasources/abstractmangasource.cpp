@@ -14,7 +14,7 @@ bool AbstractMangaSource::serializeMangaList()
         return false;
     QDataStream out(&file);
     out << mangaList.titles;
-    out << mangaList.links;
+    out << mangaList.urls;
     out << mangaList.absoluteUrls;
     out << mangaList.size;
 
@@ -25,7 +25,7 @@ bool AbstractMangaSource::serializeMangaList()
 
 bool AbstractMangaSource::deserializeMangaList()
 {
-    mangaList.links.clear();
+    mangaList.urls.clear();
     mangaList.titles.clear();
 
     QFile file(CONF.mangaListDir + name + "_mangalist.dat");
@@ -33,7 +33,7 @@ bool AbstractMangaSource::deserializeMangaList()
         return false;
     QDataStream in(&file);
     in >> mangaList.titles;
-    in >> mangaList.links;
+    in >> mangaList.urls;
     in >> mangaList.absoluteUrls;
     in >> mangaList.size;
 
@@ -77,14 +77,14 @@ Result<QString, QString> AbstractMangaSource::downloadAwaitImage(const DownloadI
         return Err(job->errorString);
 }
 
-Result<QString, QString> AbstractMangaSource::getImageLink(const QString &pagelink)
+Result<QString, QString> AbstractMangaSource::getImageUrl(const QString &pageurl)
 {
     // Default implementation:
-    // pagelinks are actually already imagelinks
-    return Ok(pagelink);
+    // pageurls are actually already imageurls
+    return Ok(pageurl);
 }
 
-Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::loadMangaInfo(const QString &mangalink,
+Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::loadMangaInfo(const QString &mangaUrl,
                                                                               const QString &mangatitle,
                                                                               bool update)
 {
@@ -104,7 +104,7 @@ Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::loadMangaInfo(co
         }
     }
 
-    auto infoR = getMangaInfo(mangalink);
+    auto infoR = getMangaInfo(mangaUrl);
 
     if (infoR.isOk())
         infoR.unwrap()->serialize();
@@ -112,16 +112,16 @@ Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::loadMangaInfo(co
     return infoR;
 }
 
-Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::getMangaInfo(const QString &mangalink)
+Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::getMangaInfo(const QString &mangaUrl)
 {
-    auto job = networkManager->downloadAsString(mangalink, 6000, mangaInfoPostDataStr);
+    auto job = networkManager->downloadAsString(mangaUrl, 6000, mangaInfoPostDataStr);
 
     auto info = QSharedPointer<MangaInfo>(new MangaInfo(this));
 
     info->mangaSource = this;
     info->hostname = name;
 
-    info->link = mangalink;
+    info->url = mangaUrl;
 
     if (!job->await(6000))
         return Err(job->errorString);
@@ -137,7 +137,7 @@ void AbstractMangaSource::updateMangaInfoAsync(QSharedPointer<MangaInfo> info)
 {
     int oldnumchapters = info->chapters.count();
 
-    auto job = networkManager->downloadAsString(info->link, 6000, mangaInfoPostDataStr);
+    auto job = networkManager->downloadAsString(info->url, 6000, mangaInfoPostDataStr);
 
     auto lambda = [oldnumchapters, info, job, this] {
         {
@@ -180,7 +180,7 @@ Result<void, QString> AbstractMangaSource::updatePageList(QSharedPointer<MangaIn
 
     if (ch.pageUrlList.count() == 0)
     {
-        qDebug() << "pagelinks empty" << ch.chapterUrl;
+        qDebug() << "pageUrls empty" << ch.chapterUrl;
         ch.numPages = 1;
         ch.pageUrlList.clear();
         ch.pageUrlList << "";
@@ -211,21 +211,21 @@ void AbstractMangaSource::genrateCoverThumbnail(QSharedPointer<MangaInfo> mangai
 
 void AbstractMangaSource::downloadCoverAsync(QSharedPointer<MangaInfo> mangainfo)
 {
-    if (mangainfo->coverLink == "")
+    if (mangainfo->coverUrl == "")
     {
         return;
     }
 
     if (mangainfo->coverPath == "")
     {
-        int ind = mangainfo->coverLink.indexOf('?');
+        int ind = mangainfo->coverUrl.indexOf('?');
         if (ind == -1)
-            ind = mangainfo->coverLink.length();
-        QString filetype = mangainfo->coverLink.mid(ind - 4, 4);
+            ind = mangainfo->coverUrl.length();
+        QString filetype = mangainfo->coverUrl.mid(ind - 4, 4);
         mangainfo->coverPath = CONF.mangainfodir(name, mangainfo->title) + "cover" + filetype;
     }
 
-    auto coverjob = networkManager->downloadAsFile(mangainfo->coverLink, mangainfo->coverPath);
+    auto coverjob = networkManager->downloadAsFile(mangainfo->coverUrl, mangainfo->coverPath);
 
     auto lambda = [this, mangainfo]() {
         genrateCoverThumbnail(mangainfo);
@@ -273,5 +273,5 @@ void AbstractMangaSource::fillMangaInfo(QSharedPointer<MangaInfo> info, const QS
     if (summaryrxmatch.hasMatch())
         info->summary = htmlToPlainText(summaryrxmatch.captured(1));
     if (coverrxmatch.hasMatch())
-        info->coverLink = coverrxmatch.captured(1);
+        info->coverUrl = coverrxmatch.captured(1);
 }

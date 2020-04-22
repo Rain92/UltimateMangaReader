@@ -9,6 +9,7 @@
 #include "mangacontroller.h"
 #include "mangadex.h"
 #include "mangahub.h"
+#include "mangakakalot.h"
 #include "mangaowl.h"
 #include "mangapanda.h"
 #include "settings.h"
@@ -39,7 +40,7 @@ public:
     void setImageSize(const QSize &size);
 
     void setCurrentMangaSource(AbstractMangaSource *mangaSource);
-    void setCurrentManga(const QString &mangalink, const QString &mangatitle);
+    void setCurrentManga(const QString &mangaUrl, const QString &mangatitle);
 
     void clearDownloadCache(ClearDownloadCacheLevel level);
     void updateActiveScources();

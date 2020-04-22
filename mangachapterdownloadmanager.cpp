@@ -70,7 +70,7 @@ void MangaChapterDownloadManager::processNextJob()
         {
             if (mangaInfo->chapters[c].imageUrlList[p] == "")
             {
-                auto res = mangaInfo->mangaSource->getImageLink(mangaInfo->chapters.at(c).pageUrlList.at(p));
+                auto res = mangaInfo->mangaSource->getImageUrl(mangaInfo->chapters.at(c).pageUrlList.at(p));
                 if (!res.isOk())
                 {
                     pagesErrors++;
@@ -82,18 +82,18 @@ void MangaChapterDownloadManager::processNextJob()
                 mangaInfo->chapters[c].imageUrlList[p] = res.unwrap();
             }
 
-            auto &imageLink = mangaInfo->chapters[c].imageUrlList[p];
+            auto &imageUrl = mangaInfo->chapters[c].imageUrlList[p];
 
-            if (imageLink != "")
+            if (imageUrl != "")
             {
-                if (imageLink != mangaInfo->chapters.at(c).pageUrlList.at(p))
+                if (imageUrl != mangaInfo->chapters.at(c).pageUrlList.at(p))
                     emit downloadPagesProgress(c + 1 - fromChapter, toChapterInclusive + 1 - fromChapter,
                                                pagesErrors);
 
-                DownloadImageDescriptor imageinfo(imageLink, mangaInfo->title, c, p);
+                DownloadImageDescriptor imageinfo(imageUrl, mangaInfo->title, c, p);
                 auto path = mangaInfo->mangaSource->getImagePath(imageinfo);
 
-                imageDescriptors.append(FileDownloadDescriptor(imageLink, path));
+                imageDescriptors.append(FileDownloadDescriptor(imageUrl, path));
             }
         }
     }

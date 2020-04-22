@@ -46,6 +46,7 @@ HEADERS += \
     mangachapterdownloadmanager.h \
     mangacontroller.h \
     mangaindextraverser.h \
+    mangasources/mangakakalot.h \
     mangasources/updateprogresstoken.h \
     networkmanager.h \
     readingprogress.h \
@@ -101,6 +102,7 @@ SOURCES += \
     mangachapterdownloadmanager.cpp \
     mangacontroller.cpp \
     mangaindextraverser.cpp \
+    mangasources/mangakakalot.cpp \
     mangasources/updateprogresstoken.cpp \
     networkmanager.cpp \
     readingprogress.cpp \

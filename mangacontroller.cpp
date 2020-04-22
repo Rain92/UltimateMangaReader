@@ -84,7 +84,7 @@ void MangaController::setCurrentIndex(const MangaIndex &index)
         emit error(res.unwrapErr());
 }
 
-Result<QString, QString> MangaController::getImageLink(const MangaIndex &index)
+Result<QString, QString> MangaController::getImageUrl(const MangaIndex &index)
 {
     if (index.chapter < 0 || index.chapter >= currentManga->chapters.count())
         return Err(QString("Chapter number out of bounds."));
@@ -102,7 +102,7 @@ Result<QString, QString> MangaController::getImageLink(const MangaIndex &index)
 
     if (currentManga->chapters[index.chapter].imageUrlList[index.page] == "")
     {
-        auto res = currentManga->mangaSource->getImageLink(
+        auto res = currentManga->mangaSource->getImageUrl(
             currentManga->chapters[index.chapter].pageUrlList.at(index.page));
         if (!res.isOk())
             return Err(res.unwrapErr());
@@ -126,15 +126,15 @@ void MangaController::currentIndexChangedInternal(bool preload)
 
 void MangaController::updateCurrentImage()
 {
-    auto imageLink = getImageLink(currentIndex);
+    auto imageUrl = getImageUrl(currentIndex);
 
-    if (!imageLink.isOk())
+    if (!imageUrl.isOk())
     {
-        emit error(imageLink.unwrapErr());
+        emit error(imageUrl.unwrapErr());
         return;
     }
 
-    auto dd = DownloadImageDescriptor(imageLink.unwrap(), currentManga->title, currentIndex.chapter,
+    auto dd = DownloadImageDescriptor(imageUrl.unwrap(), currentManga->title, currentIndex.chapter,
                                       currentIndex.page);
 
     auto imagePath = currentManga->mangaSource->downloadAwaitImage(dd);
@@ -183,15 +183,15 @@ void MangaController::advanceMangaPage(PageTurnDirection direction)
 
 void MangaController::preloadImage(const MangaIndex &index)
 {
-    auto imageLink = getImageLink(index);
+    auto imageUrl = getImageUrl(index);
 
-    if (!imageLink.isOk())
+    if (!imageUrl.isOk())
     {
-        emit error(imageLink.unwrapErr());
+        emit error(imageUrl.unwrapErr());
         return;
     }
 
-    DownloadImageDescriptor imageinfo(imageLink.unwrap(), currentManga->title, index.chapter, index.page);
+    DownloadImageDescriptor imageinfo(imageUrl.unwrap(), currentManga->title, index.chapter, index.page);
     auto path = currentManga->mangaSource->getImagePath(imageinfo);
 
     if (QFile::exists(path))
@@ -199,7 +199,7 @@ void MangaController::preloadImage(const MangaIndex &index)
 
     //    qDebug() << "preload page" << index.page;
 
-    preloadQueue.appendDownload(FileDownloadDescriptor(imageLink.unwrap(), path));
+    preloadQueue.appendDownload(FileDownloadDescriptor(imageUrl.unwrap(), path));
 }
 
 void MangaController::preloadPopular()

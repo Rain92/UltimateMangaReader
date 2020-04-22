@@ -21,6 +21,7 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
     mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaDex(networkManager)));
     mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaHub(networkManager)));
     mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaOwl(networkManager)));
+    mangaSources.append(QSharedPointer<AbstractMangaSource>(new Mangakakalot(networkManager)));
 
     currentMangaSource = mangaSources.first().get();
 
@@ -91,9 +92,9 @@ void UltimateMangaReaderCore::setCurrentMangaSource(AbstractMangaSource* mangaSo
     }
 }
 
-void UltimateMangaReaderCore::setCurrentManga(const QString& mangalink, const QString& mangatitle)
+void UltimateMangaReaderCore::setCurrentManga(const QString& mangaUrl, const QString& mangatitle)
 {
-    auto res = currentMangaSource->loadMangaInfo(mangalink, mangatitle);
+    auto res = currentMangaSource->loadMangaInfo(mangaUrl, mangatitle);
     if (res.isOk())
         mangaController->setCurrentManga(res.unwrap());
     else

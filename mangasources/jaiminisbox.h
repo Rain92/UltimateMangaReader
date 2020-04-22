@@ -13,7 +13,10 @@ public:
 
     void updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
                                         QSharedPointer<MangaInfo> info) override;
-    Result<QStringList, QString> getPageList(const QString &chapterlink) override;
+    Result<QStringList, QString> getPageList(const QString &chapterUrl) override;
+
+private:
+    QString dictionaryUrl;
 };
 
 #endif  // JAIMINISBOX_H

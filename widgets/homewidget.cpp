@@ -7,7 +7,7 @@ HomeWidget::HomeWidget(QWidget *parent)
       ui(new Ui::HomeWidget),
       currentMangaSource(nullptr),
       filteredMangaTitles(),
-      filteredMangaLinks(),
+      filteredMangaUrls(),
       filteractive(false)
 {
     ui->setupUi(this);
@@ -105,7 +105,7 @@ void HomeWidget::on_pushButtonFilter_clicked()
 
     QString ss = ui->lineEditFilter->text();
 
-    filteredMangaLinks.clear();
+    filteredMangaUrls.clear();
     filteredMangaTitles.clear();
 
     if (ss == "")
@@ -119,7 +119,7 @@ void HomeWidget::on_pushButtonFilter_clicked()
         if (currentMangaSource->mangaList.titles[i].contains(ss, Qt::CaseInsensitive))
         {
             filteredMangaTitles.append(currentMangaSource->mangaList.titles[i]);
-            filteredMangaLinks.append(currentMangaSource->mangaList.links[i]);
+            filteredMangaUrls.append(currentMangaSource->mangaList.urls[i]);
         }
 
     filteractive = true;
@@ -131,7 +131,7 @@ void HomeWidget::on_pushButtonFilterClear_clicked()
     if (ui->lineEditFilter->text() != "")
         ui->lineEditFilter->clear();
 
-    filteredMangaLinks.clear();
+    filteredMangaUrls.clear();
     filteredMangaTitles.clear();
 
     filteractive = false;
@@ -160,12 +160,12 @@ void HomeWidget::on_listViewMangas_clicked(const QModelIndex &index)
 {
     int idx = index.row();
 
-    QString mangalink = filteractive ? filteredMangaLinks[idx] : currentMangaSource->mangaList.links[idx];
+    QString mangaUrl = filteractive ? filteredMangaUrls[idx] : currentMangaSource->mangaList.urls[idx];
 
     if (!currentMangaSource->mangaList.absoluteUrls)
-        mangalink.prepend(currentMangaSource->baseurl);
+        mangaUrl.prepend(currentMangaSource->baseurl);
 
     QString mangatitle = filteractive ? filteredMangaTitles[idx] : currentMangaSource->mangaList.titles[idx];
 
-    emit mangaClicked(mangalink, mangatitle);
+    emit mangaClicked(mangaUrl, mangatitle);
 }

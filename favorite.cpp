@@ -3,8 +3,8 @@
 Favorite::Favorite() = default;
 
 Favorite::Favorite(const QString &hostname, const QString &title,
-                   const QString &mangalink)
-    : hostname(hostname), title(title), mangalink(mangalink)
+                   const QString &mangaurl)
+    : hostname(hostname), title(title), mangaUrl(mangaurl)
 {
 }
 
@@ -15,14 +15,14 @@ QString Favorite::mangaInfoPath() const
 
 QDataStream &operator<<(QDataStream &str, const Favorite &m)
 {
-    str << m.title << m.hostname << m.mangalink;
+    str << m.title << m.hostname << m.mangaUrl;
 
     return str;
 }
 
 QDataStream &operator>>(QDataStream &str, Favorite &m)
 {
-    str >> m.title >> m.hostname >> m.mangalink;
+    str >> m.title >> m.hostname >> m.mangaUrl;
 
     return str;
 }

@@ -29,7 +29,7 @@ public:
 
 signals:
     void mangaSourceClicked(AbstractMangaSource *source);
-    void mangaClicked(const QString &mangalink, const QString &mangatitle);
+    void mangaClicked(const QString &mangaurl, const QString &mangatitle);
     void favoritesCleared();
 
 private slots:
@@ -44,7 +44,7 @@ private:
     AbstractMangaSource *currentMangaSource;
 
     QStringList filteredMangaTitles;
-    QStringList filteredMangaLinks;
+    QStringList filteredMangaUrls;
     bool filteractive;
 
     void refreshMangaListView();

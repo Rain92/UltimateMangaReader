@@ -1,36 +1,32 @@
 #include "mangakakalot.h"
 
-Mangakakalot::Mangakakalot(QObject *parent, DownloadManager *dm)
-    : AbstractMangaSource(parent, dm)
+Mangakakalot::Mangakakalot(NetworkManager *dm) : AbstractMangaSource(dm)
 {
     name = "Mangakakalot";
     baseurl = "https://mangakakalot.com/";
-    dicturl =
+    dictionaryUrl =
         "https://mangakakalot.com/"
         "manga_list?type=topview&category=all&state=all&page=";
 }
 
-MangaList Mangakakalot::getMangaList()
+bool Mangakakalot::uptareMangaList(UpdateProgressToken *token)
 {
     QString rxstart(R"(<div class="main-wrapper">)");
     QString rxend(R"(<div class="panel_page_number">)");
-    QRegularExpression mangarx(
-        R"lit(<h3>\s*<a(?: rel="nofollow")? href="([^"]*)"\s*title="([^"]*)")lit");
+    QRegularExpression mangarx(R"lit(<h3>\s*<a(?: rel="nofollow")? href="([^"]*)"\s*title="([^"]*)")lit");
 
     QRegularExpression nummangasrx("Total: ([0-9,]+)");
     QRegularExpression numpagesrx(R"(Last\(([0-9]+)\))");
 
-    MangaList mangas;
+    auto job = networkManager->downloadAsString(dictionaryUrl + "1");
 
-    auto job = downloadManager->downloadAsString(dicturl + "1");
-
-    if (!job->await(2000))
+    if (!job->await(7000))
     {
-        emit updateError(job->errorString);
-        return mangas;
+        token->sendError(job->errorString);
+        return false;
     }
 
-    emit updateProgress(30);
+    token->sendProgress(10);
 
     QElapsedTimer timer;
     timer.start();
@@ -38,14 +34,18 @@ MangaList Mangakakalot::getMangaList()
     auto nummangasrxmatch = nummangasrx.match(job->buffer);
     auto numpagesrxmatch = numpagesrx.match(job->buffer);
 
-    mangas.nominalSize = 0;
+    int nominalSize = 0;
     if (nummangasrxmatch.hasMatch())
-        mangas.nominalSize = nummangasrxmatch.captured(1).remove(',').toInt();
+        nominalSize = nummangasrxmatch.captured(1).remove(',').toInt();
+
+    MangaList mangas;
+    mangas.absoluteUrls = true;
 
     int pages = 1;
     if (numpagesrxmatch.hasMatch())
         pages = numpagesrxmatch.captured(1).toInt();
 
+    const int matchesPerPage = 24;
     auto lambda = [&](QSharedPointer<DownloadJobBase> job) {
         auto sjob = static_cast<DownloadStringJob *>(job.get());
 
@@ -55,95 +55,86 @@ MangaList Mangakakalot::getMangaList()
         int matches = 0;
         for (auto &match : getAllRxMatches(mangarx, sjob->buffer, spos, epos))
         {
-            mangas.links.append(match.captured(1));
-            mangas.titles.append(
-                htmlToPlainText(htmlToPlainText(match.captured(2))));
+            mangas.urls.append(match.captured(1));
+            mangas.titles.append(htmlToPlainText(htmlToPlainText(match.captured(2))));
             matches++;
         }
-        mangas.actualSize += matches;
+        mangas.size += matches;
 
-        emit updateProgress(10 + 90 * (mangas.actualSize / 100) / pages);
+        token->sendProgress(10 + 90 * (mangas.size / matchesPerPage) / pages);
         qDebug() << "matches:" << matches;
     };
+
+    if (nominalSize != mangas.size)
+        qDebug() << "Not all mangas captured:" << nominalSize << "vs" << mangas.size;
 
     lambda(job);
 
     QList<QString> urls;
     for (int i = 2; i <= pages; i++)
-        urls.append(dicturl + QString::number(i));
+        urls.append(dictionaryUrl + QString::number(i));
 
-    DownloadQueue queue(downloadManager, urls, CONF.parallelDownloadsLow,
-                        lambda);
-
+    DownloadQueue queue(networkManager, urls, CONF.parallelDownloadsHigh, lambda, true);
+    queue.setCancellationToken(&token->canceled);
     queue.start();
-    awaitSignal(&queue, {SIGNAL(allCompleted())}, 1000000);
+    if (!queue.awaitCompletion())
+    {
+        token->sendError(queue.lastErrorMessage);
+        return false;
+    }
+    this->mangaList = mangas;
 
-    mangas.absoluteUrls = true;
+    qDebug() << "mangas:" << mangas.size << "time:" << timer.elapsed();
 
-    qDebug() << "mangas:" << mangas.actualSize << "time:" << timer.elapsed();
+    token->sendProgress(100);
 
-    emit updateProgress(100);
-
-    return mangas;
+    return true;
 }
-
-void Mangakakalot::updateMangaInfoFinishedLoading(
-    QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info)
+void Mangakakalot::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
+                                                  QSharedPointer<MangaInfo> info)
 {
     QRegularExpression titlerx(R"(<ul class="manga-info-text">(.*?)</h1>)",
                                QRegularExpression::DotMatchesEverythingOption);
-    QRegularExpression authorrx(R"(Author\(s\) :(.*?)</li>)",
-                                QRegularExpression::DotMatchesEverythingOption);
+    QRegularExpression authorrx(R"(Author\(s\) :(.*?)</li>)", QRegularExpression::DotMatchesEverythingOption);
     QRegularExpression artistrx;
     QRegularExpression statusrx("Status : ([^<]*)<");
     QRegularExpression yearrx;
     QRegularExpression genresrx(R"(Genres :[^>]*>(.*?)</li>)",
                                 QRegularExpression::DotMatchesEverythingOption);
-    QRegularExpression summaryrx(
-        R"lit(<meta name="description" content="([^"]*)")lit");
-    QRegularExpression coverrx(
-        R"lit(<meta name="twitter:image" content="([^"]*)")lit");
+    QRegularExpression summaryrx(R"lit(<meta name="description" content="([^"]*)")lit");
+    QRegularExpression coverrx(R"lit(<meta name="twitter:image" content="([^"]*)")lit");
 
     QRegularExpression chapterrx(R"lit(<a href="([^"]*)"[^>]*>([^<]*)<)lit");
 
-    fillMangaInfo(info, job->buffer, titlerx, authorrx, artistrx, statusrx,
-                  yearrx, genresrx, summaryrx, coverrx);
+    fillMangaInfo(info, job->buffer, titlerx, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx,
+                  coverrx);
 
     int spos = job->buffer.indexOf(R"(<div class="chapter-list">)");
     int epos = job->buffer.indexOf(R"(<div class="comment-info">)", spos);
 
     MangaChapterCollection newchapters;
-    for (auto &chapterrxmatch :
-         getAllRxMatches(chapterrx, job->buffer, spos, epos))
-        newchapters.insert(0, MangaChapter(chapterrxmatch.captured(2),
-                                           chapterrxmatch.captured(1)));
+    for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->buffer, spos, epos))
+        newchapters.insert(0, MangaChapter(chapterrxmatch.captured(2), chapterrxmatch.captured(1)));
     info->chapters.mergeChapters(newchapters);
 }
 
-QStringList Mangakakalot::getPageList(const QString &chapterlink)
+Result<QStringList, QString> Mangakakalot::getPageList(const QString &chapterUrl)
 {
     QRegularExpression pagerx(R"lit(<img src="([^"]*)")lit");
 
-    auto job = downloadManager->downloadAsString(chapterlink);
+    auto job = networkManager->downloadAsString(chapterUrl);
 
-    QStringList pageLinks;
-
-    if (!job->await(3000))
-        return pageLinks;
+    if (!job->await(7000))
+        return Err(job->errorString);
 
     int spos = job->buffer.indexOf(R"(<div class="vung-doc" id="vungdoc">)");
     int epos = job->buffer.indexOf("</div>", spos);
 
+    QStringList imageUrls;
     for (auto &match : getAllRxMatches(pagerx, job->buffer, spos, epos))
     {
-        pageLinks.append(match.captured(1));
+        imageUrls.append(match.captured(1));
     }
 
-    return pageLinks;
-}
-
-QString Mangakakalot::getImageLink(const QString &pagelink)
-{
-    // pagelinks are actually already imagelinks
-    return pagelink;
+    return Ok(imageUrls);
 }

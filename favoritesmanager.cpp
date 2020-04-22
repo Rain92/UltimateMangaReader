@@ -78,7 +78,7 @@ void FavoritesManager::loadInfos()
         if (mangasources.contains(fav.hostname))
         {
             auto mi = mangasources[fav.hostname]->loadMangaInfo(
-                fav.mangalink, fav.title, false);
+                fav.mangaUrl, fav.title, false);
 
             if (mi.isOk())
             {

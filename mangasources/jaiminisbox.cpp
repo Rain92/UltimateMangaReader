@@ -5,6 +5,8 @@ JaiminisBox::JaiminisBox(NetworkManager *dm) : AbstractMangaSource(dm)
     name = "JaiminisBox";
     baseurl = "https://jaiminisbox.com/";
 
+    dictionaryUrl = baseurl + "reader/directory/";
+
     QUrlQuery postdata;
     postdata.addQueryItem("adult", "true");
     mangaInfoPostDataStr = postdata.query().toUtf8();
@@ -19,9 +21,7 @@ bool JaiminisBox::uptareMangaList(UpdateProgressToken *token)
     MangaList mangas;
     mangas.absoluteUrls = true;
 
-    QString readerlink = baseurl + "reader/directory/";
-
-    auto job = networkManager->downloadAsString(readerlink + "1", -1);
+    auto job = networkManager->downloadAsString(dictionaryUrl + "1", -1);
 
     if (!job->await(7000))
     {
@@ -47,7 +47,7 @@ bool JaiminisBox::uptareMangaList(UpdateProgressToken *token)
         int matches = 0;
         for (auto &match : getAllRxMatches(mangarx, job->buffer))
         {
-            mangas.links.append(match.captured(1));
+            mangas.urls.append(match.captured(1));
             mangas.titles.append(htmlToPlainText(match.captured(2)).trimmed());
             matches++;
         }
@@ -62,7 +62,7 @@ bool JaiminisBox::uptareMangaList(UpdateProgressToken *token)
 
     QList<QString> urls;
     for (int i = 2; i <= pages; i++)
-        urls.append(readerlink + QString::number(i));
+        urls.append(dictionaryUrl + QString::number(i));
 
     DownloadQueue queue(networkManager, urls, CONF.parallelDownloadsLow, lambda, true);
     queue.setCancellationToken(&token->canceled);
@@ -105,12 +105,12 @@ void JaiminisBox::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJo
     info->chapters.mergeChapters(newchapters);
 }
 
-Result<QStringList, QString> JaiminisBox::getPageList(const QString &chapterlink)
+Result<QStringList, QString> JaiminisBox::getPageList(const QString &chapterUrl)
 {
     QRegularExpression encodedrx(R"(JSON.parse\(atob\("([^"]*))");
-    QRegularExpression imagelinksrx(R"("url":"([^"]*))");
+    QRegularExpression imageUrlsrx(R"("url":"([^"]*))");
 
-    auto job = networkManager->downloadAsString(chapterlink, 6000, mangaInfoPostDataStr);
+    auto job = networkManager->downloadAsString(chapterUrl, 6000, mangaInfoPostDataStr);
 
     if (!job->await(7000))
         return Err(job->errorString);
@@ -122,11 +122,11 @@ Result<QStringList, QString> JaiminisBox::getPageList(const QString &chapterlink
     QByteArray decoded = QByteArray::fromBase64(rxmatch.captured(1).toLatin1());
     QString decodedstr(decoded);
 
-    QStringList imageLinks;
-    for (auto &match : getAllRxMatches(imagelinksrx, decodedstr))
+    QStringList imageUrls;
+    for (auto &match : getAllRxMatches(imageUrlsrx, decodedstr))
     {
-        imageLinks.append(match.captured(1).replace("\\/", "/"));
+        imageUrls.append(match.captured(1).replace("\\/", "/"));
     }
 
-    return Ok(imageLinks);
+    return Ok(imageUrls);
 }

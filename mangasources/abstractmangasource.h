@@ -33,12 +33,12 @@ public:
     virtual void updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
                                                 QSharedPointer<MangaInfo> mangainfo) = 0;
 
-    virtual Result<QSharedPointer<MangaInfo>, QString> getMangaInfo(const QString &mangalink);
+    virtual Result<QSharedPointer<MangaInfo>, QString> getMangaInfo(const QString &mangaUrl);
 
-    virtual Result<QStringList, QString> getPageList(const QString &chapterlink) = 0;
-    virtual Result<QString, QString> getImageLink(const QString &pagelink);
+    virtual Result<QStringList, QString> getPageList(const QString &chapterUrl) = 0;
+    virtual Result<QString, QString> getImageUrl(const QString &pageUrl);
 
-    Result<QSharedPointer<MangaInfo>, QString> loadMangaInfo(const QString &mangalink,
+    Result<QSharedPointer<MangaInfo>, QString> loadMangaInfo(const QString &mangaUrl,
                                                              const QString &mangatitle, bool update = true);
 
     bool serializeMangaList();

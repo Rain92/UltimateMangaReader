@@ -79,9 +79,9 @@ bool MangaDex::uptareMangaList(UpdateProgressToken *token)
 
     MangaList mangas;
 
-    QString basedictlink = baseurl + "/titles/2/";
+    QString basedictUrl = baseurl + "/titles/2/";
 
-    auto job = networkManager->downloadAsString(basedictlink + "1", -1);
+    auto job = networkManager->downloadAsString(basedictUrl + "1", -1);
 
     if (!job->await(7000))
     {
@@ -108,7 +108,7 @@ bool MangaDex::uptareMangaList(UpdateProgressToken *token)
         int matches = 0;
         for (auto &match : getAllRxMatches(mangaidrx, sjob->buffer))
         {
-            mangas.links.append("/api/?type=manga&id=" + match.captured(2));
+            mangas.urls.append("/api/?type=manga&id=" + match.captured(2));
             mangas.titles.append(htmlToPlainText(htmlToPlainText(match.captured(1))));
             matches++;
         }
@@ -123,7 +123,7 @@ bool MangaDex::uptareMangaList(UpdateProgressToken *token)
 
     QList<QString> urls;
     for (int i = 2; i <= pages; i++)
-        urls.append(basedictlink + QString::number(i));
+        urls.append(basedictUrl + QString::number(i));
 
     DownloadQueue queue(networkManager, urls, 2, lambda, true);
     queue.setCancellationToken(&token->canceled);
@@ -182,7 +182,7 @@ void MangaDex::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> 
 
     info->summary = htmlToPlainText(mangaObject["description"].toString());
 
-    info->coverLink = baseurl + mangaObject["cover_url"].toString();
+    info->coverUrl = baseurl + mangaObject["cover_url"].toString();
 
     auto chaptersObject = jsonObject["chapter"].toObject();
 
@@ -213,9 +213,9 @@ void MangaDex::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> 
     info->chapters.mergeChapters(newchapters);
 }
 
-Result<QStringList, QString> MangaDex::getPageList(const QString &chapterlink)
+Result<QStringList, QString> MangaDex::getPageList(const QString &chapterUrl)
 {
-    auto job = networkManager->downloadAsString(chapterlink);
+    auto job = networkManager->downloadAsString(chapterUrl);
 
     if (!job->await(7000))
         return Err(job->errorString);
@@ -232,9 +232,9 @@ Result<QStringList, QString> MangaDex::getPageList(const QString &chapterlink)
 
     auto pagesArray = jsonObject["page_array"].toArray();
 
-    QStringList imagelinks;
+    QStringList imageUrls;
     for (auto page : pagesArray)
-        imagelinks.append(server + hash + "/" + page.toString());
+        imageUrls.append(server + hash + "/" + page.toString());
 
-    return Ok(imagelinks);
+    return Ok(imageUrls);
 }

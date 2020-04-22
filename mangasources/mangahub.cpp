@@ -11,9 +11,6 @@ bool MangaHub::uptareMangaList(UpdateProgressToken *token)
 {
     QRegularExpression mangarx(R"lit(<a href="(https://mangahub.io/manga/[^"]+)">([^<]+)<)lit");
 
-    MangaList mangas;
-    mangas.absoluteUrls = true;
-
     auto job = networkManager->downloadAsString(dicturl + "1");
 
     if (!job->await(7000))
@@ -27,6 +24,9 @@ bool MangaHub::uptareMangaList(UpdateProgressToken *token)
     QElapsedTimer timer;
     timer.start();
 
+    MangaList mangas;
+    mangas.absoluteUrls = true;
+
     int pages = 950;
 
     const int matchesPerPage = 30;
@@ -37,7 +37,7 @@ bool MangaHub::uptareMangaList(UpdateProgressToken *token)
         int matches = 0;
         for (auto &match : getAllRxMatches(mangarx, sjob->buffer))
         {
-            mangas.links.append(match.captured(1));
+            mangas.urls.append(match.captured(1));
             mangas.titles.append(htmlToPlainText(htmlToPlainText(match.captured(2))));
             matches++;
         }
@@ -146,13 +146,13 @@ int MangaHub::binarySearchNumPages(const QRegularExpressionMatch &imagerxmatch, 
         return binarySearchNumPages(imagerxmatch, lowerBound, mid, true);
 }
 
-Result<QStringList, QString> MangaHub::getPageList(const QString &chapterlink)
+Result<QStringList, QString> MangaHub::getPageList(const QString &chapterUrl)
 {
     QRegularExpression imagerx(R"lit(<img src="([^"]+?/)\d+(\..{3,4})")lit");
 
     QRegularExpression numimagesrx(R"lit(>1/(\d+)<)lit");
 
-    auto job = networkManager->downloadAsString(chapterlink);
+    auto job = networkManager->downloadAsString(chapterUrl);
 
     if (!job->await(7000))
         return Err(job->errorString);
@@ -173,12 +173,12 @@ Result<QStringList, QString> MangaHub::getPageList(const QString &chapterlink)
         pages = binarySearchNumPages(imagerxmatch, 1, 25, false);
     }
 
-    QStringList imageLinks;
+    QStringList imageUrls;
     for (int i = 1; i <= pages; i++)
     {
-        auto link = buildImgUrl(imagerxmatch, i);
-        imageLinks.append(link);
+        auto url = buildImgUrl(imagerxmatch, i);
+        imageUrls.append(url);
     }
 
-    return Ok(imageLinks);
+    return Ok(imageUrls);
 }

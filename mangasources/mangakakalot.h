@@ -7,17 +7,15 @@
 class Mangakakalot : public AbstractMangaSource
 {
 public:
-    Mangakakalot(QObject *parent, DownloadManager *dm);
+    Mangakakalot(NetworkManager *dm);
 
-    MangaList getMangaList() override;
-    void updateMangaInfoFinishedLoading(
-        QSharedPointer<DownloadStringJob> job,
-        QSharedPointer<MangaInfo> info) override;
-    QStringList getPageList(const QString &chapterlink) override;
-    QString getImageLink(const QString &pagelink) override;
+    bool uptareMangaList(UpdateProgressToken *token) override;
+    void updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
+                                        QSharedPointer<MangaInfo> info) override;
+    Result<QStringList, QString> getPageList(const QString &chapterUrl) override;
 
 private:
-    QString dicturl;
+    QString dictionaryUrl;
 };
 
 #endif  // MANGAKALOT_H

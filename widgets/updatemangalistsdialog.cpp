@@ -81,6 +81,9 @@ void UpdateMangaListsDialog::setupSourcesList()
 
     for (auto ms : settings->enabledMangaSources.keys())
     {
+        if (!settings->enabledMangaSources[ms])
+            continue;
+
         QCheckBox *checkbox = new QCheckBox(ms, ui->frameMangaScources);
         checkbox->setChecked(true);
         layout->addWidget(checkbox);

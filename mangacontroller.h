@@ -29,7 +29,7 @@ public:
     void advanceMangaPage(PageTurnDirection direction);
 
     Result<QString, QString> getCoverpathScaled() const;
-    Result<QString, QString> getImageLink(const MangaIndex &index);
+    Result<QString, QString> getImageUrl(const MangaIndex &index);
 
     void preloadNeighbours(int Forward, int Backward);
     void preloadImage(const MangaIndex &index);

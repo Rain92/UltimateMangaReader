@@ -6,20 +6,20 @@
 struct MangaList
 {
     QStringList titles;
-    QStringList links;
+    QStringList urls;
     bool absoluteUrls = false;
     int size = 0;
 
     void sortAndFilter()
     {
-        Q_ASSERT(titles.size() == links.size() && size == titles.size());
+        Q_ASSERT(titles.size() == urls.size() && size == titles.size());
 
         for (int i = 0; i < size; ++i)
         {
             if (titles[i] == "")
             {
                 titles.removeAt(i);
-                links.removeAt(i);
+                urls.removeAt(i);
                 size--;
             }
         }
@@ -42,7 +42,7 @@ struct MangaList
                 int j = indicesInv[i];
 
                 titles.swapItemsAt(i, j);
-                links.swapItemsAt(i, j);
+                urls.swapItemsAt(i, j);
                 indicesInv.swapItemsAt(i, j);
             }
     }

@@ -12,7 +12,7 @@ public:
     bool uptareMangaList(UpdateProgressToken *token) override;
     void updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
                                         QSharedPointer<MangaInfo> info) override;
-    Result<QStringList, QString> getPageList(const QString &chapterlink) override;
+    Result<QStringList, QString> getPageList(const QString &chapterUrl) override;
 
 private:
     void login();

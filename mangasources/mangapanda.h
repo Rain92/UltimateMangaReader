@@ -12,8 +12,8 @@ public:
     bool uptareMangaList(UpdateProgressToken *token) override;
     void updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
                                         QSharedPointer<MangaInfo> info) override;
-    Result<QStringList, QString> getPageList(const QString &chapterlink) override;
-    Result<QString, QString> getImageLink(const QString &pagelink) override;
+    Result<QStringList, QString> getPageList(const QString &chapterUrl) override;
+    Result<QString, QString> getImageUrl(const QString &pageUrl) override;
 };
 
 #endif  // MANGAPANDA_H
