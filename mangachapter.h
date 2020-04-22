@@ -14,6 +14,8 @@ public:
     QStringList pageUrlList;
     QStringList imageUrlList;
 
+    QString chapterNumber;
+
     explicit MangaChapter(const QString &title, const QString &url);
     MangaChapter();
 };

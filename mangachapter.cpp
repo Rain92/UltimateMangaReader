@@ -13,14 +13,15 @@ MangaChapter::MangaChapter(const QString &title, const QString &url)
 QDataStream &operator<<(QDataStream &str, const MangaChapter &m)
 {
     str << m.chapterTitle << m.chapterUrl << m.pagesLoaded << (qint32)m.numPages << m.pageUrlList
-        << m.imageUrlList;
+        << m.imageUrlList << m.chapterNumber;
 
     return str;
 }
 
 QDataStream &operator>>(QDataStream &str, MangaChapter &m)
 {
-    str >> m.chapterTitle >> m.chapterUrl >> m.pagesLoaded >> m.numPages >> m.pageUrlList >> m.imageUrlList;
+    str >> m.chapterTitle >> m.chapterUrl >> m.pagesLoaded >> m.numPages >> m.pageUrlList >> m.imageUrlList >>
+        m.chapterNumber;
 
     return str;
 }

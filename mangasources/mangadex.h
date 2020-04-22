@@ -16,6 +16,10 @@ public:
 
 private:
     void login();
+
+    QVector<QString> statuses;
+    QVector<QString> demographies;
+    QMap<int, QString> genreMap;
 };
 
 #endif  // MANGADEX_H

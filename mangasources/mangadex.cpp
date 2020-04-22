@@ -9,6 +9,40 @@ MangaDex::MangaDex(NetworkManager *dm) : AbstractMangaSource(dm)
     networkManager->addCookie(".mangadex.org", "mangadex_title_mode", "2");
     networkManager->addCookie(".mangadex.org", "mangadex_filter_langs", "1");
 
+    statuses = {"Ongoing", "Completed", "Cancelled", "Hiatus"};
+    demographies = {"Shounen", "Shoujo", "Seinen", "Josei"};
+    genreMap.insert(2, "Action");
+    genreMap.insert(3, "Adventure");
+    genreMap.insert(5, "Comedy");
+    genreMap.insert(8, "Drama");
+    genreMap.insert(9, "Ecchi");
+    genreMap.insert(10, "Fantasy");
+    genreMap.insert(13, "Historical");
+    genreMap.insert(14, "Horror");
+    genreMap.insert(17, "Mecha");
+    genreMap.insert(18, "Medical");
+    genreMap.insert(20, "Mystery");
+    genreMap.insert(22, "Psychological");
+    genreMap.insert(23, "Romance");
+    genreMap.insert(25, "Sci-Fi");
+    genreMap.insert(28, "Shoujo Ai");
+    genreMap.insert(30, "Shounen Ai");
+    genreMap.insert(31, "Slice of Life");
+    genreMap.insert(32, "Smut");
+    genreMap.insert(33, "Sports");
+    genreMap.insert(35, "Tragedy");
+    genreMap.insert(37, "Yaoi");
+    genreMap.insert(38, "Yuri");
+    genreMap.insert(41, "Isekai");
+    genreMap.insert(49, "Gore");
+    genreMap.insert(50, "Sexual Violence");
+    genreMap.insert(51, "Crime");
+    genreMap.insert(52, "Magical Girls");
+    genreMap.insert(53, "Philosophical");
+    genreMap.insert(54, "Superhero");
+    genreMap.insert(55, "Thriller");
+    genreMap.insert(56, "Wuxia");
+
     //    login();
 }
 
@@ -40,8 +74,8 @@ bool MangaDex::uptareMangaList(UpdateProgressToken *token)
 {
     QRegularExpression nummangasrx(R"(<p class=[^>]*>Showing .*? (\d+,\d+) titles)");
 
-    QRegularExpression mangarx(
-        R"lit(<a title=['"]([^'"]*?)['"][^<]*?href=['"]([^'"]*?)['"][^<]*?class=")lit");
+    QRegularExpression mangaidrx(
+        R"lit(<a title=['"]([^'"]*?)['"][^<]*?href=['"]/title/([^/]+)/[^<]*?class=")lit");
 
     MangaList mangas;
 
@@ -67,15 +101,14 @@ bool MangaDex::uptareMangaList(UpdateProgressToken *token)
         nominalSize = nummangasrxmatch.captured(1).remove(',').toInt();
 
     int pages = (nominalSize + 99) / 100;
-    //    pages = 5;
     qDebug() << "pages" << pages;
 
     auto lambda = [&](QSharedPointer<DownloadJobBase> job) {
         auto sjob = static_cast<DownloadStringJob *>(job.get());
         int matches = 0;
-        for (auto &match : getAllRxMatches(mangarx, sjob->buffer))
+        for (auto &match : getAllRxMatches(mangaidrx, sjob->buffer))
         {
-            mangas.links.append(match.captured(2) + "/chapters/");
+            mangas.links.append("/api/?type=manga&id=" + match.captured(2));
             mangas.titles.append(htmlToPlainText(htmlToPlainText(match.captured(1))));
             matches++;
         }
@@ -109,102 +142,99 @@ bool MangaDex::uptareMangaList(UpdateProgressToken *token)
     return true;
 }
 
+QString padChapterNumber(QString number, int places = 4)
+{
+    auto range = number.split('-');
+    QStringList result;
+    std::transform(range.begin(), range.end(), std::back_inserter(result), [places](QString chapter) {
+        chapter = chapter.trimmed();
+        auto digits = chapter.split('.')[0].length();
+        return QString("0").repeated(qMax(0, places - digits)) + chapter;
+    });
+    return result.join('-');
+}
+
 void MangaDex::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
                                               QSharedPointer<MangaInfo> info)
 {
-    QRegularExpression titlerx(R"(class="mx-1">([^<]*)<)");
+    QJsonDocument doc = QJsonDocument::fromJson(job->buffer.toUtf8());
+    if (doc.isNull())
+        qDebug() << "MangaDex chapter parse failed";
 
-    QRegularExpression authorrx("Author:</div>[^>]*>[^>]*>([^<]*)");
-    QRegularExpression artistrx("Artist:</div>[^>]*>[^>]*>([^<]*)");
-    QRegularExpression statusrx("Pub. status:</div>[^>]*>([^<]*)");
-    QRegularExpression yearrx;
-    QRegularExpression demographicrx("Demographic:</div>[^>]*>[^>]*>[^>]*>([^<]*)<");
-    QRegularExpression genresrx("Genre:</div>[^>]*>[^>]*>([^<]*)<");
+    auto jsonObject = doc.object();
+    auto mangaObject = jsonObject["manga"].toObject();
 
-    QRegularExpression summaryrx("Description:</div>[^>]*>(.*?)</div>");
+    info->title = htmlToPlainText(mangaObject["title"].toString());
+    info->author = htmlToPlainText(mangaObject["author"].toString());
+    info->artist = htmlToPlainText(mangaObject["artist"].toString());
 
-    QRegularExpression coverrx(R"lit(<img class="rounded" width="100%" src="([^\"]*)")lit");
+    int statusi = mangaObject["status"].toInt();
+    if (statusi >= 0 && statusi < statuses.length())
+        info->status = statuses[statusi];
 
-    QRegularExpression chapterrx("<a href='(/chapter/[^']*)'[^>]*>([^<]*)</a>");
+    info->releaseYear = "";
 
-    QRegularExpression pagerx(R"(<p class='text-center'>Showing 1 to \d+ of ([\d,]+))");
+    info->genres = "";
+    auto genresArray = mangaObject["genres"].toArray();
+    for (auto g : genresArray)
+        if (genreMap.contains(g.toInt()))
+            info->genres += genreMap[g.toInt()] + " ";
 
-    fillMangaInfo(info, job->buffer, titlerx, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx,
-                  coverrx);
+    info->summary = htmlToPlainText(mangaObject["description"].toString());
 
-    auto demographicrxmatch = demographicrx.match(job->buffer);
+    info->coverLink = baseurl + mangaObject["cover_url"].toString();
 
-    if (demographicrxmatch.hasMatch())
+    auto chaptersObject = jsonObject["chapter"].toObject();
+
+    MangaChapterCollection newchapters;
+    for (const QString &key : chaptersObject.keys())
     {
-        auto demo = htmlToPlainText(demographicrxmatch.captured(1).trimmed());
+        auto chapterObject = chaptersObject.value(key).toObject();
+        auto language = chapterObject["lang_code"].toString();
 
-        if (info->genres != "")
-            demo += ", ";
-        else
-            demo += " ";
+        if (language != "gb")
+            continue;
 
-        info->genres = demo + info->genres;
+        auto numChapter = chapterObject["chapter"].toString();
+
+        auto chapterTitle = "Ch. " + numChapter + " " + chapterObject["title"].toString();
+
+        auto chapterUrl = "https://mangadex.org/api/?type=chapter&id=" + key;
+
+        MangaChapter mangaChapter(chapterTitle, chapterUrl);
+        mangaChapter.chapterNumber = numChapter;
+
+        newchapters.insert(0, mangaChapter);
     }
+    std::sort(newchapters.begin(), newchapters.end(), [](auto a, auto b) {
+        return padChapterNumber(a.chapterNumber) < padChapterNumber(b.chapterNumber);
+    });
 
-    int pages = 1;
-
-    auto pagerxmatch = pagerx.match(job->buffer);
-    auto lambda = [&](QSharedPointer<DownloadStringJob> job) {
-        for (auto &match : getAllRxMatches(chapterrx, job->buffer))
-        {
-            info->chapters.insert(0, MangaChapter(match.captured(2), baseurl + match.captured(1)));
-        }
-    };
-
-    lambda(job);
-
-    if (pagerxmatch.hasMatch())
-    {
-        int chapters = pagerxmatch.captured(1).remove(',').toInt();
-        pages = (chapters + 99) / 100;
-
-        QList<QString> urls;
-        for (int i = 2; i <= pages; i++)
-            urls.append(info->link + QString::number(i));
-
-        DownloadQueue queue(networkManager, urls, CONF.parallelDownloadsLow, lambda, false);
-        queue.start();
-        queue.awaitCompletion();
-    }
+    info->chapters.mergeChapters(newchapters);
 }
 
 Result<QStringList, QString> MangaDex::getPageList(const QString &chapterlink)
 {
-    QString scriptstart("<script");
-    QRegularExpression baserx(R"(server\s+=\s+'([^']*)')");
-    QRegularExpression datarx("var dataurl = '([^']*)'");
-    QRegularExpression pagesrx("var page_array = \\[([^\\]]*)");
-
     auto job = networkManager->downloadAsString(chapterlink);
 
     if (!job->await(7000))
         return Err(job->errorString);
 
-    int spos = job->buffer.indexOf(scriptstart);
-    if (spos == -1)
-        return Err(QString("Error. Couldn't process pages/images."));
+    QJsonDocument doc = QJsonDocument::fromJson(job->buffer.toUtf8());
+    if (doc.isNull())
+        return Err(QString("MangaDex chapter parse failed"));
 
-    auto baserxmatch = baserx.match(job->buffer);
-    auto datarxmatch = datarx.match(job->buffer);
-    auto pagesrxmatch = pagesrx.match(job->buffer);
+    auto jsonObject = doc.object();
 
-    if (!baserxmatch.hasMatch() || !datarxmatch.hasMatch() || !pagesrxmatch.hasMatch())
-        return Err(QString("Error. Couldn't process pages/images."));
+    auto hash = jsonObject["hash"].toString();
 
-    QString baselink = baserxmatch.captured(1).remove('\\') + datarxmatch.captured(1) + '/';
+    auto server = jsonObject["server"].toString();
+
+    auto pagesArray = jsonObject["page_array"].toArray();
 
     QStringList imagelinks;
-    for (QString s : pagesrxmatch.captured(1).split(','))
-    {
-        s = s.remove('\'').remove('\r').remove('\n');
-        if (s != "")
-            imagelinks.append(baselink + s.remove('\'').remove('\r'));
-    }
+    for (auto page : pagesArray)
+        imagelinks.append(server + hash + "/" + page.toString());
 
     return Ok(imagelinks);
 }
