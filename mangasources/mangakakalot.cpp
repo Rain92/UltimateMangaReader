@@ -95,22 +95,30 @@ void Mangakakalot::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJ
 {
     QRegularExpression titlerx(R"(<ul class="manga-info-text">(.*?)</h1>)",
                                QRegularExpression::DotMatchesEverythingOption);
-    QRegularExpression authorrx(R"(Author\(s\) :(.*?)</li>)", QRegularExpression::DotMatchesEverythingOption);
+    QRegularExpression authorrx(R"(author/[^>]*?>([^<]*?)<)");
     QRegularExpression artistrx;
-    QRegularExpression statusrx("Status : ([^<]*)<");
-    QRegularExpression yearrx;
-    QRegularExpression genresrx(R"(Genres :[^>]*>(.*?)</li>)",
+    QRegularExpression statusrx(R"(Status :(?:\s|</td>\s)(.*?)(?:</li>|</td>))",
                                 QRegularExpression::DotMatchesEverythingOption);
+    QRegularExpression yearrx;
+    QRegularExpression genresrx(R"(Genres :[^>]*>(.*?)(?:</li>|</tr>))",
+                                QRegularExpression::DotMatchesEverythingOption);
+
     QRegularExpression summaryrx(R"lit(<meta name="description" content="([^"]*)")lit");
+
     QRegularExpression coverrx(R"lit(<meta name="twitter:image" content="([^"]*)")lit");
 
-    QRegularExpression chapterrx(R"lit(<a href="([^"]*)"[^>]*>([^<]*)<)lit");
+    QRegularExpression chapterrx(R"lit(<a[^>]*?href="([^"]*)"[^>]*>([^<]*)<)lit");
 
     fillMangaInfo(info, job->buffer, titlerx, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx,
                   coverrx);
 
-    int spos = job->buffer.indexOf(R"(<div class="chapter-list">)");
-    int epos = job->buffer.indexOf(R"(<div class="comment-info">)", spos);
+    info->genres = info->genres.remove("- ");
+    info->status = info->status.remove('\n');
+    if (info->status.contains('-'))
+        info->status = info->status.split('-')[0];
+
+    int spos = job->buffer.indexOf(R"(chapter-list">)");
+    int epos = job->buffer.indexOf(R"(<div class="fb-comments)", spos);
 
     MangaChapterCollection newchapters;
     for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->buffer, spos, epos))
@@ -128,6 +136,8 @@ Result<QStringList, QString> Mangakakalot::getPageList(const QString &chapterUrl
         return Err(job->errorString);
 
     int spos = job->buffer.indexOf(R"(<div class="vung-doc" id="vungdoc">)");
+    if (spos < 0)
+        spos = job->buffer.indexOf(R"(<div class="container-chapter-reader">)");
     int epos = job->buffer.indexOf("</div>", spos);
 
     QStringList imageUrls;
