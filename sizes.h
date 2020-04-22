@@ -72,11 +72,11 @@ private:
 
     void adjustUI()
     {
-        listSourcesHeight = mmToPx(22);
+        listSourcesHeight = mmToPx(21);
         mangasourceIconSize = mmToPx(13);
-        mangasourceItemWidth = mmToPx(20);
-        mangasourceItemHeight = mmToPx(20);
-        mangasourceIconSpacing = mmToPx(2.5);
+        mangasourceItemWidth = mmToPx(19);
+        mangasourceItemHeight = mmToPx(19);
+        mangasourceIconSpacing = mmToPx(2);
 
         buttonSize = mmToPx(8);
         buttonSizeToggleFavorite = mmToPx(8);

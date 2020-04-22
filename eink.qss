@@ -8,7 +8,7 @@ QWidget {
 QFrame#listViewSources
 {
     border: 0px solid black;
-    font-size: 8pt;
+    font-size: 7pt;
     outline: 0;
 }
 QListView::item:selected#listViewSources
