@@ -107,8 +107,8 @@ void DownloadStringJob::timeout()
 
 bool DownloadStringJob::await(int timeout, bool retry)
 {
-    //    timeouttimer.stop();
-    QMetaObject::invokeMethod(&timeoutTimer, "stop", Qt::AutoConnection);
+    timeoutTimer.stop();
+    //    QMetaObject::invokeMethod(&timeoutTimer, "stop", Qt::AutoConnection);
 
     if (isCompleted)
         return true;

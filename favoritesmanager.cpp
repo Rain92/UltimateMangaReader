@@ -1,7 +1,6 @@
 #include "favoritesmanager.h"
 
-FavoritesManager::FavoritesManager(
-    const QMap<QString, AbstractMangaSource *> &mangasources, QObject *parent)
+FavoritesManager::FavoritesManager(const QMap<QString, AbstractMangaSource *> &mangasources, QObject *parent)
     : QObject(parent), favoriteinfos(), favorites(), mangasources(mangasources)
 {
     deserialize();
@@ -42,8 +41,7 @@ bool FavoritesManager::toggleFavorite(QSharedPointer<MangaInfo> info)
 {
     for (int i = 0; i < favorites.length(); i++)
     {
-        if (favorites[i].hostname == info->hostname &&
-            favorites[i].title == info->title)
+        if (favorites[i].hostname == info->hostname && favorites[i].title == info->title)
         {
             favorites.removeAt(i);
             favoriteinfos.removeAt(i);
@@ -71,23 +69,23 @@ void FavoritesManager::moveFavoriteToFront(int i)
 
 void FavoritesManager::loadInfos()
 {
-    favoriteinfos.clear();
     for (int i = 0; i < favorites.length(); i++)
     {
         auto &fav = favorites[i];
         if (mangasources.contains(fav.hostname))
         {
-            auto mi = mangasources[fav.hostname]->loadMangaInfo(
-                fav.mangaUrl, fav.title, false);
+            QTimer::singleShot(0, [this, &fav]() {
+                auto mi = mangasources[fav.hostname]->loadMangaInfo(fav.mangaUrl, fav.title, false);
 
-            if (mi.isOk())
-            {
-                favoriteinfos.append(mi.unwrap());
-            }
-            else
-            {
-                // TODO
-            }
+                if (mi.isOk())
+                {
+                    favoriteinfos.append(mi.unwrap());
+                }
+                else
+                {
+                    favoriteinfos.append(QSharedPointer<MangaInfo>(nullptr));
+                }
+            });
         }
         else
         {
@@ -98,8 +96,24 @@ void FavoritesManager::loadInfos()
 
 void FavoritesManager::updateInfos()
 {
-    for (const auto &info : favoriteinfos)
-        mangasources[info->hostname]->updateMangaInfoAsync(info);
+    for (int i = 0; i < favoriteinfos.length(); i++)
+    {
+        if (!favoriteinfos[i].isNull())
+        {
+            mangasources[favoriteinfos[i]->hostname]->updateMangaInfoAsync(favoriteinfos[i]);
+        }
+        else
+        {
+            auto &fav = favorites[i];
+            if (mangasources.contains(fav.hostname))
+            {
+                auto mi = mangasources[fav.hostname]->loadMangaInfo(fav.mangaUrl, fav.title, false);
+
+                if (mi.isOk())
+                    favoriteinfos[i] = mi.unwrap();
+            }
+        }
+    }
 }
 
 void FavoritesManager::clearFavorites()
