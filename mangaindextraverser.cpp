@@ -1,7 +1,6 @@
 #include "mangaindextraverser.h"
 
-MangaIndexTraverser::MangaIndexTraverser(QSharedPointer<MangaInfo> mangainfo,
-                                         int chapter, int page)
+MangaIndexTraverser::MangaIndexTraverser(QSharedPointer<MangaInfo> mangainfo, int chapter, int page)
     : MangaIndex(chapter, page), mangaInfo(mangainfo)
 {
 }
@@ -32,14 +31,12 @@ Result<bool, QString> MangaIndexTraverser::decrement()
     {
         if (!mangaInfo->chapters.at(chapter - 1).pagesLoaded)
         {
-            auto res =
-                mangaInfo->mangaSource->updatePageList(mangaInfo, chapter);
+            auto res = mangaInfo->mangaSource->updatePageList(mangaInfo, chapter);
             if (!res.isOk())
                 return Err(res.unwrapErr());
         }
 
-        return setChecked(
-            chapter - 1, qMax(0, mangaInfo->chapters.at(chapter).numPages - 1));
+        return setChecked(chapter - 1, qMax(0, mangaInfo->chapters.at(chapter - 1).numPages - 1));
     }
     else
     {

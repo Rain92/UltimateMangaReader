@@ -15,8 +15,6 @@ bool MangaOwl::uptareMangaList(UpdateProgressToken *token)
         R"lit(<a href="(https://mangaowl.(?:net|com)/single/[^"]+)">.*?</td>.*?<td>([^<]+)</td>)lit",
         QRegularExpression::DotMatchesEverythingOption);
 
-    MangaList mangas;
-
     auto job = networkManager->downloadAsString(dicturl + "1");
 
     if (!job->await(7000))
@@ -35,6 +33,9 @@ bool MangaOwl::uptareMangaList(UpdateProgressToken *token)
     int pages = 1;
     if (numpagesrxmatch.hasMatch())
         pages = numpagesrxmatch.captured(1).toInt();
+
+    MangaList mangas;
+    mangas.absoluteUrls = true;
 
     qDebug() << "pages:" << pages;
 
