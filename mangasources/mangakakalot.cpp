@@ -1,12 +1,15 @@
 #include "mangakakalot.h"
 
-Mangakakalot::Mangakakalot(NetworkManager *dm) : AbstractMangaSource(dm)
+Mangakakalot::Mangakakalot(NetworkManager *networkManager) : AbstractMangaSource(networkManager)
 {
     name = "Mangakakalot";
     baseurl = "https://mangakakalot.com/";
     dictionaryUrl =
         "https://mangakakalot.com/"
         "manga_list?type=topview&category=all&state=all&page=";
+
+    networkManager->addCookie("mangakakalot.com", "content_lazyload", "off");
+    networkManager->addCookie("manganelo.com", "content_lazyload", "off");
 }
 
 bool Mangakakalot::uptareMangaList(UpdateProgressToken *token)
@@ -138,12 +141,14 @@ Result<QStringList, QString> Mangakakalot::getPageList(const QString &chapterUrl
     int spos = job->buffer.indexOf(R"(<div class="vung-doc" id="vungdoc">)");
     if (spos < 0)
         spos = job->buffer.indexOf(R"(<div class="container-chapter-reader">)");
-    int epos = job->buffer.indexOf("</div>", spos);
+    int epos = job->buffer.indexOf(R"(class="navi-change-chapter">)", spos);
 
     QStringList imageUrls;
     for (auto &match : getAllRxMatches(pagerx, job->buffer, spos, epos))
     {
-        imageUrls.append(match.captured(1));
+        auto imageUrl = match.captured(1);
+        if (!imageUrl.contains("/themes/home/images/"))
+            imageUrls.append(imageUrl);
     }
 
     return Ok(imageUrls);
