@@ -30,7 +30,7 @@ signals:
     void abortDownloads();
 
 private slots:
-    void on_pushButtonHide_clicked();
+    void on_pushButtonOk_clicked();
 
     void on_pushButtonCancel_clicked();
 

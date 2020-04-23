@@ -47,16 +47,23 @@ void MangaChapterDownloadManager::processNextJob()
 
     for (int c = fromChapter; c <= toChapterInclusive && !cancelled; c++)
     {
-        auto res = mangaInfo->mangaSource->updatePageList(mangaInfo, c);
-        if (!res.isOk())
+        // 3 trys
+        for (int i = 0; i < 3; i++)
         {
-            emit error(
-                QString("Couldn't download pagelst for chapter %1: %2").arg(c + 1).arg(res.unwrapErr()));
-            return;
-        }
-        else
-        {
-            emit downloadPagelistProgress(c + 1 - fromChapter, toChapterInclusive + 1 - fromChapter);
+            auto res = mangaInfo->mangaSource->updatePageList(mangaInfo, c);
+
+            if (res.isOk())
+            {
+                emit downloadPagelistProgress(c + 1 - fromChapter, toChapterInclusive + 1 - fromChapter);
+                break;
+            }
+            else if (i > 2)
+            {
+                cancelled = true;
+                emit error(
+                    QString("Couldn't download pagelst for chapter %1: %2").arg(c + 1).arg(res.unwrapErr()));
+                return;
+            }
         }
     }
     mangaInfo->serialize();

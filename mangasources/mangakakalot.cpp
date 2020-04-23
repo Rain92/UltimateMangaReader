@@ -96,7 +96,7 @@ bool Mangakakalot::uptareMangaList(UpdateProgressToken *token)
 void Mangakakalot::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
                                                   QSharedPointer<MangaInfo> info)
 {
-    QRegularExpression titlerx(R"(<ul class="manga-info-text">(.*?)</h1>)",
+    QRegularExpression titlerx(R"((?:"manga-info-text">|"story-info-right">)(.*?)</h1>)",
                                QRegularExpression::DotMatchesEverythingOption);
     QRegularExpression authorrx(R"(author/[^>]*?>([^<]*?)<)");
     QRegularExpression artistrx;

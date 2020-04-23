@@ -53,8 +53,8 @@ bool FavoritesManager::toggleFavorite(QSharedPointer<MangaInfo> info)
     }
 
     // add
-    favorites.append(Favorite::fromMangaInfo(info.get()));
-    favoriteinfos.append(info);
+    favorites.prepend(Favorite::fromMangaInfo(info.get()));
+    favoriteinfos.prepend(info);
     serialize();
     return true;
 }

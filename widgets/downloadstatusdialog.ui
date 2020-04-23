@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>525</width>
-    <height>381</height>
+    <height>323</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -171,17 +171,17 @@
         <enum>Qt::NoFocus</enum>
        </property>
        <property name="text">
-        <string> Abort All Downloads </string>
+        <string> Abort all</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButtonHide">
+      <widget class="QPushButton" name="pushButtonOk">
        <property name="focusPolicy">
         <enum>Qt::NoFocus</enum>
        </property>
        <property name="text">
-        <string> Background </string>
+        <string>Ok</string>
        </property>
       </widget>
      </item>

@@ -3,20 +3,16 @@
 #include "ui_errormessagewidget.h"
 
 ErrorMessageWidget::ErrorMessageWidget(QWidget* parent)
-    : QWidget(parent), ui(new Ui::ErrorMessageWidget), hideTimer(), timeout(5000)
+    : QWidget(parent), ui(new Ui::ErrorMessageWidget), hideTimer(), timeout(7000)
 {
     ui->setupUi(this);
 
     QPixmap pixmap(":/images/icons/error.png");
+    ui->labelErrorImage->setFixedHeight(SIZES.buttonSize);
     ui->labelErrorImage->setPixmap(
         pixmap.scaled(ui->labelErrorImage->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
 
-    ui->buttonHide->setMinimumHeight(SIZES.errormessageWidgetHeight);
-    this->setMinimumHeight(SIZES.errormessageWidgetHeight);
-    this->setMaximumHeight(SIZES.errormessageWidgetHeight);
-
-    this->setFocusPolicy(Qt::FocusPolicy::NoFocus);
-    ui->buttonHide->setFocusPolicy(Qt::FocusPolicy::NoFocus);
+    ui->buttonHide->setMinimumHeight(SIZES.buttonSize);
 
     hideTimer.setSingleShot(true);
     QObject::connect(&this->hideTimer, &QTimer::timeout, this, &QWidget::hide);
@@ -42,6 +38,8 @@ void ErrorMessageWidget::showError(const QString& message)
 
     if (timeout > 0)
         hideTimer.start(timeout);
+
+    this->setFixedHeight(ui->labelErrorMessage->sizeHint().height());
 }
 
 void ErrorMessageWidget::setTimeout(int timeout)

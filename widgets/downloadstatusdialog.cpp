@@ -11,18 +11,13 @@ DownloadStatusDialog::DownloadStatusDialog(QWidget *parent)
 {
     ui->setupUi(this);
     adjustUI();
-
-#ifdef KOBO
-    // disabe background download
-    ui->pushButtonHide->hide();
-#endif
 }
 
 void DownloadStatusDialog::adjustUI()
 {
     ui->labelTitle->setStyleSheet("font-size: 13pt");
     ui->pushButtonCancel->setFixedHeight(SIZES.buttonSize);
-    ui->pushButtonHide->setFixedHeight(SIZES.buttonSize);
+    ui->pushButtonOk->setFixedHeight(SIZES.buttonSize);
     this->setMinimumSize(SIZES.downloadStatusDialogWidth, SIZES.downloadStatusDialogHeight);
 }
 
@@ -41,6 +36,9 @@ void DownloadStatusDialog::downloadStart(const QString &mangaTitle)
     imageDownloadErrors = 0;
     cancelled = false;
     checkFreeMem();
+
+    ui->pushButtonCancel->show();
+    ui->pushButtonOk->hide();
 }
 
 void DownloadStatusDialog::downloadPagelistProgress(int completed, int total)
@@ -86,11 +84,8 @@ void DownloadStatusDialog::downloadCompleted()
                                   .arg(ui->labelMangaTitle->text())
                                   .arg(pageDownloadErrors + imageDownloadErrors));
 
-    QMessageBox msgBox;
-    msgBox.setText(msg);
-    msgBox.setModal(false);
-    msgBox.exec();
-    close();
+    ui->pushButtonCancel->hide();
+    ui->pushButtonOk->show();
 }
 
 void DownloadStatusDialog::checkFreeMem()
@@ -103,15 +98,10 @@ void DownloadStatusDialog::checkFreeMem()
 
         ui->labelStep->setText("Error:");
         ui->labelStatus->setText("Storage memory low.");
-
-        QMessageBox msgBox;
-        msgBox.setText("Storage memory low!\nAborting downloads.");
-        msgBox.setModal(false);
-        msgBox.exec();
     }
 }
 
-void DownloadStatusDialog::on_pushButtonHide_clicked()
+void DownloadStatusDialog::on_pushButtonOk_clicked()
 {
     close();
 }

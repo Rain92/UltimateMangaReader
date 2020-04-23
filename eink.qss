@@ -1,9 +1,20 @@
-QWidget {
-    background-color: white;
-    selection-color: white;
-    selection-background-color: black;
-    font-size: 10pt;
+
+QPushButton[type="borderless"]
+{
+    background: white;
+    border: 0px;
+    padding: 2px;
+    outline: none;
+    font-size: 13pt;
 }
+QPushButton[type="borderless"]:focus { border: 0px  }
+QPushButton[type="borderless"]:pressed
+{
+    background: black;
+    color: white;
+    border: 0px
+}
+
 
 QFrame#listViewSources
 {
@@ -11,6 +22,7 @@ QFrame#listViewSources
     font-size: 7pt;
     outline: 0;
 }
+
 QListView::item:selected#listViewSources
 {
     background: white;
@@ -25,6 +37,14 @@ QListView::item:focused#listViewSources
 QFrame#frameProgress
 {
     border: 1px solid black;
+}
+
+
+QWidget {
+    background-color: white;
+    selection-color: white;
+    selection-background-color: black;
+    font-size: 10pt;
 }
 
 QMenu 
@@ -193,22 +213,6 @@ QPushButton:pressed
     background: black;
     color: white;
     padding: 2px;
-}
-
-QPushButton[type="borderless"]
-{
-    background: white;
-    border: 0px;
-    padding: 2px;
-    outline: none;
-    font-size: 13pt;
-}
-QPushButton[type="borderless"]:focus { border: 0px  }
-QPushButton[type="borderless"]:pressed
-{
-    background: black;
-    color: white;
-    border: 0px
 }
 
 QToolButton
