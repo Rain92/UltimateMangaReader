@@ -114,7 +114,7 @@ Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::loadMangaInfo(co
 
 Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::getMangaInfo(const QString &mangaUrl)
 {
-    auto job = networkManager->downloadAsString(mangaUrl, 6000, mangaInfoPostDataStr);
+    auto job = networkManager->downloadAsString(mangaUrl, 8000, mangaInfoPostDataStr);
 
     auto info = QSharedPointer<MangaInfo>(new MangaInfo(this));
 
@@ -123,7 +123,7 @@ Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::getMangaInfo(con
 
     info->url = mangaUrl;
 
-    if (!job->await(6000))
+    if (!job->await(8000))
         return Err(job->errorString);
 
     updateMangaInfoFinishedLoading(job, info);
@@ -137,7 +137,7 @@ void AbstractMangaSource::updateMangaInfoAsync(QSharedPointer<MangaInfo> info)
 {
     int oldnumchapters = info->chapters.count();
 
-    auto job = networkManager->downloadAsString(info->url, 6000, mangaInfoPostDataStr);
+    auto job = networkManager->downloadAsString(info->url, 8000, mangaInfoPostDataStr);
 
     auto lambda = [oldnumchapters, info, job, this] {
         {

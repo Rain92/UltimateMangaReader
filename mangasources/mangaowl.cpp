@@ -104,7 +104,8 @@ void MangaOwl::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> 
 
     MangaChapterCollection newchapters;
     for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->buffer))
-        newchapters.insert(0, MangaChapter(chapterrxmatch.captured(2), chapterrxmatch.captured(1)));
+        newchapters.insert(
+            0, MangaChapter(htmlToPlainText(chapterrxmatch.captured(2)), chapterrxmatch.captured(1)));
     info->chapters.mergeChapters(newchapters);
 }
 
