@@ -17,7 +17,6 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
     settings.deserialize();
 
     mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaPanda(networkManager)));
-    mangaSources.append(QSharedPointer<AbstractMangaSource>(new JaiminisBox(networkManager)));
     mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaDex(networkManager)));
     mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaHub(networkManager)));
     mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaOwl(networkManager)));

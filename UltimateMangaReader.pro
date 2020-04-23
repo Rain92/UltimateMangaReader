@@ -66,7 +66,6 @@ HEADERS += \
     mangasources/mangaowl.h \
     mangasources/mangapanda.h \
     mangasources/mangadex.h \
-    mangasources/jaiminisbox.h \
     utils.h \
     widgets/clineedit.h \
     widgets/downloadmangachaptersdialog.h \
@@ -117,7 +116,6 @@ SOURCES += \
     mangasources/mangaowl.cpp \
     mangasources/mangapanda.cpp \
     mangasources/mangadex.cpp \
-    mangasources/jaiminisbox.cpp \
     utils.cpp \
     widgets/clineedit.cpp \
     widgets/downloadmangachaptersdialog.cpp \

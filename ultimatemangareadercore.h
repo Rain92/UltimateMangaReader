@@ -4,7 +4,6 @@
 #include <QObject>
 
 #include "favoritesmanager.h"
-#include "jaiminisbox.h"
 #include "mangachapterdownloadmanager.h"
 #include "mangacontroller.h"
 #include "mangadex.h"
