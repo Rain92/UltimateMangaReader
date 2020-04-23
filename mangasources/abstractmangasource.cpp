@@ -52,6 +52,7 @@ QString AbstractMangaSource::getImagePath(const DownloadImageDescriptor &descrip
     QString path = CONF.mangaimagesdir(name, descriptor.title) + QString::number(descriptor.chapter) + "_" +
                    QString::number(descriptor.page) + filetype;
 
+    path.replace(".png", ".jpg");
     return path;
 }
 

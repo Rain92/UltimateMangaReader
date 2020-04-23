@@ -1,16 +1,16 @@
 
 kobo {
-    DEFINES += KOBO
-    DEFINES -= DESKTOP
+    DEFINES  += KOBO
+    DEFINES  -= DESKTOP
 
     target.path = /mnt/onboard/.adds/UltimateMangaReader
     INSTALLS += target
 }
 else { # default is desktop
-    DEFINES += DESKTOP
+    DEFINES  += DESKTOP
 }
 
-QT       += core gui widgets network svg
+QT    += core gui widgets network svg
 
 TARGET = UltimateMangaReader
 

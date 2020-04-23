@@ -110,9 +110,9 @@ Result<QStringList, QString> JaiminisBox::getPageList(const QString &chapterUrl)
     QRegularExpression encodedrx(R"(JSON.parse\(atob\("([^"]*))");
     QRegularExpression imageUrlsrx(R"("url":"([^"]*))");
 
-    auto job = networkManager->downloadAsString(chapterUrl, 6000, mangaInfoPostDataStr);
+    auto job = networkManager->downloadAsString(chapterUrl, 8000, mangaInfoPostDataStr);
 
-    if (!job->await(7000))
+    if (!job->await(8000))
         return Err(job->errorString);
 
     auto rxmatch = encodedrx.match(job->buffer);

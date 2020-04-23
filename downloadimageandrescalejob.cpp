@@ -1,10 +1,7 @@
 #include "downloadimageandrescalejob.h"
 
-#include <QImage>
-
-DownloadScaledImageJob::DownloadScaledImageJob(
-    QNetworkAccessManager *networkManager, const QString &url,
-    const QString &path, QSize size)
+DownloadScaledImageJob::DownloadScaledImageJob(QNetworkAccessManager *networkManager, const QString &url,
+                                               const QString &path, QSize size)
     : DownloadFileJob(networkManager, url, path), size(size)
 {
 }
@@ -23,8 +20,7 @@ void DownloadScaledImageJob::downloadFileFinished()
         file.remove();
     }
 
-    QUrl redirect =
-        reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
+    QUrl redirect = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
     if (redirect.isValid() && reply->url() != redirect)
     {
         this->url = redirect.toString();
@@ -53,6 +49,9 @@ void DownloadScaledImageJob::downloadFileFinished()
 
 bool DownloadScaledImageJob::rescaleImage(const QByteArray &array)
 {
+    QElapsedTimer t;
+    t.start();
+
     QImage img;
     if (!img.loadFromData(array))
         return false;
@@ -61,10 +60,14 @@ bool DownloadScaledImageJob::rescaleImage(const QByteArray &array)
     if ((img.width() <= img.height()) != (size.width() <= size.height()))
         rsize.transpose();
 
-    img = img.convertToFormat(QImage::Format_Grayscale8);
-    img = img.scaled(rsize.width(), rsize.height(), Qt::KeepAspectRatio,
-                     Qt::SmoothTransformation);
-    if (!img.save(filepath))
+    img = img.scaled(rsize.width(), rsize.height(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    auto greyimg = img.convertToFormat(QImage::Format_Grayscale8);
+
+    bool res = greyimg.save(filepath);
+    if (!res)
+        res = img.save(filepath);
+
+    if (!res)
         return QFileInfo(filepath).size() > 0;
 
     return true;

@@ -133,7 +133,7 @@ bool DownloadStringJob::await(int timeout, bool retry)
         }
     }
     if (rem <= 20)
-        errorString = "Download Error: Retry limit reached.";
+        errorString = "Download Error: Timeout.";
 
     return isCompleted;
 }
