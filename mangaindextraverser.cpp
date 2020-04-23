@@ -31,7 +31,7 @@ Result<bool, QString> MangaIndexTraverser::decrement()
     {
         if (!mangaInfo->chapters.at(chapter - 1).pagesLoaded)
         {
-            auto res = mangaInfo->mangaSource->updatePageList(mangaInfo, chapter);
+            auto res = mangaInfo->mangaSource->updatePageList(mangaInfo, chapter - 1);
             if (!res.isOk())
                 return Err(res.unwrapErr());
         }
