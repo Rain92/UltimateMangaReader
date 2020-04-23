@@ -216,8 +216,6 @@ void MainWidget::adjustUI()
     ui->toolButtonMenu->setIconSize(QSize(SIZES.menuIconSize, SIZES.menuIconSize));
     ui->toolButtonWifiIcon->setIconSize(QSize(SIZES.wifiIconSize, SIZES.wifiIconSize));
 
-    ui->labelSpacer->setFixedSize(0, 0);
-
     ui->labelTitle->setStyleSheet("font-size: 18pt");
 }
 
