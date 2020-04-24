@@ -63,14 +63,18 @@ void UltimateMangaReaderCore::timerTick()
 void UltimateMangaReaderCore::updateActiveScources()
 {
     activeMangaSources.clear();
+    QMap<QString, bool> enabledMangaSources;
     for (auto ms : mangaSources)
     {
         if (!settings.enabledMangaSources.contains(ms->name))
-            settings.enabledMangaSources.insert(ms->name, true);
+            enabledMangaSources.insert(ms->name, true);
+        else
+            enabledMangaSources.insert(ms->name, settings.enabledMangaSources[ms->name]);
 
-        if (settings.enabledMangaSources[ms->name])
+        if (enabledMangaSources[ms->name])
             activeMangaSources.insert(ms->name, ms.get());
     }
+    settings.enabledMangaSources = enabledMangaSources;
 
     this->currentMangaSource = nullptr;
 
