@@ -1,46 +1,31 @@
 #include "suspendmanager.h"
 
-SuspendManager::SuspendManager(QObject *parent) : QObject(parent), sleeping(false) {}
-
-void printPowerStates()
+SuspendManager::SuspendManager(NetworkManager *networkManager, QObject *parent)
+    : QObject(parent), sleeping(false), networkManager(networkManager), timer()
 {
-    QFile file("/sys/power/state-extended");
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-    {
-        qDebug() << "Could not open /sys/power/state-extended";
-        return;
-    }
-
-    qDebug() << "Reading /sys/power/state-extended";
-    QTextStream in(&file);
-    QString line = in.readLine();
-    qDebug() << line;
-    file.close();
-
-    QFile file2("/sys/power/state");
-    if (!file2.open(QIODevice::ReadOnly | QIODevice::Text))
-    {
-        qDebug() << "Could not open /sys/power/state";
-        return;
-    }
-
-    qDebug() << "Reading /sys/power/state";
-    QTextStream in2(&file2);
-    QString line2 = in2.readLine();
-    qDebug() << line2;
-    file2.close();
+    timer.setInterval(60 * 1000);
+    connect(&timer, &QTimer::timeout, this, &SuspendManager::suspendInternal);
 }
 
-bool SuspendManager::suspend(bool silent)
+bool SuspendManager::suspend()
 {
-    if (!silent)
-    {
-        emit suspending();
-        qApp->processEvents();
-    }
+    emit suspending();
+    qApp->processEvents();
 
-#ifdef KOBO
+    sleeping = true;
+
+    timer.start();
+
+    return suspendInternal();
+}
+
+bool SuspendManager::suspendInternal()
+{
+    if (networkManager->connected)
+        networkManager->disconnectWifi();
+
     qDebug() << QTime::currentTime().toString("hh:mm:ss") << "Going to sleep...";
+#ifdef KOBO
     int handleSE = open("/sys/power/state-extended", O_RDWR);
     if (!handleSE)
     {
@@ -87,8 +72,6 @@ bool SuspendManager::suspend(bool silent)
     close(handleS);
 #endif
 
-    sleeping = true;
-
     return true;
 }
 
@@ -121,6 +104,7 @@ bool SuspendManager::resume()
     }
 #endif
 
+    timer.stop();
     sleeping = false;
 
     emit resuming();

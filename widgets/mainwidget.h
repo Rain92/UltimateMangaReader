@@ -17,7 +17,6 @@
 #include "networkmanager.h"
 #include "screensaverdialog.h"
 #include "settingsdialog.h"
-#include "suspendmanager.h"
 #include "ultimatemangareadercore.h"
 #include "updatemangalistsdialog.h"
 #include "virtualkeyboard.h"
@@ -93,8 +92,6 @@ private:
     ScreensaverDialog *screensaverDialog;
     DownloadMangaChaptersDialog *downloadMangaChaptersDialog;
     DownloadStatusDialog *downloadStatusDialog;
-
-    SuspendManager *suspendManager;
 
     QIcon wifiIcons[2];
 };

@@ -10,8 +10,10 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
       mangaController(new MangaController(networkManager, this)),
       favoritesManager(new FavoritesManager(activeMangaSources, this)),
       mangaChapterDownloadManager(new MangaChapterDownloadManager(networkManager, this)),
+      suspendManager(new SuspendManager(networkManager, this)),
       settings(),
-      timer()
+      timer(),
+      autoSuspendTimer()
 {
     setupDirectories();
     settings.deserialize();
@@ -31,17 +33,28 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
 
     favoritesManager->loadInfos();
 
-    timer.setInterval(1000 * 60);
+    timer.setInterval(60 * 1000);
     connect(&timer, &QTimer::timeout, this, &UltimateMangaReaderCore::timerTick);
+
+    // auto suspend
+    connect(networkManager, &NetworkManager::activity, this, &UltimateMangaReaderCore::activity);
+    connect(mangaController, &MangaController::activity, this, &UltimateMangaReaderCore::activity);
+
+    autoSuspendTimer.setInterval(10 * 60 * 1000);
+    connect(&autoSuspendTimer, &QTimer::timeout, [this]() {
+        qDebug() << "Auto Suspend!";
+        suspendManager->suspend();
+    });
 }
 
-void UltimateMangaReaderCore::enableTimer(bool enabled)
+void UltimateMangaReaderCore::enableTimers(bool enabled)
 {
     if (enabled == timer.isActive())
         return;
 
     if (enabled)
     {
+        autoSuspendTimer.start();
         timerTick();
         QTimer::singleShot(1000 * 60 - QTime::currentTime().second() * 1000 - QTime::currentTime().msec(),
                            [this]() {
@@ -51,8 +64,15 @@ void UltimateMangaReaderCore::enableTimer(bool enabled)
     }
     else
     {
+        autoSuspendTimer.stop();
         timer.stop();
     }
+}
+
+void UltimateMangaReaderCore::activity()
+{
+    qDebug() << "activity";
+    autoSuspendTimer.start();
 }
 
 void UltimateMangaReaderCore::timerTick()
@@ -93,6 +113,7 @@ void UltimateMangaReaderCore::setCurrentMangaSource(AbstractMangaSource* mangaSo
         this->currentMangaSource = mangaSource;
         emit currentMangaSourceChanged(mangaSource);
     }
+    activity();
 }
 
 void UltimateMangaReaderCore::setCurrentManga(const QString& mangaUrl, const QString& mangatitle)

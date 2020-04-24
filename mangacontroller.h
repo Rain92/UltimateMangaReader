@@ -44,6 +44,7 @@ signals:
     void currentIndexChanged(const ReadingProgress &progress);
     void currentImageChanged(const QString &imagePath);
     void completedImagePreloadSignal(const QString &path);
+    void activity();
 
 private:
     void completedImagePreload(const QString &, const QString &path);

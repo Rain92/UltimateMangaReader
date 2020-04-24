@@ -19,8 +19,7 @@ MainWidget::MainWidget(QWidget *parent)
       lastTab(MangaInfoTab),
       virtualKeyboard(new VirtualKeyboard(this)),
       errorMessageWidget(new ErrorMessageWidget(this)),
-      powerButtonTimer(new QTimer(this)),
-      suspendManager(new SuspendManager(this))
+      powerButtonTimer(new QTimer(this))
 {
     ui->setupUi(this);
     adjustUI();
@@ -193,8 +192,8 @@ MainWidget::MainWidget(QWidget *parent)
 
     // SuspendManager
 
-    QObject::connect(suspendManager, &SuspendManager::suspending, this, &MainWidget::onSuspend);
-    QObject::connect(suspendManager, &SuspendManager::resuming, this, &MainWidget::onResume);
+    QObject::connect(core->suspendManager, &SuspendManager::suspending, this, &MainWidget::onSuspend);
+    QObject::connect(core->suspendManager, &SuspendManager::resuming, this, &MainWidget::onResume);
 }
 
 MainWidget::~MainWidget()
@@ -225,7 +224,7 @@ void MainWidget::showEvent(QShowEvent *event)
 {
     QWidget::showEvent(event);
     core->updateActiveScources();
-    core->enableTimer(true);
+    core->enableTimers(true);
 
     QTimer::singleShot(100, this, &MainWidget::onResume);
 }
@@ -248,15 +247,15 @@ bool MainWidget::buttonReleaseEvent(QKeyEvent *event)
         qDebug() << "Powerkey release";
         powerButtonTimer->stop();
 
-        if (!suspendManager->sleeping)
-            suspendManager->suspend();
+        if (!core->suspendManager->sleeping)
+            core->suspendManager->suspend();
         else
-            suspendManager->resume();
+            core->suspendManager->resume();
     }
     else if (event->key() == SLEEPCOVERBUTTON)
     {
         qDebug() << "Sleepcover opened";
-        //        suspendManager->resume();
+        // core->suspendManager->resume();
 
         return true;
     }
@@ -276,7 +275,7 @@ bool MainWidget::buttonPressEvent(QKeyEvent *event)
     else if (event->key() == SLEEPCOVERBUTTON)
     {
         qDebug() << "Sleepcover closed";
-        suspendManager->suspend();
+        core->suspendManager->suspend();
 
         return true;
     }
@@ -292,22 +291,13 @@ void MainWidget::timerTick()
         close();
 #endif
 
-    if (!suspendManager->sleeping)
-    {
-        ui->batteryIcon->updateIcon();
-        ui->mangaReaderWidget->updateMenuBar();
-    }
-    else
-    {
-        if (core->networkManager->connected)
-            core->networkManager->disconnectWifi();
-
-        suspendManager->suspend(true);
-    }
+    ui->batteryIcon->updateIcon();
+    ui->mangaReaderWidget->updateMenuBar();
 }
 
 void MainWidget::onSuspend()
 {
+    core->enableTimers(false);
     screensaverDialog->showRandomScreensaver();
 
     disableFrontLight();
@@ -318,6 +308,7 @@ void MainWidget::onSuspend()
 void MainWidget::onResume()
 {
     screensaverDialog->close();
+    core->enableTimers(true);
 
     wifiDialog->connect();
     QTimer::singleShot(200, [this]() {
@@ -325,8 +316,6 @@ void MainWidget::onResume()
         if (!core->networkManager->connected)
             wifiDialog->open();
     });
-
-    timerTick();
 }
 
 void MainWidget::setupVirtualKeyboard()

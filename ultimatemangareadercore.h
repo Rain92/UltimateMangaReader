@@ -12,6 +12,7 @@
 #include "mangaowl.h"
 #include "mangapanda.h"
 #include "settings.h"
+#include "suspendmanager.h"
 #include "utils.h"
 
 class UltimateMangaReaderCore : public QObject
@@ -32,6 +33,7 @@ public:
     MangaController *mangaController;
     FavoritesManager *favoritesManager;
     MangaChapterDownloadManager *mangaChapterDownloadManager;
+    SuspendManager *suspendManager;
 
     Settings settings;
 
@@ -46,7 +48,9 @@ public:
 
     void updateMangaLists(QSharedPointer<UpdateProgressToken> progressToken);
 
-    void enableTimer(bool enabled);
+    void enableTimers(bool enabled);
+
+    void activity();
 
 signals:
     void currentMangaSourceChanged(AbstractMangaSource *source);
@@ -62,6 +66,8 @@ signals:
 private:
     QTimer timer;
     void timerTick();
+
+    QTimer autoSuspendTimer;
 
     void setupDirectories();
 };

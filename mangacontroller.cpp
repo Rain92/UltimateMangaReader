@@ -25,6 +25,8 @@ void MangaController::setCurrentManga(QSharedPointer<MangaInfo> mangaInfo)
         currentIndexChangedInternal(false);
     else
         emit error(res.unwrapErr());
+
+    emit activity();
 }
 
 Result<void, QString> MangaController::assurePagesLoaded()
@@ -122,6 +124,8 @@ void MangaController::currentIndexChangedInternal(bool preload)
 
     if (preload)
         QTimer::singleShot(50, [this]() { preloadNeighbours(CONF.forwardPreloads, CONF.backwardPreloads); });
+
+    emit activity();
 }
 
 void MangaController::updateCurrentImage()

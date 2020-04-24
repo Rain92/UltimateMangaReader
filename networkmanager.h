@@ -51,6 +51,7 @@ public:
 
 signals:
     void connectionStatusChanged(bool connected);
+    void activity();
 
 public slots:
 

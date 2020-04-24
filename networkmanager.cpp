@@ -84,6 +84,8 @@ QSharedPointer<DownloadStringJob> NetworkManager::downloadAsString(const QString
         new DownloadStringJob(networkManager, url, timeout, postData), &QObject::deleteLater);
 
     job->start();
+
+    emit activity();
     return job;
 }
 
@@ -110,6 +112,7 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsFile(const QString &ur
 
     fileDownloads.insert(url, job.toWeakRef());
 
+    emit activity();
     return job;
 }
 
@@ -138,6 +141,7 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const QStr
 
     fileDownloads.insert(url, job.toWeakRef());
 
+    emit activity();
     return job;
 }
 
@@ -197,5 +201,6 @@ bool NetworkManager::urlExists(const QString &url)
 
     reply->deleteLater();
 
+    emit activity();
     return result;
 }

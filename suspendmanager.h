@@ -13,9 +13,9 @@ class SuspendManager : public QObject
     Q_OBJECT
 
 public:
-    SuspendManager(QObject* parent = nullptr);
+    explicit SuspendManager(NetworkManager *networkManager, QObject *parent = nullptr);
 
-    bool suspend(bool silent = false);
+    bool suspend();
     bool resume();
 
     bool sleeping;
@@ -25,6 +25,10 @@ signals:
     void resuming();
 
 private:
+    NetworkManager *networkManager;
+    QTimer timer;
+
+    bool suspendInternal();
 };
 
 #endif  // SUSPENDMANAGER_H
