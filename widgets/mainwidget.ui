@@ -71,7 +71,7 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="0,0,1,0,0">
         <property name="spacing">
-         <number>0</number>
+         <number>9</number>
         </property>
         <item>
          <widget class="QToolButton" name="toolButtonMenu">
@@ -170,15 +170,15 @@
         <item>
          <widget class="BatteryIcon" name="batteryIcon">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
           <property name="maximumSize">
            <size>
-            <width>50</width>
-            <height>50</height>
+            <width>10000</width>
+            <height>10000</height>
            </size>
           </property>
           <property name="baseSize">
