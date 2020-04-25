@@ -147,7 +147,7 @@ Result<QStringList, QString> Mangakakalot::getPageList(const QString &chapterUrl
     for (auto &match : getAllRxMatches(pagerx, job->buffer, spos, epos))
     {
         auto imageUrl = match.captured(1);
-        if (!imageUrl.contains("/themes/home/images/"))
+        if (!imageUrl.contains("/themes/"))
             imageUrls.append(imageUrl);
     }
 

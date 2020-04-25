@@ -21,7 +21,7 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
     mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaPanda(networkManager)));
     mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaDex(networkManager)));
     mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaHub(networkManager)));
-    //    mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaOwl(networkManager)));
+    mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaOwl(networkManager)));
     mangaSources.append(QSharedPointer<AbstractMangaSource>(new Mangakakalot(networkManager)));
 
     currentMangaSource = mangaSources.first().get();
@@ -71,7 +71,6 @@ void UltimateMangaReaderCore::enableTimers(bool enabled)
 
 void UltimateMangaReaderCore::activity()
 {
-    qDebug() << "activity";
     autoSuspendTimer.start();
 }
 
