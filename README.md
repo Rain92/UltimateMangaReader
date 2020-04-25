@@ -1,14 +1,25 @@
 # UltimateMangaReader
-An online manga reader for Kobo E-Ink devices.
+A feature-rich online manga reader for Kobo E-Ink devices, based on Qt5.
+
+## Main features
+* It's **cross-platform**. While the primary targets are Kobo E-Ink devices, it will also run on Windows, Linux and Mac. Qt5.14 (with OpenSSL) and a platform backend being the only hard dependency.
+
+* It comes with a refined, modern design.
+
+* It supports **multiple websites** as manga sources with tens of thousands of available mangas.
+
+* It's **fast**. It will stream, prerender and cache mangapages in advance while reading to minimize loading times and to enable the perfect reading experience.
+
+* It supports **offline-reading**. Mangas can be downloaded in advance and read later without internet connection.
+
+* It supports **favorites** and bookmarks **reading progress** automatically, so you can pick right up reading where you left off.
+
+* It is designed to be ergonomic on E-Readers. It supports gesture input, frontlight control and sleep mode.
 
 
-# Windows
+## Install
+TODO
 
-To build the UltimateMangaReader for Windows you will need Qt 4.8.5. 
-OpenSSL 1.0.2 (prebuild or self build as well as includes) are nessasarry and you probbably have to
-edit the paths project file.
+## Build
 
-# Kobo
-
-To build for Kobo you have to setup an arm cross-compiling environment with Qt 4.8.5 first, instructions can be found at https://www.mobileread.com/forums/showthread.php?t=297335.
-You also need the KoboLauncher sources from https://bitbucket.org/vlasovsoft/free and place them into the same directory as the UltimateMangaReader sources.
+## Cross-compile for Kobo
