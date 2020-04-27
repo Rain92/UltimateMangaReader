@@ -115,7 +115,7 @@
           </property>
           <property name="sizeHint" stdset="0">
            <size>
-            <width>50</width>
+            <width>40</width>
             <height>0</height>
            </size>
           </property>
@@ -235,22 +235,22 @@
      </property>
      <layout class="QHBoxLayout" name="horizontalLayoutNavigationBar">
       <property name="spacing">
-       <number>2</number>
+       <number>0</number>
       </property>
       <property name="sizeConstraint">
        <enum>QLayout::SetNoConstraint</enum>
       </property>
       <property name="leftMargin">
-       <number>1</number>
+       <number>0</number>
       </property>
       <property name="topMargin">
-       <number>1</number>
+       <number>0</number>
       </property>
       <property name="rightMargin">
-       <number>1</number>
+       <number>0</number>
       </property>
       <property name="bottomMargin">
-       <number>1</number>
+       <number>0</number>
       </property>
       <item>
        <widget class="QFrame" name="frameButtons">
@@ -260,7 +260,16 @@
         <property name="frameShadow">
          <enum>QFrame::Plain</enum>
         </property>
+        <property name="lineWidth">
+         <number>0</number>
+        </property>
         <layout class="QHBoxLayout" name="horizontalLayout">
+         <property name="topMargin">
+          <number>6</number>
+         </property>
+         <property name="bottomMargin">
+          <number>4</number>
+         </property>
          <item>
           <widget class="QPushButton" name="pushButtonHome">
            <property name="sizePolicy">
@@ -425,7 +434,7 @@
    <container>1</container>
   </customwidget>
  </customwidgets>
- <resources>
+  <resources>
   <include location="../resources.qrc"/>
  </resources>
  <connections/>
