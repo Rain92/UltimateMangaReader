@@ -270,7 +270,11 @@ void AbstractMangaSource::fillMangaInfo(QSharedPointer<MangaInfo> info, const QS
     if (yearrxmatch.hasMatch())
         info->releaseYear = htmlToPlainText(yearrxmatch.captured(1));
     if (genresrxmatch.hasMatch())
-        info->genres = htmlToPlainText(genresrxmatch.captured(1)).trimmed().remove('\n').remove(',');
+        info->genres = htmlToPlainText(genresrxmatch.captured(1))
+                           .trimmed()
+                           .remove('\n')
+                           .replace(", ", " ")
+                           .replace(",", " ");
     if (summaryrxmatch.hasMatch())
         info->summary = htmlToPlainText(summaryrxmatch.captured(1));
     if (coverrxmatch.hasMatch())

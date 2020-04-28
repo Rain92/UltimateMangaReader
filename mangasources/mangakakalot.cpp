@@ -49,14 +49,12 @@ bool Mangakakalot::uptareMangaList(UpdateProgressToken *token)
         pages = numpagesrxmatch.captured(1).toInt();
 
     const int matchesPerPage = 24;
-    auto lambda = [&](QSharedPointer<DownloadJobBase> job) {
-        auto sjob = static_cast<DownloadStringJob *>(job.get());
-
-        int spos = sjob->buffer.indexOf(rxstart);
-        int epos = sjob->buffer.indexOf(rxend);
+    auto lambda = [&](QSharedPointer<DownloadStringJob> job) {
+        int spos = job->buffer.indexOf(rxstart);
+        int epos = job->buffer.indexOf(rxend);
 
         int matches = 0;
-        for (auto &match : getAllRxMatches(mangarx, sjob->buffer, spos, epos))
+        for (auto &match : getAllRxMatches(mangarx, job->buffer, spos, epos))
         {
             mangas.urls.append(match.captured(1));
             mangas.titles.append(htmlToPlainText(htmlToPlainText(match.captured(2))));

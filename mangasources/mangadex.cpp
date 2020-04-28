@@ -103,10 +103,9 @@ bool MangaDex::uptareMangaList(UpdateProgressToken *token)
     int pages = (nominalSize + 99) / 100;
     qDebug() << "pages" << pages;
 
-    auto lambda = [&](QSharedPointer<DownloadJobBase> job) {
-        auto sjob = static_cast<DownloadStringJob *>(job.get());
+    auto lambda = [&](QSharedPointer<DownloadStringJob> job) {
         int matches = 0;
-        for (auto &match : getAllRxMatches(mangaidrx, sjob->buffer))
+        for (auto &match : getAllRxMatches(mangaidrx, job->buffer))
         {
             mangas.urls.append("/api/?type=manga&id=" + match.captured(2));
             mangas.titles.append(htmlToPlainText(htmlToPlainText(match.captured(1))));

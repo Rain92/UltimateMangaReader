@@ -32,10 +32,9 @@ bool MangaHub::uptareMangaList(UpdateProgressToken *token)
     const int matchesPerPage = 30;
     int noMatchCounter = 0;
 
-    auto lambda = [&](QSharedPointer<DownloadJobBase> job) {
-        auto sjob = static_cast<DownloadStringJob *>(job.get());
+    auto lambda = [&](QSharedPointer<DownloadStringJob> job) {
         int matches = 0;
-        for (auto &match : getAllRxMatches(mangarx, sjob->buffer))
+        for (auto &match : getAllRxMatches(mangarx, job->buffer))
         {
             mangas.urls.append(match.captured(1));
             mangas.titles.append(htmlToPlainText(htmlToPlainText(match.captured(2))));

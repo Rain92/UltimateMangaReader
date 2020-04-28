@@ -26,5 +26,7 @@
         <file>images/icons/checkbox-unchecked.png</file>
         <file>images/icons/error.png</file>
         <file>images/icons/download.png</file>
+        <file>images/mangahostlogos/mangahere.png</file>
+        <file>images/mangahostlogos/mangatown.png</file>
     </qresource>
 </RCC>

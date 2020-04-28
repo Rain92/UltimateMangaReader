@@ -12,7 +12,7 @@ protected:
     int timeoutTime;
     QByteArray postData;
 
-protected slots:
+protected:
     void downloadStringReadyRead();
     void downloadStringFinished();
     void onError(QNetworkReply::NetworkError);
@@ -21,13 +21,12 @@ protected slots:
 public:
     QString buffer;
 
-    DownloadStringJob(QNetworkAccessManager *networkManager, const QString &url,
-                      int timeout = 6000,
+    DownloadStringJob(QNetworkAccessManager *networkManager, const QString &url, int timeout = 6000,
                       const QByteArray &postData = QByteArray());
 
-    bool await(int timeout = 6000, bool retry = true);
+    bool await(int timeout = 7000, bool retry = true);
 
-public slots:
+public:
     void start() override;
     void restart() override;
 };

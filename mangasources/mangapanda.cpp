@@ -98,9 +98,9 @@ Result<QStringList, QString> MangaPanda::getPageList(const QString &chapterUrl)
 
 Result<QString, QString> MangaPanda::getImageUrl(const QString &pageUrl)
 {
-    auto job = networkManager->downloadAsString(pageUrl);
-
     QRegularExpression imagerx(R"lit(<img id="img"[^>]*src="([^"]*)")lit");
+
+    auto job = networkManager->downloadAsString(pageUrl);
 
     if (!job->await(7000))
         return Err(job->errorString);
@@ -108,7 +108,7 @@ Result<QString, QString> MangaPanda::getImageUrl(const QString &pageUrl)
     auto match = imagerx.match(job->buffer);
 
     if (!match.hasMatch())
-        return Err(QString("Error. Couldn't process pages/images."));
+        return Err(QString("Couldn't process pages/images."));
 
     auto imageUrl = match.captured(1);
 

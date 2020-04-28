@@ -11,6 +11,8 @@ else { # default is desktop
 }
 
 QT    += core gui widgets network svg
+CONFIG += c++17
+
 
 TARGET = UltimateMangaReader
 
@@ -46,7 +48,9 @@ HEADERS += \
     mangachapterdownloadmanager.h \
     mangacontroller.h \
     mangaindextraverser.h \
+    mangasources/mangahere.h \
     mangasources/mangakakalot.h \
+    mangasources/mangatown.h \
     mangasources/updateprogresstoken.h \
     networkmanager.h \
     readingprogress.h \
@@ -101,7 +105,9 @@ SOURCES += \
     mangachapterdownloadmanager.cpp \
     mangacontroller.cpp \
     mangaindextraverser.cpp \
+    mangasources/mangahere.cpp \
     mangasources/mangakakalot.cpp \
+    mangasources/mangatown.cpp \
     mangasources/updateprogresstoken.cpp \
     networkmanager.cpp \
     readingprogress.cpp \
