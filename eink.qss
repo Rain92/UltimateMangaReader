@@ -2,25 +2,63 @@
 QPushButton[type="borderless"]
 {
     background: white;
-    border: 0px;
+    border: 0;
     padding: 2px;
     outline: none;
     font-size: 13pt;
 }
-QPushButton[type="borderless"]:focus { border: 0px  }
+
+QPushButton[type="borderless"]:focus
+{
+    border: 0;
+}
+
 QPushButton[type="borderless"]:pressed
 {
     background: black;
     color: white;
-    border: 0px
+    border: 0;
 }
 
+QLabel[type="bold"]
+{
+    font-weight: bold;
+}
+
+QLabel[objectName^="labelMangaInfoLabel"]
+{
+    font-size: 12pt;
+}
 
 QFrame#listViewSources
 {
-    border: 0px solid black;
+    border: none;
     font-size: 7pt;
     outline: 0;
+}
+
+QListView#listViewMangas
+{
+    border: none;
+    padding: 8px 0;
+}
+
+QFrame#listViewChapters
+{
+    border: none;
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+QFrame#topButtonsFrame
+{
+    border-top: 1px solid black;
+    border-bottom: 1px solid black;
+}
+
+QFrame#frameButtons
+{
+    border-top: 1px solid black;
 }
 
 QListView::item:selected#listViewSources
@@ -28,6 +66,7 @@ QListView::item:selected#listViewSources
     background: white;
     color: black;
 }
+
 QListView::item:focused#listViewSources
 {
     background: white;
@@ -39,8 +78,27 @@ QFrame#frameProgress
     border: 1px solid black;
 }
 
+QLineEdit#lineEditFilter
+{
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    font-size: 14pt;
+}
 
-QWidget {
+QFrame#searchButtonFrame
+{
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    border:1px solid black;
+}
+
+QPushButton#pushButtonFilterClear
+{
+    font-size: 20pt;
+}
+
+QWidget
+{
     background-color: white;
     selection-color: white;
     selection-background-color: black;
@@ -282,3 +340,4 @@ QDialog {
     border: 2px solid black;
     background: white;
 }
+
