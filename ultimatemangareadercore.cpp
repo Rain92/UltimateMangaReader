@@ -34,14 +34,14 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
 
     favoritesManager->loadInfos();
 
-    timer.setInterval(60 * 1000);
+    timer.setInterval(CONF.globalTickIntervalSeconds * 1000);
     connect(&timer, &QTimer::timeout, this, &UltimateMangaReaderCore::timerTick);
 
     // auto suspend
     connect(networkManager, &NetworkManager::activity, this, &UltimateMangaReaderCore::activity);
     connect(mangaController, &MangaController::activity, this, &UltimateMangaReaderCore::activity);
 
-    autoSuspendTimer.setInterval(10 * 60 * 1000);
+    autoSuspendTimer.setInterval(CONF.autoSuspendIntervalMinutes * 60 * 1000);
     connect(&autoSuspendTimer, &QTimer::timeout, [this]() {
         qDebug() << "Auto Suspend!";
         suspendManager->suspend();

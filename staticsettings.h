@@ -24,11 +24,13 @@ public:
     QString cacheDir;
     QString mangaListDir;
     QString screensaverDir;
-    int imageCacheSize;
-    int parallelDownloadsLow;
-    int parallelDownloadsHigh;
-    int forwardPreloads;
-    int backwardPreloads;
+    int imageCacheSize = 10;
+    int parallelDownloadsLow = 4;
+    int parallelDownloadsHigh = 8;
+    int forwardPreloads = 6;
+    int backwardPreloads = 1;
+    int autoSuspendIntervalMinutes = 15;
+    int globalTickIntervalSeconds = 60;
 
     inline QString mangainfodir(const QString &hostname, const QString &title)
     {
@@ -45,11 +47,6 @@ private:
         cacheDir = QCoreApplication::applicationDirPath() + "/cache/";
         screensaverDir = QCoreApplication::applicationDirPath() + "/screensavers/";
         mangaListDir = cacheDir + "mangalists/";
-        imageCacheSize = 10;
-        parallelDownloadsLow = 4;
-        parallelDownloadsHigh = 8;
-        forwardPreloads = 6;
-        backwardPreloads = 1;
     };
 };
 
