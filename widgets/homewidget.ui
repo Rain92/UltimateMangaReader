@@ -19,21 +19,24 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true"/>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <property name="spacing">
-    <number>6</number>
+    <number>0</number>
    </property>
    <property name="leftMargin">
     <number>10</number>
    </property>
    <property name="topMargin">
-    <number>10</number>
+    <number>0</number>
    </property>
    <property name="rightMargin">
     <number>10</number>
    </property>
    <property name="bottomMargin">
-    <number>10</number>
+    <number>0</number>
    </property>
    <item>
     <spacer name="verticalSpacer">
@@ -50,6 +53,9 @@
    </item>
    <item>
     <layout class="QGridLayout" name="gridLayout_2">
+     <property name="spacing">
+      <number>0</number>
+     </property>
      <item row="0" column="0" rowspan="2">
       <widget class="QListView" name="listViewSources">
        <property name="sizePolicy">
@@ -62,6 +68,9 @@
         <font>
          <family>Sans Serif</family>
         </font>
+       </property>
+       <property name="lineWidth">
+        <number>0</number>
        </property>
        <property name="verticalScrollBarPolicy">
         <enum>Qt::ScrollBarAlwaysOff</enum>
@@ -109,15 +118,24 @@
    </item>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_4">
+     <property name="spacing">
+      <number>4</number>
+     </property>
      <item>
       <widget class="CLineEdit" name="lineEditFilter">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="focusPolicy">
         <enum>Qt::ClickFocus</enum>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QFrame" name="frame">
+      <widget class="QFrame" name="searchButtonFrame">
        <property name="minimumSize">
         <size>
          <width>30</width>
@@ -131,14 +149,20 @@
         <enum>QFrame::Plain</enum>
        </property>
        <layout class="QHBoxLayout" name="horizontalLayout">
+        <property name="spacing">
+         <number>-1</number>
+        </property>
         <property name="leftMargin">
-         <number>9</number>
+         <number>8</number>
         </property>
         <property name="topMargin">
-         <number>9</number>
+         <number>4</number>
+        </property>
+        <property name="rightMargin">
+         <number>10</number>
         </property>
         <property name="bottomMargin">
-         <number>9</number>
+         <number>4</number>
         </property>
         <item>
          <widget class="QPushButton" name="pushButtonFilterClear">
@@ -152,7 +176,7 @@
            <enum>Qt::ClickFocus</enum>
           </property>
           <property name="text">
-           <string> X </string>
+           <string> ✕ </string>
           </property>
          </widget>
         </item>
@@ -163,12 +187,6 @@
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
-          </property>
-          <property name="baseSize">
-           <size>
-            <width>0</width>
-            <height>0</height>
-           </size>
           </property>
           <property name="frameShape">
            <enum>QFrame::VLine</enum>

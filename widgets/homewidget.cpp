@@ -35,7 +35,6 @@ void HomeWidget::adjustUI()
 
     ui->pushButtonFilter->setFixedHeight(SIZES.buttonSize);
     ui->pushButtonFilterClear->setFixedHeight(SIZES.buttonSize);
-    ui->lineEditFilter->setFixedHeight(SIZES.buttonSize + ui->frame->layout()->margin() * 2);
 
     ui->listViewSources->setFixedHeight(SIZES.listSourcesHeight);
     ui->listViewSources->setViewMode(QListView::IconMode);
