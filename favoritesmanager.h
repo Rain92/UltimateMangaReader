@@ -18,8 +18,6 @@ public:
     bool isFavorite(QSharedPointer<MangaInfo> info);
     bool toggleFavorite(QSharedPointer<MangaInfo> info);
 
-    void deserialize();
-
     void moveFavoriteToFront(int i);
 
     void updateInfos();
@@ -34,6 +32,7 @@ public slots:
 
 private:
     const QMap<QString, AbstractMangaSource *> &mangasources;
+    void deserialize();
 };
 
 #endif  // READINGSTATEMANAGER_H

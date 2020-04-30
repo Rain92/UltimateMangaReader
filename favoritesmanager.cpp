@@ -72,7 +72,8 @@ void FavoritesManager::loadInfos()
     for (int i = 0; i < favorites.length(); i++)
     {
         auto &fav = favorites[i];
-        if (mangasources.contains(fav.hostname))
+        if (mangasources.contains(fav.hostname) &&
+            mangasources[fav.hostname]->mangaList.titles.contains(fav.title))
         {
             QTimer::singleShot(0, [this, &fav]() {
                 auto mi = mangasources[fav.hostname]->loadMangaInfo(fav.mangaUrl, fav.title, false);

@@ -57,13 +57,13 @@
        <number>0</number>
       </property>
       <property name="leftMargin">
-       <number>9</number>
+       <number>18</number>
       </property>
       <property name="topMargin">
        <number>0</number>
       </property>
       <property name="rightMargin">
-       <number>9</number>
+       <number>18</number>
       </property>
       <property name="bottomMargin">
        <number>0</number>
@@ -434,7 +434,7 @@
    <container>1</container>
   </customwidget>
  </customwidgets>
-  <resources>
+ <resources>
   <include location="../resources.qrc"/>
  </resources>
  <connections/>
