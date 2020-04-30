@@ -9,7 +9,6 @@ public:
     QString chapterUrl;
 
     bool pagesLoaded;
-    int numPages;
 
     QStringList pageUrlList;
     QStringList imageUrlList;

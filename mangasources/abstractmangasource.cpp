@@ -182,12 +182,10 @@ Result<void, QString> AbstractMangaSource::updatePageList(QSharedPointer<MangaIn
     if (ch.pageUrlList.count() == 0)
     {
         qDebug() << "pageUrls empty" << ch.chapterUrl;
-        ch.numPages = 1;
         ch.pageUrlList.clear();
         ch.pageUrlList << "";
         return Err(QString("Can't download chapter: pagelist empty."));
     }
-    ch.numPages = ch.pageUrlList.count();
     ch.imageUrlList = QStringList();
     for (int i = 0; i < ch.pageUrlList.count(); i++)
         ch.imageUrlList.append("");

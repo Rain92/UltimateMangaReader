@@ -35,6 +35,7 @@ private:
     Ui::ClearCacheDialog *ui;
 
     void adjustUI();
+    void updateLabel();
 };
 
 #endif  // CLEARCACHEDIALOG_H

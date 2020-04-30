@@ -73,7 +73,7 @@ void MangaChapterDownloadManager::processNextJob()
     {
         if (!mangaInfo->chapters[c].pagesLoaded)
             continue;
-        for (int p = 0; p < mangaInfo->chapters[c].numPages && !cancelled; p++)
+        for (int p = 0; p < mangaInfo->chapters[c].pageUrlList.count() && !cancelled; p++)
         {
             if (mangaInfo->chapters[c].imageUrlList[p] == "")
             {

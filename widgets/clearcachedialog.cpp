@@ -31,12 +31,22 @@ void ClearCacheDialog::adjustUI()
 
 void ClearCacheDialog::open()
 {
+    QString str = QString("Calculating... \n%1 MB of free space remaining.")
+
+                      .arg(getFreeSpace());
+    ui->labelCacheSize->setText(str);
+
+    QTimer::singleShot(0, this, &ClearCacheDialog::updateLabel);
+
+    QDialog::open();
+}
+
+void ClearCacheDialog::updateLabel()
+{
     QString str = QString("Downloads take up %1 MB. \n%2 MB of free space remaining.")
                       .arg(getCacheSize())
                       .arg(getFreeSpace());
     ui->labelCacheSize->setText(str);
-
-    QDialog::open();
 }
 
 void ClearCacheDialog::on_pushButtonCancel_clicked()

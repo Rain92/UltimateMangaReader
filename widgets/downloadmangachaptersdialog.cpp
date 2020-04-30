@@ -27,14 +27,14 @@ DownloadMangaChaptersDialog::~DownloadMangaChaptersDialog()
     delete ui;
 }
 
-void DownloadMangaChaptersDialog::show(QSharedPointer<MangaInfo> mangaInfo, int chapterFrom)
+void DownloadMangaChaptersDialog::show(QSharedPointer<MangaInfo> mangaInfo, int chapterFromDefault)
 {
     this->setMaximumWidth(static_cast<QWidget *>(this->parent())->width());
 
     this->mangaInfo = mangaInfo;
-    ui->spinBoxFrom->setRange(chapterFrom + 1, mangaInfo->chapters.size());
+    ui->spinBoxFrom->setRange(1, mangaInfo->chapters.size());
     ui->spinBoxTo->setRange(1, mangaInfo->chapters.size());
-    ui->spinBoxFrom->setValue(1);
+    ui->spinBoxFrom->setValue(chapterFromDefault + 1);
     ui->spinBoxTo->setValue(mangaInfo->chapters.size());
 
     ui->labelTitle->setText("Download " + mangaInfo->title);

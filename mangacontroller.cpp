@@ -50,7 +50,7 @@ Result<void, QString> MangaController::assurePagesLoaded()
     if (currentIndex.chapter >= currentManga->chapters.count() || currentIndex.chapter < 0)
         return Err(QString("Chapter number out of bounds."));
 
-    if (currentIndex.page >= currentIndex.currentChapter().numPages)
+    if (currentIndex.page >= currentIndex.currentChapter().pageUrlList.count())
         currentIndex.page = 0;
 
     return Ok();
@@ -116,7 +116,7 @@ Result<QString, QString> MangaController::getImageUrl(const MangaIndex &index)
 void MangaController::currentIndexChangedInternal(bool preload)
 {
     emit currentIndexChanged(
-        {currentIndex, currentManga->chapters.count(), currentIndex.currentChapter().numPages});
+        {currentIndex, currentManga->chapters.count(), currentIndex.currentChapter().pageUrlList.count()});
 
     updateCurrentImage();
 
@@ -264,7 +264,7 @@ void MangaController::completedImagePreload(const QString &, const QString &path
 
 void MangaController::serializeProgress()
 {
-    ReadingProgress c(currentIndex, currentManga->chapters.count(), currentIndex.currentChapter().numPages);
+    ReadingProgress c(currentIndex, currentManga->chapters.count(), currentIndex.currentChapter().pageUrlList.count());
     c.serialize(currentManga->hostname, currentManga->title);
 }
 

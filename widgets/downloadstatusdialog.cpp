@@ -91,7 +91,7 @@ void DownloadStatusDialog::downloadCompleted()
 void DownloadStatusDialog::checkFreeMem()
 {
     auto freemem = getFreeSpace();
-    ui->labelFreeMemory->setText(QString::number(freemem));
+    ui->labelFreeMemory->setText(QString::number(freemem) + " MB");
     if (freemem < 200)
     {
         emit abortDownloads();
