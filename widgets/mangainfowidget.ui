@@ -203,7 +203,7 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>Authors: </string>
+            <string>Author: </string>
            </property>
            <property name="alignment">
             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -238,7 +238,7 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>Artists: </string>
+            <string>Artist: </string>
            </property>
            <property name="alignment">
             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -273,7 +273,7 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>Genres: </string>
+            <string>Genre: </string>
            </property>
            <property name="alignment">
             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>

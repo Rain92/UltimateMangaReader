@@ -87,7 +87,7 @@ void MangaTown::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob>
     QRegularExpression yearrx;
     QRegularExpression genresrx(R"(<b>Genre\(s\):</b>(.*?)</li>)");
 
-    QRegularExpression summaryrx(R"lit(<p[^>]*?class="fullcontent">(.*?)</p>)lit");
+    QRegularExpression summaryrx(R"lit(<span id="show"[^>]*?>([^<]*?)<)lit");
 
     QRegularExpression coverrx(R"lit(<img src="([^"]*?)" onerror="this.src)lit");
 
@@ -98,8 +98,6 @@ void MangaTown::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob>
 
     int spos = job->buffer.indexOf(R"(<ul class="chapter_list">)");
     int epos = job->buffer.indexOf(R"(<div class="comment_content">)", spos);
-
-    qDebug() << spos << epos;
 
     MangaChapterCollection newchapters;
     for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->buffer, spos, epos))
