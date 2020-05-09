@@ -32,8 +32,15 @@ bool NetworkManager::connectWifi()
         qDebug() << "Connecting to Wifi...";
         QElapsedTimer t;
         t.start();
-        KoboPlatformFunctions::enableWiFiConnection();
-        checkInternetConnection();
+        try
+        {
+            KoboPlatformFunctions::enableWiFiConnection();
+            checkInternetConnection();
+        }
+        catch (QException e)
+        {
+            qDebug() << "Error while connection to internet:" << e.what();
+        }
         qDebug() << "Connected" << (connected ? "successfully" : "unsuccessfully") << "in" << t.elapsed()
                  << "ms.";
 #endif
@@ -65,7 +72,14 @@ bool NetworkManager::checkInternetConnection()
 {
     bool oldstatus = connected;
 #ifdef KOBO
-    connected = KoboPlatformFunctions::KoboPlatformFunctions::testInternetConnection(500);
+    try
+    {
+        connected = KoboPlatformFunctions::KoboPlatformFunctions::testInternetConnection(500);
+    }
+    catch (QException e)
+    {
+        qDebug() << "Error while checkin internet connection:" << e.what();
+    }
 #else
     connected = true;
 #endif
