@@ -64,6 +64,7 @@ bool DownloadScaledImageJob::rescaleImage(const QByteArray &array)
     auto greyimg = img.convertToFormat(QImage::Format_Grayscale8);
 
     bool res = greyimg.save(filepath);
+
     if (!res)
         res = img.save(filepath);
 

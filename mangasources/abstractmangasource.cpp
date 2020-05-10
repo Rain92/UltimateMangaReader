@@ -44,15 +44,12 @@ bool AbstractMangaSource::deserializeMangaList()
 
 QString AbstractMangaSource::getImagePath(const DownloadImageDescriptor &descriptor)
 {
-    int ind = descriptor.imageUrl.indexOf('?');
-    if (ind == -1)
-        ind = descriptor.imageUrl.length();
-    QString filetype = descriptor.imageUrl.mid(ind - 4, 4);
+    // save all images as jpg
+    QString filetype = ".jpg";
 
     QString path = CONF.mangaimagesdir(name, descriptor.title) + QString::number(descriptor.chapter) + "_" +
                    QString::number(descriptor.page) + filetype;
 
-    path.replace(".png", ".jpg");
     return path;
 }
 
