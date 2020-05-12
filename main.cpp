@@ -10,12 +10,15 @@
 
 int main(int argc, char *argv[])
 {
+    qputenv("QT_ENABLE_HIGHDPI_SCALING", "1");
+
     QApplication app(argc, argv);
 
 #ifdef KOBO
     auto dev = KoboPlatformFunctions::getKoboDeviceDescriptor();
     SIZES.setDPI(dev.dpi);
 #endif
+    qDebug() << qApp->devicePixelRatio();
 
     MainWidget mainwidget;
 

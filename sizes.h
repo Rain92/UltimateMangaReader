@@ -14,8 +14,8 @@ public:
     {
         if (dpi > 0 && dpi != screenDPI)
         {
-            screenDPI = dpi;
-            adjustUI();
+            //            screenDPI = dpi;
+            //            adjustSizes();
         }
     }
 
@@ -62,15 +62,16 @@ private:
 #ifdef DESKTOP
         screenDPI = 108;
 #else
-        screenDPI = 300;
+        screenDPI = 108;
+//        screenDPI = 300;
 #endif
         readerPreviousPageThreshold = 0.3;
         readerBottomMenuThreshold = 0.1;
 
-        adjustUI();
+        adjustSizes();
     };
 
-    void adjustUI()
+    void adjustSizes()
     {
         listSourcesHeight = mmToPx(21);
         mangasourceIconSize = mmToPx(13);
@@ -84,7 +85,7 @@ private:
         numpadHeight = mmToPx(35);
 
         resourceIconSize = mmToPx(5);
-        batteryIconHeight = mmToPx(3);
+        batteryIconHeight = mmToPx(3) * 3;
         wifiIconSize = mmToPx(6);
         menuIconSize = mmToPx(10);
 

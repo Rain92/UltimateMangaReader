@@ -27,7 +27,7 @@ QLabel[type="bold"]
 
 QLabel[objectName^="labelMangaInfoLabel"]
 {
-    font-size: 12pt;
+    font-size: 11pt;
 }
 
 QFrame#listViewSources
