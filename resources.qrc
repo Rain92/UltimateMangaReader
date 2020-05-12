@@ -28,5 +28,6 @@
         <file>images/icons/download.png</file>
         <file>images/mangahostlogos/mangahere.png</file>
         <file>images/mangahostlogos/mangatown.png</file>
+        <file>images/icons/ultimatemangareader.png</file>
     </qresource>
 </RCC>

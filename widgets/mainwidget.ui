@@ -19,6 +19,10 @@
   <property name="windowTitle">
    <string>UltimateMangaReader</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="../resources.qrc">
+    <normaloff>:/images/icons/ultimatemangareader.png</normaloff>:/images/icons/ultimatemangareader.png</iconset>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">
     <number>0</number>
