@@ -40,7 +40,7 @@ private:
     void adjustUI();
     void moveFavoriteToFront(int i);
 
-    QWidget *makeIconTextWidget(const QString &path, const QString &text, const QSize &iconsize);
+    QWidget *makeIconTextWidget(const QString &path, const QString &text);
 };
 
 #endif  // FAVORITESWIDGET_H

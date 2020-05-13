@@ -57,12 +57,14 @@ MainWidget::MainWidget(QWidget *parent)
                      core->mangaChapterDownloadManager, &MangaChapterDownloadManager::cancelDownloads);
 
     // NetworkManager
-    core->networkManager->setImageRescaleSize(this->size());
+    core->networkManager->setImageRescaleSize(this->size() * qApp->devicePixelRatio());
 
     QPixmap wifioff(":/images/icons/no-wifi.png");
     QPixmap wifion(":/images/icons/wifi.png");
-    wifiIcons[0] = QIcon(wifioff.scaledToHeight(SIZES.wifiIconSize, Qt::SmoothTransformation));
-    wifiIcons[1] = QIcon(wifion.scaledToHeight(SIZES.wifiIconSize, Qt::SmoothTransformation));
+    wifiIcons[0] = QIcon(
+        wifioff.scaledToHeight(SIZES.wifiIconSize * qApp->devicePixelRatio(), Qt::SmoothTransformation));
+    wifiIcons[1] =
+        QIcon(wifion.scaledToHeight(SIZES.wifiIconSize * qApp->devicePixelRatio(), Qt::SmoothTransformation));
 
     QObject::connect(core->networkManager, &NetworkManager::connectionStatusChanged, [this](bool connected) {
         auto icon = connected ? wifiIcons[1] : wifiIcons[0];
@@ -216,6 +218,8 @@ void MainWidget::adjustUI()
     ui->toolButtonWifiIcon->setIconSize(QSize(SIZES.wifiIconSize, SIZES.wifiIconSize));
 
     ui->labelTitle->setStyleSheet("font-size: 18pt");
+
+    ui->batteryIcon->setMaximumHeight(SIZES.batteryIconHeight);
 }
 
 void MainWidget::showEvent(QShowEvent *event)
@@ -385,7 +389,7 @@ void MainWidget::resizeEvent(QResizeEvent *event)
 
     errorMessageWidget->setFixedWidth(this->width());
 
-    core->networkManager->setImageRescaleSize(this->size());
+    core->networkManager->setImageRescaleSize(this->size() * qApp->devicePixelRatio());
 }
 
 void MainWidget::setWidgetTab(WidgetTab tab)

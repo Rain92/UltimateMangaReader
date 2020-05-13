@@ -37,9 +37,7 @@ void HomeWidget::adjustUI()
     ui->pushButtonFilterClear->setFixedHeight(SIZES.buttonSize);
 
     ui->listViewSources->setFixedHeight(SIZES.listSourcesHeight);
-    ui->listViewSources->setViewMode(QListView::IconMode);
     ui->listViewSources->setIconSize(QSize(SIZES.mangasourceIconSize, SIZES.mangasourceIconSize));
-    ui->listViewMangas->setUniformItemSizes(true);
 
     ui->listViewMangas->setFocusPolicy(Qt::FocusPolicy::NoFocus);
 }

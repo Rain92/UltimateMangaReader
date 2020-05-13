@@ -28,7 +28,6 @@ public:
     void setCurrentIndex(const MangaIndex &index);
     void advanceMangaPage(PageTurnDirection direction);
 
-    Result<QString, QString> getCoverpathScaled() const;
     Result<QString, QString> getImageUrl(const MangaIndex &index);
 
     void preloadNeighbours(int Forward, int Backward);

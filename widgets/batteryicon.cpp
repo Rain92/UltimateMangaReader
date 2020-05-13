@@ -6,12 +6,16 @@
 
 BatteryIcon::BatteryIcon(QWidget *parent) : QLabel(parent)
 {
+    //    setMaximumHeight(SIZES.batteryIconHeight);
+
     batteryicons[0] = QPixmap(":/images/icons/batteryfull.png")
                           .scaledToHeight(SIZES.batteryIconHeight, Qt::SmoothTransformation);
-    batteryicons[1] = QPixmap(":/images/icons/batterycharging.png")
-                          .scaledToHeight(SIZES.batteryIconHeight, Qt::SmoothTransformation);
-    batteryicons[2] = QPixmap(":/images/icons/batteryempty.png")
-                          .scaledToHeight(SIZES.batteryIconHeight, Qt::SmoothTransformation);
+    batteryicons[1] =
+        QPixmap(":/images/icons/batterycharging.png")
+            .scaledToHeight(SIZES.batteryIconHeight * qApp->devicePixelRatio(), Qt::SmoothTransformation);
+    batteryicons[2] =
+        QPixmap(":/images/icons/batteryempty.png")
+            .scaledToHeight(SIZES.batteryIconHeight * qApp->devicePixelRatio(), Qt::SmoothTransformation);
 }
 
 void BatteryIcon::mousePressEvent(QMouseEvent *)
@@ -39,7 +43,9 @@ void BatteryIcon::updateIcon()
     }
     else
     {
-        batteryicons[3] = QPixmap(":/images/icons/batteryempty.png");
+        batteryicons[3] =
+            QPixmap(":/images/icons/batteryempty.png")
+                .scaledToHeight(SIZES.batteryIconHeight * qApp->devicePixelRatio(), Qt::SmoothTransformation);
 
         QPainter painter(&batteryicons[3]);
         QBrush brush(Qt::black);
@@ -54,7 +60,7 @@ void BatteryIcon::updateIcon()
         painter.fillRect(12 + (45 - w), 6, w, 20, brush);
 
         painter.end();
-        setPixmap(batteryicons[3].scaledToHeight(SIZES.batteryIconHeight, Qt::SmoothTransformation));
+        setPixmap(batteryicons[3]);
     }
 }
 

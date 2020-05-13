@@ -10,100 +10,42 @@ public:
         static DPIAwareSizes instance;
         return instance;
     }
-    void setDPI(int dpi)
-    {
-        if (dpi > 0 && dpi != screenDPI)
-        {
-            //            screenDPI = dpi;
-            //            adjustSizes();
-        }
-    }
 
-    inline int mmToPx(float mm) { return (int)(mm * screenDPI * 0.0393701); }
+    const int screenDPI = 108;
+    constexpr int mmToPx(float mm) { return (int)(mm * screenDPI * 0.0393701); }
 
-    int listSourcesHeight;
-    int mangasourceIconSize;
-    int mangasourceItemWidth;
-    int mangasourceItemHeight;
-    int mangasourceIconSpacing;
+    const int listSourcesHeight = mmToPx(22);
+    const int mangasourceIconSize = mmToPx(13);
+    const int mangasourceItemWidth = mmToPx(19);
+    const int mangasourceItemHeight = mmToPx(19);
+    const int mangasourceIconSpacing = mmToPx(2);
 
-    int buttonSize;
-    int buttonSizeToggleFavorite;
+    const int buttonSize = mmToPx(7);
+    const int buttonSizeToggleFavorite = mmToPx(8);
 
-    int numpadHeight;
+    const int numpadHeight = mmToPx(35);
 
-    int resourceIconSize;
-    int batteryIconHeight;
-    int wifiIconSize;
-    int menuIconSize;
+    const int resourceIconSize = mmToPx(5);
+    const int batteryIconHeight = mmToPx(3);
+    const int wifiIconSize = mmToPx(6);
+    const int menuIconSize = mmToPx(10);
 
-    int coverSize;
+    const int coverSize = mmToPx(50);
 
-    int favoriteSectonHeight;
-    int favoriteCoverHeight;
-    int favoriteCoverWidth;
+    const int favoriteSectonHeight = mmToPx(20);
+    const int favoriteCoverSize = mmToPx(16);
 
-    int frontlightSliderGrooveHeight;
-    int frontlightSliderHandleWidth;
-    int frontlightSliderHandleHeight;
+    const int frontlightSliderGrooveHeight = mmToPx(5);
+    const int frontlightSliderHandleWidth = mmToPx(7);
+    const int frontlightSliderHandleHeight = mmToPx(6);
 
-    int errormessageWidgetHeight;
+    const int errormessageWidgetHeight = mmToPx(8);
 
-    int downloadStatusDialogWidth;
-    int downloadStatusDialogHeight;
+    const int downloadStatusDialogWidth = mmToPx(80);
+    const int downloadStatusDialogHeight = mmToPx(60);
 
-    float readerPreviousPageThreshold;
-    float readerBottomMenuThreshold;
-
-private:
-    int screenDPI;
-    DPIAwareSizes()
-    {
-#ifdef DESKTOP
-        screenDPI = 108;
-#else
-        screenDPI = 108;
-//        screenDPI = 300;
-#endif
-        readerPreviousPageThreshold = 0.3;
-        readerBottomMenuThreshold = 0.1;
-
-        adjustSizes();
-    };
-
-    void adjustSizes()
-    {
-        listSourcesHeight = mmToPx(21);
-        mangasourceIconSize = mmToPx(13);
-        mangasourceItemWidth = mmToPx(19);
-        mangasourceItemHeight = mmToPx(19);
-        mangasourceIconSpacing = mmToPx(2);
-
-        buttonSize = mmToPx(8);
-        buttonSizeToggleFavorite = mmToPx(8);
-
-        numpadHeight = mmToPx(35);
-
-        resourceIconSize = mmToPx(5);
-        batteryIconHeight = mmToPx(3) * 3;
-        wifiIconSize = mmToPx(6);
-        menuIconSize = mmToPx(10);
-
-        coverSize = mmToPx(50);
-
-        favoriteSectonHeight = mmToPx(20);
-        favoriteCoverHeight = mmToPx(16);
-        favoriteCoverWidth = mmToPx(16);
-
-        frontlightSliderGrooveHeight = mmToPx(5);
-        frontlightSliderHandleWidth = mmToPx(7);
-        frontlightSliderHandleHeight = mmToPx(6);
-
-        errormessageWidgetHeight = mmToPx(8);
-
-        downloadStatusDialogWidth = mmToPx(80);
-        downloadStatusDialogHeight = mmToPx(60);
-    }
+    const float readerPreviousPageThreshold = 0.3;
+    const float readerBottomMenuThreshold = 0.1;
 };
 
 #endif  // SIZES_H

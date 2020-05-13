@@ -276,22 +276,22 @@ QPushButton:pressed
 QToolButton
 {
     background: transparent;
-    border: 0px transparent;
+    border: none;
     color: black;
     padding: 2px;
     outline: none;
 }
 QToolButton:checked
 {
-    border: 0px solid black;
+    border: none;
 }
 
 QToolButton:focus {
-    border: 0px solid black;
+    border: none;
     padding: 2px;
 }
 QToolButton:pressed {
-    border: 0px solid black;
+    border: none;
     padding: 2px;
 }
 
@@ -320,15 +320,15 @@ QScrollBar {
     background: white;
 }
 QScrollBar:vertical {
-    width: 60px
+    width: 25px
 }
 QScrollBar:vertical {
-    height: 60px
+    height: 25px
 }
 QScrollBar::handle {
     background: gray;
-    min-height: 50px;
-    min-width: 50px;
+    min-height: 25px;
+    min-width: 25px;
 }
 QScrollBar::add-line {
     width: 0px;

@@ -112,6 +112,10 @@ void activateScroller(QAbstractScrollArea* pArea)
     {
         QScroller* scroller = QScroller::scroller(pArea);
         QScrollerProperties prop = scroller->scrollerProperties();
+        prop.setScrollMetric(QScrollerProperties::VerticalOvershootPolicy,
+                             QScrollerProperties::OvershootAlwaysOff);
+        prop.setScrollMetric(QScrollerProperties::HorizontalOvershootPolicy,
+                             QScrollerProperties::OvershootAlwaysOff);
         prop.setScrollMetric(QScrollerProperties::MaximumClickThroughVelocity, 0);
         prop.setScrollMetric(QScrollerProperties::MousePressEventDelay, 0.5);
         scroller->setScrollerProperties(prop);

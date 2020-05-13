@@ -1,15 +1,16 @@
 #ifndef ABSTRACTMANGASOURCE_H
 #define ABSTRACTMANGASOURCE_H
+#include <QApplication>
 #include <QDateTime>
 #include <QImage>
 #include <QRegularExpression>
 #include <QTextDocument>
 
 #include "downloadimagedescriptor.h"
-#include "networkmanager.h"
 #include "downloadqueue.h"
 #include "mangachapter.h"
 #include "mangalist.h"
+#include "networkmanager.h"
 #include "result.h"
 #include "sizes.h"
 #include "staticsettings.h"

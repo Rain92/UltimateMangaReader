@@ -1,6 +1,7 @@
 #ifndef BATTERYICONLABEL_H
 #define BATTERYICONLABEL_H
 
+#include <QApplication>
 #include <QLabel>
 #include <QPainter>
 #include <QPair>

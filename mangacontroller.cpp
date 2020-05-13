@@ -56,27 +56,6 @@ Result<void, QString> MangaController::assurePagesLoaded()
     return Ok();
 }
 
-Result<QString, QString> MangaController::getCoverpathScaled() const
-{
-    if (currentManga->coverPath == "" || currentManga->coverPath.length() < 4)
-        return Err(QString("Invalid coverpath."));
-
-    QString scpath = currentManga->coverPath;
-    scpath.insert(scpath.length() - 4, "_scaled");
-
-    if (!QFile::exists(scpath))
-    {
-        qDebug() << "generating scaled:" << currentManga->title;
-        QImage img;
-        img.load(currentManga->coverPath);
-        img = img.scaled(SIZES.favoriteCoverWidth, SIZES.favoriteCoverHeight, Qt::KeepAspectRatio,
-                         Qt::SmoothTransformation);
-        img.save(scpath);
-    }
-
-    return Ok(scpath);
-}
-
 void MangaController::setCurrentIndex(const MangaIndex &index)
 {
     auto res = currentIndex.setChecked(index.chapter, index.page);
@@ -264,7 +243,8 @@ void MangaController::completedImagePreload(const QString &, const QString &path
 
 void MangaController::serializeProgress()
 {
-    ReadingProgress c(currentIndex, currentManga->chapters.count(), currentIndex.currentChapter().pageUrlList.count());
+    ReadingProgress c(currentIndex, currentManga->chapters.count(),
+                      currentIndex.currentChapter().pageUrlList.count());
     c.serialize(currentManga->hostname, currentManga->title);
 }
 

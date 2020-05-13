@@ -57,8 +57,7 @@ void FavoritesWidget::showFavoritesList()
 
 void FavoritesWidget::insertRow(const QSharedPointer<MangaInfo> &fav, int row)
 {
-    QWidget *titlewidget = makeIconTextWidget(fav->coverThumbnailPath(), fav->title,
-                                              QSize(SIZES.favoriteCoverHeight, SIZES.favoriteCoverHeight));
+    QWidget *titlewidget = makeIconTextWidget(fav->coverThumbnailPath(), fav->title);
 
     ui->tableWidget->insertRow(row);
 
@@ -116,21 +115,21 @@ void FavoritesWidget::coverLoaded()
         i++;
 
     QWidget *titlewidget = makeIconTextWidget(favoritesmanager->favoriteinfos.at(i)->coverThumbnailPath(),
-                                              favoritesmanager->favoriteinfos.at(i)->title,
-                                              QSize(SIZES.favoriteCoverHeight, SIZES.favoriteCoverHeight));
+                                              favoritesmanager->favoriteinfos.at(i)->title);
     ui->tableWidget->setCellWidget(i, 0, titlewidget);
 }
 
-QWidget *FavoritesWidget::makeIconTextWidget(const QString &path, const QString &text, const QSize &iconsize)
+QWidget *FavoritesWidget::makeIconTextWidget(const QString &path, const QString &text)
 {
     QWidget *widget = new QWidget();
 
     QLabel *textlabel = new QLabel(text, widget);
 
+    QPixmap img(path);
     QLabel *iconlabel = new QLabel(widget);
-    iconlabel->setMaximumSize(iconsize);
-    iconlabel->setScaledContents(false);
-    iconlabel->setPixmap(QPixmap(path));
+    iconlabel->setScaledContents(true);
+    iconlabel->setFixedSize(img.width() / qApp->devicePixelRatio(), img.height() / qApp->devicePixelRatio());
+    iconlabel->setPixmap(img);
 
     QVBoxLayout *vlayout = new QVBoxLayout(widget);
     vlayout->setAlignment(Qt::AlignCenter);

@@ -1,8 +1,10 @@
 #include "mangaimagecontainer.h"
 
+#include <QApplication>
 #include <QDebug>
 #include <QFileInfo>
 #include <QPainter>
+#include <QScreen>
 
 MangaImageContainer::MangaImageContainer(QWidget *parent) : QFrame(parent) {}
 
@@ -40,12 +42,15 @@ void MangaImageContainer::clearImage()
 void MangaImageContainer::paintEvent(QPaintEvent *)
 {
     QPainter painter(this);
+    qreal pixelRatio = qApp->devicePixelRatio();
     if (pixmap)
     {
-        int x = (this->size().width() - pixmap->width()) / 2;
-        int y = (this->size().height() - pixmap->height()) / 2;
+        int x = (this->size().width() - pixmap->width() / qApp->devicePixelRatio()) / 2;
+        int y = (this->size().height() - pixmap->height() / qApp->devicePixelRatio()) / 2;
+        qDebug() << this->size() * pixelRatio << pixmap->size();
 
-        painter.drawPixmap(x, y, pixmap->width(), pixmap->height(), *pixmap);
+        painter.drawPixmap(x, y, pixmap->width() / qApp->devicePixelRatio(),
+                           pixmap->height() / qApp->devicePixelRatio(), *pixmap);
     }
     else
     {

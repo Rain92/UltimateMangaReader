@@ -573,8 +573,20 @@ bla</string>
      <property name="lineWidth">
       <number>0</number>
      </property>
+     <property name="editTriggers">
+      <set>QAbstractItemView::NoEditTriggers</set>
+     </property>
+     <property name="showDropIndicator" stdset="0">
+      <bool>false</bool>
+     </property>
+     <property name="defaultDropAction">
+      <enum>Qt::IgnoreAction</enum>
+     </property>
      <property name="spacing">
       <number>0</number>
+     </property>
+     <property name="uniformItemSizes">
+      <bool>true</bool>
      </property>
     </widget>
    </item>

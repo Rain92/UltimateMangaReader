@@ -35,8 +35,8 @@ void MangaInfoWidget::adjustUI()
     ui->toolButtonDownload->setIconSize(
         QSize(SIZES.buttonSizeToggleFavorite * 0.8, SIZES.buttonSizeToggleFavorite * 0.8));
 
-    ui->listViewChapters->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-    ui->listViewChapters->setUniformItemSizes(true);
+    ui->labelMangaInfoCover->setFixedSize(SIZES.coverSize * 0.7, SIZES.coverSize);
+    ui->labelMangaInfoCover->setScaledContents(true);
 
     ui->labelMangaInfoTitle->setStyleSheet("font-size: 16pt");
     ui->labelMangaInfoLabelSummaryContent->setStyleSheet("font-size: 10pt");
@@ -91,10 +91,8 @@ void MangaInfoWidget::updateCover()
     }
     else
     {
-        QPixmap img;
-        img.load(currentmanga->coverPath);
-        ui->labelMangaInfoCover->setPixmap(
-            img.scaled(SIZES.coverSize, SIZES.coverSize, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        QPixmap img(currentmanga->coverPath);
+        ui->labelMangaInfoCover->setPixmap(img);
     }
 }
 
