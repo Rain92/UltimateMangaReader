@@ -95,7 +95,7 @@ void MangaOwl::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> 
     QRegularExpression coverrx(R"lit(<img class="lozad"[^>]*data-src="([^"]*)")lit");
 
     QRegularExpression chapterrx(
-        R"lit(<a[^>]*class="chapter-url"[^>]*href="([^"]*)"[^>]*>\s*<label>\s*(.*?)\s*</label>)lit",
+        R"lit(<a[^>]*class="chapter-url"[^>]*href="([^"]*)"[^>]*>\s*<label[^>]*>\s*(.*?)\s*</label>)lit",
         QRegularExpression::DotMatchesEverythingOption);
 
     fillMangaInfo(info, job->buffer, titlerx, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx,
@@ -105,6 +105,7 @@ void MangaOwl::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> 
     for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->buffer))
         newchapters.insert(
             0, MangaChapter(htmlToPlainText(chapterrxmatch.captured(2)), chapterrxmatch.captured(1)));
+
     info->chapters.mergeChapters(newchapters);
 }
 
