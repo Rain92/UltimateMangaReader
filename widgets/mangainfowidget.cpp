@@ -35,7 +35,6 @@ void MangaInfoWidget::adjustUI()
     ui->toolButtonDownload->setIconSize(
         QSize(SIZES.buttonSizeToggleFavorite * 0.8, SIZES.buttonSizeToggleFavorite * 0.8));
 
-    ui->labelMangaInfoCover->setFixedSize(SIZES.coverSize * 0.7, SIZES.coverSize);
     ui->labelMangaInfoCover->setScaledContents(true);
 
     ui->labelMangaInfoTitle->setStyleSheet("font-size: 16pt");
@@ -92,6 +91,13 @@ void MangaInfoWidget::updateCover()
     else
     {
         QPixmap img(currentmanga->coverPath);
+        double r = (double)img.height() / img.width();
+
+        if (r >= ((double)SIZES.coverHeight / SIZES.coverWidth))
+            ui->labelMangaInfoCover->setFixedSize(SIZES.coverHeight / r, SIZES.coverHeight);
+        else
+            ui->labelMangaInfoCover->setFixedSize(SIZES.coverWidth, SIZES.coverWidth * r);
+
         ui->labelMangaInfoCover->setPixmap(img);
     }
 }

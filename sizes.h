@@ -30,7 +30,8 @@ public:
     const int wifiIconSize = mmToPx(6);
     const int menuIconSize = mmToPx(10);
 
-    const int coverSize = mmToPx(50);
+    const int coverHeight = mmToPx(50);
+    const int coverWidth = coverHeight * 0.7;
 
     const int favoriteSectonHeight = mmToPx(20);
     const int favoriteCoverSize = mmToPx(16);
