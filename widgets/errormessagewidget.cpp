@@ -7,10 +7,7 @@ ErrorMessageWidget::ErrorMessageWidget(QWidget* parent)
 {
     ui->setupUi(this);
 
-    QPixmap pixmap(":/images/icons/error.png");
-    ui->labelErrorImage->setFixedHeight(SIZES.buttonSize);
-    ui->labelErrorImage->setPixmap(
-        pixmap.scaled(ui->labelErrorImage->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    ui->labelErrorImage->setFixedSize(SIZES.buttonSize, SIZES.buttonSize);
 
     ui->buttonHide->setMinimumHeight(SIZES.buttonSize);
 

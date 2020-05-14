@@ -17,7 +17,7 @@ QPushButton[type="borderless"]:pressed
 {
     background: black;
     color: white;
-    border: 0;
+    border: none;
 }
 
 QLabel[type="mangainfolabel"]
@@ -35,13 +35,13 @@ QFrame#listViewSources
 {
     border: none;
     font-size: 7pt;
-    outline: 0;
+    outline: none;
 }
 
 QListView#listViewMangas
 {
     border: none;
-    padding: 8px 0;
+    padding: 8px;
 }
 
 QFrame#listViewChapters
@@ -108,7 +108,7 @@ QWidget
 
 QMenu 
 {
-  border: 2px solid black;
+  border: 1px solid black;
   background-color:white;
 }
 QMenu::item::selected 
@@ -159,7 +159,7 @@ QLineEdit, QSpinBox, QDoubleSpinBox
 }
 QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus
 {
-  border: 2px solid black;
+  border: 1px solid black;
   padding: 1px;
 }
 QLineEdit:edit-focus, QSpinBox:edit-focus, QDoubleSpinBox:edit-focus
@@ -172,11 +172,11 @@ QTextEdit
 {
   background-color:transparent;
   border:1px solid black;
-  padding: 2px;
+  padding: 1px;
 }
 QTextEdit:focus
 {
-  border: 2px solid black;
+  border: 1px solid black;
   padding: 1px;
 }
 QTextEdit:edit-focus
@@ -237,7 +237,7 @@ QListView {
 }
 QTreeView:focus, QTableView:focus {
     padding: 1px;
-    border: 2px solid black;
+    border: 1px solid black;
 }
 QTreeView:edit-focus, QListView:edit-focus, QTableView:edit-focus {
     padding: 0px;
@@ -340,7 +340,7 @@ QScrollBar::sub-line {
     width: 0px;
 }
 QDialog {
-    border: 2px solid black;
+    border: 1px solid black;
     background: white;
 }
 

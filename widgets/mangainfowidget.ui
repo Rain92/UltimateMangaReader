@@ -208,6 +208,9 @@
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
+           <property name="lineWidth">
+            <number>0</number>
+           </property>
            <property name="text">
             <string>Author: </string>
            </property>
@@ -223,6 +226,9 @@
              <horstretch>1</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
+           </property>
+           <property name="lineWidth">
+            <number>0</number>
            </property>
            <property name="text">
             <string>Dude</string>
@@ -243,6 +249,9 @@
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
+           <property name="lineWidth">
+            <number>0</number>
+           </property>
            <property name="text">
             <string>Artist: </string>
            </property>
@@ -258,6 +267,9 @@
              <horstretch>1</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
+           </property>
+           <property name="lineWidth">
+            <number>0</number>
            </property>
            <property name="text">
             <string>Dude</string>
@@ -278,6 +290,9 @@
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
+           <property name="lineWidth">
+            <number>0</number>
+           </property>
            <property name="text">
             <string>Genre: </string>
            </property>
@@ -293,6 +308,9 @@
              <horstretch>1</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
+           </property>
+           <property name="lineWidth">
+            <number>0</number>
            </property>
            <property name="text">
             <string>Seinen 
@@ -314,6 +332,9 @@ bla</string>
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
+           <property name="lineWidth">
+            <number>0</number>
+           </property>
            <property name="text">
             <string>Status: </string>
            </property>
@@ -329,6 +350,9 @@ bla</string>
              <horstretch>1</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
+           </property>
+           <property name="lineWidth">
+            <number>0</number>
            </property>
            <property name="text">
             <string>Ongoing</string>

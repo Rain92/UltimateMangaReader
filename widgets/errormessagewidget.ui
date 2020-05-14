@@ -37,12 +37,9 @@
      <property name="lineWidth">
       <number>2</number>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout">
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,1,0">
       <property name="spacing">
        <number>9</number>
-      </property>
-      <property name="sizeConstraint">
-       <enum>QLayout::SetMinimumSize</enum>
       </property>
       <property name="leftMargin">
        <number>0</number>
@@ -64,14 +61,23 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="baseSize">
+         <size>
+          <width>20</width>
+          <height>20</height>
+         </size>
+        </property>
         <property name="styleSheet">
          <string notr="true"/>
         </property>
         <property name="text">
          <string/>
         </property>
+        <property name="pixmap">
+         <pixmap resource="../resources.qrc">:/images/icons/error.png</pixmap>
+        </property>
         <property name="scaledContents">
-         <bool>false</bool>
+         <bool>true</bool>
         </property>
        </widget>
       </item>
@@ -115,6 +121,8 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../resources.qrc"/>
+ </resources>
  <connections/>
 </ui>
