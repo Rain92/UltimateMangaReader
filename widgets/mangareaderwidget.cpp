@@ -47,59 +47,25 @@ void MangaReaderWidget::adjustUI()
     ui->horizontalSliderLight->setFixedHeight(SIZES.resourceIconSize);
     ui->horizontalSliderComfLight->setFixedHeight(SIZES.resourceIconSize);
 
-    ui->labelLessLight->setFixedSize(QSize(SIZES.resourceIconSize, SIZES.resourceIconSize));
-
     ui->labelTime->setStyleSheet("font-size: 13pt");
 
-    QPixmap p(":/images/icons/darker.png");
-    ui->labelLessLight->setPixmap(p.scaledToHeight(SIZES.resourceIconSize, Qt::SmoothTransformation));
-
+    ui->labelLessLight->setFixedSize(QSize(SIZES.resourceIconSize, SIZES.resourceIconSize));
     ui->labelMoreLight->setFixedSize(QSize(SIZES.resourceIconSize, SIZES.resourceIconSize));
-
-    QPixmap p2(":/images/icons/lighter.png");
-    ui->labelMoreLight->setPixmap(p2.scaledToHeight(SIZES.resourceIconSize, Qt::SmoothTransformation));
-
     ui->labelLessComfLight->setFixedSize(QSize(SIZES.resourceIconSize, SIZES.resourceIconSize));
-
-    QPixmap p3(":/images/icons/moon.png");
-    ui->labelLessComfLight->setPixmap(p3.scaledToHeight(SIZES.resourceIconSize, Qt::SmoothTransformation));
-
     ui->labelMoreComfLight->setFixedSize(QSize(SIZES.resourceIconSize, SIZES.resourceIconSize));
 
-    QPixmap p4(":/images/icons/sun.png");
-    ui->labelMoreComfLight->setPixmap(p4.scaledToHeight(SIZES.resourceIconSize, Qt::SmoothTransformation));
+    ui->labelLessLight->setScaledContents(true);
+    ui->labelMoreLight->setScaledContents(true);
+    ui->labelLessComfLight->setScaledContents(true);
+    ui->labelMoreComfLight->setScaledContents(true);
 
-    QString sliderstylesheet =
-        "QSlider::groove:horizontal {       "
-        "     border: 1px solid black;      "
-        "     border-radius: 5px;           "
-        "     height: %1px;                 "
-        "     background: white;            "
-        "     margin: 4px 0;                "
-        "}                                  "
-        "QSlider::handle:horizontal {       "
-        "     background: white;            "
-        "     border: 1px solid black;      "
-        "     width: %3px;                  "
-        "     height: %2px;                 "
-        "     margin: -7px 0;               "
-        "     border-radius: 9px;           "
-        "}                                  "
-        "                                   "
-        "QSlider::handle:horizontal::focus {"
-        "     background: black;            "
-        "}";
+    ui->labelLessLight->setPixmap(QPixmap(":/images/icons/darker.png"));
+    ui->labelMoreLight->setPixmap(QPixmap(":/images/icons/lighter.png"));
+    ui->labelLessComfLight->setPixmap(QPixmap(":/images/icons/moon.png"));
+    ui->labelMoreComfLight->setPixmap(QPixmap(":/images/icons/sun.png"));
 
-    ui->horizontalSliderComfLight->setFixedHeight(SIZES.frontlightSliderHandleHeight + 10);
-    ui->horizontalSliderLight->setFixedHeight(SIZES.frontlightSliderHandleHeight + 10);
-
-    ui->horizontalSliderComfLight->setStyleSheet(sliderstylesheet.arg(SIZES.frontlightSliderGrooveHeight)
-                                                     .arg(SIZES.frontlightSliderHandleWidth)
-                                                     .arg(SIZES.frontlightSliderHandleHeight));
-
-    ui->horizontalSliderLight->setStyleSheet(sliderstylesheet.arg(SIZES.frontlightSliderGrooveHeight)
-                                                 .arg(SIZES.frontlightSliderHandleWidth)
-                                                 .arg(SIZES.frontlightSliderHandleHeight));
+    ui->horizontalSliderComfLight->setFixedHeight(SIZES.frontlightSliderHandleHeight);
+    ui->horizontalSliderLight->setFixedHeight(SIZES.frontlightSliderHandleHeight);
 
     ui->horizontalSliderComfLight->setInvertedAppearance(true);
 }

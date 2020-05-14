@@ -41,10 +41,15 @@ void MangaInfoWidget::adjustUI()
     ui->labelMangaInfoLabelSummaryContent->setStyleSheet("font-size: 10pt");
 
     // set labels bold
-    ui->labelMangaInfoLabelAuthor->setProperty("type", "bold");
-    ui->labelMangaInfoLabelArtist->setProperty("type", "bold");
-    ui->labelMangaInfoLabelGenres->setProperty("type", "bold");
-    ui->labelMangaInfoLabelStaus->setProperty("type", "bold");
+    ui->labelMangaInfoLabelAuthor->setProperty("type", "mangainfolabel");
+    ui->labelMangaInfoLabelArtist->setProperty("type", "mangainfolabel");
+    ui->labelMangaInfoLabelGenres->setProperty("type", "mangainfolabel");
+    ui->labelMangaInfoLabelStaus->setProperty("type", "mangainfolabel");
+
+    ui->labelMangaInfoLabelAuthorContent->setProperty("type", "mangainfocontent");
+    ui->labelMangaInfoLabelArtistContent->setProperty("type", "mangainfocontent");
+    ui->labelMangaInfoLabelGenresContent->setProperty("type", "mangainfocontent");
+    ui->labelMangaInfoLabelStausContent->setProperty("type", "mangainfocontent");
 
     activateScroller(ui->scrollAreaMangaInfoSummary);
     activateScroller(ui->listViewChapters);

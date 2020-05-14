@@ -36,9 +36,7 @@ public:
     const int favoriteSectonHeight = mmToPx(20);
     const int favoriteCoverSize = mmToPx(16);
 
-    const int frontlightSliderGrooveHeight = mmToPx(5);
-    const int frontlightSliderHandleWidth = mmToPx(7);
-    const int frontlightSliderHandleHeight = mmToPx(6);
+    const int frontlightSliderHandleHeight = mmToPx(8);
 
     const int errormessageWidgetHeight = mmToPx(8);
 

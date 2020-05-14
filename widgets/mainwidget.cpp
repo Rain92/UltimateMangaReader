@@ -218,8 +218,6 @@ void MainWidget::adjustUI()
     ui->toolButtonWifiIcon->setIconSize(QSize(SIZES.wifiIconSize, SIZES.wifiIconSize));
 
     ui->labelTitle->setStyleSheet("font-size: 18pt");
-
-    ui->batteryIcon->setMaximumHeight(SIZES.batteryIconHeight);
 }
 
 void MainWidget::showEvent(QShowEvent *event)

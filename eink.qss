@@ -20,12 +20,13 @@ QPushButton[type="borderless"]:pressed
     border: 0;
 }
 
-QLabel[type="bold"]
+QLabel[type="mangainfolabel"]
 {
     font-weight: bold;
+    font-size: 11pt;
 }
 
-QLabel[objectName^="labelMangaInfoLabel"]
+QLabel[type="mangainfocontent"]
 {
     font-size: 11pt;
 }
@@ -129,23 +130,25 @@ QMenu::indicator:exclusive:checked
     image: url(:/images/icons/checkbox-checked.png);
 }
 
-QCheckBox::indicator:checked
-{
-  min-height: 50px;
-}
 QCheckBox::indicator
 {
-  width: 44px;
-  height: 44px;
-  border: 1px solid black;
+  width: 20px;
+  height: 20px;
   margin: 3px;
-  border-radius:8px;
+  border: none;
+  border-radius: 5px;
 }
 
 QCheckBox::indicator:checked
 {
   image: url(:/images/icons/checkbox-checked.png);
 }
+
+QCheckBox::indicator:unchecked
+{
+  image: url(:/images/icons/checkbox-unchecked.png);
+}
+
 
 QLineEdit, QSpinBox, QDoubleSpinBox
 {
@@ -300,14 +303,14 @@ QSlider::groove:horizontal {
      border-radius: 5px;
      height: 20px;
      background: white;
-     margin: 2px 0;
+     margin: 4px 0;
 }
 QSlider::handle:horizontal {
      background: white;
      border: 1px solid black;
      border-radius: 5px;
      height: 30px;
-     width: 20px;
+     width: 25px;
      margin: -7px 0;
      border-radius: 9px;
 }

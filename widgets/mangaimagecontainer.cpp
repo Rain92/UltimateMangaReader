@@ -47,7 +47,6 @@ void MangaImageContainer::paintEvent(QPaintEvent *)
     {
         int x = (this->size().width() - pixmap->width() / qApp->devicePixelRatio()) / 2;
         int y = (this->size().height() - pixmap->height() / qApp->devicePixelRatio()) / 2;
-        qDebug() << this->size() * pixelRatio << pixmap->size();
 
         painter.drawPixmap(x, y, pixmap->width() / qApp->devicePixelRatio(),
                            pixmap->height() / qApp->devicePixelRatio(), *pixmap);

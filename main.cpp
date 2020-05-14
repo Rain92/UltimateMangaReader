@@ -13,7 +13,6 @@ int main(int argc, char *argv[])
 {
 #ifndef KOBO
     qputenv("QT_SCALE_FACTOR", "1.4");  // debug
-    //    qputenv("QT_SCREEN_SCALE_FACTORS", "1.4"); // debug
 #endif
 
     QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
@@ -27,8 +26,6 @@ int main(int argc, char *argv[])
     auto dev = KoboPlatformFunctions::getKoboDeviceDescriptor();
     mainwidget.resize(dev.width, dev.height);
 #endif
-    qDebug() << qApp->devicePixelRatio() << qApp->primaryScreen()->logicalDotsPerInch()
-             << qApp->primaryScreen()->physicalDotsPerInch();
 
     QFile stylesheetFile(":/eink.qss");
     stylesheetFile.open(QFile::ReadOnly);
