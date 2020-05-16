@@ -171,7 +171,7 @@
         <enum>Qt::NoFocus</enum>
        </property>
        <property name="text">
-        <string> Abort all</string>
+        <string> Abort </string>
        </property>
       </widget>
      </item>

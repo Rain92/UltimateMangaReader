@@ -1,5 +1,6 @@
 #include <QApplication>
 #include <QScreen>
+#include <QStyleFactory>
 #include <QtCore>
 
 #include "sizes.h"
@@ -26,7 +27,8 @@ int main(int argc, char *argv[])
     auto dev = KoboPlatformFunctions::getKoboDeviceDescriptor();
     mainwidget.resize(dev.width, dev.height);
 #endif
-    qDebug() << qApp->devicePixelRatio();
+    //    qDebug() << qApp->devicePixelRatio();
+    QApplication::setStyle("windows");
 
     QFile stylesheetFile(":/eink.qss");
     stylesheetFile.open(QFile::ReadOnly);

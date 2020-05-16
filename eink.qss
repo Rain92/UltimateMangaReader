@@ -81,6 +81,8 @@ QFrame#frameProgress
 
 QLineEdit#lineEditFilter
 {
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
     font-size: 14pt;
@@ -136,7 +138,6 @@ QCheckBox::indicator
   height: 20px;
   margin: 3px;
   border: none;
-  border-radius: 5px;
 }
 
 QCheckBox::indicator:checked
@@ -154,7 +155,6 @@ QLineEdit, QSpinBox, QDoubleSpinBox
 {
   background-color:white;
   border:1px solid black;
-  border-radius:5px;
   padding: 2px;
 }
 QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus
@@ -320,18 +320,21 @@ QSlider::handle:horizontal::focus {
 }
 
 QScrollBar {
-    background: white;
+background: white;
+border: 1px solid lightGrey;
 }
+
 QScrollBar:vertical {
     width: 25px
 }
-QScrollBar:vertical {
+QScrollBar:horizontal {
     height: 25px
 }
 QScrollBar::handle {
-    background: gray;
-    min-height: 25px;
+    background: black;
     min-width: 25px;
+    min-height: 25px;
+    border: none;
 }
 QScrollBar::add-line {
     width: 0px;
@@ -339,8 +342,22 @@ QScrollBar::add-line {
 QScrollBar::sub-line {
     width: 0px;
 }
+
 QDialog {
     border: 1px solid black;
     background: white;
 }
+
+QProgressBar {
+    border: 1px solid black;
+    text-align: center;
+    background: white;
+    color: rgb(160, 160, 160);
+}
+
+QProgressBar::chunk {
+    background: black;
+    color: white;
+}
+
 
