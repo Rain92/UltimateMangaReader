@@ -132,7 +132,7 @@ export PATH=PATH:
 export SYSROOT=/home/${USER}/x-tools/arm-kobo-linux-gnueabihf/arm-kobo-linux-gnueabihf/sysroot
 ./configure --recheck-all -opensource -confirm-license -release -verbose \
  -prefix /mnt/onboard/.adds/qt-5.14.1-kobo \
- -extprefix /home/andreas/qt-bin/qt-kobo-5.14.1-shared \
+ -extprefix /home/${USER}/qt-bin/qt-kobo-5.14.1-shared \
  -xplatform linux-kobo-gnueabihf-g++ -no-opengl \
  -sysroot ${SYSROOT} \
  -openssl-linked OPENSSL_PREFIX="${SYSROOT}/usr" \
