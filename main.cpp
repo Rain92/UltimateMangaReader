@@ -5,17 +5,13 @@
 
 #include "sizes.h"
 #ifdef KOBO
-#include "../koboplatformintegrationplugin/koboplatformfunctions.h"
+#include "koboplatformfunctions.h"
 #endif
 
 #include "mainwidget.h"
 
 int main(int argc, char *argv[])
 {
-#ifndef KOBO
-//    qputenv("QT_SCALE_FACTOR", "1.4567");  // debug
-#endif
-
     QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QGuiApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
 
@@ -27,7 +23,6 @@ int main(int argc, char *argv[])
     auto dev = KoboPlatformFunctions::getKoboDeviceDescriptor();
     mainwidget.resize(dev.width, dev.height);
 #endif
-    //    qDebug() << qApp->devicePixelRatio();
     QApplication::setStyle("windows");
 
     QFile stylesheetFile(":/eink.qss");

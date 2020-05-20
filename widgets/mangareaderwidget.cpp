@@ -3,7 +3,7 @@
 #include "ui_mangareaderwidget.h"
 
 #ifdef KOBO
-#include "../koboplatformintegrationplugin/koboplatformfunctions.h"
+#include "koboplatformfunctions.h"
 #endif
 
 MangaReaderWidget::MangaReaderWidget(QWidget *parent)

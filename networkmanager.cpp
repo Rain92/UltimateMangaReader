@@ -3,7 +3,7 @@
 #include "utils.h"
 
 #ifdef KOBO
-#include "../koboplatformintegrationplugin/koboplatformfunctions.h"
+#include "koboplatformfunctions.h"
 #endif
 
 NetworkManager::NetworkManager(QObject *parent)

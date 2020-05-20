@@ -3,6 +3,10 @@ kobo {
     DEFINES  += KOBO
     DEFINES  -= DESKTOP
 
+    KOBO_PLATFORM_PLUGIN_PATH = $$PWD/../qt5-kobo-platform-plugin
+
+    INCLUDEPATH += $$KOBO_PLATFORM_PLUGIN_PATH
+
     target.path = /mnt/onboard/.adds/UltimateMangaReader
     INSTALLS += target
 }
@@ -13,13 +17,9 @@ else { # default is desktop
 QT    += core gui widgets network svg
 CONFIG += c++17
 
-
 TARGET = UltimateMangaReader
 
-
 INCLUDEPATH += $$PWD/widgets $$PWD/mangasources
-DEPENDPATH  += $$PWD/widgets $$PWD/mangasources
-
 
 RESOURCES += \
     resources.qrc

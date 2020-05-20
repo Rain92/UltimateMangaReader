@@ -3,8 +3,8 @@
 #include "ui_mainwidget.h"
 
 #ifdef KOBO
-#include "../koboplatformintegrationplugin/kobokey.h"
-#include "../koboplatformintegrationplugin/koboplatformfunctions.h"
+#include "kobokey.h"
+#include "koboplatformfunctions.h"
 #define POWERBUTTON KoboKey::Key_Power
 #define SLEEPCOVERBUTTON KoboKey::Key_SleepCover
 #else

@@ -1,7 +1,7 @@
 #include "batteryicon.h"
 
 #ifdef KOBO
-#include "../koboplatformintegrationplugin/koboplatformfunctions.h"
+#include "koboplatformfunctions.h"
 #endif
 
 BatteryIcon::BatteryIcon(QWidget *parent) : QLabel(parent)
