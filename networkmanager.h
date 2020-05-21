@@ -39,6 +39,7 @@ public:
     void setImageRescaleSize(const QSize &size);
 
     void addCookie(const QString &domain, const char *key, const char *value);
+    void addSetCustomRequestHeader(const QString &domain, const char *key, const char *value);
 
     bool checkInternetConnection();
     bool connectWifi();
@@ -53,13 +54,13 @@ signals:
     void connectionStatusChanged(bool connected);
     void activity();
 
-public slots:
-
 private:
     QNetworkAccessManager *networkManager;
     CCookieJar cookies;
 
     QSize imageRescaleSize;
+
+    QList<std::tuple<QString, const char *, const char *>> customHeaders;
 
     QMap<QString, QWeakPointer<DownloadFileJob>> fileDownloads;
 };

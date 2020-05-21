@@ -10,6 +10,8 @@ Mangakakalot::Mangakakalot(NetworkManager *networkManager) : AbstractMangaSource
 
     networkManager->addCookie("mangakakalot.com", "content_lazyload", "off");
     networkManager->addCookie("manganelo.com", "content_lazyload", "off");
+    networkManager->addSetCustomRequestHeader("mangakakalot", "Referer",
+                                              R"(https://mangakakalot.com/chapter/)");
 }
 
 bool Mangakakalot::uptareMangaList(UpdateProgressToken *token)

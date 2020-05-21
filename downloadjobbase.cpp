@@ -1,9 +1,10 @@
 #include "downloadjobbase.h"
 
-DownloadJobBase::DownloadJobBase(QNetworkAccessManager *networkManager,
-                                 const QString &url)
+DownloadJobBase::DownloadJobBase(QNetworkAccessManager *networkManager, const QString &url,
+                                 const QList<std::tuple<const char *, const char *>> &customHeaders)
     : networkManager(networkManager),
       reply(),
+      customHeaders(customHeaders),
       url(url),
       originalUrl(url),
       isCompleted(false),
@@ -13,8 +14,7 @@ DownloadJobBase::DownloadJobBase(QNetworkAccessManager *networkManager,
 
 QList<QNetworkCookie> DownloadJobBase::getCookies()
 {
-    return reply->header(QNetworkRequest::SetCookieHeader)
-        .value<QList<QNetworkCookie>>();
+    return reply->header(QNetworkRequest::SetCookieHeader).value<QList<QNetworkCookie>>();
 }
 
 void DownloadJobBase::onSslErrors(const QList<QSslError> &errors)

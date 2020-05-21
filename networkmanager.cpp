@@ -11,6 +11,7 @@ NetworkManager::NetworkManager(QObject *parent)
       connected(false),
       networkManager(new QNetworkAccessManager(this)),
       cookies(),
+      customHeaders(),
       fileDownloads()
 {
     networkManager->setCookieJar(&cookies);
@@ -37,7 +38,7 @@ bool NetworkManager::connectWifi()
             KoboPlatformFunctions::enableWiFiConnection();
             checkInternetConnection();
         }
-        catch (QException e)
+        catch (const QException &e)
         {
             qDebug() << "Error while connection to internet:" << e.what();
         }
@@ -76,7 +77,7 @@ bool NetworkManager::checkInternetConnection()
     {
         connected = KoboPlatformFunctions::KoboPlatformFunctions::testInternetConnection(500);
     }
-    catch (QException e)
+    catch (const QException &e)
     {
         qDebug() << "Error while checkin internet connection:" << e.what();
     }
@@ -144,8 +145,14 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const QStr
 
     qDebug() << "Downloading as image:" << url;
 
+    QList<std::tuple<const char *, const char *>> applicableCustomHeaders;
+
+    for (const auto &[domain, name, value] : customHeaders)
+        if (url.contains(domain))
+            applicableCustomHeaders.append(std::tuple<const char *, const char *>(name, value));
+
     auto job = QSharedPointer<DownloadFileJob>(
-        new DownloadScaledImageJob(networkManager, url, localPath, imageRescaleSize),
+        new DownloadScaledImageJob(networkManager, url, localPath, imageRescaleSize, applicableCustomHeaders),
         [this](DownloadScaledImageJob *j) {
             this->fileDownloads.remove(j->originalUrl);
             j->deleteLater();
@@ -174,6 +181,11 @@ void NetworkManager::addCookie(const QString &domain, const char *key, const cha
         }
 
     cookies.addCookie(domain, key, value);
+}
+
+void NetworkManager::addSetCustomRequestHeader(const QString &domain, const char *key, const char *value)
+{
+    customHeaders.append({domain, key, value});
 }
 
 void NetworkManager::loadCertificates(const QString &certsPath)

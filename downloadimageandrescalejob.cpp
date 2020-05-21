@@ -1,8 +1,9 @@
 #include "downloadimageandrescalejob.h"
 
-DownloadScaledImageJob::DownloadScaledImageJob(QNetworkAccessManager *networkManager, const QString &url,
-                                               const QString &path, QSize size)
-    : DownloadFileJob(networkManager, url, path), size(size)
+DownloadScaledImageJob::DownloadScaledImageJob(
+    QNetworkAccessManager *networkManager, const QString &url, const QString &path, QSize imgSize,
+    const QList<std::tuple<const char *, const char *>> &customHeaders)
+    : DownloadFileJob(networkManager, url, path, customHeaders), imgSize(imgSize)
 {
 }
 
@@ -56,8 +57,8 @@ bool DownloadScaledImageJob::rescaleImage(const QByteArray &array)
     if (!img.loadFromData(array))
         return false;
 
-    auto rsize = size;
-    if ((img.width() <= img.height()) != (size.width() <= size.height()))
+    auto rsize = imgSize;
+    if ((img.width() <= img.height()) != (imgSize.width() <= imgSize.height()))
         rsize.transpose();
 
     img = img.scaled(rsize.width(), rsize.height(), Qt::KeepAspectRatio, Qt::SmoothTransformation);

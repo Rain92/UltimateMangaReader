@@ -11,7 +11,8 @@ class DownloadScaledImageJob : public DownloadFileJob
 
 public:
     DownloadScaledImageJob(QNetworkAccessManager *networkManager, const QString &url, const QString &path,
-                           QSize size);
+                           QSize imgSize,
+                           const QList<std::tuple<const char *, const char *>> &customHeaders = {});
 
 signals:
 
@@ -20,7 +21,7 @@ public slots:
     virtual void downloadFileFinished() override;
 
 private:
-    QSize size;
+    QSize imgSize;
     bool rescaleImage(const QByteArray &array);
 };
 

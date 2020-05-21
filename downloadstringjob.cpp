@@ -3,14 +3,22 @@
 #include "utils.h"
 
 DownloadStringJob::DownloadStringJob(QNetworkAccessManager *networkManager, const QString &url, int timeout,
-                                     const QByteArray &postdata)
-    : DownloadJobBase(networkManager, url), timeoutTime(timeout), postData(postdata), buffer("")
+                                     const QByteArray &postdata,
+                                     const QList<std::tuple<const char *, const char *> > &customHeaders)
+    : DownloadJobBase(networkManager, url, customHeaders),
+      timeoutTime(timeout),
+      postData(postdata),
+      buffer("")
 {
 }
 
 void DownloadStringJob::start()
 {
     QNetworkRequest request(url);
+
+    for (const auto &[name, value] : customHeaders)
+        request.setRawHeader(name, value);
+
     if (postData.isEmpty())
     {
         reply.reset(networkManager->get(request));

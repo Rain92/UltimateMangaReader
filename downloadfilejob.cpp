@@ -2,10 +2,10 @@
 
 #include "utils.h"
 
-DownloadFileJob::DownloadFileJob(QNetworkAccessManager *networkManager,
-                                 const QString &url,
-                                 const QString &localFilePath)
-    : DownloadJobBase(networkManager, url), filepath(localFilePath)
+DownloadFileJob::DownloadFileJob(QNetworkAccessManager *networkManager, const QString &url,
+                                 const QString &localFilePath,
+                                 const QList<std::tuple<const char *, const char *>> &customHeaders)
+    : DownloadJobBase(networkManager, url, customHeaders), filepath(localFilePath)
 {
 }
 
@@ -25,6 +25,10 @@ void DownloadFileJob::start()
         if (file.open(QIODevice::WriteOnly | QIODevice::Truncate))
         {
             QNetworkRequest request(url);
+
+            for (const auto &[name, value] : customHeaders)
+                request.setRawHeader(name, value);
+
             reply.reset(networkManager->get(request));
             reply->setParent(nullptr);
 
@@ -34,11 +38,9 @@ void DownloadFileJob::start()
                              &DownloadFileJob::downloadFileFinished);
             QObject::connect(
                 reply.get(),
-                static_cast<void (QNetworkReply::*)(
-                    QNetworkReply::NetworkError)>(&QNetworkReply::error),
+                static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
                 this, &DownloadFileJob::onError);
-            QObject::connect(reply.get(), &QNetworkReply::sslErrors, this,
-                             &DownloadJobBase::onSslErrors);
+            QObject::connect(reply.get(), &QNetworkReply::sslErrors, this, &DownloadJobBase::onSslErrors);
         }
         else
         {
@@ -58,7 +60,10 @@ void DownloadFileJob::restart()
     start();
 }
 
-void DownloadFileJob::downloadFileReadyRead() { file.write(reply->readAll()); }
+void DownloadFileJob::downloadFileReadyRead()
+{
+    file.write(reply->readAll());
+}
 
 void DownloadFileJob::downloadFileFinished()
 {
@@ -68,8 +73,7 @@ void DownloadFileJob::downloadFileFinished()
         file.close();
     }
 
-    QUrl redirect =
-        reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
+    QUrl redirect = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
     if (redirect.isValid() && reply->url() != redirect)
     {
         this->url = redirect.toString();

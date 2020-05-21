@@ -11,9 +11,11 @@ class DownloadJobBase : public QObject
 protected:
     QNetworkAccessManager *networkManager;
     QScopedPointer<QNetworkReply> reply;
+    QList<std::tuple<const char *, const char *>> customHeaders;
 
 public:
-    DownloadJobBase(QNetworkAccessManager *networkManager, const QString &url);
+    DownloadJobBase(QNetworkAccessManager *networkManager, const QString &url,
+                    const QList<std::tuple<const char *, const char *>> &customHeaders = {});
 
     QString url;
     QString originalUrl;

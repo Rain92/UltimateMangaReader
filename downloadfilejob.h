@@ -15,8 +15,8 @@ protected slots:
     virtual void downloadFileFinished();
 
 public:
-    DownloadFileJob(QNetworkAccessManager *networkManager, const QString &url,
-                    const QString &localFilePath);
+    DownloadFileJob(QNetworkAccessManager *networkManager, const QString &url, const QString &localFilePath,
+                    const QList<std::tuple<const char *, const char *>> &customHeaders = {});
     ~DownloadFileJob();
 
     QString filepath;
