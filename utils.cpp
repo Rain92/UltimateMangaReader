@@ -119,7 +119,7 @@ void activateScroller(QAbstractScrollArea* pArea)
         prop.setScrollMetric(QScrollerProperties::MaximumClickThroughVelocity, 0);
         prop.setScrollMetric(QScrollerProperties::MousePressEventDelay, 0.5);
         scroller->setScrollerProperties(prop);
-        scroller->grabGesture(pArea, QScroller::LeftMouseButtonGesture);
+        scroller->grabGesture(pArea->viewport(), QScroller::LeftMouseButtonGesture);
     }
 }
 
