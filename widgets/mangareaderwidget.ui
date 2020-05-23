@@ -80,10 +80,13 @@
          </sizepolicy>
         </property>
         <property name="frameShape">
-         <enum>QFrame::StyledPanel</enum>
+         <enum>QFrame::Box</enum>
         </property>
         <property name="frameShadow">
-         <enum>QFrame::Raised</enum>
+         <enum>QFrame::Plain</enum>
+        </property>
+        <property name="lineWidth">
+         <number>0</number>
         </property>
         <layout class="QGridLayout" name="gridLayout">
          <property name="leftMargin">
@@ -222,6 +225,9 @@
        <widget class="QFrame" name="readerNavigationBar">
         <property name="autoFillBackground">
          <bool>false</bool>
+        </property>
+        <property name="frameShape">
+         <enum>QFrame::Box</enum>
         </property>
         <property name="lineWidth">
          <number>0</number>
