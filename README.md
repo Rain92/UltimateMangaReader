@@ -56,7 +56,7 @@ make install
 ```
 
 ### Prepare Qt
-Download the latest Qt (5.14.1+). \
+Download the latest Qt (5.14.2+). \
 A descriptor for the kobo platform has to be added. \
 In the source folder of Qt go to qtbase\mkspecs and add a new folder named linux-kobo-gnueabihf-g++ with theese two files: \
 qmake.conf 
@@ -101,7 +101,7 @@ qplatformdefs.h
 ```
 
 
-As of Qt 5.14.1 there is an open issue that will lead to random artifacts in the gui when using high-dpi scaling with fractional scaling factors. This can be resolved with the following patch:
+As of Qt 5.14.2 there is an open issue that will lead to random artifacts in the gui when using high-dpi scaling with fractional scaling factors. This can be resolved with the following patch:
 ```
 diff --git a/src/gui/kernel/qhighdpiscaling_p.h b/src/gui/kernel/qhighdpiscaling_p.h
 index 55ad6df5c9da3d11a8900754eebc27528aec90ec..9c3d0cdba28a1dd51c18d3fcc0350a11f8000ebc 100644
@@ -128,22 +128,25 @@ export PATH=$PATH:/home/${USER}/x-tools/arm-kobo-linux-gnueabihf/bin/
 
 Configure, make and install Qt:
 ```shell
-export PATH=PATH:
 export SYSROOT=/home/${USER}/x-tools/arm-kobo-linux-gnueabihf/arm-kobo-linux-gnueabihf/sysroot
 ./configure --recheck-all -opensource -confirm-license -release -verbose \
- -prefix /mnt/onboard/.adds/qt-5.14.1-kobo \
- -extprefix /home/${USER}/qt-bin/qt-kobo-5.14.1-shared \
- -xplatform linux-kobo-gnueabihf-g++ -no-opengl \
+ -prefix /mnt/onboard/.adds/qt-5.14.2-kobo \
+ -extprefix /home/andreas/qt-bin/qt-5.14.2-kobo \
+ -xplatform linux-kobo-gnueabihf-g++ \
  -sysroot ${SYSROOT} \
  -openssl-linked OPENSSL_PREFIX="${SYSROOT}/usr" \
- -no-icu -no-iconv -no-dbus \
- -no-sse2 -no-xcb -no-xcb-xlib -linuxfb -no-tslib \
- -nomake tests -nomake examples -no-compile-examples  \
- -skip qtlocation -skip qtconnectivity -skip qtdoc -skip qtgamepad -skip qt3d -skip qtquick3d -skip qtsensors  -skip qtspeech -skip qtwebglplugin -skip qtwinextras -skip qtx11extras -skip qtdatavis3d -skip qtandroidextras -skip qtmacextras -skip qtpurchasing -skip qtserialbus -skip qtserialport -skip multimedia -skip qtquicktimeline -skip qtlottie -skip qtwayland -skip activeqt -skip qtscript \
- -skip qtwebengine -skip qtwebview \
- -qt-libjpeg -qt-zlib -qt-libpng -qt-freetype -qt-harfbuzz -qt-pcre -sql-sqlite \
+ -qt-libjpeg -qt-zlib -qt-libpng -qt-freetype -qt-harfbuzz -qt-pcre -sql-sqlite -linuxfb \
+ -no-sse2 -no-xcb -no-xcb-xlib -no-tslib -no-icu -no-iconv -no-dbus \
+ -nomake tests -nomake examples -no-compile-examples -no-opengl \
+ -skip qtx11extras -skip qtwayland -skip qtwinextras -skip qtmacextras -skip qtandroidextras \
+ -skip qttools -skip qtdoc -skip qtlocation -skip qtremoteobjects -skip qtconnectivity -skip qtgamepad \
+ -skip qt3d -skip qtquick3d -skip qtquickcontrols -skip qtsensors -skip qtspeech -skip qtdatavis3d \
+ -skip qtpurchasing -skip qtserialbus -skip qtserialport -skip multimedia -skip qtquicktimeline -skip qtlottie \
+ -skip activeqt -skip qtscript -skip qtxmlpatterns -skip qtscxml \
+ -skip qtwebengine -skip qtwebview -skip qtwebglplugin \
  -no-cups -no-pch -no-libproxy \
- -no-sql-db2 -no-sql-ibase -no-sql-mysql -no-sql-oci -no-sql-odbc -no-sql-psql -no-sql-sqlite2 -no-sql-tds 
+ -no-sql-db2 -no-sql-ibase -no-sql-mysql -no-sql-oci -no-sql-odbc -no-sql-psql -no-sql-sqlite2 -no-sql-tds \
+ -no-feature-printdialog -no-feature-printer -no-feature-printpreviewdialog -no-feature-printpreviewwidget
 
 make -j5
 make install
