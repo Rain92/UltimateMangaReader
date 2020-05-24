@@ -69,6 +69,8 @@ bool NetworkManager::disconnectWifi()
     qDebug() << "Disconnected in" << t.elapsed() << "ms.";
 #endif
 
+    connected = false;
+
     return true;
 }
 
