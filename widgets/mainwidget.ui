@@ -61,13 +61,13 @@
        <number>0</number>
       </property>
       <property name="leftMargin">
-       <number>18</number>
+       <number>10</number>
       </property>
       <property name="topMargin">
        <number>0</number>
       </property>
       <property name="rightMargin">
-       <number>18</number>
+       <number>10</number>
       </property>
       <property name="bottomMargin">
        <number>0</number>
@@ -75,7 +75,7 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="0,0,1,0,0">
         <property name="spacing">
-         <number>9</number>
+         <number>2</number>
         </property>
         <item>
          <widget class="QToolButton" name="toolButtonMenu">

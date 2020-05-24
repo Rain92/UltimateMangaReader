@@ -38,7 +38,6 @@ void MangaInfoWidget::adjustUI()
     ui->labelMangaInfoCover->setScaledContents(true);
 
     ui->labelMangaInfoTitle->setStyleSheet("font-size: 16pt");
-    ui->labelMangaInfoLabelSummaryContent->setStyleSheet("font-size: 10pt");
 
     // set labels bold
     ui->labelMangaInfoLabelAuthor->setProperty("type", "mangainfolabel");

@@ -32,6 +32,8 @@ void FavoritesWidget::adjustUI()
 
     QHeaderView *horizontalHeader = ui->tableWidget->horizontalHeader();
     horizontalHeader->setSectionsClickable(false);
+    horizontalHeader->setFrameShape(QFrame::Box);
+    horizontalHeader->setLineWidth(1);
 
     for (int i = 0; i < 4; i++)
         horizontalHeader->setSectionResizeMode(i, QHeaderView::Stretch);
