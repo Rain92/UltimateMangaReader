@@ -122,6 +122,8 @@ bool DownloadFileJob::await(int timeout)
 
     if (errorString != "")
         return false;
+    else if (!isCompleted)
+        errorString = "Download timeout.";
 
     return isCompleted;
 }

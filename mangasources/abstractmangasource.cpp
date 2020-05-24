@@ -69,7 +69,7 @@ Result<QString, QString> AbstractMangaSource::downloadAwaitImage(const DownloadI
 
     auto job = networkManager->downloadAsScaledImage(descriptor.imageUrl, path);
 
-    if (job->await(5000))
+    if (job->await(7000))
         return Ok(path);
     else
         return Err(job->errorString);

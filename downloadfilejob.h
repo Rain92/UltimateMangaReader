@@ -21,7 +21,7 @@ public:
 
     QString filepath;
 
-    bool await(int timeout = 6000);
+    bool await(int timeout = 7000);
 
 public slots:
     void start() override;

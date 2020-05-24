@@ -72,11 +72,8 @@ MainWidget::MainWidget(QWidget *parent)
     });
 
     // MangaChapterDownloadManager
-    QObject::connect(core->mangaChapterDownloadManager, &MangaChapterDownloadManager::error,
-                     [this](auto msg) {
-                         if (!core->settings.hideErrorMessages)
-                             errorMessageWidget->showError(msg);
-                     });
+    QObject::connect(core->mangaChapterDownloadManager, &MangaChapterDownloadManager::error, this,
+                     &MainWidget::showErrorMessage);
 
     QObject::connect(core->mangaChapterDownloadManager, &MangaChapterDownloadManager::downloadStart,
                      downloadStatusDialog, &DownloadStatusDialog::downloadStart);
@@ -95,10 +92,7 @@ MainWidget::MainWidget(QWidget *parent)
                      downloadStatusDialog, &DownloadStatusDialog::downloadCompleted);
 
     // Core
-    QObject::connect(core, &UltimateMangaReaderCore::error, [this](auto msg) {
-        if (!core->settings.hideErrorMessages)
-            errorMessageWidget->showError(msg);
-    });
+    QObject::connect(core, &UltimateMangaReaderCore::error, this, &MainWidget::showErrorMessage);
 
     QObject::connect(core, &UltimateMangaReaderCore::timeTick, this, &MainWidget::timerTick);
 
@@ -125,10 +119,7 @@ MainWidget::MainWidget(QWidget *parent)
     QObject::connect(core->mangaController, &MangaController::indexMovedOutOfBounds, this,
                      &MainWidget::readerGoBack);
 
-    QObject::connect(core->mangaController, &MangaController::error, [this](auto msg) {
-        if (!core->settings.hideErrorMessages)
-            errorMessageWidget->showError(msg);
-    });
+    QObject::connect(core->mangaController, &MangaController::error, this, &MainWidget::showErrorMessage);
 
     // HomeWidget
     QObject::connect(ui->homeWidget, &HomeWidget::mangaSourceClicked, core,
@@ -364,6 +355,15 @@ void MainWidget::setFrontLight(int light, int comflight)
 
         core->settings.scheduleSerialize();
     }
+}
+
+void MainWidget::showErrorMessage(const QString &message)
+{
+    if (core->settings.hideErrorMessages)
+        return;
+
+    errorMessageWidget->showError(message);
+    qDebug() << "Error occured:" << message;
 }
 
 void MainWidget::on_pushButtonHome_clicked()

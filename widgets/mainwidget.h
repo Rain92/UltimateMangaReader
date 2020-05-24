@@ -35,8 +35,7 @@ public:
     explicit MainWidget(QWidget *parent = nullptr);
     ~MainWidget();
 
-public slots:
-
+public:
     void readerGoBack();
 
     void setWidgetTab(WidgetTab tab);
@@ -44,6 +43,8 @@ public slots:
     void setFrontLight(int light, int comflight);
 
     void enableVirtualKeyboard(bool enabled);
+
+    void showErrorMessage(const QString &message);
 
 private slots:
     void on_pushButtonHome_clicked();
