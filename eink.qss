@@ -5,7 +5,7 @@ QPushButton[type="borderless"]
     border: 0;
     padding: 2px;
     outline: none;
-    font-size: 13pt;
+    font-size: 12pt;
 }
 
 QPushButton[type="borderless"]:focus
@@ -23,12 +23,12 @@ QPushButton[type="borderless"]:pressed
 QLabel[type="mangainfolabel"]
 {
     font-weight: bold;
-    font-size: 11pt;
+    font-size: 10pt;
 }
 
 QLabel[type="mangainfocontent"]
 {
-    font-size: 11pt;
+    font-size: 10pt;
 }
 
 QFrame#listViewSources
@@ -42,6 +42,7 @@ QListView#listViewMangas
 {
     border: none;
     padding: 8px;
+    font-size: 11pt;
 }
 
 QFrame#listViewChapters
@@ -49,6 +50,7 @@ QFrame#listViewChapters
     border: none;
     padding-top: 8px;
     padding-bottom: 8px;
+    font-size: 11pt;
 }
 
 QFrame#topButtonsFrame
@@ -85,7 +87,7 @@ QLineEdit#lineEditFilter
     border-bottom-left-radius: 5px;
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
-    font-size: 14pt;
+    font-size: 12pt;
 }
 
 QFrame#searchButtonFrame
@@ -97,8 +99,9 @@ QFrame#searchButtonFrame
 
 QPushButton#pushButtonFilterClear
 {
-    font-size: 20pt;
+    font-size: 16pt;
 }
+
 
 QWidget
 {
@@ -108,26 +111,26 @@ QWidget
     font-size: 10pt;
 }
 
-QMenu 
+QMenu
 {
   border: 1px solid black;
   background-color:white;
 }
-QMenu::item::selected 
+QMenu::item::selected
 {
   border-bottom: 5px solid black;
 }
-QMenu::item 
+QMenu::item
 {
   padding: 0px 25px 0px 20px;
   border-bottom: 5px solid transparent;
 }
-QMenu::indicator 
+QMenu::indicator
 {
     width: 20px;
     height: 20px;
 }
-QMenu::indicator:exclusive:checked 
+QMenu::indicator:exclusive:checked
 {
     image: url(:/images/icons/checkbox-checked.png);
 }
@@ -212,14 +215,14 @@ QComboBox::down-arrow {
   padding-top: 2px;
   padding-right: 5px;
   padding-bottom: 2px;
-  padding-left: 0px;  
+  padding-left: 0px;
 }
 QComboBox::down-arrow:focus
 {
   padding-top: 0px;
   padding-right: 0px;
   padding-bottom: 0px;
-  padding-left: 0px;  
+  padding-left: 0px;
 }
 QTreeView {
     padding: 2px;
@@ -244,13 +247,13 @@ QTreeView:edit-focus, QListView:edit-focus, QTableView:edit-focus {
     border: 3px solid black;
 }
 QTreeView::branch:has-children:!has-siblings:closed,
-QTreeView::branch:closed:has-children:has-siblings 
+QTreeView::branch:closed:has-children:has-siblings
 {
     border-image: none;
     image: url(:/plus.png);
 }
 QTreeView::branch:open:has-children:!has-siblings,
-QTreeView::branch:open:has-children:has-siblings  
+QTreeView::branch:open:has-children:has-siblings
 {
     border-image: none;
     image: url(:/minus.png);

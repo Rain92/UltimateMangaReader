@@ -217,7 +217,7 @@ void MainWidget::adjustUI()
     ui->toolButtonMenu->setIconSize(QSize(SIZES.menuIconSize, SIZES.menuIconSize));
     ui->toolButtonWifiIcon->setIconSize(QSize(SIZES.wifiIconSize, SIZES.wifiIconSize));
 
-    ui->labelTitle->setStyleSheet("font-size: 18pt");
+    ui->labelTitle->setStyleSheet("font-size: 16pt");
 }
 
 void MainWidget::showEvent(QShowEvent *event)
