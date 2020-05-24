@@ -102,10 +102,6 @@ QPushButton#pushButtonFilterClear
     font-size: 16pt;
 }
 
-QTableView#tableWidget Header
-{
-    border: 1px solid black;
-}
 
 QWidget
 {

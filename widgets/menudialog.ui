@@ -29,7 +29,7 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <property name="leftMargin">
-      <number>9</number>
+      <number>1</number>
      </property>
      <item>
       <widget class="QToolButton" name="toolButtonMenu">
