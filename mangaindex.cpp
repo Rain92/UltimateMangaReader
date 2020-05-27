@@ -15,7 +15,7 @@ bool MangaIndex::operator!=(const MangaIndex &b) const
 
 QDataStream &operator<<(QDataStream &str, const MangaIndex &m)
 {
-    return str << (qint32)m.chapter << (qint32)m.page;
+    return str << m.chapter << m.page;
 }
 
 QDataStream &operator>>(QDataStream &str, MangaIndex &m)

@@ -82,9 +82,11 @@ bool MangaReaderWidget::event(QEvent *event)
 bool MangaReaderWidget::buttonPressEvent(QKeyEvent *event)
 {
     if (event->key() == Qt::Key_PageUp)
-        emit advancPageClicked(conditionalReverse(Forward, settings && settings->reverseButtonDirection));
+        emit advancPageClicked(
+            conditionalReverse(Forward, settings->buttonAdvance != AdvancePageHWButton::Up));
     else if (event->key() == Qt::Key_PageDown)
-        emit advancPageClicked(conditionalReverse(Forward, settings && settings->reverseButtonDirection));
+        emit advancPageClicked(
+            conditionalReverse(Forward, settings->buttonAdvance != AdvancePageHWButton::Down));
     else
         return false;
 
@@ -110,11 +112,13 @@ bool MangaReaderWidget::gestureEvent(QGestureEvent *event)
         }
         else if (angle > 155 && angle < 205)
         {
-            emit advancPageClicked(conditionalReverse(Forward, settings && settings->reverseSwipeDirection));
+            emit advancPageClicked(
+                conditionalReverse(Forward, settings->swipeAdvance != AdvancePageGestureDirection::Left));
         }
         else if (angle > 335 || angle < 25)
         {
-            emit advancPageClicked(conditionalReverse(Backward, settings && settings->reverseSwipeDirection));
+            emit advancPageClicked(
+                conditionalReverse(Forward, settings->swipeAdvance != AdvancePageGestureDirection::Right));
         }
         else if (swipe->hotSpot().y() < this->height() * SIZES.readerBottomMenuThreshold && angle > 245 &&
                  angle < 295)
@@ -141,9 +145,12 @@ bool MangaReaderWidget::gestureEvent(QGestureEvent *event)
         }
         else
         {
-            PageTurnDirection direction =
-                pos.x() > this->width() * SIZES.readerPreviousPageThreshold ? Forward : Backward;
-            emit advancPageClicked(direction);
+            auto tabSide = pos.x() < this->width() / 2 ? Left : Right;
+            if (pos.x() > this->width() * SIZES.readerPageSideThreshold &&
+                pos.x() < this->width() * (1 - SIZES.readerPageSideThreshold))
+                tabSide = settings->tabAdvance;
+
+            emit advancPageClicked(conditionalReverse(Forward, settings->tabAdvance != tabSide));
         }
     }
 

@@ -4,9 +4,10 @@ Settings::Settings()
     : lightValue(0),
       comflightValue(0),
       hideErrorMessages(false),
-      reverseSwipeDirection(false),
-      reverseButtonDirection(false),
-      doublePageFullscreen(false),
+      tabAdvance(Right),
+      swipeAdvance(Left),
+      buttonAdvance(Down),
+      doublePageFullscreen(true),
       timer()
 {
     QObject::connect(&timer, &QTimer::timeout, [this]() { this->serialize(); });
@@ -23,7 +24,10 @@ void Settings::deserialize()
     file.close();
 }
 
-void Settings::scheduleSerialize() { timer.start(1000); }
+void Settings::scheduleSerialize()
+{
+    timer.start(1000);
+}
 
 void Settings::serialize()
 {
@@ -39,10 +43,8 @@ void Settings::serialize()
 
 QDataStream &operator<<(QDataStream &str, const Settings &m)
 {
-    str << (qint32)m.lightValue << (qint32)m.comflightValue
-        << m.hideErrorMessages << m.reverseSwipeDirection
-        << m.reverseButtonDirection << m.doublePageFullscreen
-        << m.enabledMangaSources;
+    str << m.lightValue << m.comflightValue << m.hideErrorMessages << m.tabAdvance << m.swipeAdvance
+        << m.buttonAdvance << m.doublePageFullscreen << m.enabledMangaSources;
 
     return str;
 }
@@ -50,9 +52,8 @@ QDataStream &operator<<(QDataStream &str, const Settings &m)
 QDataStream &operator>>(QDataStream &str, Settings &m)
 {
     m.enabledMangaSources.clear();
-    str >> m.lightValue >> m.comflightValue >> m.hideErrorMessages >>
-        m.reverseSwipeDirection >> m.reverseButtonDirection >>
-        m.doublePageFullscreen >> m.enabledMangaSources;
+    str >> m.lightValue >> m.comflightValue >> m.hideErrorMessages >> m.tabAdvance >> m.swipeAdvance >>
+        m.buttonAdvance >> m.doublePageFullscreen >> m.enabledMangaSources;
 
     return str;
 }

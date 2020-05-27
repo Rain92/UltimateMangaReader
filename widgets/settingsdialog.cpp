@@ -3,13 +3,22 @@
 #include "ui_settingsdialog.h"
 
 SettingsDialog::SettingsDialog(Settings *settings, QWidget *parent)
-    : QDialog(parent), ui(new Ui::SettingsDialog), settings(settings)
+    : QDialog(parent), ui(new Ui::SettingsDialog), settings(settings), internalChange(false)
 {
     ui->setupUi(this);
     adjustUI();
     setWindowFlags(Qt::Popup);
 
     QObject::connect(ui->checkBoxDoublePages, &QCheckBox::clicked, this, &SettingsDialog::updateSettings);
+
+    QObject::connect(ui->comboBoxTab, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+                     [this](int) { this->updateSettings(); });
+    QObject::connect(ui->comboBoxSwipe,
+                     static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+                     [this](int) { this->updateSettings(); });
+    QObject::connect(ui->comboBoxHWButton,
+                     static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+                     [this](int) { this->updateSettings(); });
 
     QLayoutItem *item;
     int i = 0;
@@ -42,16 +51,23 @@ void SettingsDialog::open()
 
 void SettingsDialog::resetUI()
 {
+    internalChange = true;
     ui->checkBoxDoublePages->setChecked(settings->doublePageFullscreen);
     ui->checkBoxHideErrorMessages->setChecked(settings->hideErrorMessages);
-    ui->checkBoxReverseSwipeDirection->setChecked(settings->reverseSwipeDirection);
-    ui->checkBoxReverseButtonDirection->setChecked(settings->reverseButtonDirection);
+
+    ui->comboBoxTab->setCurrentIndex(settings->tabAdvance);
+    ui->comboBoxSwipe->setCurrentIndex(settings->swipeAdvance);
+    ui->comboBoxHWButton->setCurrentIndex(settings->buttonAdvance);
 
     setupSourcesList();
+    internalChange = false;
 }
 
 void SettingsDialog::updateActiveMangasSettings(const QString &name, bool enabled)
 {
+    if (internalChange)
+        return;
+
     settings->enabledMangaSources[name] = enabled;
     settings->scheduleSerialize();
 
@@ -60,10 +76,15 @@ void SettingsDialog::updateActiveMangasSettings(const QString &name, bool enable
 
 void SettingsDialog::updateSettings()
 {
+    if (internalChange)
+        return;
+
     settings->doublePageFullscreen = ui->checkBoxDoublePages->isChecked();
     settings->hideErrorMessages = ui->checkBoxHideErrorMessages->isChecked();
-    settings->reverseSwipeDirection = ui->checkBoxReverseSwipeDirection->isChecked();
-    settings->reverseButtonDirection = ui->checkBoxReverseButtonDirection->isChecked();
+
+    settings->tabAdvance = static_cast<AdvancePageGestureDirection>(ui->comboBoxTab->currentIndex());
+    settings->swipeAdvance = static_cast<AdvancePageGestureDirection>(ui->comboBoxSwipe->currentIndex());
+    settings->buttonAdvance = static_cast<AdvancePageHWButton>(ui->comboBoxHWButton->currentIndex());
 
     settings->scheduleSerialize();
 }

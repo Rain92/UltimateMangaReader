@@ -5,6 +5,7 @@
 #include <QFile>
 #include <QTimer>
 
+#include "enums.h"
 #include "staticsettings.h"
 
 class Settings
@@ -21,8 +22,9 @@ public:
 
     bool hideErrorMessages;
 
-    bool reverseSwipeDirection;
-    bool reverseButtonDirection;
+    AdvancePageGestureDirection tabAdvance;
+    AdvancePageGestureDirection swipeAdvance;
+    AdvancePageHWButton buttonAdvance;
 
     bool doublePageFullscreen;
 

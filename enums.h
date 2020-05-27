@@ -1,18 +1,32 @@
 #ifndef ENUMS_H
 #define ENUMS_H
 
+#include <QMetaEnum>
+
 enum PageTurnDirection
 {
-    Forward = 0,
+    Forward,
     Backward
+};
+
+enum AdvancePageGestureDirection
+{
+    Left,
+    Right
+};
+
+enum AdvancePageHWButton
+{
+    Down,
+    Up
 };
 
 enum WidgetTab
 {
-    HomeTab = 0,
-    MangaInfoTab = 1,
-    FavoritesTab = 2,
-    MangaReaderTab = 3
+    HomeTab,
+    MangaInfoTab,
+    FavoritesTab,
+    MangaReaderTab
 };
 
 enum ClearDownloadCacheLevel

@@ -6,19 +6,22 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>346</width>
-    <height>372</height>
+    <width>266</width>
+    <height>404</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
-   <property name="spacing">
-    <number>9</number>
-   </property>
    <item>
     <widget class="QLabel" name="labelTitle">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="text">
       <string>Settings</string>
      </property>
@@ -56,7 +59,7 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <property name="spacing">
-       <number>9</number>
+       <number>6</number>
       </property>
      </layout>
     </widget>
@@ -78,13 +81,6 @@
     </spacer>
    </item>
    <item>
-    <widget class="QCheckBox" name="checkBoxDoublePages">
-     <property name="text">
-      <string>Show double pages in portrait mode</string>
-     </property>
-    </widget>
-   </item>
-   <item>
     <widget class="QCheckBox" name="checkBoxHideErrorMessages">
      <property name="text">
       <string>Don't show error messages</string>
@@ -92,18 +88,102 @@
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="checkBoxReverseSwipeDirection">
+    <widget class="QCheckBox" name="checkBoxDoublePages">
      <property name="text">
-      <string>Reverse page  turn direction  for swipes</string>
+      <string>Show double pages in portrait mode</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="checkBoxReverseButtonDirection">
+    <widget class="QLabel" name="label_2">
      <property name="text">
-      <string>Reverse page turn direction for hardware buttons</string>
+      <string>To advance manga page:</string>
      </property>
     </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <layout class="QFormLayout" name="formLayout">
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_3">
+         <property name="text">
+          <string>Tab:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_4">
+         <property name="text">
+          <string>HW button:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_5">
+         <property name="text">
+          <string>Swipe:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QComboBox" name="comboBoxTab">
+         <item>
+          <property name="text">
+           <string>Left</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Right</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QComboBox" name="comboBoxSwipe">
+         <item>
+          <property name="text">
+           <string>Left</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Right</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QComboBox" name="comboBoxHWButton">
+         <item>
+          <property name="text">
+           <string>Down</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Up</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
    </item>
    <item>
     <spacer name="verticalSpacer">

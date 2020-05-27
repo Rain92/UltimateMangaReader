@@ -3,6 +3,7 @@
 
 #include <QDialog>
 
+#include "enums.h"
 #include "settings.h"
 #include "sizes.h"
 
@@ -14,6 +15,8 @@ class SettingsDialog;
 class SettingsDialog : public QDialog
 {
     Q_OBJECT
+    Q_ENUMS(AdvancePageGestureDirection)
+    Q_ENUMS(AdvancePageHWButton)
 
 public:
     explicit SettingsDialog(Settings *settings, QWidget *parent = nullptr);
@@ -30,6 +33,7 @@ private slots:
 private:
     Ui::SettingsDialog *ui;
     Settings *settings;
+    bool internalChange;
 
     void resetUI();
     void adjustUI();
