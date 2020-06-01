@@ -1,5 +1,7 @@
 #include "settings.h"
 
+#include "staticsettings.h"
+
 Settings::Settings()
     : lightValue(0),
       comflightValue(0),
@@ -8,6 +10,7 @@ Settings::Settings()
       swipeAdvance(Left),
       buttonAdvance(Down),
       doublePageFullscreen(true),
+      trimPages(false),
       timer()
 {
     QObject::connect(&timer, &QTimer::timeout, [this]() { this->serialize(); });
@@ -44,7 +47,7 @@ void Settings::serialize()
 QDataStream &operator<<(QDataStream &str, const Settings &m)
 {
     str << m.lightValue << m.comflightValue << m.hideErrorMessages << m.tabAdvance << m.swipeAdvance
-        << m.buttonAdvance << m.doublePageFullscreen << m.enabledMangaSources;
+        << m.buttonAdvance << m.doublePageFullscreen << m.trimPages << m.enabledMangaSources;
 
     return str;
 }
@@ -53,7 +56,7 @@ QDataStream &operator>>(QDataStream &str, Settings &m)
 {
     m.enabledMangaSources.clear();
     str >> m.lightValue >> m.comflightValue >> m.hideErrorMessages >> m.tabAdvance >> m.swipeAdvance >>
-        m.buttonAdvance >> m.doublePageFullscreen >> m.enabledMangaSources;
+        m.buttonAdvance >> m.doublePageFullscreen >> m.trimPages >> m.enabledMangaSources;
 
     return str;
 }

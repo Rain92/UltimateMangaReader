@@ -16,7 +16,7 @@ NetworkManager::NetworkManager(QObject *parent)
 {
     networkManager->setCookieJar(&cookies);
 #ifdef KOBO
-    QString sslCertPath = "/mnt/onboard/.adds/qt-5.14.2-kobo/lib/ssl_certs";
+    QString sslCertPath = "/mnt/onboard/.adds/qt-linux-5.15.0-kobo/lib/ssl_certs";
     if (qEnvironmentVariableIsSet("QTPATH"))
         sslCertPath = qEnvironmentVariable("QTPATH") + "/lib/ssl_certs";
     loadCertificates(sslCertPath);
@@ -157,7 +157,9 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const QStr
             applicableCustomHeaders.append(std::tuple<const char *, const char *>(name, value));
 
     auto job = QSharedPointer<DownloadFileJob>(
-        new DownloadScaledImageJob(networkManager, url, localPath, imageRescaleSize, applicableCustomHeaders),
+        new DownloadScaledImageJob(networkManager, url, localPath, imageRescaleSize,
+                                   settings->doublePageFullscreen, settings->trimPages,
+                                   applicableCustomHeaders),
         [this](DownloadScaledImageJob *j) {
             this->fileDownloads.remove(j->originalUrl);
             j->deleteLater();
@@ -171,9 +173,10 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const QStr
     return job;
 }
 
-void NetworkManager::setImageRescaleSize(const QSize &size)
+void NetworkManager::setDownloadSettings(const QSize &size, Settings *settings)
 {
     imageRescaleSize = size;
+    this->settings = settings;
 }
 
 void NetworkManager::addCookie(const QString &domain, const char *key, const char *value)

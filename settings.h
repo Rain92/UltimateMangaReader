@@ -6,7 +6,6 @@
 #include <QTimer>
 
 #include "enums.h"
-#include "staticsettings.h"
 
 class Settings
 {
@@ -27,6 +26,7 @@ public:
     AdvancePageHWButton buttonAdvance;
 
     bool doublePageFullscreen;
+    bool trimPages;
 
     QMap<QString, bool> enabledMangaSources;
 

@@ -101,11 +101,6 @@ void UltimateMangaReaderCore::updateActiveScources()
     emit activeMangaSourcesChanged(activeMangaSources.values());
 }
 
-void UltimateMangaReaderCore::setImageSize(const QSize& size)
-{
-    networkManager->setImageRescaleSize(size);
-}
-
 void UltimateMangaReaderCore::setCurrentMangaSource(AbstractMangaSource* mangaSource)
 {
     if (mangaSource && this->currentMangaSource != mangaSource)

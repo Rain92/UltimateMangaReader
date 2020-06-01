@@ -9,8 +9,6 @@ SettingsDialog::SettingsDialog(Settings *settings, QWidget *parent)
     adjustUI();
     setWindowFlags(Qt::Popup);
 
-    QObject::connect(ui->checkBoxDoublePages, &QCheckBox::clicked, this, &SettingsDialog::updateSettings);
-
     QObject::connect(ui->comboBoxTab, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
                      [this](int) { this->updateSettings(); });
     QObject::connect(ui->comboBoxSwipe,
@@ -26,9 +24,7 @@ SettingsDialog::SettingsDialog(Settings *settings, QWidget *parent)
     {
         auto *checkbox = dynamic_cast<QCheckBox *>(item->widget());
         if (checkbox != nullptr)
-        {
             QObject::connect(checkbox, &QCheckBox::clicked, this, &SettingsDialog::updateSettings);
-        }
     }
 }
 
@@ -52,8 +48,10 @@ void SettingsDialog::open()
 void SettingsDialog::resetUI()
 {
     internalChange = true;
-    ui->checkBoxDoublePages->setChecked(settings->doublePageFullscreen);
     ui->checkBoxHideErrorMessages->setChecked(settings->hideErrorMessages);
+
+    ui->checkBoxDoublePages->setChecked(settings->doublePageFullscreen);
+    ui->checkBoxTrim->setChecked(settings->trimPages);
 
     ui->comboBoxTab->setCurrentIndex(settings->tabAdvance);
     ui->comboBoxSwipe->setCurrentIndex(settings->swipeAdvance);
@@ -79,8 +77,10 @@ void SettingsDialog::updateSettings()
     if (internalChange)
         return;
 
-    settings->doublePageFullscreen = ui->checkBoxDoublePages->isChecked();
     settings->hideErrorMessages = ui->checkBoxHideErrorMessages->isChecked();
+
+    settings->doublePageFullscreen = ui->checkBoxDoublePages->isChecked();
+    settings->trimPages = ui->checkBoxTrim->isChecked();
 
     settings->tabAdvance = static_cast<AdvancePageGestureDirection>(ui->comboBoxTab->currentIndex());
     settings->swipeAdvance = static_cast<AdvancePageGestureDirection>(ui->comboBoxSwipe->currentIndex());

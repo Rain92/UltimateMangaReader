@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>266</width>
-    <height>384</height>
+    <width>331</width>
+    <height>432</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -91,6 +91,14 @@
     <widget class="QCheckBox" name="checkBoxDoublePages">
      <property name="text">
       <string>Show double pages in portrait mode</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="checkBoxTrim">
+     <property name="text">
+      <string>Trim images: remove white borders from 
+newly downloaded images</string>
      </property>
     </widget>
    </item>

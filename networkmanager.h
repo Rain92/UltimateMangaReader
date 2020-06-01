@@ -6,6 +6,7 @@
 #include "downloadfilejob.h"
 #include "downloadimageandrescalejob.h"
 #include "downloadstringjob.h"
+#include "settings.h"
 
 class CCookieJar : public QNetworkCookieJar
 {
@@ -36,7 +37,7 @@ public:
     QSharedPointer<DownloadFileJob> downloadAsFile(const QString &url, const QString &localPath);
     QSharedPointer<DownloadFileJob> downloadAsScaledImage(const QString &url, const QString &localPath);
 
-    void setImageRescaleSize(const QSize &size);
+    void setDownloadSettings(const QSize &size, Settings *settings);
 
     void addCookie(const QString &domain, const char *key, const char *value);
     void addSetCustomRequestHeader(const QString &domain, const char *key, const char *value);
@@ -59,6 +60,7 @@ private:
     CCookieJar cookies;
 
     QSize imageRescaleSize;
+    Settings *settings;
 
     QList<std::tuple<QString, const char *, const char *>> customHeaders;
 

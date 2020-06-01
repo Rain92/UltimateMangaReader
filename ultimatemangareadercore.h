@@ -39,8 +39,6 @@ public:
     Settings settings;
 
 public:
-    void setImageSize(const QSize &size);
-
     void setCurrentMangaSource(AbstractMangaSource *mangaSource);
     void setCurrentManga(const QString &mangaUrl, const QString &mangatitle);
 

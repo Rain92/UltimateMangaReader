@@ -57,7 +57,7 @@ MainWidget::MainWidget(QWidget *parent)
                      core->mangaChapterDownloadManager, &MangaChapterDownloadManager::cancelDownloads);
 
     // NetworkManager
-    core->networkManager->setImageRescaleSize(this->size() * qApp->devicePixelRatio());
+    core->networkManager->setDownloadSettings(this->size() * qApp->devicePixelRatio(), &core->settings);
 
     QPixmap wifioff(":/images/icons/no-wifi.png");
     QPixmap wifion(":/images/icons/wifi.png");
@@ -387,7 +387,7 @@ void MainWidget::resizeEvent(QResizeEvent *event)
 
     errorMessageWidget->setFixedWidth(this->width());
 
-    core->networkManager->setImageRescaleSize(this->size() * qApp->devicePixelRatio());
+    core->networkManager->setDownloadSettings(this->size() * qApp->devicePixelRatio(), &core->settings);
 }
 
 void MainWidget::setWidgetTab(WidgetTab tab)
