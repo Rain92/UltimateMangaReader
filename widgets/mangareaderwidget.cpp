@@ -19,6 +19,17 @@ MangaReaderWidget::MangaReaderWidget(QWidget *parent)
 
     gotodialog = new GotoDialog(this);
 
+    connect(ui->toolButtonLessLight, &QToolButton::clicked,
+            [this]() { ui->horizontalSliderLight->setValue(ui->horizontalSliderLight->value() - 1); });
+    connect(ui->toolButtonMoreLight, &QToolButton::clicked,
+            [this]() { ui->horizontalSliderLight->setValue(ui->horizontalSliderLight->value() + 1); });
+    connect(ui->toolButtonLessComfLight, &QToolButton::clicked, [this]() {
+        ui->horizontalSliderComfLight->setValue(ui->horizontalSliderComfLight->value() + 1);
+    });
+    connect(ui->toolButtonMoreComfLight, &QToolButton::clicked, [this]() {
+        ui->horizontalSliderComfLight->setValue(ui->horizontalSliderComfLight->value() - 1);
+    });
+
 #ifdef DESKTOP
     QGestureRecognizer::registerRecognizer(new TapGestureRecognizer());
 #endif
@@ -49,20 +60,10 @@ void MangaReaderWidget::adjustUI()
 
     ui->labelTime->setStyleSheet("font-size: 13pt");
 
-    ui->labelLessLight->setFixedSize(QSize(SIZES.resourceIconSize, SIZES.resourceIconSize));
-    ui->labelMoreLight->setFixedSize(QSize(SIZES.resourceIconSize, SIZES.resourceIconSize));
-    ui->labelLessComfLight->setFixedSize(QSize(SIZES.resourceIconSize, SIZES.resourceIconSize));
-    ui->labelMoreComfLight->setFixedSize(QSize(SIZES.resourceIconSize, SIZES.resourceIconSize));
-
-    ui->labelLessLight->setScaledContents(true);
-    ui->labelMoreLight->setScaledContents(true);
-    ui->labelLessComfLight->setScaledContents(true);
-    ui->labelMoreComfLight->setScaledContents(true);
-
-    ui->labelLessLight->setPixmap(QPixmap(":/images/icons/darker.png"));
-    ui->labelMoreLight->setPixmap(QPixmap(":/images/icons/lighter.png"));
-    ui->labelLessComfLight->setPixmap(QPixmap(":/images/icons/moon.png"));
-    ui->labelMoreComfLight->setPixmap(QPixmap(":/images/icons/sun.png"));
+    ui->toolButtonLessLight->setFixedSize(QSize(SIZES.lightIconSize, SIZES.lightIconSize));
+    ui->toolButtonMoreLight->setFixedSize(QSize(SIZES.lightIconSize, SIZES.lightIconSize));
+    ui->toolButtonLessComfLight->setFixedSize(QSize(SIZES.lightIconSize, SIZES.lightIconSize));
+    ui->toolButtonMoreComfLight->setFixedSize(QSize(SIZES.lightIconSize, SIZES.lightIconSize));
 
     ui->horizontalSliderComfLight->setFixedHeight(SIZES.frontlightSliderHandleHeight);
     ui->horizontalSliderLight->setFixedHeight(SIZES.frontlightSliderHandleHeight);
@@ -275,8 +276,8 @@ void MangaReaderWidget::setFrontLightPanelState(int lightmin, int lightmax, int 
     else
     {
         ui->horizontalSliderComfLight->hide();
-        ui->labelLessComfLight->hide();
-        ui->labelMoreComfLight->hide();
+        ui->toolButtonLessComfLight->hide();
+        ui->toolButtonMoreComfLight->hide();
     }
 }
 

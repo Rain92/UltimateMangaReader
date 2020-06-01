@@ -104,28 +104,67 @@
          <property name="spacing">
           <number>10</number>
          </property>
-         <item row="2" column="1">
-          <widget class="QSlider" name="horizontalSliderComfLight">
+         <item row="1" column="0">
+          <widget class="QToolButton" name="toolButtonLessLight">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../resources.qrc">
+             <normaloff>:/images/icons/darker.png</normaloff>:/images/icons/darker.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>80</width>
+             <height>80</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLabel" name="labelTime">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
-           <property name="focusPolicy">
-            <enum>Qt::NoFocus</enum>
+           <property name="text">
+            <string>Time</string>
            </property>
-           <property name="styleSheet">
-            <string notr="true"/>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
            </property>
-           <property name="maximum">
-            <number>100</number>
+          </widget>
+         </item>
+         <item row="1" column="2">
+          <widget class="QToolButton" name="toolButtonMoreLight">
+           <property name="icon">
+            <iconset resource="../resources.qrc">
+             <normaloff>:/images/icons/lighter.png</normaloff>:/images/icons/lighter.png</iconset>
            </property>
-           <property name="pageStep">
-            <number>500</number>
+           <property name="iconSize">
+            <size>
+             <width>80</width>
+             <height>80</height>
+            </size>
            </property>
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QToolButton" name="toolButtonLessComfLight">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../resources.qrc">
+             <normaloff>:/images/icons/moon.png</normaloff>:/images/icons/moon.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>80</width>
+             <height>80</height>
+            </size>
            </property>
           </widget>
          </item>
@@ -148,47 +187,42 @@
            </property>
           </widget>
          </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="labelLessLight">
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="labelLessComfLight">
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="2">
-          <widget class="QLabel" name="labelMoreLight">
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
          <item row="2" column="2">
-          <widget class="QLabel" name="labelMoreComfLight">
-           <property name="text">
-            <string/>
+          <widget class="QToolButton" name="toolButtonMoreComfLight">
+           <property name="icon">
+            <iconset resource="../resources.qrc">
+             <normaloff>:/images/icons/sun.png</normaloff>:/images/icons/sun.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>80</width>
+             <height>80</height>
+            </size>
            </property>
           </widget>
          </item>
-         <item row="0" column="1">
-          <widget class="QLabel" name="labelTime">
+         <item row="2" column="1">
+          <widget class="QSlider" name="horizontalSliderComfLight">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
-           <property name="text">
-            <string>Time</string>
+           <property name="focusPolicy">
+            <enum>Qt::NoFocus</enum>
            </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
+           <property name="styleSheet">
+            <string notr="true"/>
+           </property>
+           <property name="maximum">
+            <number>100</number>
+           </property>
+           <property name="pageStep">
+            <number>500</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
            </property>
           </widget>
          </item>
@@ -428,6 +462,8 @@
    <container>1</container>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="../resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

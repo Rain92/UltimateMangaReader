@@ -26,6 +26,7 @@ public:
     const int numpadHeight = mmToPx(35);
 
     const int resourceIconSize = mmToPx(5);
+    const int lightIconSize = mmToPx(7.5);
     const int batteryIconHeight = mmToPx(3);
     const int wifiIconSize = mmToPx(6);
     const int menuIconSize = mmToPx(10);

@@ -6,14 +6,17 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>342</width>
-    <height>474</height>
+    <width>301</width>
+    <height>360</height>
    </rect>
   </property>
-  <property name="windowTitle">
-   <string>Dialog</string>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+  <layout class="QVBoxLayout" name="v">
    <property name="spacing">
     <number>9</number>
    </property>
@@ -32,7 +35,7 @@
       <set>Qt::AlignCenter</set>
      </property>
      <property name="margin">
-      <number>30</number>
+      <number>20</number>
      </property>
     </widget>
    </item>
@@ -43,8 +46,11 @@
 from the following websites.
 This operation will take several minutes.</string>
      </property>
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+     </property>
      <property name="margin">
-      <number>40</number>
+      <number>10</number>
      </property>
     </widget>
    </item>
@@ -109,7 +115,7 @@ This operation will take several minutes.</string>
      <property name="sizeHint" stdset="0">
       <size>
        <width>20</width>
-       <height>80</height>
+       <height>40</height>
       </size>
      </property>
     </spacer>
