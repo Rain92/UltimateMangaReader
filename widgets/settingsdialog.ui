@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>331</width>
-    <height>432</height>
+    <height>398</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -29,7 +29,7 @@
       <set>Qt::AlignCenter</set>
      </property>
      <property name="margin">
-      <number>20</number>
+      <number>15</number>
      </property>
     </widget>
    </item>
@@ -59,7 +59,13 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <property name="spacing">
-       <number>6</number>
+       <number>4</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>4</number>
       </property>
      </layout>
     </widget>
@@ -204,7 +210,7 @@ newly downloaded images</string>
      <property name="sizeHint" stdset="0">
       <size>
        <width>20</width>
-       <height>20</height>
+       <height>10</height>
       </size>
      </property>
     </spacer>
