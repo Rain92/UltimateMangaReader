@@ -255,6 +255,12 @@ int MangaReaderWidget::searchCache(const QString &path) const
 
     return -1;
 }
+
+void MangaReaderWidget::clearCache()
+{
+    imgcache.clear();
+}
+
 void MangaReaderWidget::setSettings(Settings *settings)
 {
     this->settings = settings;

@@ -35,6 +35,8 @@ public:
     void updateMenuBar();
     void setSettings(Settings *settings);
 
+    void clearCache();
+
 signals:
     void changeView(WidgetTab page);
     void advancPageClicked(PageTurnDirection direction);

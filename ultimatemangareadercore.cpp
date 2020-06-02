@@ -162,6 +162,7 @@ void UltimateMangaReaderCore::clearDownloadCache(ClearDownloadCacheLevel level)
         default:
             break;
     }
+    emit downloadCacheCeared(level);
 }
 
 void UltimateMangaReaderCore::updateMangaLists(QSharedPointer<UpdateProgressToken> progressToken)

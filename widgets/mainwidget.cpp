@@ -99,6 +99,9 @@ MainWidget::MainWidget(QWidget *parent)
     QObject::connect(core, &UltimateMangaReaderCore::activeMangaSourcesChanged, ui->homeWidget,
                      &HomeWidget::updateSourcesList);
 
+    QObject::connect(core, &UltimateMangaReaderCore::downloadCacheCeared,
+                     [this]() { ui->mangaReaderWidget->clearCache(); });
+
     // MangaController
     QObject::connect(core->mangaController, &MangaController::currentMangaChanged, [this](auto info) {
         ui->mangaInfoWidget->setManga(info);

@@ -19,16 +19,13 @@ public:
     bool toggleFavorite(QSharedPointer<MangaInfo> info);
 
     void moveFavoriteToFront(int i);
-
     void updateInfos();
-
     void loadInfos();
+    void serialize();
+    void clearFavorites();
 
     QList<QSharedPointer<MangaInfo>> favoriteinfos;
     QList<Favorite> favorites;
-public slots:
-    void serialize();
-    void clearFavorites();
 
 private:
     const QMap<QString, AbstractMangaSource *> &mangasources;

@@ -58,6 +58,8 @@ signals:
 
     void activeMangaSourcesChanged(const QList<AbstractMangaSource *> &sources);
 
+    void downloadCacheCeared(ClearDownloadCacheLevel level);
+
     void error(const QString &error);
 
     void timeTick();
