@@ -4,9 +4,7 @@ Mangakakalot::Mangakakalot(NetworkManager *networkManager) : AbstractMangaSource
 {
     name = "Mangakakalot";
     baseurl = "https://mangakakalot.com/";
-    dictionaryUrl =
-        "https://mangakakalot.com/"
-        "manga_list?type=topview&category=all&state=all&page=";
+    dictionaryUrl = baseurl + "manga_list?type=topview&category=all&state=all&page=";
 
     networkManager->addCookie("mangakakalot.com", "content_lazyload", "off");
     networkManager->addCookie("manganelo.com", "content_lazyload", "off");
@@ -58,11 +56,11 @@ bool Mangakakalot::uptareMangaList(UpdateProgressToken *token)
         int matches = 0;
         for (auto &match : getAllRxMatches(mangarx, job->buffer, spos, epos))
         {
-            mangas.urls.append(match.captured(1));
-            mangas.titles.append(htmlToPlainText(htmlToPlainText(match.captured(2))));
+            auto title = htmlToPlainText(match.captured(2));
+            auto url = match.captured(1);
+            mangas.append(title, url);
             matches++;
         }
-        mangas.size += matches;
 
         token->sendProgress(10 + 90 * (mangas.size / matchesPerPage) / pages);
         qDebug() << "matches:" << matches;

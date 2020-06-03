@@ -3,6 +3,7 @@
 
 #include <QDataStream>
 #include <QFile>
+#include <QMap>
 #include <QTimer>
 
 #include "enums.h"
@@ -24,6 +25,8 @@ public:
     AdvancePageGestureDirection tabAdvance;
     AdvancePageGestureDirection swipeAdvance;
     AdvancePageHWButton buttonAdvance;
+
+    MangaOrderMethod mangaOrder;
 
     bool doublePageFullscreen;
     bool trimPages;

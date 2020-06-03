@@ -7,7 +7,7 @@
 class MangaHere : public AbstractMangaSource
 {
 public:
-    MangaHere(NetworkManager *dm);
+    explicit MangaHere(NetworkManager *dm);
 
     bool uptareMangaList(UpdateProgressToken *token) override;
     void updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,

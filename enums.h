@@ -1,8 +1,6 @@
 #ifndef ENUMS_H
 #define ENUMS_H
 
-#include <QMetaEnum>
-
 enum PageTurnDirection
 {
     Forward,
@@ -34,6 +32,13 @@ enum ClearDownloadCacheLevel
     ClearImages = 3,
     ClearInfos,
     ClearAll
+};
+
+enum MangaOrderMethod
+{
+    OrderByTitle,
+    OrderByPopularity
+
 };
 
 #endif  // ENUMS_H

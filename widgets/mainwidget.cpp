@@ -186,6 +186,9 @@ MainWidget::MainWidget(QWidget *parent)
     QObject::connect(settingsDialog, &SettingsDialog::activeMangasChanged, core,
                      &UltimateMangaReaderCore::updateActiveScources);
 
+    QObject::connect(settingsDialog, &SettingsDialog::mangaOrderMethodChanged, core,
+                     &UltimateMangaReaderCore::sortMangaLists);
+
     // SuspendManager
 
     QObject::connect(core->suspendManager, &SuspendManager::suspending, this, &MainWidget::onSuspend);

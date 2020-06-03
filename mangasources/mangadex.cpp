@@ -79,7 +79,7 @@ bool MangaDex::uptareMangaList(UpdateProgressToken *token)
 
     MangaList mangas;
 
-    QString basedictUrl = baseurl + "/titles/2/";
+    QString basedictUrl = baseurl + "/titles/9/";
 
     auto job = networkManager->downloadAsString(basedictUrl + "1", -1);
 
@@ -107,11 +107,11 @@ bool MangaDex::uptareMangaList(UpdateProgressToken *token)
         int matches = 0;
         for (auto &match : getAllRxMatches(mangaidrx, job->buffer))
         {
-            mangas.urls.append("/api/?type=manga&id=" + match.captured(2));
-            mangas.titles.append(htmlToPlainText(htmlToPlainText(match.captured(1))));
+            auto title = htmlToPlainText(match.captured(1));
+            auto url = "/api/?type=manga&id=" + match.captured(2);
+            mangas.append(title, url);
             matches++;
         }
-        mangas.size += matches;
 
         token->sendProgress(10 + 90 * mangas.size / nominalSize);
 

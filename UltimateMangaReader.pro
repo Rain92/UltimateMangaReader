@@ -105,6 +105,7 @@ SOURCES += \
     mangachapterdownloadmanager.cpp \
     mangacontroller.cpp \
     mangaindextraverser.cpp \
+    mangalist.cpp \
     mangasources/mangahere.cpp \
     mangasources/mangakakalot.cpp \
     mangasources/mangatown.cpp \

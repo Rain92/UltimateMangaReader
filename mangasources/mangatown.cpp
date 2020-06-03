@@ -34,7 +34,6 @@ bool MangaTown::uptareMangaList(UpdateProgressToken *token)
     int pages = 1;
     if (numpagesrxmatch.hasMatch())
         pages = numpagesrxmatch.captured(1).toInt();
-    //    pages = 1;
     qDebug() << "pages:" << pages;
 
     const int matchesPerPage = 30;
@@ -42,11 +41,11 @@ bool MangaTown::uptareMangaList(UpdateProgressToken *token)
         int matches = 0;
         for (auto &match : getAllRxMatches(mangarx, job->buffer))
         {
-            mangas.urls.append(match.captured(1));
-            mangas.titles.append(htmlToPlainText(htmlToPlainText(match.captured(2))));
+            auto title = htmlToPlainText(match.captured(2));
+            auto url = match.captured(1);
+            mangas.append(title, url);
             matches++;
         }
-        mangas.size += matches;
 
         token->sendProgress(10 + 90 * (mangas.size / matchesPerPage) / pages);
         qDebug() << "matches:" << matches;

@@ -9,23 +9,12 @@ SettingsDialog::SettingsDialog(Settings *settings, QWidget *parent)
     adjustUI();
     setWindowFlags(Qt::Popup);
 
-    QObject::connect(ui->comboBoxTab, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
-                     [this](int) { this->updateSettings(); });
-    QObject::connect(ui->comboBoxSwipe,
-                     static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
-                     [this](int) { this->updateSettings(); });
-    QObject::connect(ui->comboBoxHWButton,
-                     static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
-                     [this](int) { this->updateSettings(); });
+    for (auto item : this->findChildren<QComboBox *>())
+        QObject::connect(item, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+                         [this](int) { this->updateSettings(); });
 
-    QLayoutItem *item;
-    int i = 0;
-    while ((item = ui->verticalLayout->itemAt(i++)) != nullptr)
-    {
-        auto *checkbox = dynamic_cast<QCheckBox *>(item->widget());
-        if (checkbox != nullptr)
-            QObject::connect(checkbox, &QCheckBox::clicked, this, &SettingsDialog::updateSettings);
-    }
+    for (auto item : this->findChildren<QCheckBox *>())
+        QObject::connect(item, &QCheckBox::clicked, this, &SettingsDialog::updateSettings);
 }
 
 SettingsDialog::~SettingsDialog()
@@ -57,6 +46,8 @@ void SettingsDialog::resetUI()
     ui->comboBoxSwipe->setCurrentIndex(settings->swipeAdvance);
     ui->comboBoxHWButton->setCurrentIndex(settings->buttonAdvance);
 
+    ui->comboBoxMangaOrder->setCurrentIndex(settings->mangaOrder);
+
     setupSourcesList();
     internalChange = false;
 }
@@ -85,6 +76,12 @@ void SettingsDialog::updateSettings()
     settings->tabAdvance = static_cast<AdvancePageGestureDirection>(ui->comboBoxTab->currentIndex());
     settings->swipeAdvance = static_cast<AdvancePageGestureDirection>(ui->comboBoxSwipe->currentIndex());
     settings->buttonAdvance = static_cast<AdvancePageHWButton>(ui->comboBoxHWButton->currentIndex());
+
+    auto oldOrder = settings->mangaOrder;
+    settings->mangaOrder = static_cast<MangaOrderMethod>(ui->comboBoxMangaOrder->currentIndex());
+
+    if (oldOrder != settings->mangaOrder)
+        emit mangaOrderMethodChanged();
 
     settings->scheduleSerialize();
 }

@@ -103,11 +103,9 @@ void UltimateMangaReaderCore::updateActiveScources()
 
 void UltimateMangaReaderCore::setCurrentMangaSource(AbstractMangaSource* mangaSource)
 {
-    if (mangaSource && this->currentMangaSource != mangaSource)
-    {
-        this->currentMangaSource = mangaSource;
-        emit currentMangaSourceChanged(mangaSource);
-    }
+    this->currentMangaSource = mangaSource;
+    emit currentMangaSourceChanged(mangaSource);
+
     activity();
 }
 
@@ -176,7 +174,7 @@ void UltimateMangaReaderCore::updateMangaLists(QSharedPointer<UpdateProgressToke
         auto ms = activeMangaSources[name];
         if (ms->uptareMangaList(progressToken.get()))
         {
-            ms->mangaList.sortAndFilter();
+            ms->mangaList.filter();
             ms->serializeMangaList();
         }
         else
@@ -185,4 +183,22 @@ void UltimateMangaReaderCore::updateMangaLists(QSharedPointer<UpdateProgressToke
         }
     }
     progressToken->sendFinished();
+
+    sortMangaLists();
+}
+
+void UltimateMangaReaderCore::sortMangaLists()
+{
+    QElapsedTimer timer;
+    timer.start();
+
+    for (auto ms : mangaSources)
+    {
+        ms->mangaList.sortBy(settings.mangaOrder);
+        ms->serializeMangaList();
+    }
+
+    qDebug() << "Sort time:" << timer.elapsed() << "ms";
+
+    emit currentMangaSourceChanged(this->currentMangaSource);
 }

@@ -9,6 +9,7 @@ Settings::Settings()
       tabAdvance(Right),
       swipeAdvance(Left),
       buttonAdvance(Down),
+      mangaOrder(OrderByTitle),
       doublePageFullscreen(true),
       trimPages(false),
       timer()
@@ -47,7 +48,7 @@ void Settings::serialize()
 QDataStream &operator<<(QDataStream &str, const Settings &m)
 {
     str << m.lightValue << m.comflightValue << m.hideErrorMessages << m.tabAdvance << m.swipeAdvance
-        << m.buttonAdvance << m.doublePageFullscreen << m.trimPages << m.enabledMangaSources;
+        << m.buttonAdvance << m.mangaOrder << m.doublePageFullscreen << m.trimPages << m.enabledMangaSources;
 
     return str;
 }
@@ -56,7 +57,7 @@ QDataStream &operator>>(QDataStream &str, Settings &m)
 {
     m.enabledMangaSources.clear();
     str >> m.lightValue >> m.comflightValue >> m.hideErrorMessages >> m.tabAdvance >> m.swipeAdvance >>
-        m.buttonAdvance >> m.doublePageFullscreen >> m.trimPages >> m.enabledMangaSources;
+        m.buttonAdvance >> m.mangaOrder >> m.doublePageFullscreen >> m.trimPages >> m.enabledMangaSources;
 
     return str;
 }

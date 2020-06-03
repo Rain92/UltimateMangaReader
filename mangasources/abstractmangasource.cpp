@@ -12,12 +12,9 @@ bool AbstractMangaSource::serializeMangaList()
     QFile file(CONF.mangaListDir + name + "_mangalist.dat");
     if (!file.open(QIODevice::WriteOnly))
         return false;
-    QDataStream out(&file);
-    out << mangaList.titles;
-    out << mangaList.urls;
-    out << mangaList.absoluteUrls;
-    out << mangaList.size;
 
+    QDataStream out(&file);
+    out << mangaList;
     file.close();
 
     return true;
@@ -25,18 +22,12 @@ bool AbstractMangaSource::serializeMangaList()
 
 bool AbstractMangaSource::deserializeMangaList()
 {
-    mangaList.urls.clear();
-    mangaList.titles.clear();
-
     QFile file(CONF.mangaListDir + name + "_mangalist.dat");
     if (!file.open(QIODevice::ReadOnly))
         return false;
-    QDataStream in(&file);
-    in >> mangaList.titles;
-    in >> mangaList.urls;
-    in >> mangaList.absoluteUrls;
-    in >> mangaList.size;
 
+    QDataStream in(&file);
+    in >> mangaList;
     file.close();
 
     return true;

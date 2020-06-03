@@ -46,6 +46,7 @@ public:
     void updateActiveScources();
 
     void updateMangaLists(QSharedPointer<UpdateProgressToken> progressToken);
+    void sortMangaLists();
 
     void enableTimers(bool enabled);
 

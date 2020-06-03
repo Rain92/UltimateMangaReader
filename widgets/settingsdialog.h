@@ -26,6 +26,7 @@ public:
 
 signals:
     void activeMangasChanged();
+    void mangaOrderMethodChanged();
 
 private slots:
     void on_pushButtonOk_clicked();

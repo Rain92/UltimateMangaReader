@@ -4,15 +4,16 @@ MangaPanda::MangaPanda(NetworkManager *dm) : AbstractMangaSource(dm)
 {
     name = "MangaPanda";
     baseurl = "http://www.mangapanda.com";
+    dictionaryUrl = baseurl + "/popular/";
 }
 
 bool MangaPanda::uptareMangaList(UpdateProgressToken *token)
 {
-    QRegularExpression mangarx(R"lit(<li><a href="([^"]*)"[^>]*>([^<]*))lit");
+    QRegularExpression mangarx(R"lit(<a href="(/[^"]+)">([^<]+)<)lit");
 
-    MangaList mangas;
+    QRegularExpression numpagesrx(R"lit(href="/popular/(\d+)">Last)lit");
 
-    auto job = networkManager->downloadAsString(baseurl + "/alphabetical");
+    auto job = networkManager->downloadAsString(dictionaryUrl);
 
     if (!job->await(10000))
     {
@@ -20,20 +21,56 @@ bool MangaPanda::uptareMangaList(UpdateProgressToken *token)
         return false;
     }
 
-    token->sendProgress(30);
+    token->sendProgress(10);
 
     QElapsedTimer timer;
     timer.start();
 
-    int spos = job->buffer.indexOf(R"(<div class="series_col">)");
-    int epos = job->buffer.indexOf(R"(<div id="adfooter">)");
+    auto numpagesrxmatch = numpagesrx.match(job->buffer);
 
-    for (auto &match : getAllRxMatches(mangarx, job->buffer, spos, epos))
+    MangaList mangas;
+    mangas.absoluteUrls = false;
+    int pages = 1;
+
+    if (numpagesrxmatch.hasMatch())
+        pages = numpagesrxmatch.captured(1).toInt() / 30 + 1;
+    qDebug() << "pages:" << pages;
+
+    const int matchesPerPage = 30;
+    auto lambda = [&](QSharedPointer<DownloadStringJob> job) {
+        int spos = job->buffer.indexOf(R"(id="mangaresults")");
+        int epos = job->buffer.indexOf(R"(id="navigator")");
+
+        int matches = 0;
+        for (auto &match : getAllRxMatches(mangarx, job->buffer, spos, epos))
+        {
+            auto title = htmlToPlainText(match.captured(2));
+            auto url = match.captured(1);
+            mangas.append(title, url);
+            matches++;
+        }
+
+        token->sendProgress(10 + 90 * (mangas.size / matchesPerPage) / pages);
+        qDebug() << "matches:" << matches;
+        if (matches < matchesPerPage)
+            qDebug() << "          Incomplete match in page:" << job->url;
+    };
+
+    lambda(job);
+
+    QList<QString> urls;
+    for (int i = 1; i < pages; i++)
+        urls.append(dictionaryUrl + QString::number(i * 30));
+
+    DownloadQueue queue(networkManager, urls, CONF.parallelDownloadsHigh, lambda, true);
+    queue.setCancellationToken(&token->canceled);
+    queue.start();
+    if (!queue.awaitCompletion())
     {
-        mangas.urls.append(match.captured(1));
-        mangas.titles.append(htmlToPlainText(match.captured(2)));
-        mangas.size++;
+        token->sendError(queue.lastErrorMessage);
+        return false;
     }
+    this->mangaList = mangas;
 
     qDebug() << "mangas:" << mangas.size << "time:" << timer.elapsed();
 
