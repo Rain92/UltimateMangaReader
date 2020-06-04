@@ -89,7 +89,7 @@
    <item>
     <widget class="QCheckBox" name="checkBoxHideErrorMessages">
      <property name="text">
-      <string>Don't show error messages</string>
+      <string>Hide error messages</string>
      </property>
     </widget>
    </item>

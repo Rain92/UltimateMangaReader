@@ -112,7 +112,7 @@
          <enum>Qt::NoFocus</enum>
         </property>
         <property name="text">
-         <string>+ covers and infos</string>
+         <string>+ covers and meta data</string>
         </property>
        </widget>
       </item>

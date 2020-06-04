@@ -22,7 +22,7 @@ class DownloadQueue : public QObject
 public:
     explicit DownloadQueue(NetworkManager *downloadmanager, const QList<QString> &urls, int parallelDownloads,
                            std::function<void(QSharedPointer<DownloadStringJob>)> lambda, bool cancelOnError,
-                           int individualTimeout = 16000);
+                           int individualTimeout = 20000);
 
     explicit DownloadQueue(NetworkManager *downloadmanager, const QList<FileDownloadDescriptor> &urlAndPaths,
                            int parallelDownloads, bool cancelOnError);

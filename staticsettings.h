@@ -24,13 +24,14 @@ public:
     QString cacheDir;
     QString mangaListDir;
     QString screensaverDir;
-    int imageCacheSize = 10;
-    int parallelDownloadsLow = 4;
-    int parallelDownloadsHigh = 8;
-    int forwardPreloads = 6;
-    int backwardPreloads = 1;
-    int autoSuspendIntervalMinutes = 15;
-    int globalTickIntervalSeconds = 60;
+    const int imageCacheSize = 10;
+    const int parallelDownloadsLow = 4;
+    const int parallelDownloadsMid = 6;
+    const int parallelDownloadsHigh = 8;
+    const int forwardPreloads = 6;
+    const int backwardPreloads = 1;
+    const int autoSuspendIntervalMinutes = 15;
+    const int globalTickIntervalSeconds = 60;
 
     inline QString mangainfodir(const QString &hostname, const QString &title)
     {

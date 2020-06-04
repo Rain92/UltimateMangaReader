@@ -9,7 +9,7 @@ MangaHub::MangaHub(NetworkManager *dm) : AbstractMangaSource(dm)
 
 bool MangaHub::uptareMangaList(UpdateProgressToken *token)
 {
-    QRegularExpression mangarx(R"lit(<a href="(https://mangahub.io/manga/[^"]+)">([^<]+)<)lit");
+    QRegularExpression mangarx(R"lit(<a href="(https://mangahub.io/manga/[^"]+)">([^<]+)</a)lit");
 
     auto job = networkManager->downloadAsString(dicturl + "1");
 
@@ -61,7 +61,7 @@ bool MangaHub::uptareMangaList(UpdateProgressToken *token)
         for (int i = oldPages + 1; i <= pages; i++)
             urls.append(dicturl + QString::number(i));
 
-        DownloadQueue queue(networkManager, urls, CONF.parallelDownloadsHigh, lambda, true);
+        DownloadQueue queue(networkManager, urls, CONF.parallelDownloadsMid, lambda, true);
         queue.setCancellationToken(&token->canceled);
         queue.start();
         if (!queue.awaitCompletion())

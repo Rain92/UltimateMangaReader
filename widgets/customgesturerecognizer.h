@@ -15,7 +15,7 @@ class SwipeGestureRecognizer : public QGestureRecognizer
         ThreePointsReached
     };
 
-    static const int MoveThreshold = 80;
+    static const int MoveThreshold = 50;
     static const int directionChangeThreshold = MoveThreshold / 2;
 
     qreal velocity() const { return velocityValue; }
@@ -43,14 +43,13 @@ class TapGestureRecognizer : public QGestureRecognizer
     bool pressed;
     QElapsedTimer timer;
     static const int TIMEOUT = 3000;
-    static const int TAPRADIUS = 40;
+    static const int TAPRADIUS = 20;
 
 public:
     TapGestureRecognizer();
 
     QGesture *create(QObject *) override;
-    QGestureRecognizer::Result recognize(QGesture *state, QObject *watched,
-                                         QEvent *event) override;
+    QGestureRecognizer::Result recognize(QGesture *state, QObject *watched, QEvent *event) override;
     void reset(QGesture *state) override;
 };
 

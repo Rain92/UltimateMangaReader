@@ -62,7 +62,7 @@ void DownloadStatusDialog::downloadPagesProgress(int completed, int total, int e
 void DownloadStatusDialog::downloadImagesProgress(int completed, int total, int errors)
 {
     ui->labelStep->setText("Step 3:");
-    ui->labelStatus->setText(QString("Downloading images.\n%1 of %2.").arg(completed).arg(total));
+    ui->labelStatus->setText(QString("Downloading pages.\n%1 of %2.").arg(completed).arg(total));
     imageDownloadErrors = errors;
     ui->labelDownloadErrors->setText(QString::number(pageDownloadErrors + imageDownloadErrors));
     ui->progressBar->setValue(20 + 80.0 * completed / total);

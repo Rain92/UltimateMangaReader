@@ -9,7 +9,7 @@ Settings::Settings()
       tabAdvance(Right),
       swipeAdvance(Left),
       buttonAdvance(Down),
-      mangaOrder(OrderByTitle),
+      mangaOrder(OrderByPopularity),
       doublePageFullscreen(true),
       trimPages(false),
       timer()
