@@ -42,7 +42,7 @@ QListView#listViewMangas
 {
     border: none;
     padding: 8px;
-    font-size: 11pt;
+    font-size: 12pt;
 }
 
 QFrame#listViewChapters
@@ -50,7 +50,7 @@ QFrame#listViewChapters
     border: none;
     padding-top: 8px;
     padding-bottom: 8px;
-    font-size: 11pt;
+    font-size: 12pt;
 }
 
 QFrame#topButtonsFrame
