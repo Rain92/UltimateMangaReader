@@ -2,7 +2,7 @@
 A feature-rich online manga streamer and reader for Kobo E-Ink devices, based on Qt5.
 
 ## Main features
-* It's **cross-platform**. While the primary targets are Kobo E-Ink devices, it will also run on Windows, Linux and Mac. Qt5.14 (with OpenSSL) and a platform backend being the only hard dependency.
+* It's **cross-platform**. While the primary targets are Kobo E-Ink devices, it will also run on Windows, Linux and Mac. Qt5.15 (with OpenSSL) and a platform backend being the only hard dependency.
 
 * It comes with a refined, modern design and a GUI that is DPI independent and will look great on various platforms.
 
@@ -14,14 +14,16 @@ A feature-rich online manga streamer and reader for Kobo E-Ink devices, based on
 
 * It supports **favorites** and bookmarks **reading progress** automatically, so you can pick right up reading where you left off.
 
-* It is designed to be ergonomic on E-Readers. It supports gesture input, frontlight control and sleep mode.
+* It is designed to be ergonomic on E-Readers. It supports configurable gesture inputs, frontlight control and a sleep mode. Custom screensavers can be placed in the screensaver folder and will be picked at random.
 
 
-## Install
-TODO
+## Install on Kobo devices
+First you will need to install a launcher application. I recomend [KFMon](https://github.com/NiLuJe/kfmon), the latest release along with install instructions can be found [here](https://www.mobileread.com/forums/showthread.php?t=274231).
+
+For the application itself just download the latest release [here](https://github.com/Rain92/UltimateMangaReader/releases) and extract the archive into the root directiory of your Kobo device.
 
 ## Build 
-Building the application requires Qt 5.14+ with OpenSSL 1.1.1+. \
+Building the application requires Qt 5.15+ with OpenSSL 1.1.1+. \
 With Qt creator the build process is straight-foreward. \
 Building qor kobo targets the requires a cross compiled Qt and a Kobo platform plugin. \
 See https://github.com/Rain92/qt5-kobo-platform-plugin. \
@@ -56,7 +58,7 @@ make install
 ```
 
 ### Prepare Qt
-Download the latest Qt (5.14.2+). \
+Download the latest Qt (5.15+). \
 A descriptor for the kobo platform has to be added. \
 In the source folder of Qt go to qtbase\mkspecs and add a new folder named linux-kobo-gnueabihf-g++ with theese two files: \
 qmake.conf 
@@ -101,7 +103,7 @@ qplatformdefs.h
 ```
 
 
-As of Qt 5.14.2 there is an open issue that will lead to random artifacts in the gui when using high-dpi scaling with fractional scaling factors. This can be resolved with the following patch:
+As of Qt 5.15 there is an open issue that will lead to random artifacts in the gui when using high-dpi scaling with fractional scaling factors. This can be resolved with the following patch:
 ```
 diff --git a/src/gui/kernel/qhighdpiscaling_p.h b/src/gui/kernel/qhighdpiscaling_p.h
 index 55ad6df5c9da3d11a8900754eebc27528aec90ec..9c3d0cdba28a1dd51c18d3fcc0350a11f8000ebc 100644
@@ -128,10 +130,11 @@ export PATH=$PATH:/home/${USER}/x-tools/arm-kobo-linux-gnueabihf/bin/
 
 Configure, make and install Qt:
 ```shell
+export QTDIR=qt-linux-5.15.0-kobo
 export SYSROOT=/home/${USER}/x-tools/arm-kobo-linux-gnueabihf/arm-kobo-linux-gnueabihf/sysroot
 ./configure --recheck-all -opensource -confirm-license -release -verbose \
- -prefix /mnt/onboard/.adds/qt-5.14.2-kobo \
- -extprefix /home/andreas/qt-bin/qt-5.14.2-kobo \
+ -prefix /mnt/onboard/.adds/${QTDIR} \
+ -extprefix /home/${USER}/qt-bin/${QTDIR} \
  -xplatform linux-kobo-gnueabihf-g++ \
  -sysroot ${SYSROOT} \
  -openssl-linked OPENSSL_PREFIX="${SYSROOT}/usr" \
