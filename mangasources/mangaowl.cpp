@@ -80,7 +80,7 @@ bool MangaOwl::uptareMangaList(UpdateProgressToken *token)
 void MangaOwl::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
                                               QSharedPointer<MangaInfo> info)
 {
-    QRegularExpression titlerx(R"lit(<img class="lozad"[^>]*title="([^"]*)")lit");
+    //    QRegularExpression titlerx(R"lit(<img class="lozad"[^>]*title="([^"]*)")lit");
     QRegularExpression authorrx(R"(Author.*?<a[^>]*>\s*(.*?)\s*</a>)",
                                 QRegularExpression::DotMatchesEverythingOption);
     QRegularExpression artistrx;
@@ -98,8 +98,7 @@ void MangaOwl::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> 
         R"lit(<a[^>]*class="chapter-url"[^>]*href="([^"]*)"[^>]*>\s*<label[^>]*>\s*(.*?)\s*</label>)lit",
         QRegularExpression::DotMatchesEverythingOption);
 
-    fillMangaInfo(info, job->buffer, titlerx, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx,
-                  coverrx);
+    fillMangaInfo(info, job->buffer, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx, coverrx);
 
     MangaChapterCollection newchapters;
     for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->buffer))

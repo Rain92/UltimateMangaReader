@@ -82,7 +82,7 @@ bool MangaPanda::uptareMangaList(UpdateProgressToken *token)
 void MangaPanda::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
                                                 QSharedPointer<MangaInfo> info)
 {
-    QRegularExpression titlerx(R"(<h2 class="aname">([^<]*))");
+    //    QRegularExpression titlerx(R"(<h2 class="aname">([^<]*))");
     QRegularExpression authorrx("Author:</td>[^>]*>([^<]*)");
     QRegularExpression artistrx("Artist:</td>[^>]*>([^<]*)");
     QRegularExpression statusrx("Status:</td>[^>]*>([^<]*)");
@@ -94,8 +94,7 @@ void MangaPanda::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob
 
     QRegularExpression chapterrx(R"lit(<a href="([^"]*)"[^>]*>([^<]*)</a>([^<]*))lit");
 
-    fillMangaInfo(info, job->buffer, titlerx, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx,
-                  coverrx);
+    fillMangaInfo(info, job->buffer, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx, coverrx);
 
     int spos = job->buffer.indexOf(R"(<div id="chapterlist">)");
     int epos = job->buffer.indexOf(R"(<div id="adfooter">)", spos);

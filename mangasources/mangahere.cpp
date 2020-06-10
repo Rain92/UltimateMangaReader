@@ -80,7 +80,7 @@ bool MangaHere::uptareMangaList(UpdateProgressToken *token)
 void MangaHere::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
                                                QSharedPointer<MangaInfo> info)
 {
-    QRegularExpression titlerx(R"lit(<meta name="og:title" content="([^"]*?)")lit");
+    //    QRegularExpression titlerx(R"lit(<meta name="og:title" content="([^"]*?)")lit");
     QRegularExpression authorrx(R"lit(<a href="/search/author/[^+][^"]*"[^>]*?title="([^"]*)">)lit");
     QRegularExpression artistrx;
     QRegularExpression statusrx(R"(<span class="detail-info-right-title-tip">([^<]*?)<)");
@@ -94,8 +94,7 @@ void MangaHere::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob>
     QRegularExpression chapterrx(
         R"lit(<a href="(/manga/[^"]*?)" title=".*?<p class="title3">([^<]*?)</p>)lit");
 
-    fillMangaInfo(info, job->buffer, titlerx, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx,
-                  coverrx);
+    fillMangaInfo(info, job->buffer, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx, coverrx);
 
     info->genres = info->genres.remove("- ");
     info->status = info->status.remove('\n');

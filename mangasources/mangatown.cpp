@@ -79,7 +79,7 @@ bool MangaTown::uptareMangaList(UpdateProgressToken *token)
 void MangaTown::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
                                                QSharedPointer<MangaInfo> info)
 {
-    QRegularExpression titlerx(R"(<h1 class="title-top">([^<]*?)<)");
+    //    QRegularExpression titlerx(R"(<h1 class="title-top">([^<]*?)<)");
     QRegularExpression authorrx(R"(<b>Author\(s\):</b>(.*?)<li>)");
     QRegularExpression artistrx(R"(<b>Artist\(s\):</b>(.*?)<li>)");
     QRegularExpression statusrx(R"(<b>Status\(s\):</b>(.*?)(?:<a|<li))");
@@ -92,8 +92,7 @@ void MangaTown::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob>
 
     QRegularExpression chapterrx(R"lit(<a href="(/manga/[^"]*?)"[^>]*?>([^<]*))lit");
 
-    fillMangaInfo(info, job->buffer, titlerx, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx,
-                  coverrx);
+    fillMangaInfo(info, job->buffer, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx, coverrx);
 
     int spos = job->buffer.indexOf(R"(<ul class="chapter_list">)");
     int epos = job->buffer.indexOf(R"(<div class="comment_content">)", spos);

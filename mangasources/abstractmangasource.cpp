@@ -74,10 +74,10 @@ Result<QString, QString> AbstractMangaSource::getImageUrl(const QString &pageurl
 }
 
 Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::loadMangaInfo(const QString &mangaUrl,
-                                                                              const QString &mangatitle,
+                                                                              const QString &mangaTitle,
                                                                               bool update)
 {
-    QString path(CONF.mangainfodir(name, mangatitle) + "mangainfo.dat");
+    QString path(CONF.mangainfodir(name, mangaTitle) + "mangainfo.dat");
     if (QFile::exists(path))
     {
         try
@@ -93,7 +93,7 @@ Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::loadMangaInfo(co
         }
     }
 
-    auto infoR = getMangaInfo(mangaUrl);
+    auto infoR = getMangaInfo(mangaUrl, mangaTitle);
 
     if (infoR.isOk())
         infoR.unwrap()->serialize();
@@ -101,7 +101,8 @@ Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::loadMangaInfo(co
     return infoR;
 }
 
-Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::getMangaInfo(const QString &mangaUrl)
+Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::getMangaInfo(const QString &mangaUrl,
+                                                                             const QString &mangaTitle)
 {
     auto job = networkManager->downloadAsString(mangaUrl, 8000, mangaInfoPostDataStr);
 
@@ -109,8 +110,8 @@ Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::getMangaInfo(con
 
     info->mangaSource = this;
     info->hostname = name;
-
     info->url = mangaUrl;
+    info->title = mangaTitle;
 
     if (!job->await(8000))
         return Err(job->errorString);
@@ -230,14 +231,13 @@ QString AbstractMangaSource::htmlToPlainText(const QString &str)
 }
 
 void AbstractMangaSource::fillMangaInfo(QSharedPointer<MangaInfo> info, const QString &buffer,
-                                        const QRegularExpression &titlerx, const QRegularExpression &authorrx,
+                                        const QRegularExpression &authorrx,
                                         const QRegularExpression &artistrx,
                                         const QRegularExpression &statusrx, const QRegularExpression &yearrx,
                                         const QRegularExpression &genresrx,
                                         const QRegularExpression &summaryrx,
                                         const QRegularExpression &coverrx)
 {
-    auto titlerxmatch = titlerx.match(buffer);
     auto authorrxmatch = authorrx.match(buffer);
     auto artistrxmatch = artistrx.match(buffer);
     auto statusrxmatch = statusrx.match(buffer);
@@ -246,8 +246,6 @@ void AbstractMangaSource::fillMangaInfo(QSharedPointer<MangaInfo> info, const QS
     auto summaryrxmatch = summaryrx.match(buffer);
     auto coverrxmatch = coverrx.match(buffer);
 
-    if (titlerxmatch.hasMatch())
-        info->title = htmlToPlainText(titlerxmatch.captured(1)).trimmed();
     if (authorrxmatch.hasMatch())
         info->author = htmlToPlainText(authorrxmatch.captured(1)).remove('\n');
     if (artistrxmatch.hasMatch())

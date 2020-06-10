@@ -34,7 +34,8 @@ public:
     virtual void updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
                                                 QSharedPointer<MangaInfo> mangainfo) = 0;
 
-    virtual Result<QSharedPointer<MangaInfo>, QString> getMangaInfo(const QString &mangaUrl);
+    virtual Result<QSharedPointer<MangaInfo>, QString> getMangaInfo(const QString &mangaUrl,
+                                                                    const QString &mangaTitle);
 
     virtual Result<QStringList, QString> getPageList(const QString &chapterUrl) = 0;
     virtual Result<QString, QString> getImageUrl(const QString &pageUrl);
@@ -65,10 +66,10 @@ protected:
 
     void genrateCoverThumbnail(QSharedPointer<MangaInfo> mangainfo);
     void fillMangaInfo(QSharedPointer<MangaInfo> info, const QString &buffer,
-                       const QRegularExpression &titlerx, const QRegularExpression &authorrx,
-                       const QRegularExpression &artistrx, const QRegularExpression &statusrx,
-                       const QRegularExpression &yearrx, const QRegularExpression &genresrx,
-                       const QRegularExpression &summaryrx, const QRegularExpression &coverrx);
+                       const QRegularExpression &authorrx, const QRegularExpression &artistrx,
+                       const QRegularExpression &statusrx, const QRegularExpression &yearrx,
+                       const QRegularExpression &genresrx, const QRegularExpression &summaryrx,
+                       const QRegularExpression &coverrx);
 };
 
 #endif  // ABSTRACTMANGASOURCE_H

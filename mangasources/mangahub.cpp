@@ -85,7 +85,7 @@ bool MangaHub::uptareMangaList(UpdateProgressToken *token)
 void MangaHub::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
                                               QSharedPointer<MangaInfo> info)
 {
-    QRegularExpression titlerx(R"(<li class="active"><span>([^<]*)<)");
+    //    QRegularExpression titlerx(R"(<li class="active"><span>([^<]*)<)");
     QRegularExpression authorrx(R"(Author</span><span>([^<]*)</span>)");
     QRegularExpression artistrx(R"(Artist</span><span>([^<]*)</span>)");
     QRegularExpression statusrx(R"(Status</span><span>([^<]*)</span>)");
@@ -100,8 +100,7 @@ void MangaHub::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> 
     for (auto &c : job->getCookies())
         networkManager->addCookie(c.domain(), c.name(), c.value());
 
-    fillMangaInfo(info, job->buffer, titlerx, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx,
-                  coverrx);
+    fillMangaInfo(info, job->buffer, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx, coverrx);
 
     // fix genres spacing
     for (int i = 1; i < info->genres.size(); i++)
