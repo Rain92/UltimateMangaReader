@@ -31,7 +31,7 @@ public:
                                  int comflight);
     void setFrontLightPanelState(int light, int comflight);
 
-    void addImageToCache(const QString &path);
+    bool addImageToCache(const QString &path);
     void updateMenuBar();
     void setSettings(Settings *settings);
 

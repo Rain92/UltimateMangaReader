@@ -99,7 +99,7 @@ MainWidget::MainWidget(QWidget *parent)
     QObject::connect(core, &UltimateMangaReaderCore::activeMangaSourcesChanged, ui->homeWidget,
                      &HomeWidget::updateSourcesList);
 
-    QObject::connect(core, &UltimateMangaReaderCore::downloadCacheCeared,
+    QObject::connect(core, &UltimateMangaReaderCore::downloadCacheCleared,
                      [this]() { ui->mangaReaderWidget->clearCache(); });
 
     // MangaController
@@ -108,6 +108,7 @@ MainWidget::MainWidget(QWidget *parent)
         bool state = core->favoritesManager->isFavorite(info);
         ui->mangaInfoWidget->setFavoriteButtonState(state);
         setWidgetTab(MangaInfoTab);
+        ui->mangaReaderWidget->clearCache();
     });
 
     QObject::connect(core->mangaController, &MangaController::completedImagePreloadSignal,
