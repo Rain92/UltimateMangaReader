@@ -117,6 +117,12 @@ void FavoritesManager::updateInfos()
     }
 }
 
+void FavoritesManager::resetUpdatedStatus()
+{
+    for (auto fav : favoriteinfos)
+        fav->updated = false;
+}
+
 void FavoritesManager::clearFavorites()
 {
     favorites.clear();

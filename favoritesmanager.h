@@ -23,6 +23,7 @@ public:
     void loadInfos();
     void serialize();
     void clearFavorites();
+    void resetUpdatedStatus();
 
     QList<QSharedPointer<MangaInfo>> favoriteinfos;
     QList<Favorite> favorites;

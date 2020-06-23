@@ -13,7 +13,8 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
       suspendManager(new SuspendManager(networkManager, this)),
       settings(),
       timer(),
-      autoSuspendTimer()
+      autoSuspendTimer(),
+      currentDay(QDate::currentDate().day())
 {
     setupDirectories();
     settings.deserialize();
@@ -77,6 +78,12 @@ void UltimateMangaReaderCore::activity()
 
 void UltimateMangaReaderCore::timerTick()
 {
+    if (currentDay != QDate::currentDate().day())
+    {
+        currentDay = QDate::currentDate().day();
+        favoritesManager->resetUpdatedStatus();
+    }
+
     emit timeTick();
 }
 

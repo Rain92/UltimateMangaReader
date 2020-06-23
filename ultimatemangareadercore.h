@@ -67,10 +67,10 @@ signals:
 
 private:
     QTimer timer;
-    void timerTick();
-
     QTimer autoSuspendTimer;
+    int currentDay;
 
+    void timerTick();
     void setupDirectories();
 };
 
