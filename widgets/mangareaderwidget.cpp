@@ -195,7 +195,7 @@ void MangaReaderWidget::showImage(const QString &path)
 {
     showMenuBar(false);
 
-    if (path != "")
+    if (QFile::exists(path))
     {
         int i = searchCache(path);
 
@@ -206,19 +206,24 @@ void MangaReaderWidget::showImage(const QString &path)
         }
         else
         {
-            //            qDebug() << "No cachehit.";
-            addImageToCache(path);
-            i = searchCache(path);
-            ui->mangaImageContainer->setImage(imgcache[i].first);
+            if (addImageToCache(path))
+            {
+                i = searchCache(path);
+                ui->mangaImageContainer->setImage(imgcache[i].first);
+            }
+            else
+            {
+                ui->mangaImageContainer->showErrorImage();
+            }
         }
     }
     else
     {
-        ui->mangaImageContainer->clearImage();
+        ui->mangaImageContainer->showErrorImage();
     }
 }
 
-void MangaReaderWidget::addImageToCache(const QString &path)
+bool MangaReaderWidget::addImageToCache(const QString &path)
 {
     int i = searchCache(path);
     if (i != -1)
@@ -228,6 +233,8 @@ void MangaReaderWidget::addImageToCache(const QString &path)
     else
     {
         auto img = new QPixmap(path);
+        if (img->isNull())
+            return false;
 
         if (settings && settings->doublePageFullscreen &&
             (img->width() <= img->height()) != (this->width() <= this->height()))
@@ -245,6 +252,7 @@ void MangaReaderWidget::addImageToCache(const QString &path)
         if (imgcache.count() > CONF.imageCacheSize)
             imgcache.removeLast();
     }
+    return true;
 }
 
 int MangaReaderWidget::searchCache(const QString &path) const
@@ -259,6 +267,7 @@ int MangaReaderWidget::searchCache(const QString &path) const
 void MangaReaderWidget::clearCache()
 {
     imgcache.clear();
+    ui->mangaImageContainer->clearImage();
 }
 
 void MangaReaderWidget::setSettings(Settings *settings)

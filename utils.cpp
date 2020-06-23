@@ -23,7 +23,7 @@ QList<QRegularExpressionMatch> getAllRxMatches(const QRegularExpression& rx, con
 
 QString makePathLegal(QString filename)
 {
-    const QRegularExpression forbiddenchars(R"([\/:*"<>|])");
+    const QRegularExpression forbiddenchars(R"([\/:*"<>|?])");
     QString ret = filename.remove(forbiddenchars).replace(' ', "-");
     if (ret.endsWith('.'))
         ret.append("_");

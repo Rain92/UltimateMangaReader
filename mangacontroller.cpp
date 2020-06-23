@@ -123,9 +123,14 @@ void MangaController::updateCurrentImage()
     auto imagePath = currentManga->mangaSource->downloadAwaitImage(dd);
 
     if (imagePath.isOk())
+    {
         emit currentImageChanged(imagePath.unwrap());
+    }
     else
+    {
+        emit currentImageChanged("");
         emit error(imagePath.unwrapErr());
+    }
 }
 
 void MangaController::advanceMangaPage(PageTurnDirection direction)

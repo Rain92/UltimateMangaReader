@@ -94,17 +94,17 @@ void FavoritesWidget::moveFavoriteToFront(int i)
 
 void FavoritesWidget::mangaUpdated(bool newchapters)
 {
-    if (!newchapters)
-        return;
+    if (newchapters)
+    {
+        MangaInfo *mi = static_cast<MangaInfo *>(sender());
 
-    MangaInfo *mi = static_cast<MangaInfo *>(sender());
+        int i = 0;
+        while (favoritesmanager->favoriteinfos.at(i)->title != mi->title &&
+               favoritesmanager->favoriteinfos.at(i)->title != mi->title)
+            i++;
 
-    int i = 0;
-    while (favoritesmanager->favoriteinfos.at(i)->title != mi->title &&
-           favoritesmanager->favoriteinfos.at(i)->title != mi->title)
-        i++;
-
-    moveFavoriteToFront(i);
+        moveFavoriteToFront(i);
+    }
 }
 
 void FavoritesWidget::coverLoaded()
