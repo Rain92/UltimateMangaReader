@@ -120,7 +120,7 @@ bool DownloadFileJob::await(int timeout)
 
     awaitSignal(this, {SIGNAL(completed()), SIGNAL(downloadError())}, timeout);
 
-    if (errorString != "")
+    if (errorString != "" || errorString.contains("Protocol"))
         return false;
     else if (!isCompleted)
         errorString = "Download timeout.";

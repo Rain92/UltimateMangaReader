@@ -130,7 +130,7 @@ bool DownloadStringJob::await(int timeout, bool retry)
     if (errorString != "")
     {
         //        qDebug() << "url" << url;
-        if (!retry)
+        if (!retry || errorString.contains("Protocol"))
             return false;
 
         //        qDebug() << url << rem;
