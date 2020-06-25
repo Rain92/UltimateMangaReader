@@ -178,16 +178,19 @@ void MangaReaderWidget::updateCurrentIndex(const ReadingProgress &progress)
 
 void MangaReaderWidget::on_pushButtonReaderHome_clicked()
 {
+    ui->mangaImageContainer->clearImage();
     emit changeView(HomeTab);
 }
 
 void MangaReaderWidget::on_pushButtonReaderBack_clicked()
 {
+    ui->mangaImageContainer->clearImage();
     emit back();
 }
 
 void MangaReaderWidget::on_pushButtonReaderFavorites_clicked()
 {
+    ui->mangaImageContainer->clearImage();
     emit changeView(FavoritesTab);
 }
 
