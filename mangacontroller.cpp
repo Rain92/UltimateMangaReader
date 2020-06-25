@@ -113,6 +113,7 @@ void MangaController::updateCurrentImage()
 
     if (!imageUrl.isOk())
     {
+        emit currentImageChanged("error");
         emit error(imageUrl.unwrapErr());
         return;
     }
@@ -128,7 +129,7 @@ void MangaController::updateCurrentImage()
     }
     else
     {
-        emit currentImageChanged("");
+        emit currentImageChanged("error");
         emit error(imagePath.unwrapErr());
     }
 }
