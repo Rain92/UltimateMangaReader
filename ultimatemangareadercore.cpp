@@ -186,6 +186,7 @@ void UltimateMangaReaderCore::updateMangaLists(QSharedPointer<UpdateProgressToke
         }
         else
         {
+            sortMangaLists();
             return;
         }
     }
@@ -204,8 +205,6 @@ void UltimateMangaReaderCore::sortMangaLists()
         ms->mangaList.sortBy(settings.mangaOrder);
         ms->serializeMangaList();
     }
-
-    qDebug() << "Sort time:" << timer.elapsed() << "ms";
 
     emit currentMangaSourceChanged(this->currentMangaSource);
 }
