@@ -2,6 +2,7 @@
 #define BATTERYICONLABEL_H
 
 #include <QApplication>
+#include <QDebug>
 #include <QLabel>
 #include <QPainter>
 #include <QPair>
@@ -21,9 +22,11 @@ public:
 
 protected:
     void mousePressEvent(QMouseEvent *);
+    void mouseReleaseEvent(QMouseEvent *);
 
 private:
     QPixmap batteryicons[4];
+    QLabel *tooltipLabel;
 
     void setBatteryIcon();
     QPair<int, bool> getBatteryState();

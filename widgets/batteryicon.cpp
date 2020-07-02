@@ -12,6 +12,12 @@ BatteryIcon::BatteryIcon(QWidget *parent) : QLabel(parent)
 
     setScaledContents(true);
     setFixedSize(SIZES.batteryIconHeight * 2, SIZES.batteryIconHeight + 1);
+
+    // workaround
+    tooltipLabel = new QLabel(parent);
+    tooltipLabel->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+    tooltipLabel->setStyleSheet("QLabel { background-color : black; color : white; }");
+    tooltipLabel->hide();
 }
 
 void BatteryIcon::mousePressEvent(QMouseEvent *)
@@ -20,7 +26,18 @@ void BatteryIcon::mousePressEvent(QMouseEvent *)
 #ifdef KOBO
     level = KoboPlatformFunctions::getBatteryLevel();
 #endif
-    QToolTip::showText(this->mapToGlobal(QPoint(0, 0)), QString::number(level) + "%");
+    // In Qt 5.15 this seems to crash so we need a workaround
+    //    QToolTip::showText(this->mapToGlobal(QPoint(0, 0)), QString::number(level) + "%");
+
+    tooltipLabel->setText(QString::number(level) + "%");
+    tooltipLabel->move(this->mapToParent(QPoint(-10, this->width() / 2 + 6)));
+    tooltipLabel->adjustSize();
+    tooltipLabel->show();
+}
+
+void BatteryIcon::mouseReleaseEvent(QMouseEvent *)
+{
+    tooltipLabel->hide();
 }
 
 void BatteryIcon::updateIcon()
