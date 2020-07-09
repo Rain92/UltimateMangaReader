@@ -314,6 +314,9 @@ void MainWidget::onResume()
         if (!core->networkManager->connected)
             wifiDialog->open();
     });
+
+    if (ui->stackedWidget->currentIndex() == FavoritesTab)
+        ui->favoritesWidget->showFavoritesList();
 }
 
 void MainWidget::setupVirtualKeyboard()
