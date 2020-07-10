@@ -283,12 +283,14 @@ void MangaReaderWidget::setFrontLightPanelState(int lightmin, int lightmax, int 
 {
     ui->horizontalSliderLight->setMinimum(lightmin);
     ui->horizontalSliderLight->setMaximum(lightmax);
+    ui->horizontalSliderLight->setPageStep((lightmax - lightmin) / 20);
     ui->horizontalSliderLight->setValue(light);
 
     if (comflightmin != comflightmax)
     {
         ui->horizontalSliderComfLight->setMinimum(comflightmin);
         ui->horizontalSliderComfLight->setMaximum(comflightmax);
+        ui->horizontalSliderComfLight->setPageStep((comflightmax - comflightmin) / 20);
         ui->horizontalSliderComfLight->setValue(comflight);
     }
     else

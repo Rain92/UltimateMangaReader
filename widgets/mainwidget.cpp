@@ -2,16 +2,6 @@
 
 #include "ui_mainwidget.h"
 
-#ifdef KOBO
-#include "kobokey.h"
-#include "koboplatformfunctions.h"
-#define POWERBUTTON KoboKey::Key_Power
-#define SLEEPCOVERBUTTON KoboKey::Key_SleepCover
-#else
-#define POWERBUTTON Qt::Key_F1
-#define SLEEPCOVERBUTTON Qt::Key_F2
-#endif
-
 MainWidget::MainWidget(QWidget *parent)
     : QWidget(parent),
       ui(new Ui::MainWidget),
@@ -216,6 +206,11 @@ void MainWidget::adjustUI()
     ui->toolButtonWifiIcon->setIconSize(QSize(SIZES.wifiIconSize, SIZES.wifiIconSize));
 
     ui->labelTitle->setStyleSheet("font-size: 16pt");
+
+#ifdef KOBO
+    koboDevice = KoboPlatformFunctions::getKoboDeviceDescriptor();
+    this->resize(koboDevice.width, koboDevice.height);
+#endif
 }
 
 void MainWidget::showEvent(QShowEvent *event)
@@ -349,7 +344,11 @@ void MainWidget::setupFrontLight()
 {
     setFrontLight(core->settings.lightValue, core->settings.comflightValue);
 
-    ui->mangaReaderWidget->setFrontLightPanelState(core->settings.lightValue, core->settings.comflightValue);
+#ifdef KOBO
+    ui->mangaReaderWidget->setFrontLightPanelState(0, koboDevice.frontlightMaxLevel,
+                                                   core->settings.lightValue, 0, koboDevice.frontlightMaxTemp,
+                                                   core->settings.comflightValue);
+#endif
 }
 
 void MainWidget::setFrontLight(int light, int comflight)

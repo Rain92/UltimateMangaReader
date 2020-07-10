@@ -22,6 +22,16 @@
 #include "virtualkeyboard.h"
 #include "wifidialog.h"
 
+#ifdef KOBO
+#include "kobokey.h"
+#include "koboplatformfunctions.h"
+#define POWERBUTTON KoboKey::Key_Power
+#define SLEEPCOVERBUTTON KoboKey::Key_SleepCover
+#else
+#define POWERBUTTON Qt::Key_F1
+#define SLEEPCOVERBUTTON Qt::Key_F2
+#endif
+
 namespace Ui
 {
 class MainWidget;
@@ -95,6 +105,10 @@ private:
     DownloadStatusDialog *downloadStatusDialog;
 
     QIcon wifiIcons[2];
+
+#ifdef KOBO
+    KoboDeviceDescriptor koboDevice;
+#endif
 };
 
 #endif  // MAINWIDGET_H
