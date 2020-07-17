@@ -40,6 +40,7 @@ void HomeWidget::adjustUI()
     ui->listViewSources->setIconSize(QSize(SIZES.mangasourceIconSize, SIZES.mangasourceIconSize));
 
     ui->listViewMangas->setFocusPolicy(Qt::FocusPolicy::NoFocus);
+    ui->listViewMangas->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 }
 
 void HomeWidget::updateSourcesList(const QList<AbstractMangaSource *> &sources)
