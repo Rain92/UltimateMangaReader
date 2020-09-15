@@ -219,7 +219,7 @@ void MainWidget::showEvent(QShowEvent *event)
     core->updateActiveScources();
     core->enableTimers(true);
 
-    QTimer::singleShot(100, this, &MainWidget::onResume);
+    QTimer::singleShot(500, this, &MainWidget::onResume);
 }
 
 bool MainWidget::event(QEvent *event)
@@ -248,7 +248,7 @@ bool MainWidget::buttonReleaseEvent(QKeyEvent *event)
     else if (event->key() == SLEEPCOVERBUTTON)
     {
         qDebug() << "Sleepcover opened";
-        // core->suspendManager->resume();
+        core->suspendManager->resume();
 
         return true;
     }

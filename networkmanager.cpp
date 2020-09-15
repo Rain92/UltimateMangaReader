@@ -80,7 +80,7 @@ bool NetworkManager::checkInternetConnection()
 #ifdef KOBO
     try
     {
-        connected = KoboPlatformFunctions::KoboPlatformFunctions::testInternetConnection(500);
+        connected = KoboPlatformFunctions::KoboPlatformFunctions::testInternetConnection(2);
     }
     catch (const QException &e)
     {

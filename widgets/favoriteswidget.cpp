@@ -59,6 +59,9 @@ void FavoritesWidget::showFavoritesList()
 
 void FavoritesWidget::insertRow(const QSharedPointer<MangaInfo> &fav, int row)
 {
+    if (fav.isNull())
+        return;
+
     QWidget *titlewidget = makeIconTextWidget(fav->coverThumbnailPath(), fav->title);
 
     ui->tableWidget->insertRow(row);
