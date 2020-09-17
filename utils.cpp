@@ -116,10 +116,11 @@ void activateScroller(QAbstractScrollArea* pArea)
                              QScrollerProperties::OvershootAlwaysOff);
         prop.setScrollMetric(QScrollerProperties::HorizontalOvershootPolicy,
                              QScrollerProperties::OvershootAlwaysOff);
-        prop.setScrollMetric(QScrollerProperties::MaximumClickThroughVelocity, 0);
-        prop.setScrollMetric(QScrollerProperties::SnapTime, 0);
+        prop.setScrollMetric(QScrollerProperties::QScrollerProperties::DragStartDistance, 0);
+        prop.setScrollMetric(QScrollerProperties::QScrollerProperties::MousePressEventDelay, 0);
+        prop.setScrollMetric(QScrollerProperties::QScrollerProperties::OvershootDragDistanceFactor, 0);
+
         scroller->setScrollerProperties(prop);
-        scroller->grabGesture(pArea, QScroller::RightMouseButtonGesture);
         scroller->grabGesture(pArea->viewport(), QScroller::LeftMouseButtonGesture);
     }
 }

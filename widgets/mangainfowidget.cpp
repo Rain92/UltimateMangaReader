@@ -52,6 +52,7 @@ void MangaInfoWidget::adjustUI()
 
     activateScroller(ui->scrollAreaMangaInfoSummary);
     activateScroller(ui->listViewChapters);
+    ui->listViewChapters->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
 }
 
 inline void updateLabel(QLabel *caption, QLabel *content, const QString &text)

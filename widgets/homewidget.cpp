@@ -16,9 +16,6 @@ HomeWidget::HomeWidget(QWidget *parent)
     ui->listViewSources->setModel(new QStandardItemModel(this));
     ui->listViewMangas->setModel(new QStringListModel(this));
 
-    activateScroller(ui->listViewSources);
-    activateScroller(ui->listViewMangas);
-
     QObject::connect(ui->lineEditFilter, &CLineEdit::returnPressed, this,
                      &HomeWidget::on_pushButtonFilter_clicked);
 }
@@ -30,6 +27,9 @@ HomeWidget::~HomeWidget()
 
 void HomeWidget::adjustUI()
 {
+    activateScroller(ui->listViewSources);
+    activateScroller(ui->listViewMangas);
+
     ui->pushButtonFilter->setProperty("type", "borderless");
     ui->pushButtonFilterClear->setProperty("type", "borderless");
 
@@ -41,6 +41,7 @@ void HomeWidget::adjustUI()
 
     ui->listViewMangas->setFocusPolicy(Qt::FocusPolicy::NoFocus);
     ui->listViewMangas->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    ui->listViewMangas->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
 }
 
 void HomeWidget::updateSourcesList(const QList<AbstractMangaSource *> &sources)
