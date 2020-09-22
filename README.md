@@ -103,7 +103,7 @@ qplatformdefs.h
 ```
 
 
-As of Qt 5.15 there is an open issue that will lead to random artifacts in the gui when using high-dpi scaling with fractional scaling factors. This can be resolved with the following patch:
+~As of Qt 5.15.0 there is an open issue that will lead to random artifacts in the gui when using high-dpi scaling with fractional scaling factors. This can be resolved with the following patch~ (Already fixed in Qt 5.15.1):
 ```
 diff --git a/src/gui/kernel/qhighdpiscaling_p.h b/src/gui/kernel/qhighdpiscaling_p.h
 index 55ad6df5c9da3d11a8900754eebc27528aec90ec..9c3d0cdba28a1dd51c18d3fcc0350a11f8000ebc 100644
@@ -130,7 +130,7 @@ export PATH=$PATH:/home/${USER}/x-tools/arm-kobo-linux-gnueabihf/bin/
 
 Configure, make and install Qt:
 ```shell
-export QTDIR=qt-linux-5.15.0-kobo
+export QTDIR=qt-linux-5.15.1-kobo
 export SYSROOT=/home/${USER}/x-tools/arm-kobo-linux-gnueabihf/arm-kobo-linux-gnueabihf/sysroot
 ./configure --recheck-all -opensource -confirm-license -release -verbose \
  -prefix /mnt/onboard/.adds/${QTDIR} \
