@@ -246,6 +246,8 @@ void AbstractMangaSource::fillMangaInfo(QSharedPointer<MangaInfo> info, const QS
     auto summaryrxmatch = summaryrx.match(buffer);
     auto coverrxmatch = coverrx.match(buffer);
 
+    QRegularExpression bbrx(R"(\[.*?\])");
+
     if (authorrxmatch.hasMatch())
         info->author = htmlToPlainText(authorrxmatch.captured(1)).remove('\n');
     if (artistrxmatch.hasMatch())
@@ -261,7 +263,7 @@ void AbstractMangaSource::fillMangaInfo(QSharedPointer<MangaInfo> info, const QS
                            .replace(", ", " ")
                            .replace(",", " ");
     if (summaryrxmatch.hasMatch())
-        info->summary = htmlToPlainText(summaryrxmatch.captured(1));
+        info->summary = htmlToPlainText(summaryrxmatch.captured(1)).remove(bbrx);
     if (coverrxmatch.hasMatch())
         info->coverUrl = coverrxmatch.captured(1);
 }

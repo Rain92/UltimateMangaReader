@@ -11,7 +11,7 @@ Settings::Settings()
       buttonAdvance(Down),
       mangaOrder(OrderByPopularity),
       doublePageFullscreen(true),
-      trimPages(false),
+      trimPages(true),
       timer()
 {
     QObject::connect(&timer, &QTimer::timeout, [this]() { this->serialize(); });
