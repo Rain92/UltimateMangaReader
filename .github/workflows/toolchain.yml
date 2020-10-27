@@ -21,13 +21,13 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: prerequiesties
-        run: sudo apt-get install build-essential gperf help2man bison texinfo flex gawk autoconf automake wget curl file
+        run: sudo apt-get install build-essential gperf help2man bison texinfo flex gawk autoconf automake wget curl file libncurses-dev
 
       # Runs a set of commands using the runners shell
       - name: Run a multi-line script
         run: |
           git clone https://github.com/koreader/koxtoolchain 
-          ./koxtoolchain/gen-tc.sh kobo
+          ./koxtoolchain/gen-tc.sh kobo > /dev/null
 ###############################
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v2.2.0
