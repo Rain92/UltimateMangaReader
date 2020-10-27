@@ -30,6 +30,17 @@ QNetworkAccessManager *NetworkManager::networkAccessManager()
 
 bool NetworkManager::connectWifi()
 {
+#ifdef KOBO
+    if (QNetworkProxy::applicationProxy().type()!=QNetworkProxy::NoProxy)
+    {
+        QNetworkProxy proxy;
+        proxy.setType(QNetworkProxy::applicationProxy().type());
+        proxy.setHostName(QNetworkProxy::applicationProxy().hostName());
+        proxy.setPort(QNetworkProxy::applicationProxy().port());
+        QNetworkProxy::setApplicationProxy(proxy);
+        qDebug() << "***Using proxy:\t" << QNetworkProxy::applicationProxy().hostName() << ":" << QNetworkProxy::applicationProxy().port() << " type:" << QNetworkProxy::applicationProxy().type();
+    }
+#endif
     if (!checkInternetConnection())
     {
 #ifdef KOBO
