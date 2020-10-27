@@ -156,6 +156,8 @@ QString padChapterNumber(QString number, int places = 4)
 void MangaDex::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
                                               QSharedPointer<MangaInfo> info)
 {
+    QRegularExpression bbrx(R"(\[.*?\])");
+
     QJsonDocument doc = QJsonDocument::fromJson(job->buffer.toUtf8());
     if (doc.isNull())
         qDebug() << "MangaDex chapter parse failed";
@@ -179,7 +181,7 @@ void MangaDex::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> 
         if (genreMap.contains(g.toInt()))
             info->genres += genreMap[g.toInt()] + " ";
 
-    info->summary = htmlToPlainText(mangaObject["description"].toString());
+    info->summary = htmlToPlainText(mangaObject["description"].toString()).remove(bbrx);
 
     info->coverUrl = baseurl + mangaObject["cover_url"].toString();
 
