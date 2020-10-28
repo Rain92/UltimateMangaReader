@@ -35,7 +35,7 @@ jobs:
           # Artifact name
           name: toolchain
           # A file, directory or wildcard pattern that describes what to upload
-          path: /root/x-tools
+          path: ~/x-tools
           # The desired behavior if no files are found using the provided path.
           if-no-files-found: error
           # Duration after which artifact will expire in days. 0 means using default retention.
