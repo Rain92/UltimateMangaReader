@@ -10,36 +10,36 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build_toolchain"
-#   build_toolchain:
-#     # The type of runner that the job will run on
-#     runs-on: ubuntu-latest
+  build_toolchain:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
 
-#     # Steps represent a sequence of tasks that will be executed as part of the job
-#     steps:
-#       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-#       - uses: actions/checkout@v2
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
 
-#       # Runs a single command using the runners shell
-#       - name: prerequiesties
-#         run: sudo apt-get install build-essential gperf help2man bison texinfo flex gawk autoconf automake wget curl file libncurses-dev
+      # Runs a single command using the runners shell
+      - name: prerequiesties
+        run: sudo apt-get install build-essential gperf help2man bison texinfo flex gawk autoconf automake wget curl file libncurses-dev
 
-#       # Runs a set of commands using the runners shell
-#       - name: Run a multi-line script
-#         run: |
-#           git clone https://github.com/koreader/koxtoolchain 
-#           ./koxtoolchain/gen-tc.sh kobo > /dev/null
+      # Runs a set of commands using the runners shell
+      - name: Run a multi-line script
+        run: |
+          git clone https://github.com/koreader/koxtoolchain 
+          ./koxtoolchain/gen-tc.sh kobo > /dev/null
 
-#       - name: Upload a Build Artifact
-#         uses: actions/upload-artifact@v2.2.0
-#         with:
-#           # Artifact name
-#           name: toolchain
-#           # A file, directory or wildcard pattern that describes what to upload
-#           path: ~/x-tools
-#           # The desired behavior if no files are found using the provided path.
-#           if-no-files-found: error
-#           # Duration after which artifact will expire in days. 0 means using default retention.
-#           #retention-days: # optional      
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v2.2.0
+        with:
+          # Artifact name
+          name: toolchain
+          # A file, directory or wildcard pattern that describes what to upload
+          path: ~/x-tools
+          # The desired behavior if no files are found using the provided path.
+          if-no-files-found: error
+          # Duration after which artifact will expire in days. 0 means using default retention.
+          #retention-days: # optional      
 
 
   build_Qt:
