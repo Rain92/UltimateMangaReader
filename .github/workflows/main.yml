@@ -27,7 +27,7 @@ jobs:
         uses: dawidd6/action-download-artifact@v2.9.0
         with:
           # Workflow name
-          workflow: "Build prerequisites"
+          workflow: prereq.yml
           # Artifact name (download all artifacts in not specified)
           name: toolchain
           # Where to unpack the artifact
@@ -38,7 +38,7 @@ jobs:
         uses: dawidd6/action-download-artifact@v2.9.0
         with:
           # Workflow name
-          workflow: "Build prerequisites"
+          workflow: prereq.yml
           # Artifact name (download all artifacts in not specified)
           name: qt
           # Where to unpack the artifact
