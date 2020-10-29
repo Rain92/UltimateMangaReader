@@ -58,6 +58,7 @@ jobs:
         path: ~/x-tools
     - name: OpenSSL
       run: |
+        chmod -R 777 ~/x-tools
         wget -q https://www.openssl.org/source/openssl-1.1.1g.tar.gz
         tar -xzf openssl-1.1.1g.tar.gz
         cd openssl-1.1.1g 
