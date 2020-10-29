@@ -47,7 +47,7 @@ jobs:
       # Runs a set of commands using the runners shell
       - name: Run a multi-line script
         run: |
-          chmod -R 777 ~
+          chmod -R 777 ~/x-tools && chmod -R 777 ~/qt-bin
           git clone https://github.com/Rain92/qt5-kobo-platform-plugin
           source /content/koxtoolchain/refs/x-compile.sh kobo env 
           export CFLAGS=" -mtune=coretx-a8 " 
