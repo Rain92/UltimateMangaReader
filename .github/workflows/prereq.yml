@@ -59,7 +59,7 @@ jobs:
     - name: OpenSSL
       run: |
         chmod -R 777 ~/x-tools
-        wget -q https://www.openssl.org/source/openssl-1.1.1g.tar.gz
+        wget -nv https://www.openssl.org/source/openssl-1.1.1g.tar.gz
         tar -xzf openssl-1.1.1g.tar.gz
         cd openssl-1.1.1g 
         export CROSS_DIR=~/x-tools/arm-kobo-linux-gnueabihf/bin 
@@ -69,7 +69,7 @@ jobs:
         make clean && make -j5 > /dev/null && make install > /dev/null
     - name: Zlib
       run: |
-        wget http://zlib.net/zlib-1.2.11.tar.gz
+        wget -nv http://zlib.net/zlib-1.2.11.tar.gz
         tar zxf zlib-1.2.11.tar.gz
         export CROSS_DIR=~/x-tools/arm-kobo-linux-gnueabihf/bin
         export SYSROOT=~/x-tools/arm-kobo-linux-gnueabihf/arm-kobo-linux-gnueabihf/sysroot
@@ -80,12 +80,12 @@ jobs:
         make && make install
     - name: Qt
       run: |
-        wget http://download.qt.io/official_releases/qt/5.15/5.15.1/single/qt-everywhere-src-5.15.1.tar.xz
+        wget -nv http://download.qt.io/official_releases/qt/5.15/5.15.1/single/qt-everywhere-src-5.15.1.tar.xz
         tar -xf qt-everywhere-src-*.tar.xz
         mkdir -p qt-everywhere-src-5.15.1/qtbase/mkspecs/linux-kobo-gnueabihf-g++
         wget https://github.com/mtlive/UltimateMangaReader/raw/master/qmake.conf -O qt-everywhere-src-5.15.1/qtbase/mkspecs/linux-kobo-gnueabihf-g++/qmake.conf
         echo '#include "../linux-g++/qplatformdefs.h"' > qt-everywhere-src-5.15.1/qtbase/mkspecs/linux-kobo-gnueabihf-g++/qplatformdefs.h
-        export PATH=~/x-tools/arm-kobo-linux-gnueabihf/bin 
+        export PATH=~/x-tools/arm-kobo-linux-gnueabihf/bin:$PATH
         export QTDIR=$PWD/qt-everywhere-src-5.15.1 && export PATH=$PWD/qt-everywhere-src-5.15.1/qtbase/bin:$PATH
         export SYSROOT=~/x-tools/arm-kobo-linux-gnueabihf/arm-kobo-linux-gnueabihf/sysroot
         cd qt-everywhere-src-*/ 
@@ -107,8 +107,8 @@ jobs:
          -skip qtwebengine -skip qtwebview -skip qtwebglplugin \
          -no-cups -no-pch \
          -no-sql-db2 -no-sql-ibase -no-sql-mysql -no-sql-oci -no-sql-odbc -no-sql-psql -no-sql-sqlite2 -no-sql-tds \
-         -no-feature-printdialog -no-feature-printer -no-feature-printpreviewdialog -no-feature-printpreviewwidget \
-         && make -j4 >/dev/null && make install
+         -no-feature-printdialog -no-feature-printer -no-feature-printpreviewdialog -no-feature-printpreviewwidget
+         make -j4 >/dev/null && make install
          
     
     - name: Upload the updated toolchain (openssl,...)
