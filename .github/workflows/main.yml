@@ -31,7 +31,7 @@ jobs:
           # Artifact name (download all artifacts in not specified)
           name: toolchain
           # Where to unpack the artifact
-          path: ~
+          path: ~/
 
       - name: Debuggging with tmate
         # You may pin to the exact commit or the version.
