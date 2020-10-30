@@ -43,13 +43,16 @@ jobs:
           name: qt
           # Where to unpack the artifact
           path: ~/qt-bin   
+          
+      - name: SSH to GitHub Actions
+        # You may pin to the exact commit or the version.
+        # uses: P3TERX/ssh2actions@71006b93bff498b020448ac10964f8a5d0f9f32c
+        uses: P3TERX/ssh2actions@v1.0.0
 
-      # Runs a set of commands using the runners shell
       - name: Run a multi-line script
         run: |
-          rm -R ~
-          chmod -R 777 ~/x-tools
-          chmod -R 777 ~/qt-bin
+          chmod -R 777 \~/x-tools
+          chmod -R 777 \~/qt-bin
           git clone https://github.com/Rain92/qt5-kobo-platform-plugin
           export CFLAGS=" -mtune=coretx-a8 " 
           #export QTDIR=qt-everywhere-src-5.15.1 
