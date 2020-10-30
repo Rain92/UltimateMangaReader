@@ -31,7 +31,7 @@ jobs:
           # Artifact name (download all artifacts in not specified)
           name: toolchain
           # Where to unpack the artifact
-          path: ~/x-tools
+          path: $HOME/x-tools
       - name: Download Qt
         # You may pin to the exact commit or the version.
         # uses: dawidd6/action-download-artifact@86f3002f4e95a0ad10fa8514fe27e1dbfdcd190c
@@ -42,7 +42,7 @@ jobs:
           # Artifact name (download all artifacts in not specified)
           name: qt
           # Where to unpack the artifact
-          path: ~/qt-bin   
+          path: $HOME/qt-bin   
           
       - name: SSH to GitHub Actions
         # You may pin to the exact commit or the version.
