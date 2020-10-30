@@ -29,13 +29,19 @@ jobs:
           # Workflow name
           workflow: prereq.yml
           # Artifact name (download all artifacts in not specified)
-          name: toolchain
+          #name: toolchain
           # Where to unpack the artifact
           path: ~/
-
-      - name: Debuggging with tmate
+      
+      - name: ls
+        run: ls -l ~
+      - name: SSH to GitHub Actions
         # You may pin to the exact commit or the version.
-        uses: GitHub30/action-tmate@master2
+        # uses: P3TERX/ssh2actions@71006b93bff498b020448ac10964f8a5d0f9f32c
+        uses: P3TERX/ssh2actions@v1.0.0
+#         with:
+          # choose tmate or ngrok mode
+#           mode: # optional, default is tmate
         
       # Runs a set of commands using the runners shell
       - name: Run a multi-line script
