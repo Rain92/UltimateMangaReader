@@ -56,9 +56,9 @@ jobs:
           qmake CONFIG+=kobo && make -j5
           
           cd /home/runner/qt-bin
-          mv x-tools/arm-kobo-linux-gnueabihf/arm-kobo-linux-gnueabihf/sysroot/usr/lib/libcrypto.so.1.1 .
-          mv x-tools/arm-kobo-linux-gnueabihf/arm-kobo-linux-gnueabihf/sysroot/usr/lib/libssl.so.1.1 .
-          mv x-tools/arm-kobo-linux-gnueabihf/arm-kobo-linux-gnueabihf/lib/libstdc++.so.6 .
+          mv ~/x-tools/arm-kobo-linux-gnueabihf/arm-kobo-linux-gnueabihf/sysroot/usr/lib/libcrypto.so.1.1 .
+          mv ~/x-tools/arm-kobo-linux-gnueabihf/arm-kobo-linux-gnueabihf/sysroot/usr/lib/libssl.so.1.1 .
+          mv ~/x-tools/arm-kobo-linux-gnueabihf/arm-kobo-linux-gnueabihf/lib/libstdc++.so.6 .
           zip libs.zip qt-linux-5.15.1-kobo/plugins/iconengines/libqsvgicon.a qt-linux-5.15.1-kobo/plugins/imageformats/libqgif.a qt-linux-5.15.1-kobo/plugins/imageformats/libqicns.a qt-linux-5.15.1-kobo/plugins/imageformats/libqico.a qt-linux-5.15.1-kobo/plugins/imageformats/libqjpeg.a qt-linux-5.15.1-kobo/plugins/imageformats/libqsvg.a qt-linux-5.15.1-kobo/plugins/imageformats/libqtga.a qt-linux-5.15.1-kobo/plugins/imageformats/libqtiff.a qt-linux-5.15.1-kobo/plugins/imageformats/libqwbmp.a qt-linux-5.15.1-kobo/plugins/imageformats/libqwebp.a qt-linux-5.15.1-kobo/plugins/bearer/libqgenericbearer.a qt-linux-5.15.1-kobo/lib/libQt5Svg.a qt-linux-5.15.1-kobo/lib/libQt5Widgets.a qt-linux-5.15.1-kobo/lib/libQt5Gui.a qt-linux-5.15.1-kobo/lib/libqtlibpng.a qt-linux-5.15.1-kobo/lib/libqtharfbuzz.a qt-linux-5.15.1-kobo/lib/libQt5Network.a -lssl -lcrypto qt-linux-5.15.1-kobo/lib/libQt5Core.a qt-linux-5.15.1-kobo/lib/libqtpcre2.a qt-linux-5.15.1-kobo/lib/libcrypto.so.1.1 qt-linux-5.15.1-kobo/lib/libssl.so.1.1 qt-linux-5.15.1-kobo/lib/libstdc++.so.6 qt-linux-5.15.1-kobo/qml/
           
       - name: "Get upload_url"
