@@ -5,11 +5,13 @@ name: CI
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
 on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
-
+#   push:
+#     branches: [ master ]
+#   pull_request:
+#     branches: [ master ]
+  release:
+    types:
+      - published
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
@@ -52,3 +54,33 @@ jobs:
           qmake && make -j5 
           cd ../UltimateMangaReader
           qmake CONFIG+=kobo && make -j5
+          
+          cd /home/runner/qt-bin
+          mv x-tools/arm-kobo-linux-gnueabihf/arm-kobo-linux-gnueabihf/sysroot/usr/lib/libcrypto.so.1.1 .
+          mv x-tools/arm-kobo-linux-gnueabihf/arm-kobo-linux-gnueabihf/sysroot/usr/lib/libssl.so.1.1 .
+          mv x-tools/arm-kobo-linux-gnueabihf/arm-kobo-linux-gnueabihf/lib/libstdc++.so.6 .
+          zip libs.zip qt-linux-5.15.1-kobo/plugins/iconengines/libqsvgicon.a qt-linux-5.15.1-kobo/plugins/imageformats/libqgif.a qt-linux-5.15.1-kobo/plugins/imageformats/libqicns.a qt-linux-5.15.1-kobo/plugins/imageformats/libqico.a qt-linux-5.15.1-kobo/plugins/imageformats/libqjpeg.a qt-linux-5.15.1-kobo/plugins/imageformats/libqsvg.a qt-linux-5.15.1-kobo/plugins/imageformats/libqtga.a qt-linux-5.15.1-kobo/plugins/imageformats/libqtiff.a qt-linux-5.15.1-kobo/plugins/imageformats/libqwbmp.a qt-linux-5.15.1-kobo/plugins/imageformats/libqwebp.a qt-linux-5.15.1-kobo/plugins/bearer/libqgenericbearer.a qt-linux-5.15.1-kobo/lib/libQt5Svg.a qt-linux-5.15.1-kobo/lib/libQt5Widgets.a qt-linux-5.15.1-kobo/lib/libQt5Gui.a qt-linux-5.15.1-kobo/lib/libqtlibpng.a qt-linux-5.15.1-kobo/lib/libqtharfbuzz.a qt-linux-5.15.1-kobo/lib/libQt5Network.a -lssl -lcrypto qt-linux-5.15.1-kobo/lib/libQt5Core.a qt-linux-5.15.1-kobo/lib/libqtpcre2.a qt-linux-5.15.1-kobo/lib/libcrypto.so.1.1 qt-linux-5.15.1-kobo/lib/libssl.so.1.1 qt-linux-5.15.1-kobo/lib/libstdc++.so.6 qt-linux-5.15.1-kobo/qml/
+          
+      - name: "Get upload_url"
+        run: echo "::set-output name=upload_url::https://uploads.github.com/repos/$GITHUB_REPOSITORY/releases/$(jq --raw-output '.release.id' $GITHUB_EVENT_PATH)/assets{?name,label}"  
+        id: release
+      - name: Upload Release Asset
+        id: upload-release-asset 
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: UltimateMangaReader
+          asset_name: UltimateMangaReader
+          asset_content_type: application/octet-stream
+      - name: Upload Release Asset
+        id: upload-release-asset2
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: libs.zip
+          asset_name: libs.zip
+          asset_content_type: application/zip    
