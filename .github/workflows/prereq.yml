@@ -67,17 +67,6 @@ jobs:
         export CFLAGS="-O3 -march=armv7-a -mfpu=neon -mfloat-abi=hard -D__arm__ -D__ARM_NEON__ -fPIC -fno-omit-frame-pointer -funwind-tables -Wl,--no-merge-exidx-entries" 
         ./Configure linux-armv4 no-comp --prefix=${SYSROOT}/usr --openssldir=${SYSROOT}/usr --cross-compile-prefix=$CROSS_DIR/arm-kobo-linux-gnueabihf-
         make clean && make -j5 > /dev/null && make install > /dev/null
-    - name: Zlib
-      run: |
-        wget -nv http://zlib.net/zlib-1.2.11.tar.gz
-        tar zxf zlib-1.2.11.tar.gz
-        export CROSS_DIR=~/x-tools/arm-kobo-linux-gnueabihf/bin
-        export SYSROOT=~/x-tools/arm-kobo-linux-gnueabihf/arm-kobo-linux-gnueabihf/sysroot
-        export CFLAGS="-O3 -march=armv7-a -mfpu=neon -mfloat-abi=hard -D__arm__ -D__ARM_NEON__ -fPIC -fno-omit-frame-pointer -funwind-tables -Wl,--no-merge-exidx-entries" 
-        cd zlib-1.2.11
-        export CC=$CROSS_DIR/arm-kobo-linux-gnueabihf-gcc
-        ./configure --prefix=${SYSROOT}/usr 
-        make && make install
     - name: Qt
       run: |
         wget -nv http://download.qt.io/official_releases/qt/5.15/5.15.1/single/qt-everywhere-src-5.15.1.tar.xz
@@ -95,7 +84,6 @@ jobs:
          -xplatform linux-kobo-gnueabihf-g++ \
          -sysroot ${SYSROOT} \
          -openssl-linked OPENSSL_PREFIX="${SYSROOT}/usr" \
-         -system-proxies -static -static-runtime \
          -qt-libjpeg -qt-zlib -qt-libpng -qt-freetype -qt-harfbuzz -qt-pcre -sql-sqlite -linuxfb \
          -no-sse2 -no-xcb -no-xcb-xlib -no-tslib -no-icu -no-iconv -no-dbus \
          -nomake tests -nomake examples -no-compile-examples -no-opengl \
@@ -107,7 +95,7 @@ jobs:
          -skip qtwebengine -skip qtwebview -skip qtwebglplugin \
          -no-cups -no-pch \
          -no-sql-db2 -no-sql-ibase -no-sql-mysql -no-sql-oci -no-sql-odbc -no-sql-psql -no-sql-sqlite2 -no-sql-tds \
-         -no-feature-printdialog -no-feature-printer -no-feature-printpreviewdialog -no-feature-printpreviewwidget
+         -no-feature-printdialog -no-feature-printer -no-feature-printpreviewdialog -no-feature-printpreviewwidget 
          make -j4 >/dev/null && make install
          
     
