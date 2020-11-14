@@ -12,7 +12,7 @@ bool MangaOwl::uptareMangaList(UpdateProgressToken *token)
     QRegularExpression numpagesrx(R"(>(\d+)</a>\s*</li>\s*<li>\s*<a[^>]*?rel="next")");
 
     QRegularExpression mangarx(
-        R"lit(<a href="(https://mangaowl.(?:net|com)/single/[^"]+)">.*?</td>.*?<td>([^<]+)</td>)lit",
+        R"lit(<td>([^<]+)</td>.*?<td class="list-genres">.*?<a href="([^"]+)"[^>]+>Read)lit",
         QRegularExpression::DotMatchesEverythingOption);
 
     auto job = networkManager->downloadAsString(mangalistUrl + "1");
@@ -34,8 +34,9 @@ bool MangaOwl::uptareMangaList(UpdateProgressToken *token)
     if (numpagesrxmatch.hasMatch())
         pages = numpagesrxmatch.captured(1).toInt();
 
+    pages = 10;
     MangaList mangas;
-    mangas.absoluteUrls = true;
+    mangas.absoluteUrls = false;
 
     qDebug() << "pages:" << pages;
 
@@ -44,8 +45,8 @@ bool MangaOwl::uptareMangaList(UpdateProgressToken *token)
         int matches = 0;
         for (auto &match : getAllRxMatches(mangarx, job->buffer))
         {
-            auto title = htmlToPlainText(match.captured(2));
-            auto url = match.captured(1);
+            auto title = htmlToPlainText(match.captured(1));
+            auto url = match.captured(2);
             mangas.append(title, url);
             matches++;
         }
