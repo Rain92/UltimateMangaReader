@@ -1,0 +1,124 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Build prerequisites
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  workflow_dispatch
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build_toolchain"
+  build_toolchain:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      # Runs a single command using the runners shell
+      - name: prerequiesties
+        run: sudo apt-get install build-essential gperf help2man bison texinfo flex gawk autoconf automake wget curl file libncurses-dev
+
+      # Runs a set of commands using the runners shell
+      - name: Run a multi-line script
+        run: |
+          git clone https://github.com/koreader/koxtoolchain 
+          ./koxtoolchain/gen-tc.sh kobo > /dev/null
+
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v2.2.0
+        with:
+          # Artifact name
+          name: toolchain
+          # A file, directory or wildcard pattern that describes what to upload
+          path: ~/x-tools
+          # The desired behavior if no files are found using the provided path.
+          if-no-files-found: error
+          # Duration after which artifact will expire in days. 0 means using default retention.
+          #retention-days: # optional      
+
+
+  build_Qt:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    needs: build_toolchain
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    # Runs a single command using the runners shell
+    - name: Download toolchain
+      uses: actions/download-artifact@v2.0.5
+      with:
+        # Artifact name
+        name: toolchain
+        # Destination path
+        path: ~/x-tools
+    - name: OpenSSL
+      run: |
+        chmod -R 777 ~/x-tools
+        wget -nv https://www.openssl.org/source/openssl-1.1.1g.tar.gz
+        tar -xzf openssl-1.1.1g.tar.gz
+        cd openssl-1.1.1g 
+        export CROSS_DIR=~/x-tools/arm-kobo-linux-gnueabihf/bin 
+        export SYSROOT=~/x-tools/arm-kobo-linux-gnueabihf/arm-kobo-linux-gnueabihf/sysroot 
+        export CFLAGS="-O3 -march=armv7-a -mfpu=neon -mfloat-abi=hard -D__arm__ -D__ARM_NEON__ -fPIC -fno-omit-frame-pointer -funwind-tables -Wl,--no-merge-exidx-entries" 
+        ./Configure linux-armv4 no-comp --prefix=${SYSROOT}/usr --openssldir=${SYSROOT}/usr --cross-compile-prefix=$CROSS_DIR/arm-kobo-linux-gnueabihf-
+        make clean && make -j5 > /dev/null && make install > /dev/null
+    - name: Qt
+      run: |
+        wget -nv http://download.qt.io/official_releases/qt/5.15/5.15.1/single/qt-everywhere-src-5.15.1.tar.xz
+        tar -xf qt-everywhere-src-*.tar.xz
+        mkdir -p qt-everywhere-src-5.15.1/qtbase/mkspecs/linux-kobo-gnueabihf-g++
+        wget https://github.com/mtlive/UltimateMangaReader/raw/master/qmake.conf -O qt-everywhere-src-5.15.1/qtbase/mkspecs/linux-kobo-gnueabihf-g++/qmake.conf
+        echo '#include "../linux-g++/qplatformdefs.h"' > qt-everywhere-src-5.15.1/qtbase/mkspecs/linux-kobo-gnueabihf-g++/qplatformdefs.h
+        export PATH=~/x-tools/arm-kobo-linux-gnueabihf/bin:$PATH
+        export QTDIR=$PWD/qt-everywhere-src-5.15.1 && export PATH=$PWD/qt-everywhere-src-5.15.1/qtbase/bin:$PATH
+        export SYSROOT=~/x-tools/arm-kobo-linux-gnueabihf/arm-kobo-linux-gnueabihf/sysroot
+        cd qt-everywhere-src-*/ 
+        ./configure --recheck-all -opensource -confirm-license -release \
+         -prefix /mnt/onboard/.adds/qt-linux-5.15.1-kobo \
+         -extprefix /home/${USER}/qt-bin/qt-linux-5.15.1-kobo \
+         -xplatform linux-kobo-gnueabihf-g++ \
+         -sysroot ${SYSROOT} \
+         -openssl-linked OPENSSL_PREFIX="${SYSROOT}/usr" \
+         -qt-libjpeg -qt-zlib -qt-libpng -qt-freetype -qt-harfbuzz -qt-pcre -sql-sqlite -linuxfb \
+         -no-sse2 -no-xcb -no-xcb-xlib -no-tslib -no-icu -no-iconv -no-dbus \
+         -nomake tests -nomake examples -no-compile-examples -no-opengl \
+         -skip qtx11extras -skip qtwayland -skip qtwinextras -skip qtmacextras -skip qtandroidextras \
+         -skip qttools -skip qtdoc -skip qtlocation -skip qtremoteobjects -skip qtconnectivity -skip qtgamepad \
+         -skip qt3d -skip qtquick3d -skip qtquickcontrols -skip qtsensors -skip qtspeech -skip qtdatavis3d \
+         -skip qtpurchasing -skip qtserialbus -skip qtserialport -skip multimedia -skip qtquicktimeline -skip qtlottie \
+         -skip activeqt -skip qtscript -skip qtxmlpatterns -skip qtscxml \
+         -skip qtwebengine -skip qtwebview -skip qtwebglplugin \
+         -no-cups -no-pch \
+         -no-sql-db2 -no-sql-ibase -no-sql-mysql -no-sql-oci -no-sql-odbc -no-sql-psql -no-sql-sqlite2 -no-sql-tds \
+         -no-feature-printdialog -no-feature-printer -no-feature-printpreviewdialog -no-feature-printpreviewwidget 
+         make -j4 >/dev/null && make install
+         
+    
+    - name: Upload the updated toolchain (openssl,...)
+      uses: actions/upload-artifact@v2.2.0
+      with:
+        # Artifact name
+        name: toolchain
+        # A file, directory or wildcard pattern that describes what to upload
+        path: ~/x-tools
+        # The desired behavior if no files are found using the provided path.
+        if-no-files-found: error
+        # Duration after which artifact will expire in days. 0 means using default retention.
+        #retention-days: # optional     
+    - name: Upload Qt
+      uses: actions/upload-artifact@v2.2.0
+      with:
+        # Artifact name
+        name: qt
+        # A file, directory or wildcard pattern that describes what to upload
+        path: ~/qt-bin
+        # The desired behavior if no files are found using the provided path.
+        if-no-files-found: error
+        # Duration after which artifact will expire in days. 0 means using default retention.
+        #retention-days: # optional 
+        

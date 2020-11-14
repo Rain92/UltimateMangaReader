@@ -1,0 +1,86 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+#   push:
+#     branches: [ master ]
+#   pull_request:
+#     branches: [ master ]
+  release:
+    types:
+      - published
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+      - name: Download prerequisites
+        # You may pin to the exact commit or the version.
+        # uses: dawidd6/action-download-artifact@86f3002f4e95a0ad10fa8514fe27e1dbfdcd190c
+        uses: dawidd6/action-download-artifact@v2.9.0
+        with:
+          # Workflow name
+          workflow: prereq.yml
+          # Artifact name (download all artifacts in not specified)
+#           name: toolchain
+          # Where to unpack the artifact
+          path: .
+          
+      - name: get toolchain and Qt ready
+        run: |
+          mv toolchain ~/x-tools
+          mv qt ~/qt-bin
+          chmod -R 777 ~/x-tools
+          chmod -R 777 ~/qt-bin
+      - name: build
+        run: |          
+          export QTDIR=qt-everywhere-src-5.15.1 
+          export PATH=~/x-tools/arm-kobo-linux-gnueabihf/bin:$PATH
+          export PATH=~/qt-bin/qt-linux-5.15.1-kobo/bin:$PATH 
+          export SYSROOT=~/x-tools/arm-kobo-linux-gnueabihf/arm-kobo-linux-gnueabihf/sysroot 
+          cd .. && git clone https://github.com/Rain92/qt5-kobo-platform-plugin
+          cd qt5-kobo-platform-plugin 
+          qmake && make -j5 
+          cd $GITHUB_WORKSPACE
+          qmake CONFIG+=kobo && make -j5
+          
+#       - name: packing required libs
+#         run: |             
+#           cd /home/runner/qt-bin
+#           mv ~/x-tools/arm-kobo-linux-gnueabihf/arm-kobo-linux-gnueabihf/sysroot/usr/lib/libcrypto.so.1.1 qt-linux-5.15.1-kobo/lib/
+#           mv ~/x-tools/arm-kobo-linux-gnueabihf/arm-kobo-linux-gnueabihf/sysroot/usr/lib/libssl.so.1.1 qt-linux-5.15.1-kobo/lib/
+#           mv ~/x-tools/arm-kobo-linux-gnueabihf/arm-kobo-linux-gnueabihf/lib/libstdc++.so.6 qt-linux-5.15.1-kobo/lib/
+#           zip -r $GITHUB_WORKSPACE/libs.zip qt-linux-5.15.1-kobo/lib/libQt5Svg.so qt-linux-5.15.1-kobo/lib/libQt5Widgets.so qt-linux-5.15.1-kobo/lib/libQt5Gui.so qt-linux-5.15.1-kobo/lib/libQt5Network.so qt-linux-5.15.1-kobo/lib/libQt5Core.so qt-linux-5.15.1-kobo/lib/libcrypto.so.1.1 qt-linux-5.15.1-kobo/lib/libssl.so.1.1 qt-linux-5.15.1-kobo/lib/libstdc++.so.6 qt-linux-5.15.1-kobo/lib/libQt5Qml*.so qt-linux-5.15.1-kobo/qml/ qt-linux-5.15.1-kobo/plugins/
+          
+          
+      - name: "Get upload_url"
+        run: echo "::set-output name=upload_url::https://uploads.github.com/repos/$GITHUB_REPOSITORY/releases/$(jq --raw-output '.release.id' $GITHUB_EVENT_PATH)/assets{?name,label}"  
+        id: release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: UltimateMangaReader
+          asset_name: UltimateMangaReader
+          asset_content_type: application/octet-stream
+          
+#       - name: Upload required libs
+#         uses: actions/upload-release-asset@v1
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#         with:
+#           upload_url: ${{ steps.release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+#           asset_path: libs.zip
+#           asset_name: libs.zip
+#           asset_content_type: application/zip  
