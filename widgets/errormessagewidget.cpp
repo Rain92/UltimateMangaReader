@@ -3,7 +3,7 @@
 #include "ui_errormessagewidget.h"
 
 ErrorMessageWidget::ErrorMessageWidget(QWidget* parent)
-    : QWidget(parent), ui(new Ui::ErrorMessageWidget), hideTimer(), timeout(7000)
+    : QWidget(parent), ui(new Ui::ErrorMessageWidget), hideTimer(), timeout(3000)
 {
     ui->setupUi(this);
 
