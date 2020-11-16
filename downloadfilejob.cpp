@@ -36,10 +36,7 @@ void DownloadFileJob::start()
                              &DownloadFileJob::downloadFileReadyRead);
             QObject::connect(reply.get(), &QNetworkReply::finished, this,
                              &DownloadFileJob::downloadFileFinished);
-            QObject::connect(
-                reply.get(),
-                static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
-                this, &DownloadFileJob::onError);
+            QObject::connect(reply.get(), &QNetworkReply::errorOccurred, this, &DownloadFileJob::onError);
             QObject::connect(reply.get(), &QNetworkReply::sslErrors, this, &DownloadJobBase::onSslErrors);
         }
         else

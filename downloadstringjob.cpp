@@ -31,9 +31,7 @@ void DownloadStringJob::start()
     reply->setParent(nullptr);
 
     QObject::connect(reply.get(), &QNetworkReply::finished, this, &DownloadStringJob::downloadStringFinished);
-    QObject::connect(reply.get(),
-                     static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
-                     this, &DownloadStringJob::onError);
+    QObject::connect(reply.get(), &QNetworkReply::errorOccurred, this, &DownloadStringJob::onError);
     QObject::connect(reply.get(), &QNetworkReply::sslErrors, this, &DownloadJobBase::onSslErrors);
 
     if (timeoutTime > 0)
