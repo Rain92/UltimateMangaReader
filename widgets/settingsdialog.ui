@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>301</width>
-    <height>432</height>
+    <width>387</width>
+    <height>526</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -105,6 +105,14 @@
      <property name="text">
       <string>Trim pages: remove white margins from 
 newly downloaded images</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="checkBoxManhwaMode">
+     <property name="text">
+      <string>Enable Manhwa Mode: Enables vertical scrolling 
+for very long pages</string>
      </property>
     </widget>
    </item>

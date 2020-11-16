@@ -4,6 +4,7 @@
 #include <QImage>
 
 #include "downloadfilejob.h"
+#include "settings.h"
 
 class DownloadScaledImageJob : public DownloadFileJob
 {
@@ -11,7 +12,7 @@ class DownloadScaledImageJob : public DownloadFileJob
 
 public:
     DownloadScaledImageJob(QNetworkAccessManager *networkManager, const QString &url, const QString &path,
-                           QSize imgSize, bool flipVerticalImage, bool trimImage,
+                           QSize imgSize, Settings *settings,
                            const QList<std::tuple<const char *, const char *>> &customHeaders = {});
 
 signals:
@@ -22,8 +23,7 @@ public slots:
 
 private:
     QSize imgSize;
-    bool trimImage;
-    bool flipVerticalImage;
+    Settings *settings;
 
     bool processImage(const QByteArray &array);
     QImage rescaleImage(const QImage &img);

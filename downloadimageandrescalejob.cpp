@@ -2,12 +2,8 @@
 
 DownloadScaledImageJob::DownloadScaledImageJob(
     QNetworkAccessManager *networkManager, const QString &url, const QString &path, QSize imgSize,
-    bool flipVerticalImage, bool trimImage,
-    const QList<std::tuple<const char *, const char *>> &customHeaders)
-    : DownloadFileJob(networkManager, url, path, customHeaders),
-      imgSize(imgSize),
-      trimImage(trimImage),
-      flipVerticalImage(flipVerticalImage)
+    Settings *settings, const QList<std::tuple<const char *, const char *>> &customHeaders)
+    : DownloadFileJob(networkManager, url, path, customHeaders), imgSize(imgSize), settings(settings)
 {
 }
 
@@ -110,8 +106,12 @@ QRect DownloadScaledImageJob::getTrimRect(const QImage &img)
 QImage DownloadScaledImageJob::rescaleImage(const QImage &img)
 {
     auto rsize = imgSize;
-    if (flipVerticalImage && (img.width() <= img.height()) != (imgSize.width() <= imgSize.height()))
+    if (settings->doublePageFullscreen &&
+        (img.width() <= img.height()) != (imgSize.width() <= imgSize.height()))
         rsize.transpose();
+    else if (settings->manhwaMode &&
+             ((float)img.height() / img.width()) > 1.6 * ((float)imgSize.height() / imgSize.width()))
+        rsize = QSize(imgSize.width(), ((float)imgSize.width()) / img.width() * img.height());
 
     return img.scaled(rsize.width(), rsize.height(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
 }
@@ -125,7 +125,7 @@ bool DownloadScaledImageJob::processImage(const QByteArray &array)
     if (!img.loadFromData(array))
         return false;
 
-    if (!trimImage)
+    if (!settings->trimPages)
         img = rescaleImage(img);
 
     auto greyImg = img.convertToFormat(QImage::Format_Grayscale8);
@@ -133,7 +133,7 @@ bool DownloadScaledImageJob::processImage(const QByteArray &array)
 
     if (!greyImg.isNull())
     {
-        if (trimImage)
+        if (settings->trimPages)
         {
             auto trimRect = getTrimRect(greyImg);
             greyImg = greyImg.copy(trimRect);

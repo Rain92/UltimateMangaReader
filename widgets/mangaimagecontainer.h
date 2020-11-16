@@ -16,11 +16,16 @@ public:
     void setImage(QSharedPointer<QPixmap> img);
     void clearImage();
     void showErrorImage();
+    void setVOffset(int y);
 
 protected:
-    virtual void paintEvent(QPaintEvent *);
+    virtual void paintEvent(QPaintEvent *) override;
+    virtual void mousePressEvent(QMouseEvent *event) override;
+    virtual void mouseMoveEvent(QMouseEvent *event) override;
 
 private:
+    int lastY;
+    int vOffset;
     bool showError;
     QSharedPointer<QPixmap> pixmap;
     QSharedPointer<QPixmap> errorPixmap;

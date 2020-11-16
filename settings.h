@@ -30,6 +30,7 @@ public:
 
     bool doublePageFullscreen;
     bool trimPages;
+    bool manhwaMode;
 
     QMap<QString, bool> enabledMangaSources;
 

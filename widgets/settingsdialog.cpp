@@ -41,6 +41,7 @@ void SettingsDialog::resetUI()
 
     ui->checkBoxDoublePages->setChecked(settings->doublePageFullscreen);
     ui->checkBoxTrim->setChecked(settings->trimPages);
+    ui->checkBoxManhwaMode->setChecked(settings->manhwaMode);
 
     ui->comboBoxTab->setCurrentIndex(settings->tabAdvance);
     ui->comboBoxSwipe->setCurrentIndex(settings->swipeAdvance);
@@ -72,6 +73,7 @@ void SettingsDialog::updateSettings()
 
     settings->doublePageFullscreen = ui->checkBoxDoublePages->isChecked();
     settings->trimPages = ui->checkBoxTrim->isChecked();
+    settings->manhwaMode = ui->checkBoxManhwaMode->isChecked();
 
     settings->tabAdvance = static_cast<AdvancePageGestureDirection>(ui->comboBoxTab->currentIndex());
     settings->swipeAdvance = static_cast<AdvancePageGestureDirection>(ui->comboBoxSwipe->currentIndex());

@@ -31,14 +31,16 @@ QNetworkAccessManager *NetworkManager::networkAccessManager()
 bool NetworkManager::connectWifi()
 {
 #ifdef KOBO
-    if (QNetworkProxy::applicationProxy().type()!=QNetworkProxy::NoProxy)
+    if (QNetworkProxy::applicationProxy().type() != QNetworkProxy::NoProxy)
     {
         QNetworkProxy proxy;
         proxy.setType(QNetworkProxy::applicationProxy().type());
         proxy.setHostName(QNetworkProxy::applicationProxy().hostName());
         proxy.setPort(QNetworkProxy::applicationProxy().port());
         QNetworkProxy::setApplicationProxy(proxy);
-        qDebug() << "***Using proxy:\t" << QNetworkProxy::applicationProxy().hostName() << ":" << QNetworkProxy::applicationProxy().port() << " type:" << QNetworkProxy::applicationProxy().type();
+        qDebug() << "***Using proxy:\t" << QNetworkProxy::applicationProxy().hostName() << ":"
+                 << QNetworkProxy::applicationProxy().port()
+                 << " type:" << QNetworkProxy::applicationProxy().type();
     }
 #endif
     if (!checkInternetConnection())
@@ -168,8 +170,7 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const QStr
             applicableCustomHeaders.append(std::tuple<const char *, const char *>(name, value));
 
     auto job = QSharedPointer<DownloadFileJob>(
-        new DownloadScaledImageJob(networkManager, url, localPath, imageRescaleSize,
-                                   settings->doublePageFullscreen, settings->trimPages,
+        new DownloadScaledImageJob(networkManager, url, localPath, imageRescaleSize, settings,
                                    applicableCustomHeaders),
         [this](DownloadScaledImageJob *j) {
             this->fileDownloads.remove(j->originalUrl);
