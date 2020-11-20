@@ -24,11 +24,11 @@ public:
     QString cacheDir;
     QString mangaListDir;
     QString screensaverDir;
-    const int imageCacheSize = 10;
+    const int imageCacheSize = 7;
     const int parallelDownloadsLow = 4;
     const int parallelDownloadsMid = 6;
     const int parallelDownloadsHigh = 8;
-    const int forwardPreloads = 6;
+    const int forwardPreloads = 4;
     const int backwardPreloads = 1;
     const int autoSuspendIntervalMinutes = 15;
     const int globalTickIntervalSeconds = 60;

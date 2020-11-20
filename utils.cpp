@@ -139,3 +139,22 @@ qint64 getFreeSpace()
     qint64 space = info.bytesAvailable() / 1024 / 1024;
     return space;
 }
+
+unsigned long long getTotalSystemMemory()
+{
+    long pages = sysconf(_SC_PHYS_PAGES);
+    long page_size = sysconf(_SC_PAGE_SIZE);
+    return pages * page_size;
+}
+
+unsigned long long getFreeSystemMemory()
+{
+    long pages = sysconf(_SC_AVPHYS_PAGES);
+    long page_size = sysconf(_SC_PAGE_SIZE);
+    return pages * page_size;
+}
+
+bool enoughFreeSystemMemory()
+{
+    return getFreeSystemMemory() / 1024 / 1024 > 150;
+}

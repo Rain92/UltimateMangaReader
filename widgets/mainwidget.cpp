@@ -102,7 +102,8 @@ MainWidget::MainWidget(QWidget *parent)
     });
 
     QObject::connect(core->mangaController, &MangaController::completedImagePreloadSignal,
-                     ui->mangaReaderWidget, &MangaReaderWidget::addImageToCache);
+                     ui->mangaReaderWidget,
+                     [this](auto path) { ui->mangaReaderWidget->addImageToCache(path, true); });
 
     QObject::connect(core->mangaController, &MangaController::currentIndexChanged, ui->mangaReaderWidget,
                      &MangaReaderWidget::updateCurrentIndex);

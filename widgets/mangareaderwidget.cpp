@@ -206,7 +206,7 @@ void MangaReaderWidget::showImage(const QString &path)
         }
         else
         {
-            if (addImageToCache(path))
+            if (addImageToCache(path, false))
             {
                 i = searchCache(path);
                 ui->mangaImageContainer->setImage(imgcache[i].first);
@@ -223,12 +223,28 @@ void MangaReaderWidget::showImage(const QString &path)
     }
 }
 
-bool MangaReaderWidget::addImageToCache(const QString &path)
+void MangaReaderWidget::checkMem()
+{
+    while (!enoughFreeSystemMemory() && imgcache.count() > 1)
+    {
+        //        int free = getFreeSystemMemory() / 1024 / 1024;
+        //        qDebug() << "Free(MB):" << free;
+        imgcache.removeLast();
+        //        free = getFreeSystemMemory() / 1024 / 1024;
+        //        qDebug() << "Freed memory!" << free;
+    }
+}
+
+bool MangaReaderWidget::addImageToCache(const QString &path, bool isPreload)
 {
     int i = searchCache(path);
     if (i != -1)
     {
         imgcache.move(i, 0);
+    }
+    else if (isPreload && !enoughFreeSystemMemory())
+    {
+        return false;
     }
     else
     {
@@ -252,6 +268,9 @@ bool MangaReaderWidget::addImageToCache(const QString &path)
         if (imgcache.count() > CONF.imageCacheSize)
             imgcache.removeLast();
     }
+
+    checkMem();
+
     return true;
 }
 

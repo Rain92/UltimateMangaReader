@@ -16,7 +16,7 @@ NetworkManager::NetworkManager(QObject *parent)
 {
     networkManager->setCookieJar(&cookies);
 #ifdef KOBO
-    QString sslCertPath = "/mnt/onboard/.adds/qt-linux-5.15.0-kobo/lib/ssl_certs";
+    QString sslCertPath = "/mnt/onboard/.adds/qt-linux-5.15.1-kobo/lib/ssl_certs";
     if (qEnvironmentVariableIsSet("QTPATH"))
         sslCertPath = qEnvironmentVariable("QTPATH") + "/lib/ssl_certs";
     loadCertificates(sslCertPath);

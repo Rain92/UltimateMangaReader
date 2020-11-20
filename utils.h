@@ -1,6 +1,8 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <unistd.h>
+
 #include <QRegularExpression>
 #include <QScrollArea>
 #include <QScroller>
@@ -95,5 +97,9 @@ void activateScroller(QAbstractScrollArea* pArea);
 
 qint64 getCacheSize();
 qint64 getFreeSpace();
+
+unsigned long long getTotalSystemMemory();
+unsigned long long getFreeSystemMemory();
+bool enoughFreeSystemMemory();
 
 #endif  // UTILS_H

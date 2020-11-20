@@ -33,6 +33,9 @@ void MangaImageContainer::clearImage()
 
 void MangaImageContainer::setVOffset(int y)
 {
+    if (!pixmap || pixmap.isNull())
+        return;
+
     vOffset = qMax(qMin(y, (int)(pixmap->height() / qApp->devicePixelRatio()) - this->height()), 0);
     this->update();
 }
@@ -52,8 +55,9 @@ void MangaImageContainer::mousePressEvent(QMouseEvent *event)
 
 void MangaImageContainer::mouseMoveEvent(QMouseEvent *event)
 {
-    setVOffset(vOffset + lastY - event->y());
+    int deltay = lastY - event->y();
     lastY = event->y();
+    setVOffset(vOffset + 2 * deltay);
 }
 
 void MangaImageContainer::paintEvent(QPaintEvent *)
@@ -78,7 +82,7 @@ void MangaImageContainer::paintEvent(QPaintEvent *)
     int x = (this->size().width() - img->width() / pixelRatio) / 2;
     int y = (this->size().height() - img->height() / pixelRatio) / 2;
 
-    if (pixmap->height() > this->height() * 1.1)
+    if (img->height() > this->height() * 1.1)
         y = -vOffset;
 
     painter.drawPixmap(x, y, img->width() / pixelRatio, img->height() / pixelRatio, *img);

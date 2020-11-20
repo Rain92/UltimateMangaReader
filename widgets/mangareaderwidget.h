@@ -10,6 +10,7 @@
 #include "readingprogress.h"
 #include "settings.h"
 #include "sizes.h"
+#include "utils.h"
 
 namespace Ui
 {
@@ -31,7 +32,7 @@ public:
                                  int comflight);
     void setFrontLightPanelState(int light, int comflight);
 
-    bool addImageToCache(const QString &path);
+    bool addImageToCache(const QString &path, bool isPreload = true);
     void updateMenuBar();
     void setSettings(Settings *settings);
 
@@ -76,6 +77,7 @@ private:
     int searchCache(const QString &path) const;
 
     void showMenuBar(bool show);
+    void checkMem();
 };
 
 #endif  // MANGAREADERWIDGET_H
