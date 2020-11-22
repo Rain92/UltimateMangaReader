@@ -435,6 +435,13 @@ void MainWidget::setWidgetTab(WidgetTab tab)
 
     ui->batteryIcon->updateIcon();
     ui->stackedWidget->setCurrentIndex(tab);
+
+    //kiwilex issue-15
+    //force focus on widget to activate signal for hardware buttons
+    QWidget *w = ui->stackedWidget->currentWidget();
+    if (w)
+        w->setFocus();
+
 }
 
 void MainWidget::readerGoBack()
