@@ -38,8 +38,8 @@ bool MangaPanda::uptareMangaList(UpdateProgressToken *token)
 
     const int matchesPerPage = 30;
     auto lambda = [&](QSharedPointer<DownloadStringJob> job) {
-        int spos = job->buffer.indexOf(R"(id="mangaresults")");
-        int epos = job->buffer.indexOf(R"(id="navigator")");
+        int spos = job->buffer.indexOf(R"(>Popular Mangas)");
+        int epos = job->buffer.indexOf(R"(<li class="active">)");
 
         int matches = 0;
         for (auto &match : getAllRxMatches(mangarx, job->buffer, spos, epos))
@@ -53,7 +53,7 @@ bool MangaPanda::uptareMangaList(UpdateProgressToken *token)
         token->sendProgress(10 + 90 * (mangas.size / matchesPerPage) / pages);
         qDebug() << "matches:" << matches;
         if (matches < matchesPerPage)
-            qDebug() << "          Incomplete match in page:" << job->url;
+            qDebug() << "       Incomplete match in page:" << job->url;
     };
 
     lambda(job);
