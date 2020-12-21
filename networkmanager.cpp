@@ -109,13 +109,23 @@ bool NetworkManager::checkInternetConnection()
     return connected;
 }
 
+QString NetworkManager::fixUrl(const QString &url)
+{
+    if (url.startsWith("//"))
+        return "http:" + url;
+
+    return url;
+}
+
 QSharedPointer<DownloadStringJob> NetworkManager::downloadAsString(const QString &url, int timeout,
                                                                    const QByteArray &postData)
 {
-    qDebug() << "Downloading as string:" << url;
+    auto urlf = fixUrl(url);
+
+    qDebug() << "Downloading as string:" << urlf;
 
     auto job = QSharedPointer<DownloadStringJob>(
-        new DownloadStringJob(networkManager, url, timeout, postData), &QObject::deleteLater);
+        new DownloadStringJob(networkManager, urlf, timeout, postData), &QObject::deleteLater);
 
     job->start();
 
@@ -125,18 +135,20 @@ QSharedPointer<DownloadStringJob> NetworkManager::downloadAsString(const QString
 
 QSharedPointer<DownloadFileJob> NetworkManager::downloadAsFile(const QString &url, const QString &localPath)
 {
-    if (fileDownloads.contains(url))
+    auto urlf = fixUrl(url);
+
+    if (fileDownloads.contains(urlf))
     {
-        auto job = fileDownloads.value(url).toStrongRef();
+        auto job = fileDownloads.value(urlf).toStrongRef();
         if (job)
             return job;
         else
-            fileDownloads.remove(url);
+            fileDownloads.remove(urlf);
     }
 
-    qDebug() << "Downloading as file:" << url;
+    qDebug() << "Downloading as file:" << urlf;
 
-    auto job = QSharedPointer<DownloadFileJob>(new DownloadFileJob(networkManager, url, localPath),
+    auto job = QSharedPointer<DownloadFileJob>(new DownloadFileJob(networkManager, urlf, localPath),
                                                [this](DownloadFileJob *j) {
                                                    this->fileDownloads.remove(j->originalUrl);
                                                    j->deleteLater();
@@ -144,7 +156,7 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsFile(const QString &ur
 
     job->start();
 
-    fileDownloads.insert(url, job.toWeakRef());
+    fileDownloads.insert(urlf, job.toWeakRef());
 
     emit activity();
     return job;
@@ -153,25 +165,27 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsFile(const QString &ur
 QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const QString &url,
                                                                       const QString &localPath)
 {
-    if (fileDownloads.contains(url))
+    auto urlf = fixUrl(url);
+
+    if (fileDownloads.contains(urlf))
     {
-        auto job = fileDownloads.value(url).toStrongRef();
+        auto job = fileDownloads.value(urlf).toStrongRef();
         if (job)
             return job;
         else
-            fileDownloads.remove(url);
+            fileDownloads.remove(urlf);
     }
 
-    qDebug() << "Downloading as image:" << url;
+    qDebug() << "Downloading as image:" << urlf;
 
     QList<std::tuple<const char *, const char *>> applicableCustomHeaders;
 
     for (const auto &[domain, name, value] : customHeaders)
-        if (url.contains(domain))
+        if (urlf.contains(domain))
             applicableCustomHeaders.append(std::tuple<const char *, const char *>(name, value));
 
     auto job = QSharedPointer<DownloadFileJob>(
-        new DownloadScaledImageJob(networkManager, url, localPath, imageRescaleSize, settings,
+        new DownloadScaledImageJob(networkManager, urlf, localPath, imageRescaleSize, settings,
                                    applicableCustomHeaders),
         [this](DownloadScaledImageJob *j) {
             this->fileDownloads.remove(j->originalUrl);
@@ -180,7 +194,7 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const QStr
 
     job->start();
 
-    fileDownloads.insert(url, job.toWeakRef());
+    fileDownloads.insert(urlf, job.toWeakRef());
 
     emit activity();
     return job;

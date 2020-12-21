@@ -82,22 +82,25 @@ bool MangaPanda::uptareMangaList(UpdateProgressToken *token)
 void MangaPanda::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
                                                 QSharedPointer<MangaInfo> info)
 {
-    //    QRegularExpression titlerx(R"(<h2 class="aname">([^<]*))");
-    QRegularExpression authorrx("Author:</td>[^>]*>([^<]*)");
-    QRegularExpression artistrx("Artist:</td>[^>]*>([^<]*)");
-    QRegularExpression statusrx("Status:</td>[^>]*>([^<]*)");
-    QRegularExpression yearrx("Year of Release:</td>[^>]*>([^<]*)");
-    QRegularExpression genresrx("Genre:</td>(.*?)</td>", QRegularExpression::DotMatchesEverythingOption);
-    QRegularExpression summaryrx(R"(<div id="readmangasum">.*?<p>(.*?)</p>)",
+    QRegularExpression authorrx("Author ?:</td>[^>]*>([^<]*)");
+    QRegularExpression artistrx("Artist ?:</td>[^>]*>([^<]*)");
+    QRegularExpression statusrx("Status ?:</td>[^>]*>([^<]*)");
+    QRegularExpression yearrx("Year of Release ?:</td>[^>]*>([^<]*)");
+    QRegularExpression genresrx("Genre ?:</td>(.*?)</td>", QRegularExpression::DotMatchesEverythingOption);
+    QRegularExpression summaryrx(R"(>Read [^<]* Online</div><p>(.*?)</p>)",
                                  QRegularExpression::DotMatchesEverythingOption);
-    QRegularExpression coverrx(R"(<div id="mangaimg"><img src="([^"]*))");
+    QRegularExpression coverrx(R"(<img src="([^"]*/cover/[^"]*))");
 
     QRegularExpression chapterrx(R"lit(<a href="([^"]*)"[^>]*>([^<]*)</a>([^<]*))lit");
 
-    fillMangaInfo(info, job->buffer, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx, coverrx);
+    fillMangaInfo(info, job->buffer, authorrx, artistrx, statusrx, yearrx, QRegularExpression(), summaryrx,
+                  coverrx);
 
-    int spos = job->buffer.indexOf(R"(<div id="chapterlist">)");
-    int epos = job->buffer.indexOf(R"(<div id="adfooter">)", spos);
+    int spos = job->buffer.indexOf(R"(Date Added)");
+    int epos = job->buffer.indexOf(R"(<script>)", spos);
+
+    auto genresrxmatch = genresrx.match(job->buffer);
+    info->genres = htmlToPlainText(genresrxmatch.captured(1).replace("</a>", " ")).trimmed();
 
     MangaChapterCollection newchapters;
     for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->buffer, spos, epos))
@@ -113,40 +116,17 @@ void MangaPanda::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob
 
 Result<QStringList, QString> MangaPanda::getPageList(const QString &chapterUrl)
 {
-    QRegularExpression pagerx(R"lit(<option value="([^"]*)")lit");
+    QRegularExpression pagerx(R"lit("u":"([^"]*)")lit");
 
     auto job = networkManager->downloadAsString(chapterUrl);
 
     if (!job->await(7000))
         return Err(job->errorString);
 
-    int spos = job->buffer.indexOf(R"(<select id="pageMenu")");
-    int epos = job->buffer.indexOf("</select>", spos);
-
-    QStringList pageUrls;
-    for (auto &match : getAllRxMatches(pagerx, job->buffer, spos, epos))
+    QStringList imageUrls;
+    for (auto &match : getAllRxMatches(pagerx, job->buffer))
     {
-        pageUrls.append(baseurl + match.captured(1));
+        imageUrls.append(match.captured(1).remove('\\'));
     }
-
-    return Ok(pageUrls);
-}
-
-Result<QString, QString> MangaPanda::getImageUrl(const QString &pageUrl)
-{
-    QRegularExpression imagerx(R"lit(<img id="img"[^>]*src="([^"]*)")lit");
-
-    auto job = networkManager->downloadAsString(pageUrl);
-
-    if (!job->await(7000))
-        return Err(job->errorString);
-
-    auto match = imagerx.match(job->buffer);
-
-    if (!match.hasMatch())
-        return Err(QString("Couldn't process pages/images."));
-
-    auto imageUrl = match.captured(1);
-
-    return Ok(imageUrl);
+    return Ok(imageUrls);
 }

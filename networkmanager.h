@@ -65,6 +65,7 @@ private:
     QList<std::tuple<QString, const char *, const char *>> customHeaders;
 
     QMap<QString, QWeakPointer<DownloadFileJob>> fileDownloads;
+    QString fixUrl(const QString &url);
 };
 
 #endif  // DOWNLOADMANAGER_H
