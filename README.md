@@ -130,7 +130,7 @@ export PATH=$PATH:/home/${USER}/x-tools/arm-kobo-linux-gnueabihf/bin/
 
 Configure, make and install Qt:
 ```shell
-export QTDIR=qt-linux-5.15.1-kobo
+export QTDIR=qt-linux-5.15.2-kobo
 export SYSROOT=/home/${USER}/x-tools/arm-kobo-linux-gnueabihf/arm-kobo-linux-gnueabihf/sysroot
 ./configure --recheck-all -opensource -confirm-license -release -verbose \
  -prefix /mnt/onboard/.adds/${QTDIR} \
@@ -145,7 +145,7 @@ export SYSROOT=/home/${USER}/x-tools/arm-kobo-linux-gnueabihf/arm-kobo-linux-gnu
  -skip qttools -skip qtdoc -skip qtlocation -skip qtremoteobjects -skip qtconnectivity -skip qtgamepad \
  -skip qt3d -skip qtquick3d -skip qtquickcontrols -skip qtsensors -skip qtspeech -skip qtdatavis3d \
  -skip qtpurchasing -skip qtserialbus -skip qtserialport -skip multimedia -skip qtquicktimeline -skip qtlottie \
- -skip activeqt -skip qtscript -skip qtxmlpatterns -skip qtscxml \
+ -skip activeqt -skip qtscript -skip qtxmlpatterns -skip qtscxml -skip qtvirtualkeyboard \
  -skip qtwebengine -skip qtwebview -skip qtwebglplugin \
  -no-cups -no-pch -no-libproxy \
  -no-sql-db2 -no-sql-ibase -no-sql-mysql -no-sql-oci -no-sql-odbc -no-sql-psql -no-sql-sqlite2 -no-sql-tds \
