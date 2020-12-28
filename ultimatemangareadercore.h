@@ -7,6 +7,7 @@
 #include "mangachapterdownloadmanager.h"
 #include "mangacontroller.h"
 #include "mangadex.h"
+#include "mangago.h"
 #include "mangahub.h"
 #include "mangakakalot.h"
 #include "mangaowl.h"
