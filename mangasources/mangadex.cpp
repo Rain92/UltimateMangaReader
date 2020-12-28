@@ -141,7 +141,7 @@ bool MangaDex::uptareMangaList(UpdateProgressToken *token)
     return true;
 }
 
-QString padChapterNumber(QString number, int places = 4)
+QString padChapterNumber(const QString &number, int places = 4)
 {
     auto range = number.split('-');
     QStringList result;
