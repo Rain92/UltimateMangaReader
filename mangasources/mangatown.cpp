@@ -123,7 +123,7 @@ Result<QStringList, QString> MangaTown::getPageList(const QString &chapterUrl)
     QStringList imageUrls;
     for (int i = 1; i <= numPages; i++)
     {
-        auto url = QString("%1%2.html").arg(chapterUrl).arg(i);
+        auto url = QString("%1%2.html").arg(job->url).arg(i);
         imageUrls.append(url);
     }
 
