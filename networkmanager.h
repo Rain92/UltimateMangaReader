@@ -8,21 +8,6 @@
 #include "downloadstringjob.h"
 #include "settings.h"
 
-class CCookieJar : public QNetworkCookieJar
-{
-public:
-    CCookieJar() : cookies() {}
-    void addCookie(const QString &domain, const char *key, const char *value)
-    {
-        QNetworkCookie c = QNetworkCookie(QByteArray(key), QByteArray(value));
-        c.setDomain(domain);
-        c.setExpirationDate(QDateTime::currentDateTime().addDays(1));
-        cookies.append(c);
-        setAllCookies(cookies);
-    }
-    QList<QNetworkCookie> cookies;
-};
-
 class NetworkManager : public QObject
 {
     Q_OBJECT
@@ -57,7 +42,6 @@ signals:
 
 private:
     QNetworkAccessManager *networkManager;
-    CCookieJar cookies;
 
     QSize imageRescaleSize;
     Settings *settings;

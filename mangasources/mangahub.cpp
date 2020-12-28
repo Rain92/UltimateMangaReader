@@ -3,7 +3,7 @@
 MangaHub::MangaHub(NetworkManager *dm) : AbstractMangaSource(dm)
 {
     name = "MangaHub";
-    baseurl = "https://mangahub.io/";
+    baseUrl = "https://mangahub.io/";
     dicturl = "https://mangahub.io/search/page/";
 }
 
@@ -96,9 +96,6 @@ void MangaHub::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> 
 
     QRegularExpression chapterrx(
         R"lit(<a href="(https://mangahub.io/chapter/[^"]+)"[^>]*>(.*?)</span></span>)lit");
-
-    for (auto &c : job->getCookies())
-        networkManager->addCookie(c.domain(), c.name(), c.value());
 
     fillMangaInfo(info, job->buffer, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx, coverrx);
 

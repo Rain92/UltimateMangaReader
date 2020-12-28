@@ -48,6 +48,7 @@ HEADERS += \
     mangachapterdownloadmanager.h \
     mangacontroller.h \
     mangaindextraverser.h \
+    mangasources/mangago.h \
     mangasources/mangahere.h \
     mangasources/mangakakalot.h \
     mangasources/mangatown.h \
@@ -106,6 +107,7 @@ SOURCES += \
     mangacontroller.cpp \
     mangaindextraverser.cpp \
     mangalist.cpp \
+    mangasources/mangago.cpp \
     mangasources/mangahere.cpp \
     mangasources/mangakakalot.cpp \
     mangasources/mangatown.cpp \

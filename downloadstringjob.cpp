@@ -61,7 +61,7 @@ void DownloadStringJob::downloadStringFinished()
     timeoutTimer.stop();
 
     QUrl redirect = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
-    if (redirect.isValid() && reply->url() != redirect)
+    if (redirect.isValid())
     {
         if (redirect.host() != "")
         {

@@ -3,7 +3,7 @@
 MangaDex::MangaDex(NetworkManager *dm) : AbstractMangaSource(dm)
 {
     name = "MangaDex";
-    baseurl = "https://mangadex.org";
+    baseUrl = "https://mangadex.org";
 
     //    networkManager->addCookie(".mangadex.org", "mangadex_h_toggle", "1");
     networkManager->addCookie(".mangadex.org", "mangadex_title_mode", "2");
@@ -56,18 +56,7 @@ void MangaDex::login()
 
     QString loginurl("https://mangadex.org/ajax/actions.ajax.php?function=login&nojs=1");
 
-    auto lambda = [this](QSharedPointer<DownloadJobBase> job) {
-        auto ncookies = job->getCookies();
-        foreach (QNetworkCookie c, ncookies)
-        {
-            qDebug() << "Added cookie" << c.name() << c.value();
-            networkManager->addCookie(".mangadex.org", c.name(), c.value());
-        }
-    };
-
     auto job = networkManager->downloadAsString(loginurl, 6000, query);
-
-    executeOnJobCompletion(job, lambda);
 }
 
 bool MangaDex::uptareMangaList(UpdateProgressToken *token)
@@ -79,7 +68,7 @@ bool MangaDex::uptareMangaList(UpdateProgressToken *token)
 
     MangaList mangas;
 
-    QString basedictUrl = baseurl + "/titles/9/";
+    QString basedictUrl = baseUrl + "/titles/9/";
 
     auto job = networkManager->downloadAsString(basedictUrl + "1", -1);
 
@@ -183,7 +172,7 @@ void MangaDex::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> 
 
     info->summary = htmlToPlainText(mangaObject["description"].toString()).remove(bbrx);
 
-    info->coverUrl = baseurl + mangaObject["cover_url"].toString();
+    info->coverUrl = baseUrl + mangaObject["cover_url"].toString();
 
     auto chaptersObject = jsonObject["chapter"].toObject();
 

@@ -261,6 +261,7 @@ void AbstractMangaSource::fillMangaInfo(QSharedPointer<MangaInfo> info, const QS
                            .trimmed()
                            .remove('\n')
                            .replace(", ", " ")
+                           .replace("/ ", " ")
                            .replace(",", " ");
     if (summaryrxmatch.hasMatch())
         info->summary = htmlToPlainText(summaryrxmatch.captured(1)).remove(bbrx);

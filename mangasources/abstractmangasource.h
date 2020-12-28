@@ -23,7 +23,7 @@ class AbstractMangaSource
 public:
     QString name;
 
-    QString baseurl;
+    QString baseUrl;
 
     MangaList mangaList;
 

@@ -3,8 +3,8 @@
 Mangakakalot::Mangakakalot(NetworkManager *networkManager) : AbstractMangaSource(networkManager)
 {
     name = "Mangakakalot";
-    baseurl = "https://mangakakalot.com/";
-    dictionaryUrl = baseurl + "manga_list?type=topview&category=all&state=all&page=";
+    baseUrl = "https://mangakakalot.com/";
+    dictionaryUrl = baseUrl + "manga_list?type=topview&category=all&state=all&page=";
 
     networkManager->addCookie("mangakakalot.com", "content_lazyload", "off");
     networkManager->addCookie("manganelo.com", "content_lazyload", "off");

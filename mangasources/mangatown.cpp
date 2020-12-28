@@ -3,7 +3,7 @@
 MangaTown::MangaTown(NetworkManager *networkManager) : AbstractMangaSource(networkManager)
 {
     name = "MangaTown";
-    baseurl = "https://www.mangatown.com";
+    baseUrl = "https://www.mangatown.com";
     dictionaryUrl = "https://www.mangatown.com/directory/";
 }
 
@@ -99,7 +99,7 @@ void MangaTown::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob>
 
     MangaChapterCollection newchapters;
     for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->buffer, spos, epos))
-        newchapters.insert(0, MangaChapter(chapterrxmatch.captured(2), baseurl + chapterrxmatch.captured(1)));
+        newchapters.insert(0, MangaChapter(chapterrxmatch.captured(2), baseUrl + chapterrxmatch.captured(1)));
     info->chapters.mergeChapters(newchapters);
 }
 

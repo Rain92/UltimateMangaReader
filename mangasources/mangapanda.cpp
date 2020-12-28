@@ -3,8 +3,8 @@
 MangaPanda::MangaPanda(NetworkManager *dm) : AbstractMangaSource(dm)
 {
     name = "MangaPanda";
-    baseurl = "http://www.mangapanda.com";
-    dictionaryUrl = baseurl + "/popular/";
+    baseUrl = "http://www.mangapanda.com";
+    dictionaryUrl = baseUrl + "/popular/";
 }
 
 bool MangaPanda::uptareMangaList(UpdateProgressToken *token)
@@ -108,7 +108,7 @@ void MangaPanda::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob
         auto ctitle = chapterrxmatch.captured(2);
         if (chapterrxmatch.captured(3) != " : ")
             ctitle += chapterrxmatch.captured(3);
-        auto curl = baseurl + chapterrxmatch.captured(1);
+        auto curl = baseUrl + chapterrxmatch.captured(1);
         newchapters.append(MangaChapter(ctitle, curl));
     }
     info->chapters.mergeChapters(newchapters);

@@ -3,7 +3,7 @@
 MangaHere::MangaHere(NetworkManager *networkManager) : AbstractMangaSource(networkManager)
 {
     name = "MangaHere";
-    baseurl = "https://www.mangahere.cc";
+    baseUrl = "https://www.mangahere.cc";
     dictionaryUrl = "https://www.mangahere.cc/directory/1/";
 
     networkManager->addCookie(".mangahere.cc", "isAdult", "1");
@@ -106,7 +106,7 @@ void MangaHere::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob>
 
     MangaChapterCollection newchapters;
     for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->buffer, spos, epos))
-        newchapters.insert(0, MangaChapter(chapterrxmatch.captured(2), baseurl + chapterrxmatch.captured(1)));
+        newchapters.insert(0, MangaChapter(chapterrxmatch.captured(2), baseUrl + chapterrxmatch.captured(1)));
     info->chapters.mergeChapters(newchapters);
 }
 

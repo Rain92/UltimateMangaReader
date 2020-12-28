@@ -10,11 +10,9 @@ NetworkManager::NetworkManager(QObject *parent)
     : QObject(parent),
       connected(false),
       networkManager(new QNetworkAccessManager(this)),
-      cookies(),
       customHeaders(),
       fileDownloads()
 {
-    networkManager->setCookieJar(&cookies);
 #ifdef KOBO
     QString sslCertPath = "/mnt/onboard/.adds/qt-linux-5.15.1-kobo/lib/ssl_certs";
     if (qEnvironmentVariableIsSet("QTPATH"))
@@ -208,14 +206,11 @@ void NetworkManager::setDownloadSettings(const QSize &size, Settings *settings)
 
 void NetworkManager::addCookie(const QString &domain, const char *key, const char *value)
 {
-    for (int i = 0; i < cookies.cookies.count(); i++)
-        if (cookies.cookies[i].name() == QByteArray(key) && cookies.cookies[i].domain() == domain)
-        {
-            cookies.cookies.removeAt(i);
-            break;
-        }
+    QNetworkCookie c = QNetworkCookie(QByteArray(key), QByteArray(value));
+    c.setDomain(domain);
+    c.setExpirationDate(QDateTime::currentDateTime().addDays(1));
 
-    cookies.addCookie(domain, key, value);
+    networkManager->cookieJar()->insertCookie(c);
 }
 
 void NetworkManager::addSetCustomRequestHeader(const QString &domain, const char *key, const char *value)

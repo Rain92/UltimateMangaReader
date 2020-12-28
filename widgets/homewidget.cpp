@@ -162,7 +162,7 @@ void HomeWidget::on_listViewMangas_clicked(const QModelIndex &index)
     QString mangaUrl = filteractive ? filteredMangaUrls[idx] : currentMangaSource->mangaList.urls[idx];
 
     if (!currentMangaSource->mangaList.absoluteUrls)
-        mangaUrl.prepend(currentMangaSource->baseurl);
+        mangaUrl.prepend(currentMangaSource->baseUrl);
 
     QString mangatitle = filteractive ? filteredMangaTitles[idx] : currentMangaSource->mangaList.titles[idx];
 

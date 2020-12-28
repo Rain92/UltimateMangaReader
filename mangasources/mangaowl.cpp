@@ -3,7 +3,7 @@
 MangaOwl::MangaOwl(NetworkManager *dm) : AbstractMangaSource(dm)
 {
     name = "MangaOwl";
-    baseurl = "https://mangaowl.net/";
+    baseUrl = "https://mangaowl.net/";
     mangalistUrl = "https://mangaowl.net/list/";
 }
 
@@ -34,7 +34,6 @@ bool MangaOwl::uptareMangaList(UpdateProgressToken *token)
     if (numpagesrxmatch.hasMatch())
         pages = numpagesrxmatch.captured(1).toInt();
 
-    pages = 10;
     MangaList mangas;
     mangas.absoluteUrls = false;
 
