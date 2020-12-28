@@ -80,7 +80,6 @@ bool MangaOwl::uptareMangaList(UpdateProgressToken *token)
 void MangaOwl::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
                                               QSharedPointer<MangaInfo> info)
 {
-    //    QRegularExpression titlerx(R"lit(<img class="lozad"[^>]*title="([^"]*)")lit");
     QRegularExpression authorrx(R"(Author.*?<a[^>]*>\s*(.*?)\s*</a>)",
                                 QRegularExpression::DotMatchesEverythingOption);
     QRegularExpression artistrx;

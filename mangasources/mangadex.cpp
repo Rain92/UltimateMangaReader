@@ -154,7 +154,6 @@ void MangaDex::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> 
     auto jsonObject = doc.object();
     auto mangaObject = jsonObject["manga"].toObject();
 
-    //    info->title = htmlToPlainText(mangaObject["title"].toString());
     info->author = htmlToPlainText(mangaObject["author"].toString());
     info->artist = htmlToPlainText(mangaObject["artist"].toString());
 

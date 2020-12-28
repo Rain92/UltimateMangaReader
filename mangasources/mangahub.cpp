@@ -85,7 +85,6 @@ bool MangaHub::uptareMangaList(UpdateProgressToken *token)
 void MangaHub::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
                                               QSharedPointer<MangaInfo> info)
 {
-    //    QRegularExpression titlerx(R"(<li class="active"><span>([^<]*)<)");
     QRegularExpression authorrx(R"(Author</span><span>([^<]*)</span>)");
     QRegularExpression artistrx(R"(Artist</span><span>([^<]*)</span>)");
     QRegularExpression statusrx(R"(Status</span><span>([^<]*)</span>)");

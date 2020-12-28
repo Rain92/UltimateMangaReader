@@ -114,7 +114,6 @@ void DownloadStringJob::timeout()
 bool DownloadStringJob::await(int timeout, bool retry)
 {
     timeoutTimer.stop();
-    //    QMetaObject::invokeMethod(&timeoutTimer, "stop", Qt::AutoConnection);
 
     if (isCompleted)
         return true;
@@ -127,11 +126,9 @@ bool DownloadStringJob::await(int timeout, bool retry)
     int rem = timeout - time.elapsed();
     if (errorString != "")
     {
-        //        qDebug() << "url" << url;
         if (!retry || errorString.contains("Protocol"))
             return false;
 
-        //        qDebug() << url << rem;
         if (rem > 0)
         {
             restart();
