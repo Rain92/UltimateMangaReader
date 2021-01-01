@@ -102,7 +102,8 @@ void Mangakakalot::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJ
     QRegularExpression genresrx(R"(Genres :[^>]*>(.*?)(?:</li>|</tr>))",
                                 QRegularExpression::DotMatchesEverythingOption);
 
-    QRegularExpression summaryrx(R"lit(<meta name="description" content="([^"]*)")lit");
+    QRegularExpression summaryrx(R"lit((?:Description :</h3>|summary: </p></h2>)(.*?)</div)lit",
+                                 QRegularExpression::DotMatchesEverythingOption);
 
     QRegularExpression coverrx(R"lit(<meta name="twitter:image" content="([^"]*)")lit");
 
