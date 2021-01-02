@@ -26,7 +26,7 @@ void DownloadFileJob::start()
         {
             QNetworkRequest request(url);
 
-            for (const auto &[name, value] : customHeaders)
+            for (const auto &[name, value] : qAsConst(customHeaders))
                 request.setRawHeader(name, value);
 
             reply.reset(networkManager->get(request));

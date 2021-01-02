@@ -12,8 +12,7 @@ const int VirtualKeyboard::height = VIRTUAL_KEYBOARD_HEIGHT;
 
 static QRect ir(const QRect& r, int size)
 {
-    return QRect(r.x() + size, r.y() + size, r.width() - 2 * size,
-                 r.height() - 2 * size);
+    return QRect(r.x() + size, r.y() + size, r.width() - 2 * size, r.height() - 2 * size);
 }
 
 VirtualKeyboard::VirtualKeyboard(QWidget* parent)
@@ -59,8 +58,7 @@ VirtualKeyboard::VirtualKeyboard(QWidget* parent)
     keys.push_back(VirtualKey(7, 1, 1, 1, Qt::Key_I, "i", "I"));
     keys.push_back(VirtualKey(8, 1, 1, 1, Qt::Key_O, "o", "O"));
     keys.push_back(VirtualKey(9, 1, 1, 1, Qt::Key_P, "p", "P"));
-    keys.push_back(
-        VirtualKey(10, 1, 1, 1, Qt::Key_Backspace, "", "", "delete"));
+    keys.push_back(VirtualKey(10, 1, 1, 1, Qt::Key_Backspace, "", "", "delete"));
 
     keys.push_back(VirtualKey(0, 2, 1, 1, Qt::Key_A, "a", "A"));
     keys.push_back(VirtualKey(1, 2, 1, 1, Qt::Key_S, "s", "S"));
@@ -89,8 +87,7 @@ VirtualKeyboard::VirtualKeyboard(QWidget* parent)
     keys.push_back(VirtualKey(0, 4, 1, 1, Qt::Key_Shift, "", "", "shift0"));
     shiftKeyIndex = keys.size() - 1;
 
-    keys.push_back(
-        VirtualKey(1, 4, 1, 1, Qt::Key_Mode_switch, "", "", "language"));
+    keys.push_back(VirtualKey(1, 4, 1, 1, Qt::Key_Mode_switch, "", "", "language"));
     keys.push_back(VirtualKey(2, 4, 1, 1, Qt::Key_BraceLeft, "[", "{"));
     keys.push_back(VirtualKey(3, 4, 1, 1, Qt::Key_BraceRight, "]", "}"));
     keys.push_back(VirtualKey(4, 4, 2, 1, Qt::Key_Space, " ", " "));
@@ -110,10 +107,8 @@ VirtualKeyboard::VirtualKeyboard(QWidget* parent)
     repeatDelayTimer.setSingleShot(true);
     repeatRateTimer.setInterval(150);
 
-    QObject::connect(&repeatDelayTimer, SIGNAL(timeout()), this,
-                     SLOT(onAutoRepeat()));
-    QObject::connect(&repeatRateTimer, SIGNAL(timeout()), this,
-                     SLOT(onAutoRepeat()));
+    QObject::connect(&repeatDelayTimer, SIGNAL(timeout()), this, SLOT(onAutoRepeat()));
+    QObject::connect(&repeatRateTimer, SIGNAL(timeout()), this, SLOT(onAutoRepeat()));
 }
 
 VirtualKeyboard::~VirtualKeyboard()
@@ -122,7 +117,10 @@ VirtualKeyboard::~VirtualKeyboard()
     //        g_pConfig->writeInt("kbd_layout", layoutNo);
 }
 
-int VirtualKeyboard::heightForWidth(int w) const { return w * 5 / 11; }
+int VirtualKeyboard::heightForWidth(int w) const
+{
+    return w * 5 / 11;
+}
 
 void VirtualKeyboard::setLayout(int l)
 {
@@ -171,8 +169,7 @@ void VirtualKeyboard::paintEvent(QPaintEvent* event)
 
     int fontSize = 0;
 
-    for (std::vector<VirtualKey>::const_iterator i = keys.begin();
-         i != keys.end(); ++i)
+    for (std::vector<VirtualKey>::const_iterator i = keys.begin(); i != keys.end(); ++i)
     {
         QRect r(getRectForKey(*i));
 
@@ -182,7 +179,7 @@ void VirtualKeyboard::paintEvent(QPaintEvent* event)
 
             QString s(isShift ? i->ss : i->sn);
             QMap<QString, QString>::ConstIterator it(map.find(s));
-            if (it != map.end())
+            if (it != map.cend())
                 s = it.value();
 
             if (!fontSize)
@@ -202,13 +199,11 @@ void VirtualKeyboard::paintEvent(QPaintEvent* event)
 
                 QRectF bounds(svgRenderer.boundsOnElement(i->image));
                 if (bounds.width() / bounds.height() > 1.1)
-                    ir.setHeight(ir.height() * bounds.height() /
-                                 bounds.width());
+                    ir.setHeight(ir.height() * bounds.height() / bounds.width());
                 else if (bounds.height() / bounds.width() > 1.1)
                     ir.setWidth(ir.width() * bounds.width() / bounds.height());
 
-                ir.translate((r.width() + 1 - ir.width()) / 2,
-                             (r.height() + 1 - ir.height()) / 2);
+                ir.translate((r.width() + 1 - ir.width()) / 2, (r.height() + 1 - ir.height()) / 2);
 
                 svgRenderer.render(&p, i->image, ir);
             }
@@ -321,14 +316,12 @@ void VirtualKeyboard::activateKey(VirtualKey* pKey, QEvent::Type t)
         {
             QString s(isShift ? pKey->ss : pKey->sn);
             QMap<QString, QString>::ConstIterator i(map.find(s));
-            if (i != map.end())
+            if (i != map.cend())
                 s = i.value();
-            Qt::KeyboardModifiers mod =
-                isShift ? Qt::ShiftModifier : Qt::NoModifier;
+            Qt::KeyboardModifiers mod = isShift ? Qt::ShiftModifier : Qt::NoModifier;
             QWidget* w = qApp->focusWidget();
             if (w != NULL)
-                QCoreApplication::postEvent(
-                    w, new QKeyEvent(t, pKey->key, mod, s));
+                QCoreApplication::postEvent(w, new QKeyEvent(t, pKey->key, mod, s));
 
             QRect r(getRectForKey(*pKey));
             r.setX(r.x() - gap);
@@ -336,8 +329,8 @@ void VirtualKeyboard::activateKey(VirtualKey* pKey, QEvent::Type t)
             r.setWidth(r.width() + 2 * gap);
             r.setHeight(r.height() + 2 * gap);
 
-            if (pKey->key != Qt::Key_Up && pKey->key != Qt::Key_Down &&
-                pKey->key != Qt::Key_Left && pKey->key != Qt::Key_Right)
+            if (pKey->key != Qt::Key_Up && pKey->key != Qt::Key_Down && pKey->key != Qt::Key_Left &&
+                pKey->key != Qt::Key_Right)
             {
                 if (isShift && !isCapsLock)
                 {
@@ -367,8 +360,7 @@ void VirtualKeyboard::activateKey(VirtualKey* pKey, QEvent::Type t)
 
 void VirtualKeyboard::translateKey(QKeyEvent* event)
 {
-    for (std::vector<VirtualKey>::iterator i = keys.begin(); i != keys.end();
-         ++i)
+    for (std::vector<VirtualKey>::iterator i = keys.begin(); i != keys.end(); ++i)
     {
         if (event->key() == i->key)
         {
@@ -400,8 +392,7 @@ void VirtualKeyboard::mouseReleaseEvent(QMouseEvent* event)
     }
 }
 
-QRect VirtualKeyboard::getRectForKey(
-    const VirtualKeyboard::VirtualKey& key) const
+QRect VirtualKeyboard::getRectForKey(const VirtualKeyboard::VirtualKey& key) const
 {
     QRect r(this->rect());
     int cw = (r.width() - (width + 1) * gap) / width;
@@ -418,8 +409,7 @@ QRect VirtualKeyboard::getRectForKey(
 
 VirtualKeyboard::VirtualKey* VirtualKeyboard::findKeyByMousePos(int x, int y)
 {
-    for (std::vector<VirtualKey>::iterator i = keys.begin(); i != keys.end();
-         ++i)
+    for (std::vector<VirtualKey>::iterator i = keys.begin(); i != keys.end(); ++i)
     {
         QRect r(getRectForKey(*i));
         if (r.contains(x, y))
@@ -430,11 +420,10 @@ VirtualKeyboard::VirtualKey* VirtualKeyboard::findKeyByMousePos(int x, int y)
 
 VirtualKeyboard::VirtualKey* VirtualKeyboard::findKeyByCursorPos(int x, int y)
 {
-    for (std::vector<VirtualKey>::iterator i = keys.begin(); i != keys.end();
-         ++i)
+    for (std::vector<VirtualKey>::iterator i = keys.begin(); i != keys.end(); ++i)
     {
-        if (x >= i->pos.x() && x < i->pos.x() + i->size.width() &&
-            y >= i->pos.y() && y < i->pos.y() + i->size.height())
+        if (x >= i->pos.x() && x < i->pos.x() + i->size.width() && y >= i->pos.y() &&
+            y < i->pos.y() + i->size.height())
             return &*i;
     }
     return NULL;
@@ -466,7 +455,10 @@ void VirtualKeyboard::readLayouts()
     //    }
 }
 
-void VirtualKeyboard::onCapsLock() { isEnableCapsLock = false; }
+void VirtualKeyboard::onCapsLock()
+{
+    isEnableCapsLock = false;
+}
 
 void VirtualKeyboard::onAutoRepeat()
 {

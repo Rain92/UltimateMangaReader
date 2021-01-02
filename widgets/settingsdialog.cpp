@@ -99,7 +99,7 @@ void SettingsDialog::setupSourcesList()
         delete item;
     }
 
-    for (auto ms : settings->enabledMangaSources.keys())
+    for (const auto &ms : settings->enabledMangaSources.keys())
     {
         bool enabled = settings->enabledMangaSources[ms];
 

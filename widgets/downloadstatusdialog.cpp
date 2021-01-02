@@ -84,6 +84,8 @@ void DownloadStatusDialog::downloadCompleted()
                                   .arg(ui->labelMangaTitle->text())
                                   .arg(pageDownloadErrors + imageDownloadErrors));
 
+    qDebug() << msg;
+
     ui->pushButtonCancel->hide();
     ui->pushButtonOk->show();
 }

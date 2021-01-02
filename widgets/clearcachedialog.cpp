@@ -56,18 +56,18 @@ void ClearCacheDialog::on_pushButtonCancel_clicked()
 
 void ClearCacheDialog::on_pushButtonClear1_clicked()
 {
-    finished(ClearImages);
+    emit finished(ClearImages);
     close();
 }
 
 void ClearCacheDialog::on_pushButtonClear2_clicked()
 {
-    finished(ClearInfos);
+    emit finished(ClearInfos);
     close();
 }
 
 void ClearCacheDialog::on_pushButtonClear3_clicked()
 {
-    finished(ClearAll);
+    emit finished(ClearAll);
     close();
 }

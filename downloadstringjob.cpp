@@ -16,7 +16,7 @@ void DownloadStringJob::start()
 {
     QNetworkRequest request(url);
 
-    for (const auto &[name, value] : customHeaders)
+    for (const auto &[name, value] : qAsConst(customHeaders))
         request.setRawHeader(name, value);
 
     if (postData.isEmpty())

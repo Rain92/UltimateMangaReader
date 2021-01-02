@@ -30,7 +30,7 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
 
     currentMangaSource = mangaSources.first().get();
 
-    for (auto ms : mangaSources)
+    for (const auto& ms : qAsConst(mangaSources))
         ms->deserializeMangaList();
 
     updateActiveScources();
@@ -93,7 +93,7 @@ void UltimateMangaReaderCore::updateActiveScources()
 {
     activeMangaSources.clear();
     QMap<QString, bool> enabledMangaSources;
-    for (auto ms : mangaSources)
+    for (const auto& ms : qAsConst(mangaSources))
     {
         if (!settings.enabledMangaSources.contains(ms->name))
             enabledMangaSources.insert(ms->name, true);
@@ -144,7 +144,7 @@ void UltimateMangaReaderCore::clearDownloadCache(ClearDownloadCacheLevel level)
     switch (level)
     {
         case ClearImages:
-            for (auto ms : mangaSources)
+            for (const auto& ms : qAsConst(mangaSources))
             {
                 for (auto& info :
                      QDir(CONF.cacheDir + ms->name)
@@ -154,13 +154,13 @@ void UltimateMangaReaderCore::clearDownloadCache(ClearDownloadCacheLevel level)
             break;
 
         case ClearInfos:
-            for (auto ms : mangaSources)
+            for (const auto& ms : qAsConst(mangaSources))
                 removeDir(CONF.cacheDir + ms->name, "progress.dat");
 
             break;
 
         case ClearAll:
-            for (auto ms : mangaSources)
+            for (const auto& ms : qAsConst(mangaSources))
                 removeDir(CONF.cacheDir + ms->name);
             QFile::remove(CONF.cacheDir + "favorites.dat");
             favoritesManager->clearFavorites();
@@ -174,7 +174,7 @@ void UltimateMangaReaderCore::clearDownloadCache(ClearDownloadCacheLevel level)
 
 void UltimateMangaReaderCore::updateMangaLists(QSharedPointer<UpdateProgressToken> progressToken)
 {
-    for (auto name : progressToken->sourcesProgress.keys())
+    for (const auto& name : progressToken->sourcesProgress.keys())
     {
         if (progressToken->sourcesProgress[name] == 100)
             continue;
@@ -202,7 +202,7 @@ void UltimateMangaReaderCore::sortMangaLists()
     QElapsedTimer timer;
     timer.start();
 
-    for (auto ms : mangaSources)
+    for (const auto& ms : qAsConst(mangaSources))
     {
         ms->mangaList.sortBy(settings.mangaOrder);
         ms->serializeMangaList();

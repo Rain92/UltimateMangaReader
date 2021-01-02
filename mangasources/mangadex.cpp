@@ -85,7 +85,7 @@ bool MangaDex::uptareMangaList(UpdateProgressToken *token)
 
     auto nummangasrxmatch = nummangasrx.match(job->buffer);
 
-    int nominalSize = 0;
+    int nominalSize = 1;
     if (nummangasrxmatch.hasMatch())
         nominalSize = nummangasrxmatch.captured(1).remove(',').toInt();
 

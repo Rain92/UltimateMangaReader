@@ -6,7 +6,7 @@ QStringList MangaChapterCollection::getMangaTitlesReversed()
 {
     QStringList list;
 
-    for (const auto& ch : *this)
+    for (const auto& ch : qAsConst(*this))
         list.insert(0, ch.chapterTitle);
 
     return list;
@@ -36,8 +36,7 @@ void MangaChapterCollection::mergeChapters(MangaChapterCollection& other)
         {
             for (int i = 0; i < other.count(); i++)
             {
-                if (ch.chapterUrl == other[i].chapterUrl ||
-                    ch.chapterTitle == other[i].chapterTitle)
+                if (ch.chapterUrl == other[i].chapterUrl || ch.chapterTitle == other[i].chapterTitle)
                 {
                     other[i].imageUrlList = ch.imageUrlList;
                     other[i].pageUrlList = ch.pageUrlList;

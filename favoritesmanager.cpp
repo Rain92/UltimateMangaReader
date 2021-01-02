@@ -30,7 +30,7 @@ void FavoritesManager::serialize()
 
 bool FavoritesManager::isFavorite(QSharedPointer<MangaInfo> info)
 {
-    for (const Favorite &f : favorites)
+    for (const Favorite &f : qAsConst(favorites))
         if (f.hostname == info->hostname && f.title == info->title)
             return true;
 
@@ -119,7 +119,7 @@ void FavoritesManager::updateInfos()
 
 void FavoritesManager::resetUpdatedStatus()
 {
-    for (auto fav : favoriteinfos)
+    for (const auto &fav : qAsConst(favoriteinfos))
         fav->updated = false;
 }
 

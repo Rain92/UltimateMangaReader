@@ -10,6 +10,7 @@ NetworkManager::NetworkManager(QObject *parent)
     : QObject(parent),
       connected(false),
       networkManager(new QNetworkAccessManager(this)),
+      settings(nullptr),
       customHeaders(),
       fileDownloads()
 {
@@ -178,7 +179,7 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const QStr
 
     QList<std::tuple<const char *, const char *>> applicableCustomHeaders;
 
-    for (const auto &[domain, name, value] : customHeaders)
+    for (const auto &[domain, name, value] : qAsConst(customHeaders))
         if (urlf.contains(domain))
             applicableCustomHeaders.append(std::tuple<const char *, const char *>(name, value));
 

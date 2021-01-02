@@ -79,7 +79,7 @@ void UpdateMangaListsDialog::setupSourcesList()
         delete item;
     }
 
-    for (auto ms : settings->enabledMangaSources.keys())
+    for (const auto &ms : settings->enabledMangaSources.keys())
     {
         if (!settings->enabledMangaSources[ms])
             continue;
@@ -92,7 +92,7 @@ void UpdateMangaListsDialog::setupSourcesList()
 
 void UpdateMangaListsDialog::updateProgress()
 {
-    int numsources = progressToken->sourcesProgress.values().count();
+    int numsources = progressToken->sourcesProgress.count();
     int sum = 0;
     for (auto v : progressToken->sourcesProgress.values())
         sum += v;
