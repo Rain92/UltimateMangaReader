@@ -9,7 +9,7 @@ class MangaOwl : public AbstractMangaSource
 public:
     explicit MangaOwl(NetworkManager *dm);
 
-    bool uptareMangaList(UpdateProgressToken *token) override;
+    bool updateMangaList(UpdateProgressToken *token) override;
     void updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
                                         QSharedPointer<MangaInfo> info) override;
     Result<QStringList, QString> getPageList(const QString &chapterUrl) override;

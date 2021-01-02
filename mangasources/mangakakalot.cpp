@@ -12,7 +12,7 @@ Mangakakalot::Mangakakalot(NetworkManager *networkManager) : AbstractMangaSource
                                               R"(https://mangakakalot.com/chapter/)");
 }
 
-bool Mangakakalot::uptareMangaList(UpdateProgressToken *token)
+bool Mangakakalot::updateMangaList(UpdateProgressToken *token)
 {
     QString rxstart(R"(<div class="main-wrapper">)");
     QString rxend(R"(<div class="panel_page_number">)");

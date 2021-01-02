@@ -9,7 +9,7 @@ class MangaGo : public AbstractMangaSource
 public:
     explicit MangaGo(NetworkManager *dm);
 
-    bool uptareMangaList(UpdateProgressToken *token) override;
+    bool updateMangaList(UpdateProgressToken *token) override;
     void updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
                                         QSharedPointer<MangaInfo> info) override;
     Result<QStringList, QString> getPageList(const QString &chapterUrl) override;
@@ -17,4 +17,5 @@ public:
 private:
     QString mangalistUrl;
 };
+
 #endif  // MANGAGO_H

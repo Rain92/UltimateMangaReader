@@ -7,7 +7,7 @@ MangaPanda::MangaPanda(NetworkManager *dm) : AbstractMangaSource(dm)
     dictionaryUrl = baseUrl + "/popular/";
 }
 
-bool MangaPanda::uptareMangaList(UpdateProgressToken *token)
+bool MangaPanda::updateMangaList(UpdateProgressToken *token)
 {
     QRegularExpression mangarx(R"lit(<a href="(/[^"]+)">([^<]+)<)lit");
 

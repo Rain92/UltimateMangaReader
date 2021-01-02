@@ -9,7 +9,7 @@ MangaHere::MangaHere(NetworkManager *networkManager) : AbstractMangaSource(netwo
     networkManager->addCookie(".mangahere.cc", "isAdult", "1");
 }
 
-bool MangaHere::uptareMangaList(UpdateProgressToken *token)
+bool MangaHere::updateMangaList(UpdateProgressToken *token)
 {
     QRegularExpression mangarx(R"lit("(/manga/[^"]*)" title="((?:.(?!><))*)">\s*<img)lit");
 

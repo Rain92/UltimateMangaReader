@@ -29,7 +29,7 @@ public:
 
     AbstractMangaSource(NetworkManager *networkManager);
 
-    virtual bool uptareMangaList(UpdateProgressToken *token) = 0;
+    virtual bool updateMangaList(UpdateProgressToken *token) = 0;
 
     virtual void updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
                                                 QSharedPointer<MangaInfo> mangainfo) = 0;

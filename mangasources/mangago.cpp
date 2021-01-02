@@ -7,7 +7,7 @@ MangaGo::MangaGo(NetworkManager *dm) : AbstractMangaSource(dm)
     mangalistUrl = "http://www.mangago.me/list/directory/all/";
 }
 
-bool MangaGo::uptareMangaList(UpdateProgressToken *token)
+bool MangaGo::updateMangaList(UpdateProgressToken *token)
 {
     QRegularExpression numpagesrx(R"lit(class="pagination"[^>]*total="(\d+)")lit");
 

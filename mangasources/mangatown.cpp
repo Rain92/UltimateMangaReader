@@ -7,7 +7,7 @@ MangaTown::MangaTown(NetworkManager *networkManager) : AbstractMangaSource(netwo
     dictionaryUrl = "https://www.mangatown.com/directory/";
 }
 
-bool MangaTown::uptareMangaList(UpdateProgressToken *token)
+bool MangaTown::updateMangaList(UpdateProgressToken *token)
 {
     QRegularExpression mangarx(R"lit(<a class="manga_cover" href="(/manga/[^"]*?)" title="([^"]*?)")lit");
 

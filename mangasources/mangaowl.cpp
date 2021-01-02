@@ -7,7 +7,7 @@ MangaOwl::MangaOwl(NetworkManager *dm) : AbstractMangaSource(dm)
     mangalistUrl = "https://mangaowl.net/list/";
 }
 
-bool MangaOwl::uptareMangaList(UpdateProgressToken *token)
+bool MangaOwl::updateMangaList(UpdateProgressToken *token)
 {
     QRegularExpression numpagesrx(R"(>(\d+)</a>\s*</li>\s*<li>\s*<a[^>]*?rel="next")");
 

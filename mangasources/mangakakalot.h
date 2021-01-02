@@ -9,7 +9,7 @@ class Mangakakalot : public AbstractMangaSource
 public:
     Mangakakalot(NetworkManager *dm);
 
-    bool uptareMangaList(UpdateProgressToken *token) override;
+    bool updateMangaList(UpdateProgressToken *token) override;
     void updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
                                         QSharedPointer<MangaInfo> info) override;
     Result<QStringList, QString> getPageList(const QString &chapterUrl) override;

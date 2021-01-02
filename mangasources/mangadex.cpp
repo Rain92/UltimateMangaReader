@@ -59,7 +59,7 @@ void MangaDex::login()
     auto job = networkManager->downloadAsString(loginurl, 6000, query);
 }
 
-bool MangaDex::uptareMangaList(UpdateProgressToken *token)
+bool MangaDex::updateMangaList(UpdateProgressToken *token)
 {
     QRegularExpression nummangasrx(R"(<p class=[^>]*>Showing .*? (\d+,\d+) titles)");
 

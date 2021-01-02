@@ -7,7 +7,7 @@ MangaHub::MangaHub(NetworkManager *dm) : AbstractMangaSource(dm)
     dicturl = "https://mangahub.io/search/page/";
 }
 
-bool MangaHub::uptareMangaList(UpdateProgressToken *token)
+bool MangaHub::updateMangaList(UpdateProgressToken *token)
 {
     QRegularExpression mangarx(R"lit(<a href="(https://mangahub.io/manga/[^"]+)">([^<]+)</a)lit");
 
