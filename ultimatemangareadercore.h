@@ -12,6 +12,7 @@
 #include "mangakakalot.h"
 #include "mangaowl.h"
 #include "mangapanda.h"
+#include "mangaplus.h"
 #include "mangatown.h"
 #include "settings.h"
 #include "suspendmanager.h"

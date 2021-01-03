@@ -7,7 +7,7 @@
 #include "downloadqueue.h"
 #include "mangainfo.h"
 #include "networkmanager.h"
-#include "result.h"
+#include "thirdparty/result.h"
 
 struct MangaChapterRange
 {

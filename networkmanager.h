@@ -3,6 +3,7 @@
 
 #include <QNetworkReply>
 
+#include "downloadbufferjob.h"
 #include "downloadfilejob.h"
 #include "downloadimageandrescalejob.h"
 #include "downloadstringjob.h"
@@ -18,6 +19,8 @@ public:
     QNetworkAccessManager *networkAccessManager();
 
     QSharedPointer<DownloadStringJob> downloadAsString(const QString &url, int timeout = 6000,
+                                                       const QByteArray &postData = QByteArray());
+    QSharedPointer<DownloadBufferJob> downloadToBuffer(const QString &url, int timeout = 6000,
                                                        const QByteArray &postData = QByteArray());
     QSharedPointer<DownloadFileJob> downloadAsFile(const QString &url, const QString &localPath);
     QSharedPointer<DownloadFileJob> downloadAsScaledImage(const QString &url, const QString &localPath);

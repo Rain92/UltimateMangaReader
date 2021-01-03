@@ -43,6 +43,7 @@ FORMS += \
     widgets/wifidialog.ui
 
 HEADERS += \
+    downloadbufferjob.h \
     enums.h \
     mangachaptercollection.h \
     mangachapterdownloadmanager.h \
@@ -51,14 +52,16 @@ HEADERS += \
     mangasources/mangago.h \
     mangasources/mangahere.h \
     mangasources/mangakakalot.h \
+    mangasources/mangaplus.h \
     mangasources/mangatown.h \
     mangasources/updateprogresstoken.h \
     networkmanager.h \
     readingprogress.h \
-    result.h \
     sizes.h \
     staticsettings.h \
     suspendmanager.h \
+    thirdparty/picoproto.h \
+    thirdparty/result.h \
     ultimatemangareadercore.h \
     widgets/batteryicon.h \
     widgets/customgesturerecognizer.h \
@@ -102,6 +105,7 @@ HEADERS += \
     widgets/wifidialog.h
 
 SOURCES += \
+    downloadbufferjob.cpp \
     mangachaptercollection.cpp \
     mangachapterdownloadmanager.cpp \
     mangacontroller.cpp \
@@ -110,11 +114,13 @@ SOURCES += \
     mangasources/mangago.cpp \
     mangasources/mangahere.cpp \
     mangasources/mangakakalot.cpp \
+    mangasources/mangaplus.cpp \
     mangasources/mangatown.cpp \
     mangasources/updateprogresstoken.cpp \
     networkmanager.cpp \
     readingprogress.cpp \
     suspendmanager.cpp \
+    thirdparty/picoproto.cc \
     ultimatemangareadercore.cpp \
     widgets/batteryicon.cpp \
     widgets/customgesturerecognizer.cpp \

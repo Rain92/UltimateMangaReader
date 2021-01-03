@@ -158,3 +158,24 @@ bool enoughFreeSystemMemory()
 {
     return getFreeSystemMemory() / 1024 / 1024 > 150;
 }
+
+void decryptXorInplace(QByteArray& data, const QByteArray& key)
+{
+    for (int i = 0, p = 0; i < data.length(); i++, p++)
+    {
+        if (p >= key.length())
+            p = 0;
+        data[i] = data[i] ^ key[p];
+    }
+}
+
+QByteArray hexstr2array(QString str)
+{
+    QByteArray key;
+    for (int i = 0; i < str.length(); i += 2)
+    {
+        auto sub = str.mid(i, 2);
+        key.append(sub.toUInt(nullptr, 16));
+    }
+    return key;
+}

@@ -132,6 +132,22 @@ QSharedPointer<DownloadStringJob> NetworkManager::downloadAsString(const QString
     return job;
 }
 
+QSharedPointer<DownloadBufferJob> NetworkManager::downloadToBuffer(const QString &url, int timeout,
+                                                                   const QByteArray &postData)
+{
+    auto urlf = fixUrl(url);
+
+    qDebug() << "Downloading to buffer:" << urlf;
+
+    auto job = QSharedPointer<DownloadBufferJob>(
+        new DownloadBufferJob(networkManager, urlf, timeout, postData), &QObject::deleteLater);
+
+    job->start();
+
+    emit activity();
+    return job;
+}
+
 QSharedPointer<DownloadFileJob> NetworkManager::downloadAsFile(const QString &url, const QString &localPath)
 {
     auto urlf = fixUrl(url);
@@ -164,7 +180,25 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsFile(const QString &ur
 QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const QString &url,
                                                                       const QString &localPath)
 {
-    auto urlf = fixUrl(url);
+    QString urlf;
+    EncryptionDescriptor ed;
+    if (url.contains('|'))
+    {
+        auto split = url.split('|');
+        urlf = split[0];
+
+        if (split[1].startsWith("xor:"))
+        {
+            ed.type = XorEncryption;
+            ed.key = hexstr2array(split[1].mid(4));
+        }
+        else
+            qDebug() << "Error: Encryption not supported!";
+    }
+    else
+        urlf = url;
+
+    urlf = fixUrl(urlf);
 
     if (fileDownloads.contains(urlf))
     {
@@ -185,7 +219,7 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const QStr
 
     auto job = QSharedPointer<DownloadFileJob>(
         new DownloadScaledImageJob(networkManager, urlf, localPath, imageRescaleSize, settings,
-                                   applicableCustomHeaders),
+                                   applicableCustomHeaders, ed),
         [this](DownloadScaledImageJob *j) {
             this->fileDownloads.remove(j->originalUrl);
             j->deleteLater();

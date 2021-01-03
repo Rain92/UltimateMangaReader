@@ -2,8 +2,12 @@
 
 DownloadScaledImageJob::DownloadScaledImageJob(
     QNetworkAccessManager *networkManager, const QString &url, const QString &path, QSize imgSize,
-    Settings *settings, const QList<std::tuple<const char *, const char *>> &customHeaders)
-    : DownloadFileJob(networkManager, url, path, customHeaders), imgSize(imgSize), settings(settings)
+    Settings *settings, const QList<std::tuple<const char *, const char *>> &customHeaders,
+    EncryptionDescriptor encryption)
+    : DownloadFileJob(networkManager, url, path, customHeaders),
+      imgSize(imgSize),
+      settings(settings),
+      encryption(encryption)
 {
 }
 
@@ -116,10 +120,13 @@ QImage DownloadScaledImageJob::rescaleImage(const QImage &img)
     return img.scaled(rsize.width(), rsize.height(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
 }
 
-bool DownloadScaledImageJob::processImage(const QByteArray &array)
+bool DownloadScaledImageJob::processImage(QByteArray &&array)
 {
     //    QElapsedTimer t;
     //    t.start();
+
+    if (encryption.type == XorEncryption)
+        decryptXorInplace(array, encryption.key);
 
     QImage img;
     if (!img.loadFromData(array))

@@ -11,9 +11,9 @@
 #include "mangachapter.h"
 #include "mangalist.h"
 #include "networkmanager.h"
-#include "result.h"
 #include "sizes.h"
 #include "staticsettings.h"
+#include "thirdparty/result.h"
 #include "updateprogresstoken.h"
 
 class MangaInfo;

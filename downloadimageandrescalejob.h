@@ -5,6 +5,19 @@
 
 #include "downloadfilejob.h"
 #include "settings.h"
+#include "utils.h"
+
+enum EncryptionType
+{
+    NoEncryption = 0,
+    XorEncryption
+};
+
+struct EncryptionDescriptor
+{
+    EncryptionType type = NoEncryption;
+    QByteArray key = {};
+};
 
 class DownloadScaledImageJob : public DownloadFileJob
 {
@@ -13,7 +26,8 @@ class DownloadScaledImageJob : public DownloadFileJob
 public:
     DownloadScaledImageJob(QNetworkAccessManager *networkManager, const QString &url, const QString &path,
                            QSize imgSize, Settings *settings,
-                           const QList<std::tuple<const char *, const char *>> &customHeaders = {});
+                           const QList<std::tuple<const char *, const char *>> &customHeaders = {},
+                           EncryptionDescriptor encryption = {});
 
 signals:
 
@@ -24,8 +38,9 @@ public slots:
 private:
     QSize imgSize;
     Settings *settings;
+    EncryptionDescriptor encryption;
 
-    bool processImage(const QByteArray &array);
+    bool processImage(QByteArray &&array);
     QImage rescaleImage(const QImage &img);
     QRect getTrimRect(const QImage &image);
 };

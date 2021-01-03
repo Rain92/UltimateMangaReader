@@ -102,4 +102,7 @@ unsigned long long getTotalSystemMemory();
 unsigned long long getFreeSystemMemory();
 bool enoughFreeSystemMemory();
 
+void decryptXorInplace(QByteArray& data, const QByteArray& key);
+QByteArray hexstr2array(QString str);
+
 #endif  // UTILS_H

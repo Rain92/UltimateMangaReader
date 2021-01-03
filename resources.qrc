@@ -31,5 +31,6 @@
         <file>images/icons/ultimatemangareader.png</file>
         <file>images/icons/file-error.png</file>
         <file>images/mangahostlogos/mangago.png</file>
+        <file>images/mangahostlogos/mangaplus.png</file>
     </qresource>
 </RCC>

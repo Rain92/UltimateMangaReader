@@ -10,7 +10,7 @@
 #include "mangaindextraverser.h"
 #include "mangainfo.h"
 #include "readingprogress.h"
-#include "result.h"
+#include "thirdparty/result.h"
 #include "staticsettings.h"
 
 class MangaController : public QObject

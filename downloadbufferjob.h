@@ -1,9 +1,9 @@
-#ifndef DOWNLOADSTRINGJOB_H
-#define DOWNLOADSTRINGJOB_H
+#ifndef DOWNLOADBUFFERJOB_H
+#define DOWNLOADBUFFERJOB_H
 
 #include "downloadjobbase.h"
 
-class DownloadStringJob : public DownloadJobBase
+class DownloadBufferJob : public DownloadJobBase
 {
     Q_OBJECT
 
@@ -12,15 +12,15 @@ protected:
     int timeoutTime;
     QByteArray postData;
 
-    void downloadStringReadyRead();
-    void downloadStringFinished();
+    void DownloadBufferReadyRead();
+    void DownloadBufferFinished();
     void onError(QNetworkReply::NetworkError);
     void timeout();
 
 public:
-    QString buffer;
+    QByteArray buffer;
 
-    DownloadStringJob(QNetworkAccessManager *networkManager, const QString &url, int timeout = 6000,
+    DownloadBufferJob(QNetworkAccessManager *networkManager, const QString &url, int timeout = 6000,
                       const QByteArray &postData = QByteArray(),
                       const QList<std::tuple<const char *, const char *>> &customHeaders = {});
 
@@ -31,4 +31,4 @@ public:
     void restart() override;
 };
 
-#endif  // DOWNLOADFILEJOB_H
+#endif  // DOWNLOADBUFFERJOB_H
