@@ -12,8 +12,10 @@ QStringList MangaChapterCollection::getMangaTitlesReversed()
     return list;
 }
 
-void MangaChapterCollection::mergeChapters(MangaChapterCollection& other)
+QList<QPair<int, int>> MangaChapterCollection::mergeChapters(MangaChapterCollection& other)
 {
+    QList<int> changed;
+    QList<QPair<int, int>> moveMapping;
     if (count() == other.count())
     {
         bool same = true;
@@ -23,29 +25,37 @@ void MangaChapterCollection::mergeChapters(MangaChapterCollection& other)
                 (*this)[i].chapterTitle != other[i].chapterTitle)
             {
                 same = false;
-                break;
+                changed.append(i);
             }
         }
         if (same)
-            return;
+            return moveMapping;
     }
 
-    for (auto& ch : *this)
+    for (auto& i : changed)
     {
+        auto& ch = (*this)[i];
         if (ch.pagesLoaded)
         {
-            for (int i = 0; i < other.count(); i++)
+            for (int i2 = 0; i2 < other.count(); i2++)
             {
-                if (ch.chapterUrl == other[i].chapterUrl || ch.chapterTitle == other[i].chapterTitle)
+                if (ch.chapterUrl == other[i2].chapterUrl && ch.chapterTitle == other[i2].chapterTitle)
                 {
-                    other[i].imageUrlList = ch.imageUrlList;
-                    other[i].pageUrlList = ch.pageUrlList;
-                    other[i].pagesLoaded = true;
+                    other[i2].imageUrlList = ch.imageUrlList;
+                    other[i2].pageUrlList = ch.pageUrlList;
+                    other[i2].pagesLoaded = true;
+                    moveMapping.append({i, i2});
                     break;
+                }
+                else if (i2 == other.count() - 1)
+                {
+                    moveMapping.append({i, -1});
                 }
             }
         }
     }
     (*this).clear();
     (*this).append(other);
+
+    return moveMapping;
 }

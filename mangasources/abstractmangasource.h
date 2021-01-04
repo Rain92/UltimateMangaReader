@@ -58,6 +58,8 @@ public:
     void downloadCoverAsync(QSharedPointer<MangaInfo> mangainfo);
     Result<void, QString> updatePageList(QSharedPointer<MangaInfo> info, int chapter);
 
+    void reorderChapterPages(QSharedPointer<MangaInfo> info, QList<QPair<int, int>> moveMapping);
+
 protected:
     QByteArray mangaInfoPostDataStr;
 

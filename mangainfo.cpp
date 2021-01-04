@@ -1,17 +1,13 @@
 #include "mangainfo.h"
 
 MangaInfo::MangaInfo(AbstractMangaSource *mangasource)
-    : QObject(),
-      updated(false),
-      mangaSource(mangasource),
-      updateMutex(new QMutex())
+    : QObject(), updated(false), mangaSource(mangasource), updateMutex(new QMutex())
 {
 }
 
 MangaInfo::~MangaInfo() = default;
 
-QSharedPointer<MangaInfo> MangaInfo::deserialize(
-    AbstractMangaSource *mangasource, const QString &path)
+QSharedPointer<MangaInfo> MangaInfo::deserialize(AbstractMangaSource *mangasource, const QString &path)
 {
     auto mi = QSharedPointer<MangaInfo>(new MangaInfo(mangasource));
 
@@ -20,9 +16,8 @@ QSharedPointer<MangaInfo> MangaInfo::deserialize(
         return mi;
 
     QDataStream in(&file);
-    in >> mi->hostname >> mi->title >> mi->url >> mi->author >> mi->artist >>
-        mi->releaseYear >> mi->status >> mi->genres >> mi->summary >>
-        mi->coverUrl >> mi->coverPath >> mi->chapters;
+    in >> mi->hostname >> mi->title >> mi->url >> mi->author >> mi->artist >> mi->releaseYear >> mi->status >>
+        mi->genres >> mi->summary >> mi->coverUrl >> mi->coverPath >> mi->chapters;
 
     file.close();
 
@@ -36,8 +31,8 @@ void MangaInfo::serialize()
         return;
 
     QDataStream out(&file);
-    out << hostname << title << url << author << artist << releaseYear
-        << status << genres << summary << coverUrl << coverPath << chapters;
+    out << hostname << title << url << author << artist << releaseYear << status << genres << summary
+        << coverUrl << coverPath << chapters;
 
     file.close();
 }
@@ -47,10 +42,13 @@ void MangaInfo::updateCompeted(bool newchapters)
     if (newchapters)
         updated = true;
 
-    emit updatedSignal(newchapters);
+    emit updatedSignal(updated);
 }
 
-void MangaInfo::sendCoverLoaded() { emit coverLoaded(); }
+void MangaInfo::sendCoverLoaded()
+{
+    emit coverLoaded();
+}
 
 QString MangaInfo::coverThumbnailPath() const
 {

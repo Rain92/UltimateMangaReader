@@ -198,6 +198,38 @@ void AbstractMangaSource::genrateCoverThumbnail(QSharedPointer<MangaInfo> mangai
     }
 }
 
+void AbstractMangaSource::reorderChapterPages(QSharedPointer<MangaInfo> info,
+                                              QList<QPair<int, int>> moveMapping)
+{
+    DownloadImageDescriptor id1("", info->title, 0, 0);
+    DownloadImageDescriptor id2("", info->title, 0, 0);
+    for (const auto &[i1, i2] : moveMapping)
+    {
+        id1.chapter = i1;
+        id2.chapter = i2;
+        for (int pi = 0; pi < info->chapters[i2].pageUrlList.count(); pi++)
+        {
+            id1.page = pi;
+            id2.page = pi;
+            auto oldpath = getImagePath(id1);
+            auto newpath = getImagePath(id2) + '_';
+            QFile::rename(oldpath, newpath);
+        }
+        //        qDebug() << "moving chapter pages:" << i1 << "->" << i2;
+    }
+    for (const auto &[i1, i2] : moveMapping)
+    {
+        id2.chapter = i2;
+        for (int pi = 0; pi < info->chapters[i2].pageUrlList.count(); pi++)
+        {
+            id2.page = pi;
+            auto newpath = getImagePath(id2);
+            auto oldpath = newpath + '_';
+            QFile::rename(oldpath, newpath);
+        }
+    }
+}
+
 void AbstractMangaSource::downloadCoverAsync(QSharedPointer<MangaInfo> mangainfo)
 {
     if (mangainfo->coverUrl == "")

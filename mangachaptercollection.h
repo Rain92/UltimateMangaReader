@@ -10,7 +10,7 @@ public:
 
     QStringList getMangaTitlesReversed();
 
-    void mergeChapters(MangaChapterCollection& newChapters);
+    QList<QPair<int, int>> mergeChapters(MangaChapterCollection& newChapters);
 };
 
 #endif  // MANGACHAPTERCONTAINER_H

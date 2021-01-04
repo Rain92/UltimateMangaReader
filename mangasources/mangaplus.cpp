@@ -37,6 +37,8 @@ bool MangaPlus::updateMangaList(UpdateProgressToken *token)
     //          optional int32 language = 7;
     //        }
 
+    std::sort(titles.begin(), titles.end(), [](auto a, auto b) { return a->GetUInt64(6) > b->GetUInt64(6); });
+
     MangaList mangas;
     mangas.absoluteUrls = false;
 
@@ -102,12 +104,13 @@ void MangaPlus::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob>
     info->author = author;
     info->coverUrl = coverurl;
     info->summary = summary;
-    qDebug() << coverurl;
 
     auto chapters = detail->GetMessageArray(9);
 
     auto chaptersL = detail->GetMessageArray(10);
     chapters.insert(chapters.end(), chaptersL.begin(), chaptersL.end());
+    std::reverse(chapters.begin(), chapters.end());
+
     //    message Chapter {
     //      optional uint32 titleId = 1;
     //      optional uint32 chapterId = 2;
@@ -129,7 +132,12 @@ void MangaPlus::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob>
 
         newchapters.insert(0, MangaChapter(chapterName, chapterUrl));
     }
-    info->chapters.mergeChapters(newchapters);
+    auto moveMapping = info->chapters.mergeChapters(newchapters);
+    if (!moveMapping.empty())
+    {
+        info->updated = true;
+        reorderChapterPages(info, moveMapping);
+    };
 }
 
 Result<QStringList, QString> MangaPlus::getPageList(const QString &chapterUrl)
