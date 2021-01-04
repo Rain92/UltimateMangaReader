@@ -51,8 +51,15 @@ void MangaInfo::updateCompeted(bool updated, const QList<QPair<int, int> > &move
         {
             if (progress.index.chapter == i1)
             {
-                progress.index.chapter = i2;
-                qDebug() << "Reading index changed for" << title << ":" << i1 << "->" << i2;
+                if (i2 > 0)
+                    progress.index.chapter = i2;
+                else
+                {
+                    progress.index.chapter = qMin(qMax(progress.index.chapter, 0), chapters.count() - 1);
+                    progress.index.page = 0;
+                }
+                qDebug() << "Reading index changed for" << title << ":" << i1 << "->"
+                         << progress.index.chapter;
                 break;
             }
         }
