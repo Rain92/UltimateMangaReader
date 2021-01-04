@@ -46,7 +46,7 @@ void DownloadScaledImageJob::downloadFileFinished()
         }
         else
         {
-            errorString = "Failed to load or rescale image.";
+            errorString = "Failed to load or process image.";
             emit downloadError();
         }
     }

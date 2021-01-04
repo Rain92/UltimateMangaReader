@@ -180,10 +180,14 @@ Result<QStringList, QString> MangaPlus::getPageList(const QString &chapterUrl)
             continue;
 
         auto mangapage = p->GetMessage(1);
-        auto xorkey = mangapage->GetString(5);
+        std::string xorkey;
+        if (mangapage->CheckFieldForType(5, picoproto::FIELD_BYTES))
+            xorkey = mangapage->GetString(5);
         auto pageurl = mangapage->GetString(1);
 
-        auto urlencoded = QString::fromUtf8(pageurl.c_str()) + "|xor:" + xorkey.c_str();
+        auto urlencoded = QString::fromUtf8(pageurl.c_str());
+        if (xorkey.length() > 0)
+            urlencoded += QString("|xor:") + xorkey.c_str();
         imageUrls.append(urlencoded);
     }
 
