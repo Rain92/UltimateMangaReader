@@ -54,7 +54,8 @@ bool DownloadMangaChaptersDialog::eventFilter(QObject *obj, QEvent *event)
 {
     if (event->type() == QEvent::FocusIn)
     {
-        static_cast<QSpinBox *>(obj)->selectAll();
+        auto box = static_cast<QSpinBox *>(obj);
+        QTimer::singleShot(0, box, &QSpinBox::selectAll);
         return false;
     }
     else if (event->type() == QEvent::RequestSoftwareInputPanel)
