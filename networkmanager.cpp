@@ -15,7 +15,7 @@ NetworkManager::NetworkManager(QObject *parent)
       fileDownloads()
 {
 #ifdef KOBO
-    QString sslCertPath = "/mnt/onboard/.adds/qt-linux-5.15.1-kobo/lib/ssl_certs";
+    QString sslCertPath = "/mnt/onboard/.adds/qt-linux-5.15.2-kobo/lib/ssl_certs";
     if (qEnvironmentVariableIsSet("QTPATH"))
         sslCertPath = qEnvironmentVariable("QTPATH") + "/lib/ssl_certs";
     loadCertificates(sslCertPath);
@@ -256,23 +256,19 @@ void NetworkManager::addSetCustomRequestHeader(const QString &domain, const char
 void NetworkManager::loadCertificates(const QString &certsPath)
 {
     auto sslConfig = QSslConfiguration::defaultConfiguration();
-    sslConfig.setProtocol(QSsl::SecureProtocols);
+    sslConfig.setProtocol(QSsl::AnyProtocol);
     auto certs = sslConfig.caCertificates();
 
-    QDir dir(certsPath);
-    dir.setFilter(QDir::Files | QDir::NoDotAndDotDot | QDir::Hidden);
-    dir.setNameFilters({"*.cer", "*.crt", "*.pem"});
-    foreach (auto &entry, dir.entryInfoList())
+    QList<QSslCertificate> caCertificates = QSslCertificate::fromPath(certsPath + "/cacert.pem", QSsl::Pem);
+    if (caCertificates.size() != 0)
     {
-        QFile cafile(entry.filePath());
-        cafile.open(QIODevice::ReadOnly);
-        QSslCertificate cert(&cafile);
-
-        certs << cert;
-        cafile.close();
+        sslConfig.setCaCertificates(caCertificates);
+    }
+    else
+    {
+        qDebug() << "Couldn't load SSL certificates";
     }
 
-    sslConfig.setCaCertificates(certs);
     QSslConfiguration::setDefaultConfiguration(sslConfig);
 }
 
