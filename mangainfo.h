@@ -6,6 +6,7 @@
 #include "abstractmangasource.h"
 #include "downloadimagedescriptor.h"
 #include "mangachaptercollection.h"
+#include "readingprogress.h"
 #include "staticsettings.h"
 
 class MangaInfo : public QObject
@@ -41,13 +42,14 @@ public:
 
     QScopedPointer<QMutex> updateMutex;
 
-    void updateCompeted(bool newchapters);
+    void updateCompeted(bool updated, const QList<QPair<int, int>> &moveMap);
     QString coverThumbnailPath() const;
 
     void sendCoverLoaded();
 
 signals:
     void updatedSignal(bool newchapters);
+    void chaptersMoved(QList<QPair<int, int>> moveMap);
     void coverLoaded();
 };
 

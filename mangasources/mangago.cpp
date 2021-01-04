@@ -88,8 +88,8 @@ bool MangaGo::updateMangaList(UpdateProgressToken *token)
     return true;
 }
 
-void MangaGo::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
-                                             QSharedPointer<MangaInfo> info)
+Result<MangaChapterCollection, QString> MangaGo::updateMangaInfoFinishedLoading(
+    QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info)
 {
     QRegularExpression authorrx(R"(<label>\W*Author:\W*</label>(.*?)\d* released.\W*</td>)",
                                 QRegularExpression::DotMatchesEverythingOption);
@@ -117,7 +117,7 @@ void MangaGo::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> j
         newchapters.insert(
             0, MangaChapter(htmlToPlainText(chapterrxmatch.captured(2)), chapterrxmatch.captured(1)));
 
-    info->chapters.mergeChapters(newchapters);
+    return Ok(newchapters);
 }
 
 Result<QStringList, QString> MangaGo::getPageList(const QString &chapterUrl)

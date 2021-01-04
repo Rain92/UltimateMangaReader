@@ -79,8 +79,8 @@ bool MangaPanda::updateMangaList(UpdateProgressToken *token)
     return true;
 }
 
-void MangaPanda::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
-                                                QSharedPointer<MangaInfo> info)
+Result<MangaChapterCollection, QString> MangaPanda::updateMangaInfoFinishedLoading(
+    QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info)
 {
     QRegularExpression authorrx("Author ?:</td>[^>]*>([^<]*)");
     QRegularExpression artistrx("Artist ?:</td>[^>]*>([^<]*)");
@@ -111,7 +111,8 @@ void MangaPanda::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob
         auto curl = baseUrl + chapterrxmatch.captured(1);
         newchapters.append(MangaChapter(ctitle, curl));
     }
-    info->chapters.mergeChapters(newchapters);
+
+    return Ok(newchapters);
 }
 
 Result<QStringList, QString> MangaPanda::getPageList(const QString &chapterUrl)

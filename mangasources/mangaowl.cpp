@@ -77,8 +77,8 @@ bool MangaOwl::updateMangaList(UpdateProgressToken *token)
     return true;
 }
 
-void MangaOwl::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
-                                              QSharedPointer<MangaInfo> info)
+Result<MangaChapterCollection, QString> MangaOwl::updateMangaInfoFinishedLoading(
+    QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info)
 {
     QRegularExpression authorrx(R"(Author.*?<a[^>]*>\s*(.*?)\s*</a>)",
                                 QRegularExpression::DotMatchesEverythingOption);
@@ -104,7 +104,7 @@ void MangaOwl::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> 
         newchapters.insert(
             0, MangaChapter(htmlToPlainText(chapterrxmatch.captured(2)), chapterrxmatch.captured(1)));
 
-    info->chapters.mergeChapters(newchapters);
+    return Ok(newchapters);
 }
 
 Result<QStringList, QString> MangaOwl::getPageList(const QString &chapterUrl)

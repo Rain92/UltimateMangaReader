@@ -8,7 +8,7 @@
 
 #include "downloadimagedescriptor.h"
 #include "downloadqueue.h"
-#include "mangachapter.h"
+#include "mangachaptercollection.h"
 #include "mangalist.h"
 #include "networkmanager.h"
 #include "sizes.h"
@@ -31,8 +31,8 @@ public:
 
     virtual bool updateMangaList(UpdateProgressToken *token) = 0;
 
-    virtual void updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
-                                                QSharedPointer<MangaInfo> mangainfo) = 0;
+    virtual Result<MangaChapterCollection, QString> updateMangaInfoFinishedLoading(
+        QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> mangainfo) = 0;
 
     virtual Result<QSharedPointer<MangaInfo>, QString> getMangaInfo(const QString &mangaUrl,
                                                                     const QString &mangaTitle);

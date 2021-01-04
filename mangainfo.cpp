@@ -37,12 +37,30 @@ void MangaInfo::serialize()
     file.close();
 }
 
-void MangaInfo::updateCompeted(bool newchapters)
+void MangaInfo::updateCompeted(bool updated, const QList<QPair<int, int> > &moveMap)
 {
-    if (newchapters)
-        updated = true;
+    if (updated)
+        this->updated = true;
 
-    emit updatedSignal(updated);
+    ReadingProgress progress(hostname, title);
+    progress.numChapters = chapters.count();
+
+    if (!moveMap.empty())
+    {
+        for (const auto &[i1, i2] : moveMap)
+        {
+            if (progress.index.chapter == i1)
+            {
+                progress.index.chapter = i2;
+                qDebug() << "Reading index changed for" << title << ":" << i1 << "->" << i2;
+                break;
+            }
+        }
+        progress.serialize(hostname, title);
+        emit chaptersMoved(moveMap);
+    }
+
+    emit updatedSignal(this->updated);
 }
 
 void MangaInfo::sendCoverLoaded()

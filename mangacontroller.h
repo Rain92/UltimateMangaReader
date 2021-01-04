@@ -10,8 +10,8 @@
 #include "mangaindextraverser.h"
 #include "mangainfo.h"
 #include "readingprogress.h"
-#include "thirdparty/result.h"
 #include "staticsettings.h"
+#include "thirdparty/result.h"
 
 class MangaController : public QObject
 {
@@ -49,6 +49,7 @@ private:
     void completedImagePreload(const QString &, const QString &path);
     Result<void, QString> assurePagesLoaded();
     void currentIndexChangedInternal(bool preload);
+    void chaptersMoved(QList<QPair<int, int>> moveMap);
     void updateCurrentImage();
     void deserializeProgress();
     void serializeProgress();

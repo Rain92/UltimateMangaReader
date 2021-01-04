@@ -142,8 +142,8 @@ QString padChapterNumber(const QString &number, int places = 4)
     return result.join('-');
 }
 
-void MangaDex::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
-                                              QSharedPointer<MangaInfo> info)
+Result<MangaChapterCollection, QString> MangaDex::updateMangaInfoFinishedLoading(
+    QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info)
 {
     QRegularExpression bbrx(R"(\[.*?\])");
 
@@ -199,7 +199,7 @@ void MangaDex::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> 
         return padChapterNumber(a.chapterNumber) < padChapterNumber(b.chapterNumber);
     });
 
-    info->chapters.mergeChapters(newchapters);
+    return Ok(newchapters);
 }
 
 Result<QStringList, QString> MangaDex::getPageList(const QString &chapterUrl)

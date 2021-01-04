@@ -30,7 +30,7 @@ signals:
 
 private slots:
     void on_tableWidget_cellClicked(int row, int column);
-    void mangaUpdated(bool newchapters);
+    void mangaUpdated(bool updated);
     void coverLoaded();
 
 private:

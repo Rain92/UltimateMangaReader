@@ -10,8 +10,8 @@ public:
     explicit MangaPanda(NetworkManager *dm);
 
     bool updateMangaList(UpdateProgressToken *token) override;
-    void updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
-                                        QSharedPointer<MangaInfo> info) override;
+    Result<MangaChapterCollection, QString> updateMangaInfoFinishedLoading(
+        QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info) override;
     Result<QStringList, QString> getPageList(const QString &chapterUrl) override;
 
 private:

@@ -77,8 +77,8 @@ bool MangaHere::updateMangaList(UpdateProgressToken *token)
     return true;
 }
 
-void MangaHere::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
-                                               QSharedPointer<MangaInfo> info)
+Result<MangaChapterCollection, QString> MangaHere::updateMangaInfoFinishedLoading(
+    QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info)
 {
     QRegularExpression authorrx(R"lit(<a href="/search/author/[^+][^"]*"[^>]*?title="([^"]*)">)lit");
     QRegularExpression artistrx;
@@ -107,6 +107,8 @@ void MangaHere::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob>
     for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->bufferStr, spos, epos))
         newchapters.insert(0, MangaChapter(chapterrxmatch.captured(2), baseUrl + chapterrxmatch.captured(1)));
     info->chapters.mergeChapters(newchapters);
+
+    return Ok(newchapters);
 }
 
 // UNFINISHED

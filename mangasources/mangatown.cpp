@@ -76,8 +76,8 @@ bool MangaTown::updateMangaList(UpdateProgressToken *token)
     return true;
 }
 
-void MangaTown::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
-                                               QSharedPointer<MangaInfo> info)
+Result<MangaChapterCollection, QString> MangaTown::updateMangaInfoFinishedLoading(
+    QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info)
 {
     QRegularExpression authorrx(R"(<b>Author\(s\):</b>(.*?)<li>)");
     QRegularExpression artistrx(R"(<b>Artist\(s\):</b>(.*?)<li>)");
@@ -99,7 +99,8 @@ void MangaTown::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob>
     MangaChapterCollection newchapters;
     for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->bufferStr, spos, epos))
         newchapters.insert(0, MangaChapter(chapterrxmatch.captured(2), baseUrl + chapterrxmatch.captured(1)));
-    info->chapters.mergeChapters(newchapters);
+
+    return Ok(newchapters);
 }
 
 Result<QStringList, QString> MangaTown::getPageList(const QString &chapterUrl)

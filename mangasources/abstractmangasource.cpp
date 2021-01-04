@@ -116,7 +116,22 @@ Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::getMangaInfo(con
     if (!job->await(8000))
         return Err(job->errorString);
 
-    updateMangaInfoFinishedLoading(job, info);
+    int oldnumchapters = info->chapters.count();
+    auto res = updateMangaInfoFinishedLoading(job, info);
+    if (res.isErr())
+        return Err(res.unwrapErr());
+
+    auto newChapters = res.unwrap();
+
+    auto moveMapping = info->chapters.mergeChapters(newChapters);
+
+    if (!moveMapping.empty())
+    {
+        info->updated = true;
+        reorderChapterPages(info, moveMapping);
+    }
+
+    info->updateCompeted(info->chapters.count() > oldnumchapters, moveMapping);
 
     downloadCoverAsync(info);
 
@@ -133,10 +148,22 @@ void AbstractMangaSource::updateMangaInfoAsync(QSharedPointer<MangaInfo> info)
         {
             QMutexLocker locker(info->updateMutex.get());
             updateMangaInfoFinishedLoading(job, info);
-        }
+            auto res = updateMangaInfoFinishedLoading(job, info);
+            if (res.isErr())
+                return;
 
-        bool newchapters = info->chapters.count() > oldnumchapters;
-        info->updateCompeted(newchapters);
+            auto newChapters = res.unwrap();
+
+            auto moveMapping = info->chapters.mergeChapters(newChapters);
+            if (!moveMapping.empty())
+            {
+                info->updated = true;
+                reorderChapterPages(info, moveMapping);
+            };
+
+            bool newchapters = info->chapters.count() > oldnumchapters;
+            info->updateCompeted(newchapters, moveMapping);
+        }
 
         downloadCoverAsync(info);
         info->serialize();

@@ -13,10 +13,17 @@ MangaController::MangaController(NetworkManager *networkManager, QObject *parent
 void MangaController::setCurrentManga(QSharedPointer<MangaInfo> mangaInfo)
 {
     cancelAllPreloads();
+
+    if (currentManga.get())
+        QObject::disconnect(currentManga.get(), &MangaInfo::chaptersMoved, this,
+                            &MangaController::chaptersMoved);
+
     currentManga.clear();
     currentManga = mangaInfo;
     currentIndex = MangaIndexTraverser(currentManga, 0, 0);
     deserializeProgress();
+
+    QObject::connect(currentManga.get(), &MangaInfo::chaptersMoved, this, &MangaController::chaptersMoved);
 
     emit currentMangaChanged(mangaInfo);
 
@@ -27,6 +34,12 @@ void MangaController::setCurrentManga(QSharedPointer<MangaInfo> mangaInfo)
         emit error(res.unwrapErr());
 
     emit activity();
+}
+
+void MangaController::chaptersMoved(QList<QPair<int, int>> moveMap)
+{
+    deserializeProgress();
+    currentIndexChangedInternal(false);
 }
 
 Result<void, QString> MangaController::assurePagesLoaded()

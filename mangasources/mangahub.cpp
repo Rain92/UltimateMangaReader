@@ -82,8 +82,8 @@ bool MangaHub::updateMangaList(UpdateProgressToken *token)
     return true;
 }
 
-void MangaHub::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
-                                              QSharedPointer<MangaInfo> info)
+Result<MangaChapterCollection, QString> MangaHub::updateMangaInfoFinishedLoading(
+    QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info)
 {
     QRegularExpression authorrx(R"(Author</span><span>([^<]*)</span>)");
     QRegularExpression artistrx(R"(Artist</span><span>([^<]*)</span>)");
@@ -115,7 +115,8 @@ void MangaHub::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> 
     for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->bufferStr, spos, epos))
         newchapters.insert(
             0, MangaChapter(htmlToPlainText(chapterrxmatch.captured(2)), chapterrxmatch.captured(1)));
-    info->chapters.mergeChapters(newchapters);
+
+    return Ok(newchapters);
 }
 
 int MangaHub::binarySearchNumPages(const QRegularExpressionMatch &imagerxmatch, int lowerBound,

@@ -95,9 +95,9 @@ void FavoritesWidget::moveFavoriteToFront(int i)
     insertRow(favoritesmanager->favoriteinfos.at(0), 0);
 }
 
-void FavoritesWidget::mangaUpdated(bool newchapters)
+void FavoritesWidget::mangaUpdated(bool updated)
 {
-    if (newchapters)
+    if (updated)
     {
         MangaInfo *mi = static_cast<MangaInfo *>(sender());
 

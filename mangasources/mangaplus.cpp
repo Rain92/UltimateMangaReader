@@ -65,15 +65,15 @@ bool MangaPlus::updateMangaList(UpdateProgressToken *token)
     return true;
 }
 
-void MangaPlus::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
-                                               QSharedPointer<MangaInfo> info)
+Result<MangaChapterCollection, QString> MangaPlus::updateMangaInfoFinishedLoading(
+    QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info)
 {
     picoproto::Message message;
 
     message.ParseFromBytes((uint8_t *)job->buffer.data(), job->buffer.size());
 
     if (!message.CheckFieldForType(1, picoproto::FIELD_BYTES))
-        return;
+        return Err(QString("Error updating manga."));
 
     auto detail = message.GetMessage(1)->GetMessage(8);  //    message TitleDetailView {
     //      optional Title title = 1;
@@ -132,12 +132,8 @@ void MangaPlus::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob>
 
         newchapters.insert(0, MangaChapter(chapterName, chapterUrl));
     }
-    auto moveMapping = info->chapters.mergeChapters(newchapters);
-    if (!moveMapping.empty())
-    {
-        info->updated = true;
-        reorderChapterPages(info, moveMapping);
-    };
+
+    return Ok(newchapters);
 }
 
 Result<QStringList, QString> MangaPlus::getPageList(const QString &chapterUrl)
