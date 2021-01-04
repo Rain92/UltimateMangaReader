@@ -10,7 +10,6 @@ class DownloadFileJob : public DownloadJobBase
 protected:
     QFile file;
 
-protected slots:
     virtual void downloadFileReadyRead();
     virtual void downloadFileFinished();
 
@@ -23,7 +22,6 @@ public:
 
     bool await(int timeout = 7000);
 
-public slots:
     void start() override;
     void restart() override;
     void onError(QNetworkReply::NetworkError);

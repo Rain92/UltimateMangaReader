@@ -11,14 +11,9 @@ public:
     explicit MangaPlus(NetworkManager *dm);
 
     bool updateMangaList(UpdateProgressToken *token) override;
-    void updateMangaInfoAsync(QSharedPointer<MangaInfo> info) override;
-    Result<QSharedPointer<MangaInfo>, QString> getMangaInfo(const QString &mangaUrl,
-                                                            const QString &mangaTitle) override;
 
     void updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
                                         QSharedPointer<MangaInfo> info) override;
-    void updateMangaInfoFinishedLoading(QSharedPointer<DownloadBufferJob> job,
-                                        QSharedPointer<MangaInfo> info);
     Result<QStringList, QString> getPageList(const QString &chapterUrl) override;
 
 private:

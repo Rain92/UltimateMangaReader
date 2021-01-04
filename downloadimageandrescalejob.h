@@ -29,11 +29,8 @@ public:
                            const QList<std::tuple<const char *, const char *>> &customHeaders = {},
                            EncryptionDescriptor encryption = {});
 
-signals:
-
-public slots:
-    virtual void downloadFileReadyRead() override;
-    virtual void downloadFileFinished() override;
+    void downloadFileReadyRead() override;
+    void downloadFileFinished() override;
 
 private:
     QSize imgSize;

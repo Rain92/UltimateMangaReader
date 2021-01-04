@@ -34,7 +34,7 @@ bool MangaHub::updateMangaList(UpdateProgressToken *token)
 
     auto lambda = [&](QSharedPointer<DownloadStringJob> job) {
         int matches = 0;
-        for (auto &match : getAllRxMatches(mangarx, job->buffer))
+        for (auto &match : getAllRxMatches(mangarx, job->bufferStr))
         {
             auto title = htmlToPlainText(match.captured(2));
             auto url = match.captured(1);
@@ -96,7 +96,7 @@ void MangaHub::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> 
     QRegularExpression chapterrx(
         R"lit(<a href="(https://mangahub.io/chapter/[^"]+)"[^>]*>(.*?)</span></span>)lit");
 
-    fillMangaInfo(info, job->buffer, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx, coverrx);
+    fillMangaInfo(info, job->bufferStr, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx, coverrx);
 
     // fix genres spacing
     for (int i = 1; i < info->genres.size(); i++)
@@ -108,11 +108,11 @@ void MangaHub::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> 
         }
     }
 
-    auto spos = job->buffer.indexOf(R"(<div class="tab-content">)");
-    auto epos = job->buffer.indexOf(R"(<section id="comments">)");
+    auto spos = job->bufferStr.indexOf(R"(<div class="tab-content">)");
+    auto epos = job->bufferStr.indexOf(R"(<section id="comments">)");
 
     MangaChapterCollection newchapters;
-    for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->buffer, spos, epos))
+    for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->bufferStr, spos, epos))
         newchapters.insert(
             0, MangaChapter(htmlToPlainText(chapterrxmatch.captured(2)), chapterrxmatch.captured(1)));
     info->chapters.mergeChapters(newchapters);
@@ -151,8 +151,8 @@ Result<QStringList, QString> MangaHub::getPageList(const QString &chapterUrl)
     if (!job->await(7000))
         return Err(job->errorString);
 
-    auto imagerxmatch = imagerx.match(job->buffer);
-    auto numimagesrxmatch = numimagesrx.match(job->buffer);
+    auto imagerxmatch = imagerx.match(job->bufferStr);
+    auto numimagesrxmatch = numimagesrx.match(job->bufferStr);
 
     if (!imagerxmatch.hasMatch())
         return Err(QString("Error. Couldn't process pages/images."));

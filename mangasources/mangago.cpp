@@ -28,8 +28,8 @@ bool MangaGo::updateMangaList(UpdateProgressToken *token)
     QElapsedTimer timer;
     timer.start();
 
-    auto numpagesrxmatch = numpagesrx.match(job->buffer);
-    auto nummangasrxmatch = nummangasrx.match(job->buffer);
+    auto numpagesrxmatch = numpagesrx.match(job->bufferStr);
+    auto nummangasrxmatch = nummangasrx.match(job->bufferStr);
 
     int pages = 1;
     if (numpagesrxmatch.hasMatch())
@@ -47,7 +47,7 @@ bool MangaGo::updateMangaList(UpdateProgressToken *token)
     const int matchesPerPage = 44;
     auto lambda = [&](QSharedPointer<DownloadStringJob> job) {
         int matches = 0;
-        for (auto &match : getAllRxMatches(mangarx, job->buffer))
+        for (auto &match : getAllRxMatches(mangarx, job->bufferStr))
         {
             auto title = htmlToPlainText(match.captured(2));
             auto url = match.captured(1);
@@ -107,13 +107,13 @@ void MangaGo::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> j
     QRegularExpression chapterrx(R"lit(<a[^>]*href="([^"]*)">W*(.*?)W*</a>)lit",
                                  QRegularExpression::DotMatchesEverythingOption);
 
-    fillMangaInfo(info, job->buffer, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx, coverrx);
+    fillMangaInfo(info, job->bufferStr, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx, coverrx);
 
-    int spos = job->buffer.indexOf(R"(id="chapter_table">)");
-    int epos = job->buffer.indexOf(R"(</table>)", spos);
+    int spos = job->bufferStr.indexOf(R"(id="chapter_table">)");
+    int epos = job->bufferStr.indexOf(R"(</table>)", spos);
 
     MangaChapterCollection newchapters;
-    for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->buffer, spos, epos))
+    for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->bufferStr, spos, epos))
         newchapters.insert(
             0, MangaChapter(htmlToPlainText(chapterrxmatch.captured(2)), chapterrxmatch.captured(1)));
 
@@ -131,7 +131,7 @@ Result<QStringList, QString> MangaGo::getPageList(const QString &chapterUrl)
         return Err(job->errorString);
 
     QStringList imageUrls;
-    for (auto &match : getAllRxMatches(pagerx, job->buffer))
+    for (auto &match : getAllRxMatches(pagerx, job->bufferStr))
     {
         imageUrls.append(match.captured(1));
     }

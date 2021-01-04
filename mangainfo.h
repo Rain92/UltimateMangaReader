@@ -16,8 +16,7 @@ public:
     explicit MangaInfo(AbstractMangaSource *mangaSource);
     ~MangaInfo();
 
-    static QSharedPointer<MangaInfo> deserialize(
-        AbstractMangaSource *mangaSource, const QString &path);
+    static QSharedPointer<MangaInfo> deserialize(AbstractMangaSource *mangaSource, const QString &path);
 
     void serialize();
     QString title;
@@ -45,12 +44,11 @@ public:
     void updateCompeted(bool newchapters);
     QString coverThumbnailPath() const;
 
+    void sendCoverLoaded();
+
 signals:
     void updatedSignal(bool newchapters);
     void coverLoaded();
-
-public slots:
-    void sendCoverLoaded();
 };
 
 #endif  // MANGAINFO_H

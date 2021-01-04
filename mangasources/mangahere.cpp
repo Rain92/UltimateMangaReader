@@ -28,7 +28,7 @@ bool MangaHere::updateMangaList(UpdateProgressToken *token)
     QElapsedTimer timer;
     timer.start();
 
-    auto numpagesrxmatch = numpagesrx.match(job->buffer);
+    auto numpagesrxmatch = numpagesrx.match(job->bufferStr);
 
     MangaList mangas;
     mangas.absoluteUrls = false;
@@ -42,7 +42,7 @@ bool MangaHere::updateMangaList(UpdateProgressToken *token)
     const int matchesPerPage = 70;
     auto lambda = [&](QSharedPointer<DownloadStringJob> job) {
         int matches = 0;
-        for (auto &match : getAllRxMatches(mangarx, job->buffer))
+        for (auto &match : getAllRxMatches(mangarx, job->bufferStr))
         {
             auto title = htmlToPlainText(match.captured(2));
             auto url = match.captured(1);
@@ -93,18 +93,18 @@ void MangaHere::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob>
     QRegularExpression chapterrx(
         R"lit(<a href="(/manga/[^"]*?)" title=".*?<p class="title3">([^<]*?)</p>)lit");
 
-    fillMangaInfo(info, job->buffer, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx, coverrx);
+    fillMangaInfo(info, job->bufferStr, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx, coverrx);
 
     info->genres = info->genres.remove("- ");
     info->status = info->status.remove('\n');
     if (info->status.contains('-'))
         info->status = info->status.split('-')[0];
 
-    int spos = job->buffer.indexOf(R"(<div id="chapterlist">)");
-    int epos = job->buffer.indexOf(R"(<div class="fb-comments)", spos);
+    int spos = job->bufferStr.indexOf(R"(<div id="chapterlist">)");
+    int epos = job->bufferStr.indexOf(R"(<div class="fb-comments)", spos);
 
     MangaChapterCollection newchapters;
-    for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->buffer, spos, epos))
+    for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->bufferStr, spos, epos))
         newchapters.insert(0, MangaChapter(chapterrxmatch.captured(2), baseUrl + chapterrxmatch.captured(1)));
     info->chapters.mergeChapters(newchapters);
 }
@@ -119,11 +119,11 @@ Result<QStringList, QString> MangaHere::getPageList(const QString &chapterUrl)
     if (!job->await(7000))
         return Err(job->errorString);
 
-    int spos = job->buffer.indexOf(R"(<div class="vung-doc" id="vungdoc">)");
-    int epos = job->buffer.indexOf(R"(class="navi-change-chapter">)", spos);
+    int spos = job->bufferStr.indexOf(R"(<div class="vung-doc" id="vungdoc">)");
+    int epos = job->bufferStr.indexOf(R"(class="navi-change-chapter">)", spos);
 
     QStringList imageUrls;
-    for (auto &match : getAllRxMatches(pagerx, job->buffer, spos, epos))
+    for (auto &match : getAllRxMatches(pagerx, job->bufferStr, spos, epos))
     {
         auto imageUrl = match.captured(1);
         if (!imageUrl.contains("/themes/"))

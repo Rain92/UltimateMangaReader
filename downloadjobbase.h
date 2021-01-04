@@ -13,6 +13,10 @@ protected:
     QScopedPointer<QNetworkReply> reply;
     QList<std::tuple<const char *, const char *>> customHeaders;
 
+signals:
+    void completed();
+    void downloadError();
+
 public:
     DownloadJobBase(QNetworkAccessManager *networkManager, const QString &url,
                     const QList<std::tuple<const char *, const char *>> &customHeaders = {});
@@ -24,11 +28,6 @@ public:
 
     QList<QNetworkCookie> getCookies();
 
-signals:
-    void completed();
-    void downloadError();
-
-public slots:
     virtual void start() = 0;
     virtual void restart() = 0;
     virtual void onSslErrors(const QList<QSslError> &);

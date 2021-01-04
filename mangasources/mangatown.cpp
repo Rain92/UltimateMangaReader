@@ -26,7 +26,7 @@ bool MangaTown::updateMangaList(UpdateProgressToken *token)
     QElapsedTimer timer;
     timer.start();
 
-    auto numpagesrxmatch = numpagesrx.match(job->buffer);
+    auto numpagesrxmatch = numpagesrx.match(job->bufferStr);
 
     MangaList mangas;
     mangas.absoluteUrls = false;
@@ -39,7 +39,7 @@ bool MangaTown::updateMangaList(UpdateProgressToken *token)
     const int matchesPerPage = 30;
     auto lambda = [&](QSharedPointer<DownloadStringJob> job) {
         int matches = 0;
-        for (auto &match : getAllRxMatches(mangarx, job->buffer))
+        for (auto &match : getAllRxMatches(mangarx, job->bufferStr))
         {
             auto title = htmlToPlainText(match.captured(2));
             auto url = match.captured(1);
@@ -79,7 +79,6 @@ bool MangaTown::updateMangaList(UpdateProgressToken *token)
 void MangaTown::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
                                                QSharedPointer<MangaInfo> info)
 {
-    //    QRegularExpression titlerx(R"(<h1 class="title-top">([^<]*?)<)");
     QRegularExpression authorrx(R"(<b>Author\(s\):</b>(.*?)<li>)");
     QRegularExpression artistrx(R"(<b>Artist\(s\):</b>(.*?)<li>)");
     QRegularExpression statusrx(R"(<b>Status\(s\):</b>(.*?)(?:<a|<li))");
@@ -92,13 +91,13 @@ void MangaTown::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob>
 
     QRegularExpression chapterrx(R"lit(<a href="(/manga/[^"]*?)"[^>]*?>([^<]*))lit");
 
-    fillMangaInfo(info, job->buffer, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx, coverrx);
+    fillMangaInfo(info, job->bufferStr, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx, coverrx);
 
-    int spos = job->buffer.indexOf(R"(<ul class="chapter_list">)");
-    int epos = job->buffer.indexOf(R"(<div class="comment_content">)", spos);
+    int spos = job->bufferStr.indexOf(R"(<ul class="chapter_list">)");
+    int epos = job->bufferStr.indexOf(R"(<div class="comment_content">)", spos);
 
     MangaChapterCollection newchapters;
-    for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->buffer, spos, epos))
+    for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->bufferStr, spos, epos))
         newchapters.insert(0, MangaChapter(chapterrxmatch.captured(2), baseUrl + chapterrxmatch.captured(1)));
     info->chapters.mergeChapters(newchapters);
 }
@@ -113,7 +112,7 @@ Result<QStringList, QString> MangaTown::getPageList(const QString &chapterUrl)
     if (!job->await(7000))
         return Err(job->errorString);
 
-    auto numPagesRxMatch = numPagesRx.match(job->buffer);
+    auto numPagesRxMatch = numPagesRx.match(job->bufferStr);
 
     if (!numPagesRxMatch.hasMatch())
         return Err(QString("Couldn't process pagelist."));
@@ -138,7 +137,7 @@ Result<QString, QString> MangaTown::getImageUrl(const QString &pageUrl)
     if (!job->await(7000))
         return Err(job->errorString);
 
-    auto match = imgUrlRx.match(job->buffer);
+    auto match = imgUrlRx.match(job->bufferStr);
 
     if (!match.hasMatch())
         return Err(QString("Couldn't process pages/images."));

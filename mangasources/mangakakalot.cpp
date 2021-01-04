@@ -34,8 +34,8 @@ bool Mangakakalot::updateMangaList(UpdateProgressToken *token)
     QElapsedTimer timer;
     timer.start();
 
-    auto nummangasrxmatch = nummangasrx.match(job->buffer);
-    auto numpagesrxmatch = numpagesrx.match(job->buffer);
+    auto nummangasrxmatch = nummangasrx.match(job->bufferStr);
+    auto numpagesrxmatch = numpagesrx.match(job->bufferStr);
 
     int nominalSize = 0;
     if (nummangasrxmatch.hasMatch())
@@ -50,11 +50,11 @@ bool Mangakakalot::updateMangaList(UpdateProgressToken *token)
 
     const int matchesPerPage = 24;
     auto lambda = [&](QSharedPointer<DownloadStringJob> job) {
-        int spos = job->buffer.indexOf(rxstart);
-        int epos = job->buffer.indexOf(rxend);
+        int spos = job->bufferStr.indexOf(rxstart);
+        int epos = job->bufferStr.indexOf(rxend);
 
         int matches = 0;
-        for (auto &match : getAllRxMatches(mangarx, job->buffer, spos, epos))
+        for (auto &match : getAllRxMatches(mangarx, job->bufferStr, spos, epos))
         {
             auto title = htmlToPlainText(match.captured(2));
             auto url = match.captured(1);
@@ -109,18 +109,18 @@ void Mangakakalot::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJ
 
     QRegularExpression chapterrx(R"lit(<a[^>]*?href="([^"]*)"[^>]*>([^<]*)<)lit");
 
-    fillMangaInfo(info, job->buffer, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx, coverrx);
+    fillMangaInfo(info, job->bufferStr, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx, coverrx);
 
     info->genres = info->genres.remove("- ");
     info->status = info->status.remove('\n');
     if (info->status.contains('-'))
         info->status = info->status.split('-')[0];
 
-    int spos = job->buffer.indexOf(R"(chapter-list">)");
-    int epos = job->buffer.indexOf(R"(<div class="fb-comments)", spos);
+    int spos = job->bufferStr.indexOf(R"(chapter-list">)");
+    int epos = job->bufferStr.indexOf(R"(<div class="fb-comments)", spos);
 
     MangaChapterCollection newchapters;
-    for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->buffer, spos, epos))
+    for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->bufferStr, spos, epos))
         newchapters.insert(0, MangaChapter(chapterrxmatch.captured(2), chapterrxmatch.captured(1)));
     info->chapters.mergeChapters(newchapters);
 }
@@ -134,13 +134,13 @@ Result<QStringList, QString> Mangakakalot::getPageList(const QString &chapterUrl
     if (!job->await(7000))
         return Err(job->errorString);
 
-    int spos = job->buffer.indexOf(R"(<div class="vung-doc" id="vungdoc">)");
+    int spos = job->bufferStr.indexOf(R"(<div class="vung-doc" id="vungdoc">)");
     if (spos < 0)
-        spos = job->buffer.indexOf(R"(<div class="container-chapter-reader">)");
-    int epos = job->buffer.indexOf(R"(class="navi-change-chapter">)", spos);
+        spos = job->bufferStr.indexOf(R"(<div class="container-chapter-reader">)");
+    int epos = job->bufferStr.indexOf(R"(class="navi-change-chapter">)", spos);
 
     QStringList imageUrls;
-    for (auto &match : getAllRxMatches(pagerx, job->buffer, spos, epos))
+    for (auto &match : getAllRxMatches(pagerx, job->bufferStr, spos, epos))
     {
         auto imageUrl = match.captured(1);
         if (!imageUrl.contains("/themes/"))

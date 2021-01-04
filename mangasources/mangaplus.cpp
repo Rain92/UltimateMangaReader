@@ -63,54 +63,7 @@ bool MangaPlus::updateMangaList(UpdateProgressToken *token)
     return true;
 }
 
-void MangaPlus::updateMangaInfoAsync(QSharedPointer<MangaInfo> info)
-{
-    int oldnumchapters = info->chapters.count();
-
-    auto job = networkManager->downloadToBuffer(info->url, 8000, mangaInfoPostDataStr);
-
-    auto lambda = [oldnumchapters, info, job, this] {
-        {
-            QMutexLocker locker(info->updateMutex.get());
-            updateMangaInfoFinishedLoading(job, info);
-        }
-
-        bool newchapters = info->chapters.count() > oldnumchapters;
-        info->updateCompeted(newchapters);
-
-        downloadCoverAsync(info);
-        info->serialize();
-    };
-
-    executeOnJobCompletion(job, lambda);
-}
-Result<QSharedPointer<MangaInfo>, QString> MangaPlus::getMangaInfo(const QString &mangaUrl,
-                                                                   const QString &mangaTitle)
-{
-    auto job = networkManager->downloadToBuffer(mangaUrl, 8000, mangaInfoPostDataStr);
-
-    auto info = QSharedPointer<MangaInfo>(new MangaInfo(this));
-
-    info->mangaSource = this;
-    info->hostname = name;
-    info->url = mangaUrl;
-    info->title = mangaTitle;
-
-    if (!job->await(8000))
-        return Err(job->errorString);
-
-    updateMangaInfoFinishedLoading(job, info);
-
-    downloadCoverAsync(info);
-
-    return Ok(info);
-}
-
-void MangaPlus::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob>, QSharedPointer<MangaInfo>)
-{
-}
-
-void MangaPlus::updateMangaInfoFinishedLoading(QSharedPointer<DownloadBufferJob> job,
+void MangaPlus::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> job,
                                                QSharedPointer<MangaInfo> info)
 {
     picoproto::Message message;

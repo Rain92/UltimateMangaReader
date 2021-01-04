@@ -12,8 +12,8 @@ protected:
     int timeoutTime;
     QByteArray postData;
 
-    void DownloadBufferReadyRead();
-    void DownloadBufferFinished();
+    void downloadBufferReadyRead();
+    void downloadBufferFinished();
     void onError(QNetworkReply::NetworkError);
     void timeout();
 
@@ -26,7 +26,6 @@ public:
 
     bool await(int timeout = 7000, bool retry = true);
 
-public:
     void start() override;
     void restart() override;
 };

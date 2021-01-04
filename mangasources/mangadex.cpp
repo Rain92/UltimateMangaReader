@@ -83,7 +83,7 @@ bool MangaDex::updateMangaList(UpdateProgressToken *token)
     QElapsedTimer timer;
     timer.start();
 
-    auto nummangasrxmatch = nummangasrx.match(job->buffer);
+    auto nummangasrxmatch = nummangasrx.match(job->bufferStr);
 
     int nominalSize = 1;
     if (nummangasrxmatch.hasMatch())
@@ -94,7 +94,7 @@ bool MangaDex::updateMangaList(UpdateProgressToken *token)
 
     auto lambda = [&](QSharedPointer<DownloadStringJob> job) {
         int matches = 0;
-        for (auto &match : getAllRxMatches(mangaidrx, job->buffer))
+        for (auto &match : getAllRxMatches(mangaidrx, job->bufferStr))
         {
             auto title = htmlToPlainText(match.captured(1));
             auto url = "/api/?type=manga&id=" + match.captured(2);
@@ -147,7 +147,7 @@ void MangaDex::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> 
 {
     QRegularExpression bbrx(R"(\[.*?\])");
 
-    QJsonDocument doc = QJsonDocument::fromJson(job->buffer.toUtf8());
+    QJsonDocument doc = QJsonDocument::fromJson(job->bufferStr.toUtf8());
     if (doc.isNull())
         qDebug() << "MangaDex chapter parse failed";
 
@@ -209,7 +209,7 @@ Result<QStringList, QString> MangaDex::getPageList(const QString &chapterUrl)
     if (!job->await(7000))
         return Err(job->errorString);
 
-    QJsonDocument doc = QJsonDocument::fromJson(job->buffer.toUtf8());
+    QJsonDocument doc = QJsonDocument::fromJson(job->bufferStr.toUtf8());
     if (doc.isNull())
         return Err(QString("MangaDex chapter parse failed"));
 

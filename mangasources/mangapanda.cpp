@@ -26,7 +26,7 @@ bool MangaPanda::updateMangaList(UpdateProgressToken *token)
     QElapsedTimer timer;
     timer.start();
 
-    auto numpagesrxmatch = numpagesrx.match(job->buffer);
+    auto numpagesrxmatch = numpagesrx.match(job->bufferStr);
 
     MangaList mangas;
     mangas.absoluteUrls = false;
@@ -38,11 +38,11 @@ bool MangaPanda::updateMangaList(UpdateProgressToken *token)
 
     const int matchesPerPage = 30;
     auto lambda = [&](QSharedPointer<DownloadStringJob> job) {
-        int spos = job->buffer.indexOf(R"(>Popular Mangas)");
-        int epos = job->buffer.indexOf(R"(<li class="active">)");
+        int spos = job->bufferStr.indexOf(R"(>Popular Mangas)");
+        int epos = job->bufferStr.indexOf(R"(<li class="active">)");
 
         int matches = 0;
-        for (auto &match : getAllRxMatches(mangarx, job->buffer, spos, epos))
+        for (auto &match : getAllRxMatches(mangarx, job->bufferStr, spos, epos))
         {
             auto title = htmlToPlainText(match.captured(2));
             auto url = match.captured(1);
@@ -93,17 +93,17 @@ void MangaPanda::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob
 
     QRegularExpression chapterrx(R"lit(<a href="([^"]*)"[^>]*>([^<]*)</a>([^<]*))lit");
 
-    fillMangaInfo(info, job->buffer, authorrx, artistrx, statusrx, yearrx, QRegularExpression(), summaryrx,
+    fillMangaInfo(info, job->bufferStr, authorrx, artistrx, statusrx, yearrx, QRegularExpression(), summaryrx,
                   coverrx);
 
-    int spos = job->buffer.indexOf(R"(Date Added)");
-    int epos = job->buffer.indexOf(R"(<script>)", spos);
+    int spos = job->bufferStr.indexOf(R"(Date Added)");
+    int epos = job->bufferStr.indexOf(R"(<script>)", spos);
 
-    auto genresrxmatch = genresrx.match(job->buffer);
+    auto genresrxmatch = genresrx.match(job->bufferStr);
     info->genres = htmlToPlainText(genresrxmatch.captured(1).replace("</a>", " ")).trimmed();
 
     MangaChapterCollection newchapters;
-    for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->buffer, spos, epos))
+    for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->bufferStr, spos, epos))
     {
         auto ctitle = chapterrxmatch.captured(2);
         if (chapterrxmatch.captured(3) != " : ")
@@ -124,7 +124,7 @@ Result<QStringList, QString> MangaPanda::getPageList(const QString &chapterUrl)
         return Err(job->errorString);
 
     QStringList imageUrls;
-    for (auto &match : getAllRxMatches(pagerx, job->buffer))
+    for (auto &match : getAllRxMatches(pagerx, job->bufferStr))
     {
         imageUrls.append(match.captured(1).remove('\\'));
     }

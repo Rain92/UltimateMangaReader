@@ -28,7 +28,7 @@ bool MangaOwl::updateMangaList(UpdateProgressToken *token)
     QElapsedTimer timer;
     timer.start();
 
-    auto numpagesrxmatch = numpagesrx.match(job->buffer);
+    auto numpagesrxmatch = numpagesrx.match(job->bufferStr);
 
     int pages = 1;
     if (numpagesrxmatch.hasMatch())
@@ -42,7 +42,7 @@ bool MangaOwl::updateMangaList(UpdateProgressToken *token)
     const int matchesPerPage = 36;
     auto lambda = [&](QSharedPointer<DownloadStringJob> job) {
         int matches = 0;
-        for (auto &match : getAllRxMatches(mangarx, job->buffer))
+        for (auto &match : getAllRxMatches(mangarx, job->bufferStr))
         {
             auto title = htmlToPlainText(match.captured(1));
             auto url = match.captured(2);
@@ -97,10 +97,10 @@ void MangaOwl::updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob> 
         R"lit(<a[^>]*class="chapter-url"[^>]*href="([^"]*)"[^>]*>\s*<label[^>]*>\s*(.*?)\s*</label>)lit",
         QRegularExpression::DotMatchesEverythingOption);
 
-    fillMangaInfo(info, job->buffer, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx, coverrx);
+    fillMangaInfo(info, job->bufferStr, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx, coverrx);
 
     MangaChapterCollection newchapters;
-    for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->buffer))
+    for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->bufferStr))
         newchapters.insert(
             0, MangaChapter(htmlToPlainText(chapterrxmatch.captured(2)), chapterrxmatch.captured(1)));
 
@@ -117,7 +117,7 @@ Result<QStringList, QString> MangaOwl::getPageList(const QString &chapterUrl)
         return Err(job->errorString);
 
     QStringList imageUrls;
-    for (auto &match : getAllRxMatches(pagerx, job->buffer))
+    for (auto &match : getAllRxMatches(pagerx, job->bufferStr))
     {
         imageUrls.append(match.captured(1));
     }

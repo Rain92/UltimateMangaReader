@@ -27,7 +27,7 @@ void DownloadBufferJob::start()
     }
     reply->setParent(nullptr);
 
-    QObject::connect(reply.get(), &QNetworkReply::finished, this, &DownloadBufferJob::DownloadBufferFinished);
+    QObject::connect(reply.get(), &QNetworkReply::finished, this, &DownloadBufferJob::downloadBufferFinished);
     QObject::connect(reply.get(), &QNetworkReply::errorOccurred, this, &DownloadBufferJob::onError);
     QObject::connect(reply.get(), &QNetworkReply::sslErrors, this, &DownloadJobBase::onSslErrors);
 
@@ -42,18 +42,18 @@ void DownloadBufferJob::restart()
 {
     isCompleted = false;
     errorString = "";
-    buffer = "";
+    buffer.clear();
 
     start();
 }
 
-void DownloadBufferJob::DownloadBufferReadyRead()
+void DownloadBufferJob::downloadBufferReadyRead()
 {
     // read it all at once when finished
     // buffer.append(reply->readAll());
 }
 
-void DownloadBufferJob::DownloadBufferFinished()
+void DownloadBufferJob::downloadBufferFinished()
 {
     timeoutTimer.stop();
 
@@ -81,7 +81,7 @@ void DownloadBufferJob::DownloadBufferFinished()
     }
     else
     {
-        buffer.append(reply->readAll());
+        buffer = reply->readAll();
 
         isCompleted = true;
 
@@ -103,8 +103,7 @@ void DownloadBufferJob::onError(QNetworkReply::NetworkError)
 void DownloadBufferJob::timeout()
 {
     errorString = "Download error: timeout";
-    QObject::disconnect(reply.get(), &QNetworkReply::finished, this,
-                        &DownloadBufferJob::DownloadBufferFinished);
+    reply.get()->disconnect();
     reply->abort();
 }
 
