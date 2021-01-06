@@ -51,7 +51,7 @@ void MangaInfo::updateCompeted(bool updated, const QList<QPair<int, int> > &move
         {
             if (progress.index.chapter == i1)
             {
-                if (i2 > 0)
+                if (i2 >= 0)
                     progress.index.chapter = i2;
                 else
                 {

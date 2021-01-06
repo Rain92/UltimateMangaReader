@@ -14,48 +14,38 @@ QStringList MangaChapterCollection::getMangaTitlesReversed()
 
 QList<QPair<int, int>> MangaChapterCollection::mergeChapters(MangaChapterCollection& other)
 {
-    QList<int> changed;
     QList<QPair<int, int>> moveMapping;
-    if (count() == other.count())
-    {
-        bool same = true;
-        for (int i = 0; i < count(); i++)
-        {
-            if ((*this)[i].chapterUrl != other[i].chapterUrl ||
-                (*this)[i].chapterTitle != other[i].chapterTitle)
-            {
-                same = false;
-                changed.append(i);
-            }
-        }
-        if (same)
-            return moveMapping;
-    }
 
-    for (auto& i : changed)
+    for (int i = 0; i < this->length(); i++)
     {
         auto& ch = (*this)[i];
         if (ch.pagesLoaded)
         {
-            for (int i2 = 0; i2 < other.count(); i2++)
+            int i2 = i;
+            if (!(i < other.length() && ch.chapterTitle == other[i].chapterTitle &&
+                  ch.chapterUrl == other[i].chapterUrl))
             {
-                if (ch.chapterUrl == other[i2].chapterUrl && ch.chapterTitle == other[i2].chapterTitle)
-                {
-                    other[i2].imageUrlList = ch.imageUrlList;
-                    other[i2].pageUrlList = ch.pageUrlList;
-                    other[i2].pagesLoaded = true;
+                for (i2 = 0; i2 < other.count(); i2++)
+                    if (ch.chapterTitle == other[i2].chapterTitle && ch.chapterUrl == other[i2].chapterUrl)
+                        break;
+            }
+
+            if (i2 < other.length())
+            {
+                other[i2].imageUrlList = ch.imageUrlList;
+                other[i2].pageUrlList = ch.pageUrlList;
+                other[i2].pagesLoaded = true;
+                if (i != i2)
                     moveMapping.append({i, i2});
-                    break;
-                }
-                else if (i2 == other.count() - 1)
-                {
-                    moveMapping.append({i, -1});
-                }
+            }
+            else
+            {
+                moveMapping.append({i, -1});
             }
         }
     }
-    (*this).clear();
-    (*this).append(other);
+    this->clear();
+    this->append(other);
 
     return moveMapping;
 }

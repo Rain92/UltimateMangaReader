@@ -92,7 +92,6 @@ Result<QString, QString> MangaController::getImageUrl(const MangaIndex &index)
     if (index.chapter >= currentManga->chapters.count() ||
         currentManga->chapters[index.chapter].imageUrlList.count() <= index.page)
         return Err(QString("Page index out of bounds."));
-    ;
 
     if (currentManga->chapters[index.chapter].imageUrlList[index.page] == "")
     {
