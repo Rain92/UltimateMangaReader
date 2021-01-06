@@ -122,8 +122,8 @@ QImage DownloadScaledImageJob::rescaleImage(const QImage &img)
 
 bool DownloadScaledImageJob::processImage(QByteArray &&array)
 {
-    //    QElapsedTimer t;
-    //    t.start();
+    QElapsedTimer t;
+    t.start();
 
     if (encryption.type == XorEncryption)
     {
@@ -138,8 +138,7 @@ bool DownloadScaledImageJob::processImage(QByteArray &&array)
     if (!img.loadFromData(array))
         return false;
 
-    if (!settings->trimPages)
-        img = rescaleImage(img);
+    img = rescaleImage(img);
 
     auto greyImg = img.convertToFormat(QImage::Format_Grayscale8);
     bool res = false;
@@ -150,18 +149,15 @@ bool DownloadScaledImageJob::processImage(QByteArray &&array)
         {
             auto trimRect = getTrimRect(greyImg);
             greyImg = greyImg.copy(trimRect);
-
-            greyImg = rescaleImage(greyImg);
         }
-        res = greyImg.save(filepath);
+        res = greyImg.save(filepath, nullptr, 80);
     }
 
-    if (!res)  // something went wrong with the greyscale img; use original
-    {
-        img = rescaleImage(img);
+    // if something went wrong with the greyscale img -> use original
+    if (!res)
         res = img.save(filepath);
-    }
-    //    qDebug() << t.elapsed();
+
+    qDebug() << t.elapsed();
 
     return res || QFileInfo(filepath).size() > 0;
 }
