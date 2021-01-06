@@ -11,6 +11,10 @@
 #include "enums.h"
 #include "networkmanager.h"
 
+#ifdef KOBO
+#include <arm_neon.h>
+#endif
+
 QList<QRegularExpressionMatch> getAllRxMatches(const QRegularExpression& rx, const QString& text,
                                                int spos = 0, int epos = -1);
 
@@ -103,6 +107,10 @@ unsigned long long getFreeSystemMemory();
 bool enoughFreeSystemMemory();
 
 void decryptXorInplace(QByteArray& data, const QByteArray& key);
-QByteArray hexstr2array(QString str);
+#ifdef KOBO
+void decryptXorInplace_NEON(QByteArray& data, const QByteArray& key);
+#endif
+
+QByteArray hexstr2array(const QString& str);
 
 #endif  // UTILS_H

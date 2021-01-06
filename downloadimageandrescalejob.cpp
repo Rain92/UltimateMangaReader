@@ -126,7 +126,13 @@ bool DownloadScaledImageJob::processImage(QByteArray &&array)
     //    t.start();
 
     if (encryption.type == XorEncryption)
+    {
+#ifdef KOBO
+        decryptXorInplace_NEON(array, encryption.key);
+#else
         decryptXorInplace(array, encryption.key);
+#endif
+    }
 
     QImage img;
     if (!img.loadFromData(array))

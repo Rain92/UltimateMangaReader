@@ -63,11 +63,8 @@ qint64 dirSize(const QString& path)
     // calculate total size of current directories' files
     QDir::Filters fileFilters = QDir::Files | QDir::System | QDir::Hidden;
     for (const auto& filePath : dir.entryList(fileFilters))
-    {
-        QFileInfo fi(dir, filePath);
-        size += fi.size();
-    }
-    // add size of child directories recursively
+        size += QFileInfo(dir, filePath).size();
+
     QDir::Filters dirFilters = QDir::Dirs | QDir::NoDotAndDotDot | QDir::System | QDir::Hidden;
 
     for (const auto& childDirPath : dir.entryList(dirFilters))
@@ -82,9 +79,9 @@ bool removeDir(const QString& path, const QString& ignore)
 
     if (dir.exists())
     {
-        foreach (QFileInfo info, dir.entryInfoList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden |
-                                                       QDir::AllDirs | QDir::Files,
-                                                   QDir::DirsFirst))
+        for (const auto& info : dir.entryInfoList(
+                 QDir::NoDotAndDotDot | QDir::System | QDir::Hidden | QDir::AllDirs | QDir::Files,
+                 QDir::DirsFirst))
         {
             if (info.isDir())
             {
@@ -161,15 +158,92 @@ bool enoughFreeSystemMemory()
 
 void decryptXorInplace(QByteArray& data, const QByteArray& key)
 {
-    for (int i = 0, p = 0; i < data.length(); i++, p++)
+    //    QElapsedTimer t;
+    //    t.start();
+
+    // loops inflated for better performance due to compiler optimizations
+    int r = data.length() / key.length();
+    int i, c, p;
+    for (i = 0, c = 0; c < r; c++)
+        for (p = 0; p < key.length(); i++, p++)
+        {
+            data[i] = data[i] ^ key[p];
+        }
+
+    for (p = 0; i < data.length(); i++, p++)
     {
-        if (p >= key.length())
-            p = 0;
         data[i] = data[i] ^ key[p];
     }
+
+    //    for (int i = 0, p = 0; i < data.length(); i++, p++)
+    //    {
+    //        if (p >= key.length())
+    //            p = 0;
+    //        data[i] = data[i] ^ key[p];
+    //    }
+
+    //    qDebug() << "Xor:" << t.elapsed();
 }
 
-QByteArray hexstr2array(QString str)
+#ifdef KOBO
+void decryptXorInplace_NEON(QByteArray& data, const QByteArray& key)
+{
+    //    QElapsedTimer t;
+    //    t.start();
+
+    QByteArray key2;
+    key2.append(key);
+    key2.append(key);
+
+    uint8_t* datap = (uint8_t*)data.data();
+    uint8_t* key2p = (uint8_t*)key2.data();
+
+    uint8x16_t vdata, vkey, vres, vmask;
+    int incr = qMin(16, key.length());
+    int rounds = data.length() / incr;
+
+    int koff = 0;
+    int doff = 0;
+
+    uint8_t mask[16];
+    for (int i = 0; i < 16; i++)
+        mask[i] = i < incr ? 255 : 0;
+
+    vmask = vld1q_u8(mask);
+
+    for (int i = 0; i < rounds; i++)
+    {
+        /* load */
+        vkey = vld1q_u8(key2p + koff);
+        vdata = vld1q_u8(datap + doff);
+
+        /* res = data ^ key */
+        vres = veorq_u8(vdata, vkey);
+
+        // mask result if key is smaller than 16
+        if (key.length() < 16)
+            vres = vbslq_u8(vmask, vres, vdata);
+
+        /* store */
+        vst1q_u8(datap + doff, vres);
+
+        doff += incr;
+        koff += incr;
+        if (koff >= key.length())
+            koff -= key.length();
+    }
+
+    // take care of leftovers
+    for (; doff < data.length(); doff++, koff++)
+    {
+        data[doff] = data[doff] ^ key2[koff];
+    }
+
+    //    qDebug() << "Xor NEON:" << t.elapsed();
+}
+#endif
+
+QByteArray hexstr2array(const QString& str)
 {
     QByteArray key;
     for (int i = 0; i < str.length(); i += 2)
