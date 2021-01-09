@@ -25,7 +25,7 @@ class DownloadScaledImageJob : public DownloadFileJob
 
 public:
     DownloadScaledImageJob(QNetworkAccessManager *networkManager, const QString &url, const QString &path,
-                           QSize imgSize, Settings *settings,
+                           QSize screenSize, Settings *settings,
                            const QList<std::tuple<const char *, const char *>> &customHeaders = {},
                            EncryptionDescriptor encryption = {});
 
@@ -33,13 +33,12 @@ public:
     void downloadFileFinished() override;
 
 private:
-    QSize imgSize;
+    QSize screenSize;
     Settings *settings;
     EncryptionDescriptor encryption;
 
     bool processImage(QByteArray &&array);
     QImage rescaleImage(const QImage &img);
-    QRect getTrimRect(const QImage &image);
 };
 
 #endif  // DOWNLOADIMAGEANDRESCALEJOB_H

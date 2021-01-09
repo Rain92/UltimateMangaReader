@@ -36,8 +36,13 @@ void MangaImageContainer::setVOffset(int y)
     if (!pixmap || pixmap.isNull())
         return;
 
-    vOffset = qMax(qMin(y, (int)(pixmap->height() / qApp->devicePixelRatio()) - this->height()), 0);
-    this->update();
+    auto newvOffset = qMax(qMin(y, (int)(pixmap->height() / qApp->devicePixelRatio()) - this->height()), 0);
+
+    if (newvOffset != vOffset)
+    {
+        vOffset = newvOffset;
+        this->update();
+    }
 }
 
 void MangaImageContainer::showErrorImage()
@@ -62,6 +67,9 @@ void MangaImageContainer::mouseMoveEvent(QMouseEvent *event)
 
 void MangaImageContainer::paintEvent(QPaintEvent *)
 {
+    //    QElapsedTimer t;
+    //    t.start();
+
     QPainter painter(this);
     auto pixelRatio = qApp->devicePixelRatio();
     auto img = pixmap;
@@ -79,11 +87,15 @@ void MangaImageContainer::paintEvent(QPaintEvent *)
         }
     }
 
-    int x = (this->size().width() - img->width() / pixelRatio) / 2;
-    int y = (this->size().height() - img->height() / pixelRatio) / 2;
+    auto scaledSize = img->size();
+
+    int x = (this->size().width() - scaledSize.width() / pixelRatio) / 2;
+    int y = (this->size().height() - scaledSize.height() / pixelRatio) / 2;
 
     if (img->height() > this->height() * 1.1)
         y = -vOffset;
 
-    painter.drawPixmap(x, y, img->width() / pixelRatio, img->height() / pixelRatio, *img);
+    painter.drawPixmap(x, y, scaledSize.width() / pixelRatio, scaledSize.height() / pixelRatio, *img);
+
+    //    qDebug() << "Image Painting:" << t.elapsed();
 }

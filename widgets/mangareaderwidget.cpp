@@ -237,6 +237,9 @@ void MangaReaderWidget::checkMem()
 
 bool MangaReaderWidget::addImageToCache(const QString &path, bool isPreload)
 {
+    //    QElapsedTimer t;
+    //    t.start();
+
     int i = searchCache(path);
     if (i != -1)
     {
@@ -248,28 +251,20 @@ bool MangaReaderWidget::addImageToCache(const QString &path, bool isPreload)
     }
     else
     {
-        auto img = new QPixmap(path);
-        if (img->isNull())
+        auto img = QSharedPointer<QPixmap>(new QPixmap(path));
+
+        if (!img || img->isNull())
             return false;
 
-        if (settings && settings->doublePageFullscreen &&
-            (img->width() <= img->height()) != (this->width() <= this->height()))
-        {
-            QTransform t;
-            t = t.rotate(90);
-
-            auto imgRot = new QPixmap(img->transformed(t));
-            delete img;
-            img = imgRot;
-        }
-
-        imgcache.insert(0, {QSharedPointer<QPixmap>(img), path});
+        imgcache.insert(0, {img, path});
 
         if (imgcache.count() > CONF.imageCacheSize)
             imgcache.removeLast();
     }
 
     checkMem();
+
+    //    qDebug() << "Load image:" << t.elapsed();
 
     return true;
 }

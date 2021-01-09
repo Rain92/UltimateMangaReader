@@ -1,8 +1,8 @@
 #ifndef MANGAIMAGECONTAINER_H
 #define MANGAIMAGECONTAINER_H
 
-#include <qframe.h>
-
+#include <QElapsedTimer>
+#include <QFrame>
 #include <QMouseEvent>
 #include <QPainter>
 

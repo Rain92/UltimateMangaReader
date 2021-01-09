@@ -1,11 +1,11 @@
 #include "downloadimageandrescalejob.h"
 
 DownloadScaledImageJob::DownloadScaledImageJob(
-    QNetworkAccessManager *networkManager, const QString &url, const QString &path, QSize imgSize,
+    QNetworkAccessManager *networkManager, const QString &url, const QString &path, QSize screenSize,
     Settings *settings, const QList<std::tuple<const char *, const char *>> &customHeaders,
     EncryptionDescriptor encryption)
     : DownloadFileJob(networkManager, url, path, customHeaders),
-      imgSize(imgSize),
+      screenSize(screenSize),
       settings(settings),
       encryption(encryption)
 {
@@ -52,78 +52,99 @@ void DownloadScaledImageJob::downloadFileFinished()
     }
 }
 
-QRect DownloadScaledImageJob::getTrimRect(const QImage &img)
+inline QPair<int, int> getTrimRectHelper(const QImage &img, int lineNum, int limitLeft, int limitRight,
+                                         const uchar threshold)
 {
-    const uchar threshold = 240;
+    const uchar *line = img.constScanLine(lineNum);
+
+    int left = 0;
+    int right = 0;
+
+    for (left = 0; left < limitLeft; left++)
+        if (line[left] <= threshold)
+            break;
+
+    for (right = img.width() - 1; right >= limitRight; right--)
+        if (line[right] <= threshold)
+            break;
+
+    return {left, right};
+}
+
+QRect getTrimRect(const QImage &img)
+{
+    const uchar threshold = 234;
 
     int bottom = 0;
     int top = 0;
-    bool contentReached = false;
     int leftMin = img.width();
-    int rightMin = img.width();
-    for (int h = 0; h < img.height(); h++)
+    int rightMin = 0;
+
+    for (top = 0; top < img.height(); top++)
     {
-        const uchar *line = img.constScanLine(h);
+        auto [left, right] = getTrimRectHelper(img, top, img.width(), rightMin, threshold);
 
-        bool allWhite = true;
-        int left = 0;
-        int right = 0;
-
-        for (int w = 0; w < img.width(); w++)
-        {
-            if (line[w] > threshold)
-            {
-                if (allWhite)
-                    left++;
-                else
-                    right++;
-            }
-            else if (!allWhite)
-            {
-                right = 0;
-            }
-            else
-            {
-                allWhite = false;
-                contentReached = true;
-                right = 0;
-            }
-        }
-        if (allWhite)
-        {
-            if (!contentReached)
-                top++;
-            else
-                bottom++;
-        }
-        else
+        bool allWhite = left == img.width();
+        if (!allWhite)
         {
             leftMin = qMin(leftMin, left);
-            rightMin = qMin(rightMin, right);
-
-            bottom = 0;
+            rightMin = qMax(rightMin, right);
+            break;
         }
     }
-    return QRect(leftMin, top, img.width() - rightMin - leftMin, img.height() - bottom - top);
+
+    for (bottom = img.height() - 1; bottom >= top; bottom--)
+    {
+        auto [left, right] = getTrimRectHelper(img, bottom, img.width(), rightMin, threshold);
+
+        bool allWhite = left == img.width();
+        if (!allWhite)
+        {
+            leftMin = qMin(leftMin, left);
+            rightMin = qMax(rightMin, right);
+            break;
+        }
+    }
+
+    for (int middle = top; middle < bottom; middle++)
+    {
+        auto [left, right] = getTrimRectHelper(img, middle, leftMin, rightMin, threshold);
+
+        bool allWhite = left == img.width();
+        if (!allWhite)
+        {
+            leftMin = qMin(leftMin, left);
+            rightMin = qMax(rightMin, right);
+        }
+    }
+
+    return QRect(leftMin, top, rightMin - leftMin, bottom - top);
 }
 
 QImage DownloadScaledImageJob::rescaleImage(const QImage &img)
 {
-    auto rsize = imgSize;
-    if (settings->doublePageFullscreen &&
-        (img.width() <= img.height()) != (imgSize.width() <= imgSize.height()))
-        rsize.transpose();
-    else if (settings->manhwaMode &&
-             ((float)img.height() / img.width()) > 1.6 * ((float)imgSize.height() / imgSize.width()))
-        rsize = QSize(imgSize.width(), ((float)imgSize.width()) / img.width() * img.height());
+    auto rescaleSize = screenSize;
 
-    return img.scaled(rsize.width(), rsize.height(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    if (settings->doublePageFullscreen &&
+        (img.width() <= img.height()) != (screenSize.width() <= screenSize.height()))
+    {
+        auto imgR = img.transformed(QTransform().rotate(90));
+        return imgR.scaled(rescaleSize.width(), rescaleSize.height(), Qt::KeepAspectRatio,
+                           Qt::SmoothTransformation);
+    }
+
+    if (settings->manhwaMode &&
+        ((float)img.height() / img.width()) > 1.6 * ((float)screenSize.height() / screenSize.width()))
+        rescaleSize = QSize(screenSize.width(), ((float)screenSize.width()) / img.width() * img.height());
+
+    return img.scaled(rescaleSize.width(), rescaleSize.height(), Qt::KeepAspectRatio,
+                      Qt::SmoothTransformation);
 }
 
 bool DownloadScaledImageJob::processImage(QByteArray &&array)
 {
-    QElapsedTimer t;
-    t.start();
+    //    QElapsedTimer t;
+    //    t.start();
 
     if (encryption.type == XorEncryption)
     {
@@ -138,8 +159,6 @@ bool DownloadScaledImageJob::processImage(QByteArray &&array)
     if (!img.loadFromData(array))
         return false;
 
-    img = rescaleImage(img);
-
     auto greyImg = img.convertToFormat(QImage::Format_Grayscale8);
     bool res = false;
 
@@ -150,14 +169,18 @@ bool DownloadScaledImageJob::processImage(QByteArray &&array)
             auto trimRect = getTrimRect(greyImg);
             greyImg = greyImg.copy(trimRect);
         }
+        greyImg = rescaleImage(greyImg);
         res = greyImg.save(filepath, nullptr, 80);
     }
 
     // if something went wrong with the greyscale img -> use original
     if (!res)
+    {
+        img = rescaleImage(img);
         res = img.save(filepath);
+    }
 
-    qDebug() << t.elapsed();
+    //    qDebug() << "Image processing:" << t.elapsed();
 
     return res || QFileInfo(filepath).size() > 0;
 }
