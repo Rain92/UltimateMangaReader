@@ -3,17 +3,17 @@
 MangaPanda::MangaPanda(NetworkManager *dm) : AbstractMangaSource(dm)
 {
     name = "MangaPanda";
-    baseUrl = "http://www.mangapanda.com";
-    dictionaryUrl = baseUrl + "/popular/";
+    baseUrl = "http://manga-panda.xyz/";
+    dictionaryUrl = "http://manga-panda.xyz/popular-manga/?page=";
 }
 
 bool MangaPanda::updateMangaList(UpdateProgressToken *token)
 {
-    QRegularExpression mangarx(R"lit(<a href="(/[^"]+)">([^<]+)<)lit");
+    QRegularExpression mangarx(R"lit(<a href="(http://manga-panda.xyz/manga/[^"]*?)" title="([^"]*?)">)lit");
 
-    QRegularExpression numpagesrx(R"lit(href="/popular/(\d+)">Last)lit");
+    QRegularExpression numpagesrx(R"lit(>(\d+)</a></li>\W*<li><a[^>]+rel="next">&raquo;</a></li>)lit");
 
-    auto job = networkManager->downloadAsString(dictionaryUrl);
+    auto job = networkManager->downloadAsString(dictionaryUrl + "1");
 
     if (!job->await(10000))
     {
@@ -29,19 +29,19 @@ bool MangaPanda::updateMangaList(UpdateProgressToken *token)
     auto numpagesrxmatch = numpagesrx.match(job->bufferStr);
 
     MangaList mangas;
-    mangas.absoluteUrls = false;
+    mangas.absoluteUrls = true;
     int pages = 1;
 
     if (numpagesrxmatch.hasMatch())
-        pages = numpagesrxmatch.captured(1).toInt() / 30 + 1;
+        pages = numpagesrxmatch.captured(1).toInt();
     qDebug() << "pages:" << pages;
 
     const int matchesPerPage = 30;
     auto lambda = [&](QSharedPointer<DownloadStringJob> job) {
-        int spos = job->bufferStr.indexOf(R"(>Popular Mangas)");
+        int matches = 0;
+        int spos = job->bufferStr.indexOf(R"(<span>Popular Manga</span>)");
         int epos = job->bufferStr.indexOf(R"(<li class="active">)");
 
-        int matches = 0;
         for (auto &match : getAllRxMatches(mangarx, job->bufferStr, spos, epos))
         {
             auto title = htmlToPlainText(match.captured(2));
@@ -59,8 +59,8 @@ bool MangaPanda::updateMangaList(UpdateProgressToken *token)
     lambda(job);
 
     QList<QString> urls;
-    for (int i = 1; i < pages; i++)
-        urls.append(dictionaryUrl + QString::number(i * 30));
+    for (int i = 2; i < pages; i++)
+        urls.append(dictionaryUrl + QString::number(i));
 
     DownloadQueue queue(networkManager, urls, CONF.parallelDownloadsHigh, lambda, true);
     queue.setCancellationToken(&token->canceled);
@@ -82,34 +82,27 @@ bool MangaPanda::updateMangaList(UpdateProgressToken *token)
 Result<MangaChapterCollection, QString> MangaPanda::updateMangaInfoFinishedLoading(
     QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info)
 {
-    QRegularExpression authorrx("Author ?:</td>[^>]*>([^<]*)");
-    QRegularExpression artistrx("Artist ?:</td>[^>]*>([^<]*)");
-    QRegularExpression statusrx("Status ?:</td>[^>]*>([^<]*)");
-    QRegularExpression yearrx("Year of Release ?:</td>[^>]*>([^<]*)");
-    QRegularExpression genresrx("Genre ?:</td>(.*?)</td>", QRegularExpression::DotMatchesEverythingOption);
-    QRegularExpression summaryrx(R"(>Read [^<]* Online</div><p>(.*?)</p>)",
+    QRegularExpression authorrx(R"(<li>Author\(s\) ?:([^<]*))");
+    QRegularExpression artistrx;
+    QRegularExpression statusrx("<li>Status ?:([^<]*)");
+    QRegularExpression yearrx;
+    QRegularExpression genresrx("<li>Genre ?:(.*?)</li>", QRegularExpression::DotMatchesEverythingOption);
+    QRegularExpression summaryrx(R"(<div id="noidungm"[^>]*>(.*?)</div>)",
                                  QRegularExpression::DotMatchesEverythingOption);
-    QRegularExpression coverrx(R"(<img src="([^"]*/cover/[^"]*))");
+    QRegularExpression coverrx(R"(<div class="manga-info-pic">\W*<img src="([^"]*))");
 
-    QRegularExpression chapterrx(R"lit(<a href="([^"]*)"[^>]*>([^<]*)</a>([^<]*))lit");
+    QRegularExpression chapterrx(R"lit(<span><a\W*href="([^"]*)"\W*title="([^"]*)">)lit");
 
-    fillMangaInfo(info, job->bufferStr, authorrx, artistrx, statusrx, yearrx, QRegularExpression(), summaryrx,
-                  coverrx);
+    fillMangaInfo(info, job->bufferStr, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx, coverrx);
 
-    int spos = job->bufferStr.indexOf(R"(Date Added)");
-    int epos = job->bufferStr.indexOf(R"(<script>)", spos);
-
-    auto genresrxmatch = genresrx.match(job->bufferStr);
-    info->genres = htmlToPlainText(genresrxmatch.captured(1).replace("</a>", " ")).trimmed();
+    info->author = info->author.remove(',');
 
     MangaChapterCollection newchapters;
-    for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->bufferStr, spos, epos))
+    for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->bufferStr))
     {
         auto ctitle = chapterrxmatch.captured(2);
-        if (chapterrxmatch.captured(3) != " : ")
-            ctitle += chapterrxmatch.captured(3);
-        auto curl = baseUrl + chapterrxmatch.captured(1);
-        newchapters.append(MangaChapter(ctitle, curl));
+        auto curl = chapterrxmatch.captured(1);
+        newchapters.prepend(MangaChapter(ctitle, curl));
     }
 
     return Ok(newchapters);
@@ -117,17 +110,21 @@ Result<MangaChapterCollection, QString> MangaPanda::updateMangaInfoFinishedLoadi
 
 Result<QStringList, QString> MangaPanda::getPageList(const QString &chapterUrl)
 {
-    QRegularExpression pagerx(R"lit("u":"([^"]*)")lit");
-
+    QRegularExpression pagerx(R"lit(<p id=arraydata style=display:none>(.*?)</p>)lit");
     auto job = networkManager->downloadAsString(chapterUrl);
 
     if (!job->await(7000))
         return Err(job->errorString);
 
+    auto pagerxmatch = pagerx.match(job->bufferStr);
+
+    if (!pagerxmatch.hasMatch())
+        return Err(QString("Couldn't parse pages."));
+
     QStringList imageUrls;
-    for (auto &match : getAllRxMatches(pagerx, job->bufferStr))
+    for (auto &match : pagerxmatch.captured(1).split(','))
     {
-        imageUrls.append(match.captured(1).remove('\\'));
+        imageUrls.append(match);
     }
     return Ok(imageUrls);
 }
