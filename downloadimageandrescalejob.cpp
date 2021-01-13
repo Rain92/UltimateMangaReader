@@ -3,8 +3,9 @@
 DownloadScaledImageJob::DownloadScaledImageJob(
     QNetworkAccessManager *networkManager, const QString &url, const QString &path, QSize screenSize,
     Settings *settings, const QList<std::tuple<const char *, const char *>> &customHeaders,
-    EncryptionDescriptor encryption)
+    const EncryptionDescriptor encryption)
     : DownloadFileJob(networkManager, url, path, customHeaders),
+      resultImage(nullptr),
       screenSize(screenSize),
       settings(settings),
       encryption(encryption)
@@ -169,15 +170,15 @@ bool DownloadScaledImageJob::processImage(QByteArray &&array)
             auto trimRect = getTrimRect(greyImg);
             greyImg = greyImg.copy(trimRect);
         }
-        greyImg = rescaleImage(greyImg);
-        res = greyImg.save(filepath, nullptr, 80);
+        resultImage.reset(new QImage(rescaleImage(greyImg)));
+        res = resultImage->save(filepath, nullptr, 80);
     }
 
     // if something went wrong with the greyscale img -> use original
     if (!res)
     {
-        img = rescaleImage(img);
-        res = img.save(filepath);
+        resultImage.reset(new QImage(rescaleImage(img)));
+        res = resultImage->save(filepath, nullptr, 80);
     }
 
     //    qDebug() << "Image processing:" << t.elapsed();

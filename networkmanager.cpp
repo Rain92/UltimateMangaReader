@@ -202,7 +202,7 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const QStr
 
     if (fileDownloads.contains(urlf))
     {
-        auto job = fileDownloads.value(urlf).toStrongRef();
+        auto job = qSharedPointerCast<DownloadScaledImageJob>(fileDownloads.value(urlf).toStrongRef());
         if (job)
             return job;
         else
@@ -230,6 +230,9 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const QStr
     fileDownloads.insert(urlf, job.toWeakRef());
 
     emit activity();
+    auto sjob = qSharedPointerCast<DownloadScaledImageJob>(job);
+    connect(sjob.get(), &DownloadScaledImageJob::completed,
+            [=]() { emit downloadedImage(sjob->filepath, {sjob->resultImage}); });
     return job;
 }
 

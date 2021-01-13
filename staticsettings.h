@@ -28,7 +28,7 @@ public:
     const int parallelDownloadsLow = 4;
     const int parallelDownloadsMid = 6;
     const int parallelDownloadsHigh = 8;
-    const int forwardPreloads = 4;
+    const int forwardPreloads = 3;
     const int backwardPreloads = 1;
     const int autoSuspendIntervalMinutes = 15;
     const int globalTickIntervalSeconds = 60;

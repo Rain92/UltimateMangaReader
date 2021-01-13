@@ -35,13 +35,14 @@ public:
     bool disconnectWifi();
 
     static void loadCertificates(const QString &certsPath);
-    bool urlExists(const QString &url_string);
+    bool urlExists(const QString &url);
 
     bool connected;
 
 signals:
     void connectionStatusChanged(bool connected);
     void activity();
+    void downloadedImage(const QString &path, QSharedPointer<QImage> img);
 
 private:
     QNetworkAccessManager *networkManager;

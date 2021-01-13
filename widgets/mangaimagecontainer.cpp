@@ -11,15 +11,15 @@ MangaImageContainer::MangaImageContainer(QWidget *parent)
       lastY(0),
       vOffset(0),
       showError(false),
-      errorPixmap(new QPixmap(":/images/icons/file-error.png"))
+      errorImage(new QImage(":/images/icons/file-error.png"))
 {
 }
 
-void MangaImageContainer::setImage(QSharedPointer<QPixmap> img)
+void MangaImageContainer::setImage(QSharedPointer<QImage> img)
 {
     showError = false;
     vOffset = 0;
-    pixmap = img;
+    image = img;
     update();
 }
 
@@ -27,16 +27,16 @@ void MangaImageContainer::clearImage()
 {
     showError = false;
     vOffset = 0;
-    pixmap.clear();
+    image.clear();
     update();
 }
 
 void MangaImageContainer::setVOffset(int y)
 {
-    if (!pixmap || pixmap.isNull())
+    if (!image || image.isNull())
         return;
 
-    auto newvOffset = qMax(qMin(y, (int)(pixmap->height() / qApp->devicePixelRatio()) - this->height()), 0);
+    auto newvOffset = qMax(qMin(y, (int)(image->height() / qApp->devicePixelRatio()) - this->height()), 0);
 
     if (newvOffset != vOffset)
     {
@@ -49,7 +49,7 @@ void MangaImageContainer::showErrorImage()
 {
     showError = true;
     vOffset = 0;
-    pixmap.clear();
+    image.clear();
     update();
 }
 
@@ -72,13 +72,13 @@ void MangaImageContainer::paintEvent(QPaintEvent *)
 
     QPainter painter(this);
     auto pixelRatio = qApp->devicePixelRatio();
-    auto img = pixmap;
+    auto img = image;
 
     if (!img || img.isNull())
     {
         if (showError)
         {
-            img = errorPixmap;
+            img = errorImage;
         }
         else
         {
@@ -92,10 +92,10 @@ void MangaImageContainer::paintEvent(QPaintEvent *)
     int x = (this->size().width() - scaledSize.width() / pixelRatio) / 2;
     int y = (this->size().height() - scaledSize.height() / pixelRatio) / 2;
 
-    if (img->height() > this->height() * 1.1)
+    if (img->height() > this->height() * pixelRatio * 1.1)
         y = -vOffset;
 
-    painter.drawPixmap(x, y, scaledSize.width() / pixelRatio, scaledSize.height() / pixelRatio, *img);
+    painter.drawImage(QRect(x, y, img->width() / pixelRatio, img->height() / pixelRatio), *img);
 
     //    qDebug() << "Image Painting:" << t.elapsed();
 }

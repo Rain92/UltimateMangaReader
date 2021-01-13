@@ -114,7 +114,7 @@ void MangaController::currentIndexChangedInternal(bool preload)
     serializeProgress();
 
     if (preload)
-        QTimer::singleShot(50, [this]() { preloadNeighbours(CONF.forwardPreloads, CONF.backwardPreloads); });
+        QTimer::singleShot(50, this, &MangaController::preloadNeighbours);
 
     emit activity();
 }
@@ -212,8 +212,11 @@ void MangaController::preloadPopular()
         preloadImage({currentManga->chapters.count() - 1, 0});
 }
 
-void MangaController::preloadNeighbours(int forward, int backward)
+void MangaController::preloadNeighbours()
 {
+    int forward = CONF.forwardPreloads;
+    int backward = CONF.backwardPreloads;
+
     MangaIndexTraverser forwardindex(currentIndex);
     MangaIndexTraverser backwardindex(currentIndex);
 

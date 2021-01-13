@@ -33,6 +33,7 @@ public:
     void setFrontLightPanelState(int light, int comflight);
 
     bool addImageToCache(const QString &path, bool isPreload = true);
+    bool addImageToCache(const QString &path, QSharedPointer<QImage> img);
     void updateMenuBar();
     void setSettings(Settings *settings);
 
@@ -66,7 +67,7 @@ private:
 
     Ui::MangaReaderWidget *ui;
 
-    QQueue<QPair<QSharedPointer<QPixmap>, QString>> imgcache;
+    QQueue<QPair<QSharedPointer<QImage>, QString>> imgcache;
 
     GotoDialog *gotodialog;
 

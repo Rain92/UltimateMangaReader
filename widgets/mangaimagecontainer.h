@@ -13,7 +13,7 @@ class MangaImageContainer : public QFrame
 public:
     explicit MangaImageContainer(QWidget *parent);
 
-    void setImage(QSharedPointer<QPixmap> img);
+    void setImage(QSharedPointer<QImage> img);
     void clearImage();
     void showErrorImage();
     void setVOffset(int y);
@@ -27,8 +27,8 @@ private:
     int lastY;
     int vOffset;
     bool showError;
-    QSharedPointer<QPixmap> pixmap;
-    QSharedPointer<QPixmap> errorPixmap;
+    QSharedPointer<QImage> image;
+    QSharedPointer<QImage> errorImage;
 };
 
 #endif  // MANGAIMAGECONTAINER_H

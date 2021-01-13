@@ -135,6 +135,7 @@ MainWidget::MainWidget(QWidget *parent)
     QObject::connect(ui->mangaInfoWidget, &MangaInfoWidget::readMangaClicked, [this](auto index) {
         setWidgetTab(MangaReaderTab);
         core->mangaController->setCurrentIndex(index);
+        QTimer::singleShot(50, core->mangaController, &MangaController::preloadNeighbours);
     });
 
     QObject::connect(ui->mangaInfoWidget, &MangaInfoWidget::readMangaContinueClicked,
@@ -173,6 +174,10 @@ MainWidget::MainWidget(QWidget *parent)
 
     QObject::connect(ui->mangaReaderWidget, &MangaReaderWidget::gotoIndex, core->mangaController,
                      &MangaController::setCurrentIndex);
+
+    QObject::connect(
+        core->networkManager, &NetworkManager::downloadedImage, ui->mangaReaderWidget,
+        qOverload<const QString &, QSharedPointer<QImage> >(&MangaReaderWidget::addImageToCache));
 
     // SettingsDialog
     QObject::connect(settingsDialog, &SettingsDialog::activeMangasChanged, core,

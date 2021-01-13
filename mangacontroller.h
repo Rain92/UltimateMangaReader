@@ -30,7 +30,7 @@ public:
 
     Result<QString, QString> getImageUrl(const MangaIndex &index);
 
-    void preloadNeighbours(int Forward, int Backward);
+    void preloadNeighbours();
     void preloadImage(const MangaIndex &index);
 
     void preloadPopular();

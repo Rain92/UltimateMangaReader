@@ -27,10 +27,12 @@ public:
     DownloadScaledImageJob(QNetworkAccessManager *networkManager, const QString &url, const QString &path,
                            QSize screenSize, Settings *settings,
                            const QList<std::tuple<const char *, const char *>> &customHeaders = {},
-                           EncryptionDescriptor encryption = {});
+                           const EncryptionDescriptor encryption = {});
 
     void downloadFileReadyRead() override;
     void downloadFileFinished() override;
+
+    QSharedPointer<QImage> resultImage;
 
 private:
     QSize screenSize;

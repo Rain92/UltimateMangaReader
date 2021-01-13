@@ -153,7 +153,7 @@ unsigned long long getFreeSystemMemory()
 
 bool enoughFreeSystemMemory()
 {
-    return getFreeSystemMemory() / 1024 / 1024 > 150;
+    return getFreeSystemMemory() / 1024 / 1024 > 100;
 }
 
 void decryptXorInplace(QByteArray& data, const QByteArray& key)

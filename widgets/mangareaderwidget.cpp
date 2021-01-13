@@ -225,7 +225,7 @@ void MangaReaderWidget::showImage(const QString &path)
 
 void MangaReaderWidget::checkMem()
 {
-    while (!enoughFreeSystemMemory() && imgcache.count() > 1)
+    while (imgcache.size() > 1 && !enoughFreeSystemMemory())
     {
         //        int free = getFreeSystemMemory() / 1024 / 1024;
         //        qDebug() << "Free(MB):" << free;
@@ -233,6 +233,34 @@ void MangaReaderWidget::checkMem()
         //        free = getFreeSystemMemory() / 1024 / 1024;
         //        qDebug() << "Freed memory!" << free;
     }
+}
+
+bool MangaReaderWidget::addImageToCache(const QString &path, QSharedPointer<QImage> img)
+{
+    //    QElapsedTimer t;
+    //    t.start();
+
+    int i = searchCache(path);
+    if (i != -1)
+    {
+        imgcache.move(i, 0);
+    }
+    else
+    {
+        if (!img || img->isNull())
+            return false;
+
+        imgcache.insert(0, {img, path});
+
+        if (imgcache.count() > CONF.imageCacheSize)
+            imgcache.removeLast();
+    }
+
+    checkMem();
+
+    //    qDebug() << "Load image1:" << t.elapsed() << path.split('/').last();
+
+    return true;
 }
 
 bool MangaReaderWidget::addImageToCache(const QString &path, bool isPreload)
@@ -251,7 +279,7 @@ bool MangaReaderWidget::addImageToCache(const QString &path, bool isPreload)
     }
     else
     {
-        auto img = QSharedPointer<QPixmap>(new QPixmap(path));
+        auto img = QSharedPointer<QImage>(new QImage(path));
 
         if (!img || img->isNull())
             return false;
@@ -264,7 +292,7 @@ bool MangaReaderWidget::addImageToCache(const QString &path, bool isPreload)
 
     checkMem();
 
-    //    qDebug() << "Load image:" << t.elapsed();
+    //    qDebug() << "Load image2:" << t.elapsed() << path.split('/').last();
 
     return true;
 }
