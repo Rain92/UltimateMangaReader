@@ -8,7 +8,7 @@ DownloadJobBase::DownloadJobBase(QNetworkAccessManager *networkManager, const QS
       url(url),
       originalUrl(url),
       isCompleted(false),
-      errorString("")
+      errorString()
 {
 }
 

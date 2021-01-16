@@ -30,7 +30,7 @@ void DownloadFileJob::start()
                 request.setRawHeader(name, value);
 
             reply.reset(networkManager->get(request));
-            reply->setParent(nullptr);
+            //            reply->setParent(nullptr);
 
             QObject::connect(reply.get(), &QNetworkReply::readyRead, this,
                              &DownloadFileJob::downloadFileReadyRead);

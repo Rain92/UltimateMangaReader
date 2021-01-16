@@ -231,8 +231,11 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const QStr
 
     emit activity();
     auto sjob = qSharedPointerCast<DownloadScaledImageJob>(job);
-    connect(sjob.get(), &DownloadScaledImageJob::completed,
-            [=]() { emit downloadedImage(sjob->filepath, {sjob->resultImage}); });
+    connect(sjob.get(), &DownloadScaledImageJob::completed, [sjob, this]() mutable {
+        if (sjob->resultImage)
+            emit downloadedImage(sjob->filepath, {sjob->resultImage});
+        sjob.clear();
+    });
     return job;
 }
 

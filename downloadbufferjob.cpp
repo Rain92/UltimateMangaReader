@@ -25,7 +25,7 @@ void DownloadBufferJob::start()
         request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
         reply.reset(networkManager->post(request, postData));
     }
-    reply->setParent(nullptr);
+    //    reply->setParent(nullptr);
 
     QObject::connect(reply.get(), &QNetworkReply::finished, this, &DownloadBufferJob::downloadBufferFinished);
     QObject::connect(reply.get(), &QNetworkReply::errorOccurred, this, &DownloadBufferJob::onError);

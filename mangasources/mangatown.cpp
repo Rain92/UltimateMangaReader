@@ -145,7 +145,7 @@ Result<QString, QString> MangaTown::getImageUrl(const QString &pageUrl)
 
     auto imageUrl = match.captured(1);
     if (imageUrl.startsWith("//"))
-        imageUrl.prepend("https:");
+        imageUrl = "https:" + imageUrl;
 
     return Ok(imageUrl);
 }
