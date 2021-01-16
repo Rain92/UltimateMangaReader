@@ -237,6 +237,7 @@ Field::~Field()
                     delete cached_message;
                 }
             }
+            delete cached_messages;
         }
         break;
         default:
