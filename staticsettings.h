@@ -33,9 +33,10 @@ public:
     const int autoSuspendIntervalMinutes = 15;
     const int globalTickIntervalSeconds = 60;
 
+    inline QString mangasourcedir(const QString &hostname) { return cacheDir + hostname + "/"; }
     inline QString mangainfodir(const QString &hostname, const QString &title)
     {
-        return cacheDir + hostname + "/" + makePathLegal(title) + "/";
+        return mangasourcedir(hostname) + makePathLegal(title) + "/";
     }
     inline QString mangaimagesdir(const QString &hostname, const QString &title)
     {

@@ -20,6 +20,8 @@ private:
     QString mangalistUrl;
     QString chapterDetailUrl;
     QString pagesUrl;
+
+    void invalidatePagelist();
 };
 
 #endif  // MANGAPLUS_H

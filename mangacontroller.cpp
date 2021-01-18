@@ -50,7 +50,8 @@ Result<void, QString> MangaController::assurePagesLoaded()
     if (currentIndex.chapter >= currentManga->chapters.count() || currentIndex.chapter < 0)
         currentIndex.chapter = qMax(0, currentManga->chapters.count() - 1);
 
-    if (!currentIndex.currentChapter().pagesLoaded)
+    if (!currentIndex.currentChapter().pagesLoaded ||
+        currentIndex.currentChapter().imageUrlList[currentIndex.page] == "")
     {
         auto res = currentManga->mangaSource->updatePageList(currentManga, currentIndex.chapter);
 

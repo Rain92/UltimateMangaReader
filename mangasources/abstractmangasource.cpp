@@ -180,7 +180,7 @@ Result<void, QString> AbstractMangaSource::updatePageList(QSharedPointer<MangaIn
     if (chapter >= info->chapters.count() || chapter < 0)
         return Err(QString("Chapter number out of bounds."));
 
-    if (info->chapters[chapter].pagesLoaded)
+    if (info->chapters[chapter].pagesLoaded && info->chapters[chapter].imageUrlList.first() != "")
         return Ok();
 
     auto newpagelistR = getPageList(info->chapters[chapter].chapterUrl);

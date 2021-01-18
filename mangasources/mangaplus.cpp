@@ -7,6 +7,31 @@ MangaPlus::MangaPlus(NetworkManager *dm) : AbstractMangaSource(dm)
     mangalistUrl = "api/title_list/all";
     chapterDetailUrl = "api/title_detail?title_id=%1";
     pagesUrl = "api/manga_viewer?chapter_id=%1&img_quality=super_high&split=yes";
+
+    invalidatePagelist();
+}
+
+// encrypiton keys are changing almost daily, we need to invalidate the old ones
+void MangaPlus::invalidatePagelist()
+{
+    auto path = CONF.mangasourcedir(this->name);
+    QDir dir(path);
+    QDir::Filters dirFilters = QDir::Dirs | QDir::NoDotAndDotDot | QDir::System | QDir::Hidden;
+
+    for (const auto &mangadir : dir.entryList(dirFilters))
+    {
+        auto mangaPath = CONF.mangainfodir(name, mangadir) + "mangainfo.dat";
+        auto mi = MangaInfo::deserialize(this, mangaPath);
+        for (int i = 0; i < mi->chapters.size(); i++)
+        {
+            if (!mi->chapters[i].pagesLoaded)
+                continue;
+
+            for (int c = 0; c < mi->chapters[i].imageUrlList.size(); c++)
+                mi->chapters[i].imageUrlList[c] = "";
+        }
+        mi->serialize();
+    }
 }
 
 bool MangaPlus::updateMangaList(UpdateProgressToken *token)
