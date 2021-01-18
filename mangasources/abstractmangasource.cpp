@@ -237,17 +237,21 @@ void AbstractMangaSource::reorderChapterPages(QSharedPointer<MangaInfo> info,
     {
         id1.chapter = i1;
         id2.chapter = i2;
+        if (i2 < 0)
+        {
+            auto oldpath = getImagePath(id1);
+            QFile::remove(oldpath);
+            continue;
+        }
         for (int pi = 0; pi < info->chapters[i2].pageUrlList.count(); pi++)
         {
             id1.page = pi;
             id2.page = pi;
             auto oldpath = getImagePath(id1);
             auto newpath = getImagePath(id2) + '_';
-            if (i2 < 0)
-                QFile::remove(oldpath);
-            else
-                QFile::rename(oldpath, newpath);
+            QFile::rename(oldpath, newpath);
         }
+
         //        qDebug() << "moving chapter pages:" << i1 << "->" << i2;
     }
     for (const auto &[i1, i2] : moveMapping)
