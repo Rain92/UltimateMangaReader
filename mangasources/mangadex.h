@@ -16,6 +16,7 @@ public:
 
 private:
     void login();
+    QString basedictUrl;
 
     QVector<QString> statuses;
     QVector<QString> demographies;

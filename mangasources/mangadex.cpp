@@ -4,8 +4,9 @@ MangaDex::MangaDex(NetworkManager *dm) : AbstractMangaSource(dm)
 {
     name = "MangaDex";
     baseUrl = "https://mangadex.org";
+    basedictUrl = baseUrl + "/titles/9/";
 
-    //    networkManager->addCookie(".mangadex.org", "mangadex_h_toggle", "1");
+    networkManager->addCookie(".mangadex.org", "mangadex_h_toggle", "1");
     networkManager->addCookie(".mangadex.org", "mangadex_title_mode", "2");
     networkManager->addCookie(".mangadex.org", "mangadex_filter_langs", "1");
 
@@ -42,33 +43,16 @@ MangaDex::MangaDex(NetworkManager *dm) : AbstractMangaSource(dm)
     genreMap.insert(54, "Superhero");
     genreMap.insert(55, "Thriller");
     genreMap.insert(56, "Wuxia");
-
-    //    login();
-}
-
-void MangaDex::login()
-{
-    QUrlQuery postData;
-    postData.addQueryItem("login_username", "UMRBot2");
-    postData.addQueryItem("login_password", "umrbot123");
-    postData.addQueryItem("remember_me", "1");
-    auto query = postData.query().toUtf8();
-
-    QString loginurl("https://mangadex.org/ajax/actions.ajax.php?function=login&nojs=1");
-
-    auto job = networkManager->downloadAsString(loginurl, 6000, query);
 }
 
 bool MangaDex::updateMangaList(UpdateProgressToken *token)
 {
     QRegularExpression nummangasrx(R"(<p class=[^>]*>Showing .*? (\d+,\d+) titles)");
 
-    QRegularExpression mangaidrx(
-        R"lit(<a title=['"]([^'"]*?)['"][^<]*?href=['"]/title/([^/]+)/[^<]*?class=")lit");
+    QRegularExpression mangaidrx(R"lit(<a title="([^"]*?)"[^<]*?href=['"]/title/([^/]+)/[^<]*?class=")lit");
 
     MangaList mangas;
-
-    QString basedictUrl = baseUrl + "/titles/9/";
+    ;
 
     auto job = networkManager->downloadAsString(basedictUrl + "1", -1);
 
