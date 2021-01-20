@@ -108,14 +108,16 @@ void activateScroller(QAbstractScrollArea* pArea)
     if (pArea)
     {
         QScroller* scroller = QScroller::scroller(pArea);
-        QScrollerProperties prop = scroller->scrollerProperties();
+        // properties won't be set for some reason; has to be hardfixed in the qt source
+        QScrollerProperties prop;
+        prop.setScrollMetric(QScrollerProperties::QScrollerProperties::MousePressEventDelay, 0);
         prop.setScrollMetric(QScrollerProperties::VerticalOvershootPolicy,
                              QScrollerProperties::OvershootAlwaysOff);
         prop.setScrollMetric(QScrollerProperties::HorizontalOvershootPolicy,
                              QScrollerProperties::OvershootAlwaysOff);
-        prop.setScrollMetric(QScrollerProperties::QScrollerProperties::DragStartDistance, 0);
-        prop.setScrollMetric(QScrollerProperties::QScrollerProperties::MousePressEventDelay, 0);
-        prop.setScrollMetric(QScrollerProperties::QScrollerProperties::OvershootDragDistanceFactor, 0);
+
+        prop.setScrollMetric(QScrollerProperties::OvershootDragResistanceFactor, 0);
+        prop.setScrollMetric(QScrollerProperties::OvershootDragDistanceFactor, 0);
 
         scroller->setScrollerProperties(prop);
         scroller->grabGesture(pArea->viewport(), QScroller::LeftMouseButtonGesture);

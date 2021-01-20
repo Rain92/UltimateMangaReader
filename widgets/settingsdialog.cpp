@@ -1,5 +1,7 @@
 #include "settingsdialog.h"
 
+#include <QScrollBar>
+
 #include "ui_settingsdialog.h"
 
 SettingsDialog::SettingsDialog(Settings *settings, QWidget *parent)
@@ -26,11 +28,17 @@ void SettingsDialog::adjustUI()
 {
     ui->labelTitle->setStyleSheet("font-size: 15pt");
     ui->pushButtonOk->setFixedHeight(SIZES.buttonSize);
+    activateScroller(ui->scrollArea);
 }
 
 void SettingsDialog::open()
 {
     resetUI();
+    QRect screenGeometry = this->parentWidget()->geometry();
+    int x = (screenGeometry.width() - this->width()) / 2 + this->parentWidget()->x();
+    int y = (screenGeometry.height() - this->height()) / 2 + this->parentWidget()->y();
+    this->setMaximumHeight(this->parentWidget()->height());
+    this->move(x, y);
     QDialog::open();
 }
 

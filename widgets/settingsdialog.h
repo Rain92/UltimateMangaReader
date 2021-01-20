@@ -6,6 +6,7 @@
 #include "enums.h"
 #include "settings.h"
 #include "sizes.h"
+#include "utils.h"
 
 namespace Ui
 {
