@@ -2,16 +2,6 @@
 
 MangaChapterCollection::MangaChapterCollection() {}
 
-QStringList MangaChapterCollection::getMangaTitlesReversed()
-{
-    QStringList list;
-
-    for (const auto& ch : qAsConst(*this))
-        list.insert(0, ch.chapterTitle);
-
-    return list;
-}
-
 QList<QPair<int, int>> MangaChapterCollection::mergeChapters(MangaChapterCollection& other)
 {
     QList<QPair<int, int>> moveMapping;

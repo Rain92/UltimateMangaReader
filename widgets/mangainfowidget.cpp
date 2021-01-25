@@ -109,8 +109,13 @@ void MangaInfoWidget::updateCover()
 
 void MangaInfoWidget::updateInfos()
 {
+    QStringList list;
+
+    for (int i = 0; i < currentmanga->chapters.size(); i++)
+        list.insert(0, QString("%1: %2").arg(i + 1).arg(currentmanga->chapters[i].chapterTitle));
+
     QStringListModel *model = new QStringListModel(this);
-    model->setStringList(currentmanga->chapters.getMangaTitlesReversed());
+    model->setStringList(list);
 
     if (ui->listViewChapters->model() != nullptr)
         ui->listViewChapters->model()->deleteLater();

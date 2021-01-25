@@ -8,8 +8,6 @@ class MangaChapterCollection : public QList<MangaChapter>
 public:
     MangaChapterCollection();
 
-    QStringList getMangaTitlesReversed();
-
     QList<QPair<int, int>> mergeChapters(MangaChapterCollection& newChapters);
 };
 
