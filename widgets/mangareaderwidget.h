@@ -6,6 +6,7 @@
 #include "customgesturerecognizer.h"
 #include "enums.h"
 #include "gotodialog.h"
+#include "imageprocessingnative.h"
 #include "mangainfo.h"
 #include "readingprogress.h"
 #include "settings.h"

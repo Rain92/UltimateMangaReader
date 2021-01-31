@@ -41,6 +41,7 @@ MangaReaderWidget::MangaReaderWidget(QWidget *parent)
 
 MangaReaderWidget::~MangaReaderWidget()
 {
+    imgcache.clear();
     delete ui;
 }
 
@@ -279,7 +280,10 @@ bool MangaReaderWidget::addImageToCache(const QString &path, bool isPreload)
     }
     else
     {
-        auto img = QSharedPointer<QImage>(new QImage(path));
+        auto imgl = loadJpegFast(path);
+        if (imgl.isNull())
+            imgl = QImage(path);
+        auto img = QSharedPointer<QImage>(new QImage(imgl));
 
         if (!img || img->isNull())
             return false;

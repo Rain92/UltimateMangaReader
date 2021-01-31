@@ -4,6 +4,8 @@
 #include <QImage>
 
 #include "downloadfilejob.h"
+#include "imageprocessingnative.h"
+#include "imageprocessingqt.h"
 #include "settings.h"
 #include "utils.h"
 
@@ -27,7 +29,7 @@ public:
     DownloadScaledImageJob(QNetworkAccessManager *networkManager, const QString &url, const QString &path,
                            QSize screenSize, Settings *settings,
                            const QList<std::tuple<const char *, const char *>> &customHeaders = {},
-                           const EncryptionDescriptor encryption = {});
+                           const EncryptionDescriptor &encryption = {});
 
     void downloadFileReadyRead() override;
     void downloadFileFinished() override;
@@ -40,7 +42,6 @@ private:
     EncryptionDescriptor encryption;
 
     bool processImage(QByteArray &&array);
-    QImage rescaleImage(const QImage &img);
 };
 
 #endif  // DOWNLOADIMAGEANDRESCALEJOB_H

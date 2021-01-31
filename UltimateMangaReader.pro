@@ -17,6 +17,8 @@ else { # default is desktop
 QT    += core gui widgets network svg
 CONFIG += c++17
 
+LIBS +=  -lturbojpeg
+
 TARGET = UltimateMangaReader
 
 INCLUDEPATH += $$PWD/widgets $$PWD/mangasources
@@ -45,6 +47,8 @@ FORMS += \
 HEADERS += \
     downloadbufferjob.h \
     enums.h \
+    imageprocessingnative.h \
+    imageprocessingqt.h \
     mangachaptercollection.h \
     mangachapterdownloadmanager.h \
     mangacontroller.h \
@@ -60,6 +64,7 @@ HEADERS += \
     sizes.h \
     staticsettings.h \
     suspendmanager.h \
+    thirdparty/ne10_imgproc.h \
     thirdparty/picoproto.h \
     thirdparty/result.h \
     ultimatemangareadercore.h \
@@ -106,6 +111,8 @@ HEADERS += \
 
 SOURCES += \
     downloadbufferjob.cpp \
+    imageprocessingnative.cpp \
+    imageprocessingqt.cpp \
     mangachaptercollection.cpp \
     mangachapterdownloadmanager.cpp \
     mangacontroller.cpp \
@@ -120,6 +127,7 @@ SOURCES += \
     networkmanager.cpp \
     readingprogress.cpp \
     suspendmanager.cpp \
+    thirdparty/ne10_imgproc.cpp \
     thirdparty/picoproto.cc \
     ultimatemangareadercore.cpp \
     widgets/batteryicon.cpp \
