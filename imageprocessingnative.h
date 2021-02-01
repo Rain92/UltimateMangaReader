@@ -13,8 +13,7 @@
 #include "imageprocessingqt.h"
 #include "thirdparty/ne10_imgproc.h"
 
-inline QPair<int, int> getTrimRectBufHelper(const QByteArray &buffer, int imgWidth, int lineNum,
-                                            int limitLeft, int limitRight, const uchar threshold);
+bool isJpeg(const QByteArray &buffer);
 
 QImage loadJpegFast(const QByteArray &jpegBuf, tjhandle tjInstanceD = nullptr);
 QImage loadJpegFast(const QString &path);

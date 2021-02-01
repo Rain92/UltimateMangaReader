@@ -1,6 +1,15 @@
 
 #include "imageprocessingnative.h"
 
+#define JPEG_MAGIC_NUMBER_0 (char)0xFF
+#define JPEG_MAGIC_NUMBER_1 (char)0xD8
+
+bool isJpeg(const QByteArray &buffer)
+{
+    return buffer.size() > 2 && buffer.data()[0] == JPEG_MAGIC_NUMBER_0 &&
+           buffer.data()[1] == JPEG_MAGIC_NUMBER_1;
+}
+
 QByteArray cropImage(QRect rect, const QByteArray &src, int srcwidth)
 {
     QByteArray imgBuf2;

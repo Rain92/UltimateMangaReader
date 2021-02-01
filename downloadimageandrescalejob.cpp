@@ -68,14 +68,18 @@ bool DownloadScaledImageJob::processImage(QByteArray &&array)
     }
 
     //    qDebug() << "Image processing decrypt:" << t.elapsed();
+    QImage pimg;
 
-    auto pimg = processImageN(array, filepath, screenSize, settings->doublePageFullscreen,
-                              settings->trimPages, settings->manhwaMode);
+    if (isJpeg(array))
+        pimg = processImageN(array, filepath, screenSize, settings->doublePageFullscreen, settings->trimPages,
+                             settings->manhwaMode);
     if (!pimg.isNull())
+    {
         resultImage.reset(new QImage(pimg));
+    }
     else
     {
-        qDebug() << "Image is not JPG, using fallback";
+        qDebug() << "Jpeg decoding failed, using fallback!";
 
         pimg = processImageQt(array, filepath, screenSize, settings->doublePageFullscreen,
                               settings->trimPages, settings->manhwaMode);
