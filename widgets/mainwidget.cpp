@@ -47,7 +47,11 @@ MainWidget::MainWidget(QWidget *parent)
                      core->mangaChapterDownloadManager, &MangaChapterDownloadManager::cancelDownloads);
 
     // NetworkManager
+#ifdef KOBO
+    core->networkManager->setDownloadSettings({koboDevice.width, koboDevice.height}, &core->settings);
+#else
     core->networkManager->setDownloadSettings(this->size() * qApp->devicePixelRatio(), &core->settings);
+#endif
 
     QPixmap wifioff(":/images/icons/no-wifi.png");
     QPixmap wifion(":/images/icons/wifi.png");
@@ -402,7 +406,11 @@ void MainWidget::resizeEvent(QResizeEvent *event)
 
     errorMessageWidget->setFixedWidth(this->width());
 
+#ifdef KOBO
+    core->networkManager->setDownloadSettings({koboDevice.width, koboDevice.height}, &core->settings);
+#else
     core->networkManager->setDownloadSettings(this->size() * qApp->devicePixelRatio(), &core->settings);
+#endif
 }
 
 void MainWidget::setWidgetTab(WidgetTab tab)

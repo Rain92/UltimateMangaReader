@@ -87,46 +87,39 @@ bool calcRotationInfo(QSize imgSize, QSize screenSize, bool doublePageFullscreen
     return rot90;
 }
 
+QSize fitToSize(QSize imgSize, QSize maxSize)
+{
+    if (maxSize.width() / imgSize.width() < maxSize.height() / imgSize.height())
+    {
+        return QSize(maxSize.width(), (imgSize.height() * maxSize.width()) / imgSize.width());
+    }
+    else
+    {
+        return QSize((imgSize.width() * maxSize.height()) / imgSize.height(), maxSize.height());
+    }
+}
+
 QSize calcRescaleSize(QSize imgSize, QSize screenSize, bool rot90, bool manhwaMode)
 {
     QSize rescaleSize;
 
     if (rot90)
     {
-        float sx = (float)screenSize.width() / imgSize.height();
-        float sy = (float)screenSize.height() / imgSize.width();
-        float s = qMin(sx, sy);
-        rescaleSize = QSize(imgSize.height(), imgSize.width()) * s;
+        rescaleSize = fitToSize(imgSize, screenSize);
     }
     else
     {
         if (manhwaMode && ((float)imgSize.height() / imgSize.width()) >
                               1.6 * ((float)screenSize.height() / screenSize.width()))
             rescaleSize =
-                QSize(screenSize.width(), ((float)screenSize.width()) / imgSize.width() * imgSize.height());
+                QSize(screenSize.width(), (imgSize.height() * screenSize.width()) / imgSize.width());
         else
         {
-            float sx = (float)screenSize.width() / imgSize.width();
-            float sy = (float)screenSize.height() / imgSize.height();
-            float s = qMin(sx, sy);
-            rescaleSize = imgSize * s;
+            rescaleSize = fitToSize(imgSize, screenSize);
         }
     }
     rescaleSize.setWidth(rescaleSize.width() + 4 - rescaleSize.width() % 4);
     return rescaleSize;
-}
-
-QImage rescaleImageQt(const QImage &img, QSize rescaleSize, bool rot90)
-{
-    if (rot90)
-    {
-        auto imgR = img.transformed(QTransform().rotate(90));
-        return imgR.scaled(rescaleSize.width(), rescaleSize.height(), Qt::KeepAspectRatio,
-                           Qt::SmoothTransformation);
-    }
-
-    return img.scaled(rescaleSize.width(), rescaleSize.height(), Qt::KeepAspectRatio,
-                      Qt::SmoothTransformation);
 }
 
 QImage processImageQt(const QByteArray &array, const QString &filepath, QSize screenSize,
@@ -150,16 +143,25 @@ QImage processImageQt(const QByteArray &array, const QString &filepath, QSize sc
             auto trimRect = getTrimRect(arrayT, img.width(), img.height(), greyImg.bytesPerLine());
             greyImg = greyImg.copy(trimRect);
         }
+
+        if (rot90)
+            greyImg = greyImg.transformed(QTransform().rotate(90));
         auto rescaleSize = calcRescaleSize(greyImg.size(), screenSize, rot90, manhwaMode);
-        ret = rescaleImageQt(greyImg, rescaleSize, rot90);
+
+        ret = greyImg.scaled(rescaleSize.width(), rescaleSize.height(), Qt::KeepAspectRatio,
+                             Qt::SmoothTransformation);
         res = ret.save(filepath, nullptr, 85);
     }
 
     // if something went wrong with the greyscale img -> use original
     if (!res)
     {
-        auto rescaleSize = calcRescaleSize(greyImg.size(), screenSize, rot90, manhwaMode);
-        ret = rescaleImageQt(greyImg, rescaleSize, rot90);
+        if (rot90)
+            img = img.transformed(QTransform().rotate(90));
+        auto rescaleSize = calcRescaleSize(img.size(), screenSize, rot90, manhwaMode);
+
+        ret = img.scaled(rescaleSize.width(), rescaleSize.height(), Qt::KeepAspectRatio,
+                         Qt::SmoothTransformation);
         res = ret.save(filepath, nullptr, 85);
     }
 
