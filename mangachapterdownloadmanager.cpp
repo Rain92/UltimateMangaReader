@@ -21,6 +21,7 @@ MangaChapterDownloadManager::MangaChapterDownloadManager(NetworkManager *network
 void MangaChapterDownloadManager::cancelDownloads()
 {
     cancelled = true;
+    running = false;
     downloadQueue.clearQuene();
 }
 

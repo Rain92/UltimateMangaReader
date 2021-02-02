@@ -45,7 +45,6 @@ void DownloadMangaChaptersDialog::show(QSharedPointer<MangaInfo> mangaInfo, int 
 
 void DownloadMangaChaptersDialog::on_pushButtonCancel_clicked()
 {
-    qDebug() << "cancel clicked";
     mangaInfo.clear();
     close();
 }
