@@ -79,7 +79,7 @@ bool DownloadScaledImageJob::processImage(QByteArray &&array)
     }
     else
     {
-        qDebug() << "Jpeg decoding failed, using fallback!";
+        qDebug() << "Fast decoding failed, using fallback!";
 
         pimg = processImageQt(array, filepath, screenSize, settings->doublePageFullscreen,
                               settings->trimPages, settings->manhwaMode);

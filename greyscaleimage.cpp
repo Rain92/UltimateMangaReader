@@ -80,8 +80,8 @@ GreyscaleImage GreyscaleImage::resize(QSize newSize)
     img_resize_bilinear_grey_neon((uchar *)newBuffer.data(), newSize.width(), newSize.height(),
                                   (uchar *)buffer.data(), width, height, width);
 #else
-    img_resize_bilinear_grey_c((uchar *)newBuffer.data(), newWidth, newHeight, (uchar *)buffer.data(), width,
-                               height, width);
+    img_resize_bilinear_grey_c((uchar *)newBuffer.data(), newSize.width(), newSize.height(),
+                               (uchar *)buffer.data(), width, height, width);
 #endif
 
     return GreyscaleImage(newSize, qMove(newBuffer));
