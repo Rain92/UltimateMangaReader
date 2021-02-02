@@ -1,6 +1,7 @@
 #ifndef IMAGEPROCESSINGNATIVE_H
 #define IMAGEPROCESSINGNATIVE_H
 
+#include <png.h>
 #include <turbojpeg.h>
 
 #include <QDebug>
@@ -10,18 +11,18 @@
 #include <QScopeGuard>
 #include <cstring>
 
+#include "greyscaleimage.h"
 #include "imageprocessingqt.h"
 #include "thirdparty/ne10_imgproc.h"
 
 bool isJpeg(const QByteArray &buffer);
+bool isPng(const QByteArray &buffer);
 
-QImage loadJpegFast(const QByteArray &jpegBuf, tjhandle tjInstanceD = nullptr);
 QImage loadJpegFast(const QString &path);
 
-bool saveJpegFast(const QByteArray &imgBuf, QString filename, int width, int height,
-                  tjhandle tjInstanceC = nullptr);
+GreyscaleImage loadFromJpegAndRotate(const QByteArray &buffer, QSize screenSize, bool doublePageFullscreen);
 
-QImage processImageN(QByteArray &jpegBuf, const QString &filepath, QSize screenSize,
+QImage processImageN(const QByteArray &buffer, const QString &filepath, QSize screenSize,
                      bool doublePageFullscreen, bool trim, bool manhwaMode);
 
 #endif  // IMAGEPROCESSINGNATIVE_H

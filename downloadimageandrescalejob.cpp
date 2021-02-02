@@ -70,7 +70,7 @@ bool DownloadScaledImageJob::processImage(QByteArray &&array)
     //    qDebug() << "Image processing decrypt:" << t.elapsed();
     QImage pimg;
 
-    if (isJpeg(array))
+    if (isJpeg(array) || isPng(array))
         pimg = processImageN(array, filepath, screenSize, settings->doublePageFullscreen, settings->trimPages,
                              settings->manhwaMode);
     if (!pimg.isNull())
@@ -89,5 +89,6 @@ bool DownloadScaledImageJob::processImage(QByteArray &&array)
     }
 
     //    qDebug() << "Image processing:" << t.elapsed();
+
     return !pimg.isNull();
 }

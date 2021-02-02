@@ -17,7 +17,7 @@ else { # default is desktop
 QT    += core gui widgets network svg
 CONFIG += c++17
 
-LIBS +=  -lturbojpeg
+LIBS +=  -lturbojpeg -lpng
 
 TARGET = UltimateMangaReader
 
@@ -47,6 +47,7 @@ FORMS += \
 HEADERS += \
     downloadbufferjob.h \
     enums.h \
+    greyscaleimage.h \
     imageprocessingnative.h \
     imageprocessingqt.h \
     mangachaptercollection.h \
@@ -111,6 +112,7 @@ HEADERS += \
 
 SOURCES += \
     downloadbufferjob.cpp \
+    greyscaleimage.cpp \
     imageprocessingnative.cpp \
     imageprocessingqt.cpp \
     mangachaptercollection.cpp \
