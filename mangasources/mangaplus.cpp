@@ -100,7 +100,8 @@ Result<MangaChapterCollection, QString> MangaPlus::updateMangaInfoFinishedLoadin
     if (!message.CheckFieldForType(1, picoproto::FIELD_BYTES))
         return Err(QString("Error updating manga."));
 
-    auto detail = message.GetMessage(1)->GetMessage(8);  //    message TitleDetailView {
+    auto detail = message.GetMessage(1)->GetMessage(8);
+    //    message TitleDetailView {
     //      optional Title title = 1;
     //      optional string titleImageUrl = 2;
     //      optional string overview = 3;

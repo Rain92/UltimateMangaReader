@@ -68,6 +68,7 @@ HEADERS += \
     thirdparty/ne10_imgproc.h \
     thirdparty/picoproto.h \
     thirdparty/result.h \
+    thirdparty/simdjson.h \
     ultimatemangareadercore.h \
     widgets/batteryicon.h \
     widgets/customgesturerecognizer.h \
@@ -131,6 +132,7 @@ SOURCES += \
     suspendmanager.cpp \
     thirdparty/ne10_imgproc.cpp \
     thirdparty/picoproto.cc \
+    thirdparty/simdjson.cpp \
     ultimatemangareadercore.cpp \
     widgets/batteryicon.cpp \
     widgets/customgesturerecognizer.cpp \

@@ -3,6 +3,7 @@
 
 #include "abstractmangasource.h"
 #include "mangainfo.h"
+#include "thirdparty/simdjson.h"
 
 class MangaDex : public AbstractMangaSource
 {

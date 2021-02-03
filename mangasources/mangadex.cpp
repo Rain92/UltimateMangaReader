@@ -1,5 +1,11 @@
 #include "mangadex.h"
 
+#include "thirdparty/simdjson.cpp"
+
+using namespace simdjson;
+
+#define asQstring(jo) QString(jo.get_c_str())
+
 MangaDex::MangaDex(NetworkManager *dm) : AbstractMangaSource(dm)
 {
     name = "MangaDex";
@@ -129,59 +135,74 @@ QString padChapterNumber(const QString &number, int places = 4)
 Result<MangaChapterCollection, QString> MangaDex::updateMangaInfoFinishedLoading(
     QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info)
 {
+    //    QElapsedTimer t;
+    //    t.start();
     QRegularExpression bbrx(R"(\[.*?\])");
 
-    QJsonDocument doc = QJsonDocument::fromJson(job->bufferStr.toUtf8());
-    if (doc.isNull())
-        qDebug() << "MangaDex chapter parse failed";
-
-    auto jsonObject = doc.object();
-    auto mangaObject = jsonObject["manga"].toObject();
-
-    info->author = htmlToPlainText(mangaObject["author"].toString());
-    info->artist = htmlToPlainText(mangaObject["artist"].toString());
-
-    int statusi = mangaObject["status"].toInt();
-    if (statusi >= 0 && statusi < statuses.length())
-        info->status = statuses[statusi];
-
-    info->releaseYear = "";
-
-    info->genres = "";
-    auto genresArray = mangaObject["genres"].toArray();
-    for (auto g : genresArray)
-        if (genreMap.contains(g.toInt()))
-            info->genres += genreMap[g.toInt()] + " ";
-
-    info->summary = htmlToPlainText(mangaObject["description"].toString()).remove(bbrx);
-
-    info->coverUrl = baseUrl + mangaObject["cover_url"].toString();
-
-    auto chaptersObject = jsonObject["chapter"].toObject();
-
     MangaChapterCollection newchapters;
-    for (const QString &key : chaptersObject.keys())
+
+    try
     {
-        auto chapterObject = chaptersObject.value(key).toObject();
-        auto language = chapterObject["lang_code"].toString();
+        padded_string json(job->buffer.data(), job->buffer.size());
+        simdjson::dom::parser parser;
+        auto doc = parser.parse(json);
 
-        if (language != "gb")
-            continue;
+        auto mangaObject = doc["manga"];
 
-        auto numChapter = chapterObject["chapter"].toString();
+        info->author = htmlToPlainText(asQstring(mangaObject["author"]));
+        info->artist = htmlToPlainText(asQstring(mangaObject["artist"]));
 
-        auto chapterTitle = "Ch. " + numChapter + " " + chapterObject["title"].toString();
+        int statusi = mangaObject["status"].get_int64();
 
-        auto chapterUrl = "https://mangadex.org/api/?type=chapter&id=" + key;
+        if (statusi >= 0 && statusi < statuses.length())
+            info->status = statuses[statusi];
 
-        MangaChapter mangaChapter(chapterTitle, chapterUrl);
-        mangaChapter.chapterNumber = numChapter;
+        info->releaseYear = "";
 
-        newchapters.insert(0, mangaChapter);
+        info->genres = "";
+        auto genresArray = mangaObject["genres"];
+        for (auto g : genresArray)
+        {
+            int gn = g.get_int64();
+            if (genreMap.contains(gn))
+                info->genres += genreMap[gn] + " ";
+        }
+
+        info->summary = htmlToPlainText(asQstring(mangaObject["description"])).remove(bbrx);
+
+        info->coverUrl = baseUrl + asQstring(mangaObject["cover_url"]);
+
+        auto chaptersObject = doc["chapter"].get_object();
+
+        for (const auto &chapter : chaptersObject)
+        {
+            auto chapterKey = chapter.key.data();
+            auto chapterObject = chapter.value;
+            auto language = asQstring(chapterObject["lang_code"]);
+
+            if (language != "gb")
+                continue;
+
+            auto numChapter = asQstring(chapterObject["chapter"]);
+
+            auto chapterTitle = "Ch. " + numChapter + " " + asQstring(chapterObject["title"]);
+
+            auto chapterUrl = QString("https://mangadex.org/api/?type=chapter&id=") + chapterKey;
+
+            MangaChapter mangaChapter(chapterTitle, chapterUrl);
+            mangaChapter.chapterNumber = padChapterNumber(numChapter);
+
+            newchapters.insert(0, mangaChapter);
+        }
     }
-    std::sort(newchapters.begin(), newchapters.end(), [](auto a, auto b) {
-        return padChapterNumber(a.chapterNumber) < padChapterNumber(b.chapterNumber);
-    });
+    catch (simdjson::simdjson_error &)
+    {
+        return Err(QString("Coulnd't parse mangainfos."));
+    }
+    //    qDebug() << "Mangadex update:" << t.elapsed() << info->title;
+
+    std::sort(newchapters.begin(), newchapters.end(),
+              [](auto a, auto b) { return a.chapterNumber < b.chapterNumber; });
 
     return Ok(newchapters);
 }
@@ -193,21 +214,26 @@ Result<QStringList, QString> MangaDex::getPageList(const QString &chapterUrl)
     if (!job->await(7000))
         return Err(job->errorString);
 
-    QJsonDocument doc = QJsonDocument::fromJson(job->bufferStr.toUtf8());
-    if (doc.isNull())
-        return Err(QString("MangaDex chapter parse failed"));
-
-    auto jsonObject = doc.object();
-
-    auto hash = jsonObject["hash"].toString();
-
-    auto server = jsonObject["server"].toString();
-
-    auto pagesArray = jsonObject["page_array"].toArray();
-
     QStringList imageUrls;
-    for (auto page : pagesArray)
-        imageUrls.append(server + hash + "/" + page.toString());
+    try
+    {
+        padded_string json(job->buffer.data(), job->buffer.size());
+        simdjson::dom::parser parser;
+        auto jsonObject = parser.parse(json);
+
+        auto hash = asQstring(jsonObject["hash"]);
+
+        auto server = asQstring(jsonObject["server"]);
+
+        auto pagesArray = jsonObject["page_array"];
+
+        for (auto page : pagesArray)
+            imageUrls.append(server + hash + "/" + asQstring(page));
+    }
+    catch (simdjson::simdjson_error &)
+    {
+        return Err(QString("Coulnd't parse pagelist."));
+    }
 
     return Ok(imageUrls);
 }
