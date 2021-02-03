@@ -69,7 +69,7 @@ private slots:
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
-    bool eventFilter(QObject *obj, QEvent *ev) override;
+    bool eventFilter(QObject *obj, QEvent *event) override;
     void showEvent(QShowEvent *event) override;
     bool event(QEvent *event) override;
     bool buttonPressEvent(QKeyEvent *event);

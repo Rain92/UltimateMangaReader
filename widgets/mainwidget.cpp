@@ -28,6 +28,11 @@ MainWidget::MainWidget(QWidget *parent)
     downloadMangaChaptersDialog = new DownloadMangaChaptersDialog(this);
     downloadStatusDialog = new DownloadStatusDialog(this);
 
+    updateMangaListsDialog->installEventFilter(this);
+    wifiDialog->installEventFilter(this);
+    downloadMangaChaptersDialog->installEventFilter(this);
+    downloadStatusDialog->installEventFilter(this);
+
     QObject::connect(menuDialog, &MenuDialog::finished,
                      [this](int b) { menuDialogButtonPressed(static_cast<MenuButton>(b)); });
 
@@ -457,18 +462,24 @@ void MainWidget::readerGoBack()
     setWidgetTab(lastTab);
 }
 
-bool MainWidget::eventFilter(QObject *, QEvent *ev)
+bool MainWidget::eventFilter(QObject *, QEvent *event)
 {
-    if (ev->type() == QEvent::RequestSoftwareInputPanel + 1000)
+    if (event->type() == QEvent::RequestSoftwareInputPanel + 1000)
     {
         enableVirtualKeyboard(true);
         return true;
     }
-    else if (ev->type() == QEvent::CloseSoftwareInputPanel + 1000)
+    else if (event->type() == QEvent::CloseSoftwareInputPanel + 1000)
     {
         enableVirtualKeyboard(false);
         return true;
     }
+
+    if (event->type() == QEvent::KeyPress)
+        return buttonPressEvent(static_cast<QKeyEvent *>(event));
+    else if (event->type() == QEvent::KeyRelease)
+        return buttonReleaseEvent(static_cast<QKeyEvent *>(event));
+
     return false;
 }
 

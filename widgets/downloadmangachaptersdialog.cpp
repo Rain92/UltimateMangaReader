@@ -7,6 +7,7 @@ DownloadMangaChaptersDialog::DownloadMangaChaptersDialog(QWidget *parent)
 {
     ui->setupUi(this);
     adjustUI();
+    setWindowFlags(Qt::Popup);
 
     ui->spinBoxFrom->installEventFilter(this);
     ui->spinBoxTo->installEventFilter(this);
