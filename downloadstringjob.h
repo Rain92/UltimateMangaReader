@@ -8,7 +8,7 @@ class DownloadStringJob : public DownloadBufferJob
     Q_OBJECT
 
 protected:
-    void downloadStringFinished();
+    virtual void downloadFinished() override;
 
 public:
     QString bufferStr;
@@ -17,7 +17,6 @@ public:
                       const QByteArray &postData = QByteArray(),
                       const QList<std::tuple<const char *, const char *>> &customHeaders = {});
 
-    void start() override;
     void restart() override;
 };
 

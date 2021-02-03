@@ -27,7 +27,7 @@ void DownloadBufferJob::start()
     }
     //    reply->setParent(nullptr);
 
-    QObject::connect(reply.get(), &QNetworkReply::finished, this, &DownloadBufferJob::downloadBufferFinished);
+    QObject::connect(reply.get(), &QNetworkReply::finished, this, &DownloadBufferJob::downloadFinished);
     QObject::connect(reply.get(), &QNetworkReply::errorOccurred, this, &DownloadBufferJob::onError);
     QObject::connect(reply.get(), &QNetworkReply::sslErrors, this, &DownloadJobBase::onSslErrors);
 
@@ -47,13 +47,13 @@ void DownloadBufferJob::restart()
     start();
 }
 
-void DownloadBufferJob::downloadBufferReadyRead()
+void DownloadBufferJob::downloadReadyRead()
 {
     // read it all at once when finished
     // buffer.append(reply->readAll());
 }
 
-void DownloadBufferJob::downloadBufferFinished()
+void DownloadBufferJob::downloadFinished()
 {
     timeoutTimer.stop();
 

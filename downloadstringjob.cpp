@@ -9,16 +9,6 @@ DownloadStringJob::DownloadStringJob(QNetworkAccessManager *networkManager, cons
 {
 }
 
-void DownloadStringJob::start()
-{
-    DownloadBufferJob::start();
-
-    QObject::disconnect(reply.get(), &QNetworkReply::finished, this,
-                        &DownloadStringJob::downloadBufferFinished);
-
-    QObject::connect(reply.get(), &QNetworkReply::finished, this, &DownloadStringJob::downloadStringFinished);
-}
-
 void DownloadStringJob::restart()
 {
     bufferStr = "";
@@ -26,7 +16,7 @@ void DownloadStringJob::restart()
     DownloadBufferJob::restart();
 }
 
-void DownloadStringJob::downloadStringFinished()
+void DownloadStringJob::downloadFinished()
 {
     timeoutTimer.stop();
 

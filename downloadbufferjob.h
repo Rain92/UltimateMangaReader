@@ -12,8 +12,8 @@ protected:
     int timeoutTime;
     QByteArray postData;
 
-    void downloadBufferReadyRead();
-    void downloadBufferFinished();
+    void downloadReadyRead();
+    virtual void downloadFinished();
     void onError(QNetworkReply::NetworkError);
     void timeout();
 
