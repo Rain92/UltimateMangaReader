@@ -150,7 +150,6 @@ void AbstractMangaSource::updateMangaInfoAsync(QSharedPointer<MangaInfo> info, b
     auto lambda = [oldnumchapters, info, job, updateCover, this] {
         {
             QMutexLocker locker(info->updateMutex.get());
-            updateMangaInfoFinishedLoading(job, info);
             auto res = updateMangaInfoFinishedLoading(job, info);
             if (res.isErr())
                 return;
