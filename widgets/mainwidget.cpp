@@ -151,7 +151,7 @@ MainWidget::MainWidget(QWidget *parent)
     });
 
     // FavoritesWidget
-    ui->favoritesWidget->favoritesmanager = core->favoritesManager;
+    ui->favoritesWidget->favoritesManager = core->favoritesManager;
 
     QObject::connect(ui->favoritesWidget, &FavoritesWidget::favoriteClicked,
                      [this](auto mangainfo, auto jumptoreader) {
@@ -319,9 +319,6 @@ void MainWidget::onResume()
         if (!core->networkManager->connected)
             wifiDialog->open();
     });
-
-    if (ui->stackedWidget->currentIndex() == FavoritesTab)
-        ui->favoritesWidget->showFavoritesList();
 }
 
 void MainWidget::setupVirtualKeyboard()
@@ -420,7 +417,6 @@ void MainWidget::setWidgetTab(WidgetTab tab)
 
     if (tab == ui->stackedWidget->currentIndex())
         return;
-
     switch (tab)
     {
         case HomeTab:

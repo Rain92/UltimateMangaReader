@@ -141,13 +141,13 @@ Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::getMangaInfo(con
     return Ok(info);
 }
 
-void AbstractMangaSource::updateMangaInfoAsync(QSharedPointer<MangaInfo> info)
+void AbstractMangaSource::updateMangaInfoAsync(QSharedPointer<MangaInfo> info, bool updateCover)
 {
     int oldnumchapters = info->chapters.count();
 
     auto job = networkManager->downloadAsString(info->url, 8000, mangaInfoPostDataStr);
 
-    auto lambda = [oldnumchapters, info, job, this] {
+    auto lambda = [oldnumchapters, info, job, updateCover, this] {
         {
             QMutexLocker locker(info->updateMutex.get());
             updateMangaInfoFinishedLoading(job, info);
@@ -168,7 +168,7 @@ void AbstractMangaSource::updateMangaInfoAsync(QSharedPointer<MangaInfo> info)
             info->updateCompeted(newchapters, moveMapping);
         }
 
-        downloadCoverAsync(info);
+        downloadCoverAsync(info, updateCover);
         info->serialize();
     };
 
@@ -269,12 +269,10 @@ void AbstractMangaSource::reorderChapterPages(QSharedPointer<MangaInfo> info,
     }
 }
 
-void AbstractMangaSource::downloadCoverAsync(QSharedPointer<MangaInfo> mangainfo)
+void AbstractMangaSource::downloadCoverAsync(QSharedPointer<MangaInfo> mangainfo, bool updateCover)
 {
     if (mangainfo->coverUrl == "")
-    {
         return;
-    }
 
     if (mangainfo->coverPath == "")
     {
@@ -284,6 +282,9 @@ void AbstractMangaSource::downloadCoverAsync(QSharedPointer<MangaInfo> mangainfo
         QString filetype = mangainfo->coverUrl.mid(ind - 4, 4);
         mangainfo->coverPath = CONF.mangainfodir(name, mangainfo->title) + "cover" + filetype;
     }
+
+    if (!updateCover && QFile::exists(mangainfo->coverPath))
+        return;
 
     auto coverjob = networkManager->downloadAsFile(mangainfo->coverUrl, mangainfo->coverPath);
 

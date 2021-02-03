@@ -36,8 +36,6 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
 
     updateActiveScources();
 
-    favoritesManager->loadInfos();
-
     timer.setInterval(CONF.globalTickIntervalSeconds * 1000);
     connect(&timer, &QTimer::timeout, this, &UltimateMangaReaderCore::timerTick);
 

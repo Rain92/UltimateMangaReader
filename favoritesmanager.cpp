@@ -69,24 +69,26 @@ void FavoritesManager::moveFavoriteToFront(int i)
 
 void FavoritesManager::loadInfos()
 {
+    if (favorites.length() == favoriteinfos.length())
+        return;
+
+    favoriteinfos.clear();
     for (int i = 0; i < favorites.length(); i++)
     {
         auto &fav = favorites[i];
         if (mangasources.contains(fav.hostname) &&
             mangasources[fav.hostname]->mangaList.titles.contains(fav.title))
         {
-            QTimer::singleShot(0, [this, &fav]() {
-                auto mi = mangasources[fav.hostname]->loadMangaInfo(fav.mangaUrl, fav.title, false);
+            auto mi = mangasources[fav.hostname]->loadMangaInfo(fav.mangaUrl, fav.title, false);
 
-                if (mi.isOk())
-                {
-                    favoriteinfos.append(mi.unwrap());
-                }
-                else
-                {
-                    favoriteinfos.append(QSharedPointer<MangaInfo>(nullptr));
-                }
-            });
+            if (mi.isOk())
+            {
+                favoriteinfos.append(mi.unwrap());
+            }
+            else
+            {
+                favoriteinfos.append(QSharedPointer<MangaInfo>(nullptr));
+            }
         }
         else
         {
@@ -101,7 +103,7 @@ void FavoritesManager::updateInfos()
     {
         if (!favoriteinfos[i].isNull())
         {
-            mangasources[favoriteinfos[i]->hostname]->updateMangaInfoAsync(favoriteinfos[i]);
+            mangasources[favoriteinfos[i]->hostname]->updateMangaInfoAsync(favoriteinfos[i], false);
         }
         else
         {

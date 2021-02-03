@@ -54,8 +54,8 @@ public:
 
     QString htmlToPlainText(const QString &str);
 
-    virtual void updateMangaInfoAsync(QSharedPointer<MangaInfo> mangainfo);
-    void downloadCoverAsync(QSharedPointer<MangaInfo> mangainfo);
+    virtual void updateMangaInfoAsync(QSharedPointer<MangaInfo> mangainfo, bool updateCover = true);
+    void downloadCoverAsync(QSharedPointer<MangaInfo> mangainfo, bool updateCover = true);
     Result<void, QString> updatePageList(QSharedPointer<MangaInfo> info, int chapter);
 
     void reorderChapterPages(QSharedPointer<MangaInfo> info, QList<QPair<int, int>> moveMapping);

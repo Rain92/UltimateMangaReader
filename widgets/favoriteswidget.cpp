@@ -3,7 +3,7 @@
 #include "ui_favoriteswidget.h"
 
 FavoritesWidget::FavoritesWidget(QWidget *parent)
-    : QWidget(parent), favoritesmanager(nullptr), ui(new Ui::FavoritesWidget)
+    : QWidget(parent), favoritesManager(nullptr), ui(new Ui::FavoritesWidget)
 {
     ui->setupUi(this);
 
@@ -41,18 +41,31 @@ void FavoritesWidget::adjustUI()
 
 void FavoritesWidget::showFavoritesList()
 {
-    favoritesmanager->updateInfos();
+    favoritesManager->loadInfos();
+    favoritesManager->updateInfos();
 
-    ui->tableWidget->clearContents();
-    while (ui->tableWidget->model()->rowCount() > 0)
-        ui->tableWidget->removeRow(0);
+    bool updateNeeded = ui->tableWidget->rowCount() != favoritesManager->favorites.count();
+    if (!updateNeeded)
+        for (int i = 0; i < ui->tableWidget->rowCount(); i++)
+            if (ui->tableWidget->cellWidget(i, 0)->property("ptext").toString() !=
+                favoritesManager->favoriteinfos.at(i)->title)
+            {
+                updateNeeded = true;
+                break;
+            }
+    this->repaint(this->rect());
 
-    for (int r = 0; r < favoritesmanager->favoriteinfos.count(); r++)
+    if (!updateNeeded)
+        return;
+
+    ui->tableWidget->setRowCount(0);
+
+    for (int r = 0; r < favoritesManager->favoriteinfos.count(); r++)
     {
-        insertRow(favoritesmanager->favoriteinfos[r], r);
-        QObject::connect(favoritesmanager->favoriteinfos[r].get(), &MangaInfo::updatedSignal, this,
+        insertRow(favoritesManager->favoriteinfos[r], r);
+        QObject::connect(favoritesManager->favoriteinfos[r].get(), &MangaInfo::updatedSignal, this,
                          &FavoritesWidget::mangaUpdated);
-        QObject::connect(favoritesmanager->favoriteinfos[r].get(), &MangaInfo::coverLoaded, this,
+        QObject::connect(favoritesManager->favoriteinfos[r].get(), &MangaInfo::coverLoaded, this,
                          &FavoritesWidget::coverLoaded);
     }
 }
@@ -89,10 +102,10 @@ void FavoritesWidget::insertRow(const QSharedPointer<MangaInfo> &fav, int row)
 
 void FavoritesWidget::moveFavoriteToFront(int i)
 {
-    favoritesmanager->moveFavoriteToFront(i);
+    favoritesManager->moveFavoriteToFront(i);
 
     ui->tableWidget->removeRow(i);
-    insertRow(favoritesmanager->favoriteinfos.at(0), 0);
+    insertRow(favoritesManager->favoriteinfos.at(0), 0);
 }
 
 void FavoritesWidget::mangaUpdated(bool updated)
@@ -102,8 +115,8 @@ void FavoritesWidget::mangaUpdated(bool updated)
         MangaInfo *mi = static_cast<MangaInfo *>(sender());
 
         int i = 0;
-        while (favoritesmanager->favoriteinfos.at(i)->title != mi->title &&
-               favoritesmanager->favoriteinfos.at(i)->title != mi->title)
+        while (favoritesManager->favoriteinfos.at(i)->title != mi->title &&
+               favoritesManager->favoriteinfos.at(i)->title != mi->title)
             i++;
 
         moveFavoriteToFront(i);
@@ -115,12 +128,12 @@ void FavoritesWidget::coverLoaded()
     MangaInfo *mi = static_cast<MangaInfo *>(sender());
 
     int i = 0;
-    while (favoritesmanager->favoriteinfos.at(i)->title != mi->title &&
-           favoritesmanager->favoriteinfos.at(i)->title != mi->title)
+    while (favoritesManager->favoriteinfos.at(i)->title != mi->title &&
+           favoritesManager->favoriteinfos.at(i)->title != mi->title)
         i++;
 
-    QWidget *titlewidget = makeIconTextWidget(favoritesmanager->favoriteinfos.at(i)->coverThumbnailPath(),
-                                              favoritesmanager->favoriteinfos.at(i)->title);
+    QWidget *titlewidget = makeIconTextWidget(favoritesManager->favoriteinfos.at(i)->coverThumbnailPath(),
+                                              favoritesManager->favoriteinfos.at(i)->title);
     ui->tableWidget->setCellWidget(i, 0, titlewidget);
 }
 
@@ -158,5 +171,5 @@ void FavoritesWidget::on_tableWidget_cellClicked(int row, int column)
 {
     moveFavoriteToFront(row);
 
-    emit favoriteClicked(favoritesmanager->favoriteinfos.first(), column >= 2);
+    emit favoriteClicked(favoritesManager->favoriteinfos.first(), column >= 2);
 }

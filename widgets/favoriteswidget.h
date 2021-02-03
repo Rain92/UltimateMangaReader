@@ -23,7 +23,7 @@ public:
     ~FavoritesWidget();
 
     void showFavoritesList();
-    FavoritesManager *favoritesmanager;
+    FavoritesManager *favoritesManager;
 
 signals:
     void favoriteClicked(QSharedPointer<MangaInfo> fav, bool current);
