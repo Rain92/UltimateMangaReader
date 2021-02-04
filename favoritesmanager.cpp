@@ -67,10 +67,12 @@ void FavoritesManager::moveFavoriteToFront(int i)
     serialize();
 }
 
-void FavoritesManager::loadInfos()
+bool FavoritesManager::loadInfos()
 {
     if (favorites.length() == favoriteinfos.length())
-        return;
+        return true;
+
+    bool res = true;
 
     favoriteinfos.clear();
     for (int i = 0; i < favorites.length(); i++)
@@ -87,7 +89,9 @@ void FavoritesManager::loadInfos()
             }
             else
             {
+                res = false;
                 favoriteinfos.append(QSharedPointer<MangaInfo>(nullptr));
+                emit error(mi.unwrapErr());
             }
         }
         else
@@ -95,6 +99,7 @@ void FavoritesManager::loadInfos()
             favorites.removeAt(i--);
         }
     }
+    return res;
 }
 
 void FavoritesManager::updateInfos()

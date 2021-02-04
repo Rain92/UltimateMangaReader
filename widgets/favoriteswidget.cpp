@@ -41,8 +41,10 @@ void FavoritesWidget::adjustUI()
 
 void FavoritesWidget::showFavoritesList()
 {
-    favoritesManager->loadInfos();
-    favoritesManager->updateInfos();
+    bool res = favoritesManager->loadInfos();
+
+    if (res)
+        favoritesManager->updateInfos();
 
     bool updateNeeded = ui->tableWidget->rowCount() != favoritesManager->favorites.count();
     if (!updateNeeded)
@@ -53,7 +55,6 @@ void FavoritesWidget::showFavoritesList()
                 updateNeeded = true;
                 break;
             }
-    this->repaint(this->rect());
 
     if (!updateNeeded)
         return;
@@ -62,7 +63,9 @@ void FavoritesWidget::showFavoritesList()
 
     for (int r = 0; r < favoritesManager->favoriteinfos.count(); r++)
     {
-        insertRow(favoritesManager->favoriteinfos[r], r);
+        if (favoritesManager->favoriteinfos[r].isNull())
+            continue;
+        insertRow(favoritesManager->favoriteinfos[r], ui->tableWidget->rowCount());
         QObject::connect(favoritesManager->favoriteinfos[r].get(), &MangaInfo::updatedSignal, this,
                          &FavoritesWidget::mangaUpdated);
         QObject::connect(favoritesManager->favoriteinfos[r].get(), &MangaInfo::coverLoaded, this,

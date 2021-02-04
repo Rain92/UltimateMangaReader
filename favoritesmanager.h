@@ -20,13 +20,16 @@ public:
 
     void moveFavoriteToFront(int i);
     void updateInfos();
-    void loadInfos();
+    bool loadInfos();
     void serialize();
     void clearFavorites();
     void resetUpdatedStatus();
 
     QList<QSharedPointer<MangaInfo>> favoriteinfos;
     QList<Favorite> favorites;
+
+signals:
+    void error(const QString &error);
 
 private:
     const QMap<QString, AbstractMangaSource *> &mangasources;

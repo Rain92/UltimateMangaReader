@@ -125,6 +125,9 @@ MainWidget::MainWidget(QWidget *parent)
 
     QObject::connect(core->mangaController, &MangaController::error, this, &MainWidget::showErrorMessage);
 
+    // FavoritesManager
+    QObject::connect(core->favoritesManager, &FavoritesManager::error, this, &MainWidget::showErrorMessage);
+
     // HomeWidget
     QObject::connect(ui->homeWidget, &HomeWidget::mangaSourceClicked, core,
                      &UltimateMangaReaderCore::setCurrentMangaSource);
