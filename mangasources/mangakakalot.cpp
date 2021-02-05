@@ -94,9 +94,6 @@ bool Mangakakalot::updateMangaList(UpdateProgressToken *token)
 Result<MangaChapterCollection, QString> Mangakakalot::updateMangaInfoFinishedLoading(
     QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info)
 {
-    //    QElapsedTimer t;
-    //    t.start();
-
     QRegularExpression authorrx(R"(author/[^>]*?>([^<]*?)<)");
     QRegularExpression artistrx;
     QRegularExpression statusrx(R"(Status :(?:\s|</td>\s)(.*?)(?:</li>|</td>))",
@@ -126,7 +123,6 @@ Result<MangaChapterCollection, QString> Mangakakalot::updateMangaInfoFinishedLoa
     for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->bufferStr, spos, epos))
         newchapters.insert(0, MangaChapter(chapterrxmatch.captured(2), chapterrxmatch.captured(1)));
 
-    //    qDebug() << "Parse time:" << t.elapsed();
     return Ok(newchapters);
 }
 

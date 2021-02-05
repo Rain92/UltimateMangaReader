@@ -19,11 +19,6 @@ private:
     QString dicturl;
     int binarySearchNumPages(const QRegularExpressionMatch &imagerxmatch, int lowerBound, int upperBound,
                              bool upperChecked);
-
-    inline QString buildImgUrl(const QRegularExpressionMatch &imagerxmatch, int i)
-    {
-        return imagerxmatch.captured(1) + QString::number(i) + imagerxmatch.captured(2);
-    }
 };
 
 #endif  // MANGAHUB_H

@@ -119,6 +119,11 @@ Result<MangaChapterCollection, QString> MangaHub::updateMangaInfoFinishedLoading
     return Ok(newchapters);
 }
 
+inline QString buildImgUrl(const QRegularExpressionMatch &imagerxmatch, int i)
+{
+    return imagerxmatch.captured(1) + QString::number(i) + imagerxmatch.captured(2);
+}
+
 int MangaHub::binarySearchNumPages(const QRegularExpressionMatch &imagerxmatch, int lowerBound,
                                    int upperBound, bool upperChecked)
 {
