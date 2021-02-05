@@ -146,7 +146,7 @@ QWidget *FavoritesWidget::makeIconTextWidget(const QString &path, const QString 
 
     QLabel *textlabel = new QLabel(text, widget);
 
-    QPixmap img(path);
+    auto img = QPixmap::fromImage(loadQImageFast(path));
     QLabel *iconlabel = new QLabel(widget);
     iconlabel->setScaledContents(true);
     iconlabel->setFixedSize(img.width() / qApp->devicePixelRatio(), img.height() / qApp->devicePixelRatio());

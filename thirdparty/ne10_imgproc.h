@@ -12,13 +12,6 @@
 #include <arm_neon.h>
 #endif
 
-inline uint32_t align_size(int32_t sz, int32_t n);
-inline int32_t floor(float a);
-
-inline int32_t clip(int32_t x, int32_t a, int32_t b);
-
-inline uint8_t cast_op(int32_t val);
-
 void img_hresize_linear_c(const uint8_t** src, int32_t** dst, int32_t count, const int32_t* xofs,
                           const int16_t* alpha, int32_t swidth, int32_t dwidth, int32_t cn, int32_t xmin,
                           int32_t xmax);

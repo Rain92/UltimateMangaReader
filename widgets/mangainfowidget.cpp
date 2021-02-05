@@ -95,7 +95,7 @@ void MangaInfoWidget::updateCover()
     }
     else
     {
-        QPixmap img(currentmanga->coverPath);
+        QPixmap img = QPixmap::fromImage(loadQImageFast(currentmanga->coverPath));
         double r = (double)img.height() / img.width();
 
         if (r >= ((double)SIZES.coverHeight / SIZES.coverWidth))

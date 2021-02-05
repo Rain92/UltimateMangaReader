@@ -4,12 +4,7 @@
 #include <png.h>
 #include <turbojpeg.h>
 
-#include <QDebug>
-#include <QElapsedTimer>
-#include <QFile>
 #include <QImage>
-#include <QScopeGuard>
-#include <cstring>
 
 #include "dithering.h"
 #include "greyscaleimage.h"
