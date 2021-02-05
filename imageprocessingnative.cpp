@@ -46,8 +46,8 @@ QImage loadQImageFast(const QString &path, bool useSWDithering)
         if (useSWDithering && ret.isNull() && ret.format() == QImage::Format_Grayscale8 &&
             ret.bytesPerLine() == ret.width())
         {
-            auto buffer = QByteArray::fromRawData((const char *)ret.bits(), ret.sizeInBytes());
-            dither_auto(buffer, ret.width(), ret.height());
+            auto imgbuffer = QByteArray::fromRawData((const char *)ret.bits(), ret.sizeInBytes());
+            dither_auto(imgbuffer, ret.width(), ret.height());
         }
 
         return ret;

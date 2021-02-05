@@ -39,8 +39,7 @@ inline uint8_t cast_op(int32_t val)
 };
 
 void img_hresize_linear_c(const uint8_t** src, int32_t** dst, int32_t count, const int32_t* xofs,
-                          const int16_t* alpha, int32_t swidth, int32_t dwidth, int32_t cn, int32_t xmin,
-                          int32_t xmax)
+                          const int16_t* alpha, int32_t, int32_t dwidth, int32_t cn, int32_t, int32_t xmax)
 {
     int32_t dx, k;
 
@@ -185,7 +184,7 @@ void img_resize_cal_offset_linear(int32_t* xofs, int16_t* ialpha, int32_t* yofs,
 
     float fx, fy;
 
-    float cbuf[MAX_ESIZE];
+    float cbuf[MAX_ESIZE] = {0};
 
     for (dx = 0; dx < dstw; dx++)
     {
@@ -268,7 +267,7 @@ void img_resize_bilinear_grey_c(uint8_t* dst, uint32_t dst_width, uint32_t dst_h
     free(buffer_);
 }
 
-#ifdef KOBO
+#ifdef __ARM_NEON__
 
 void img_vresize_linear_neon(const int** src, unsigned char* dst, const short* beta, int width)
 {

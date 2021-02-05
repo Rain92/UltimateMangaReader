@@ -9,6 +9,7 @@ class MangaDex : public AbstractMangaSource
 {
 public:
     explicit MangaDex(NetworkManager *dm);
+    virtual ~MangaDex() = default;
 
     bool updateMangaList(UpdateProgressToken *token) override;
     Result<MangaChapterCollection, QString> updateMangaInfoFinishedLoading(

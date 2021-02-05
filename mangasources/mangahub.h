@@ -8,6 +8,7 @@ class MangaHub : public AbstractMangaSource
 {
 public:
     explicit MangaHub(NetworkManager *dm);
+    virtual ~MangaHub() = default;
 
     bool updateMangaList(UpdateProgressToken *token) override;
     Result<MangaChapterCollection, QString> updateMangaInfoFinishedLoading(

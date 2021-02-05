@@ -113,6 +113,7 @@ HEADERS += \
     widgets/wifidialog.h
 
 SOURCES += \
+    dithering.cpp \
     downloadbufferjob.cpp \
     greyscaleimage.cpp \
     imageprocessingnative.cpp \

@@ -28,6 +28,7 @@ public:
     MangaList mangaList;
 
     AbstractMangaSource(NetworkManager *networkManager);
+    virtual ~AbstractMangaSource() = default;
 
     virtual bool updateMangaList(UpdateProgressToken *token) = 0;
 

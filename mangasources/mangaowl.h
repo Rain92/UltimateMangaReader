@@ -8,6 +8,7 @@ class MangaOwl : public AbstractMangaSource
 {
 public:
     explicit MangaOwl(NetworkManager *dm);
+    virtual ~MangaOwl() = default;
 
     bool updateMangaList(UpdateProgressToken *token) override;
     Result<MangaChapterCollection, QString> updateMangaInfoFinishedLoading(

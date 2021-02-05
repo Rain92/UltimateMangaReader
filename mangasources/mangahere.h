@@ -8,6 +8,7 @@ class MangaHere : public AbstractMangaSource
 {
 public:
     explicit MangaHere(NetworkManager *dm);
+    virtual ~MangaHere() = default;
 
     bool updateMangaList(UpdateProgressToken *token) override;
     Result<MangaChapterCollection, QString> updateMangaInfoFinishedLoading(

@@ -8,6 +8,7 @@ class MangaPanda : public AbstractMangaSource
 {
 public:
     explicit MangaPanda(NetworkManager *dm);
+    virtual ~MangaPanda() = default;
 
     bool updateMangaList(UpdateProgressToken *token) override;
     Result<MangaChapterCollection, QString> updateMangaInfoFinishedLoading(

@@ -690,7 +690,7 @@ std::vector<Message*> Message::GetMessageArray(int32_t number)
     }
     if (field->type == FIELD_BYTES)
     {
-        for (int i = 0; i < field->value.v_bytes->size(); ++i)
+        for (uint32_t i = 0; i < field->value.v_bytes->size(); ++i)
         {
             Message* cached_message = field->cached_messages->at(i);
             if (!cached_message)

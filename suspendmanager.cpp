@@ -41,7 +41,7 @@ bool SuspendManager::suspendInternal()
     }
 
     QThread::sleep(2);
-    QProcess::execute("sync");
+    QProcess::execute("sync", {});
 
     qDebug() << QTime::currentTime().toString("hh:mm:ss") << "suspending to RAM";
 
@@ -88,6 +88,11 @@ bool SuspendManager::resume()
         return false;
     }
     auto ret = write(handleSE, "0\n", 2);
+    if (!ret)
+    {
+        qDebug() << "Could not write to /sys/power/state-extended:" << ret;
+        return false;
+    }
     close(handleSE);
 
     QThread::msleep(100);
@@ -95,11 +100,16 @@ bool SuspendManager::resume()
     int handleNC = open("/sys/devices/virtual/input/input1/neocmd", O_RDWR);
     if (!handleNC)
     {
-        qDebug() << "Could not open /sys/power/state-extended";
+        qDebug() << "Could not open /sys/devices/virtual/input/input1/neocmd";
     }
     else
     {
         ret = write(handleNC, "a\n", 2);
+        if (!ret)
+        {
+            qDebug() << "Could not write to /sys/devices/virtual/input/input1/neocmd:" << ret;
+            return false;
+        }
         close(handleNC);
     }
 #endif

@@ -8,6 +8,7 @@ class Mangakakalot : public AbstractMangaSource
 {
 public:
     Mangakakalot(NetworkManager *dm);
+    virtual ~Mangakakalot() = default;
 
     bool updateMangaList(UpdateProgressToken *token) override;
     Result<MangaChapterCollection, QString> updateMangaInfoFinishedLoading(

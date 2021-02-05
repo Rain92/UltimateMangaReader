@@ -30,6 +30,7 @@ public:
                            QSize screenSize, Settings *settings,
                            const QList<std::tuple<const char *, const char *>> &customHeaders = {},
                            const EncryptionDescriptor &encryption = {});
+    virtual ~DownloadScaledImageJob() = default;
 
     void downloadFileReadyRead() override;
     void downloadFileFinished() override;

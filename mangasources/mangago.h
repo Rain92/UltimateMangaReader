@@ -8,6 +8,7 @@ class MangaGo : public AbstractMangaSource
 {
 public:
     explicit MangaGo(NetworkManager *dm);
+    virtual ~MangaGo() = default;
 
     bool updateMangaList(UpdateProgressToken *token) override;
     Result<MangaChapterCollection, QString> updateMangaInfoFinishedLoading(

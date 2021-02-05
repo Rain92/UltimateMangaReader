@@ -20,6 +20,7 @@ signals:
 public:
     DownloadJobBase(QNetworkAccessManager *networkManager, const QString &url,
                     const QList<std::tuple<const char *, const char *>> &customHeaders = {});
+    virtual ~DownloadJobBase() = default;
 
     QString url;
     QString originalUrl;

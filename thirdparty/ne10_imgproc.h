@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <cstdlib>
 
-#ifdef KOBO
+#ifdef __ARM_NEON__
 #include <arm_neon.h>
 #endif
 
@@ -34,7 +34,7 @@ void img_resize_cal_offset_linear(int32_t* xofs, int16_t* ialpha, int32_t* yofs,
 
 void img_resize_bilinear_grey_c(uint8_t* dst, uint32_t dst_width, uint32_t dst_height, uint8_t* src,
                                 uint32_t src_width, uint32_t src_height, uint32_t src_stride);
-#ifdef KOBO
+#ifdef __ARM_NEON__
 
 void img_vresize_linear_neon(const int** src, unsigned char* dst, const short* beta, int width);
 

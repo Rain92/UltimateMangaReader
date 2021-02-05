@@ -187,7 +187,7 @@ void decryptXorInplace(QByteArray& data, const QByteArray& key)
     //    qDebug() << "Xor:" << t.elapsed();
 }
 
-#ifdef KOBO
+#ifdef __ARM_NEON__
 void decryptXorInplace_NEON(QByteArray& data, const QByteArray& key)
 {
     //    QElapsedTimer t;

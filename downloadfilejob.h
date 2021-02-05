@@ -16,7 +16,7 @@ protected:
 public:
     DownloadFileJob(QNetworkAccessManager *networkManager, const QString &url, const QString &localFilePath,
                     const QList<std::tuple<const char *, const char *>> &customHeaders = {});
-    ~DownloadFileJob();
+    virtual ~DownloadFileJob() = default;
 
     QString filepath;
 

@@ -11,7 +11,7 @@
 #include "enums.h"
 #include "networkmanager.h"
 
-#ifdef KOBO
+#ifdef __ARM_NEON__
 #include <arm_neon.h>
 #endif
 
@@ -107,7 +107,7 @@ unsigned long long getFreeSystemMemory();
 bool enoughFreeSystemMemory();
 
 void decryptXorInplace(QByteArray& data, const QByteArray& key);
-#ifdef KOBO
+#ifdef __ARM_NEON__
 void decryptXorInplace_NEON(QByteArray& data, const QByteArray& key);
 #endif
 

@@ -91,7 +91,7 @@ Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::loadMangaInfo(co
 
             return Ok(info);
         }
-        catch (QException)
+        catch (QException &)
         {
         }
     }

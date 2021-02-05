@@ -9,6 +9,7 @@ class MangaPlus : public AbstractMangaSource
 {
 public:
     explicit MangaPlus(NetworkManager *dm);
+    virtual ~MangaPlus() = default;
 
     bool updateMangaList(UpdateProgressToken *token) override;
 

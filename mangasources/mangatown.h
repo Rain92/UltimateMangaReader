@@ -8,6 +8,7 @@ class MangaTown : public AbstractMangaSource
 {
 public:
     MangaTown(NetworkManager *dm);
+    virtual ~MangaTown() = default;
 
     bool updateMangaList(UpdateProgressToken *token) override;
     Result<MangaChapterCollection, QString> updateMangaInfoFinishedLoading(

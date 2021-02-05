@@ -36,7 +36,7 @@ void MangaController::setCurrentManga(QSharedPointer<MangaInfo> mangaInfo)
     emit activity();
 }
 
-void MangaController::chaptersMoved(QList<QPair<int, int>> moveMap)
+void MangaController::chaptersMoved(QList<QPair<int, int>>)
 {
     deserializeProgress();
     currentIndexChangedInternal(false);

@@ -47,8 +47,6 @@ void DownloadFileJob::start()
     }
 }
 
-DownloadFileJob::~DownloadFileJob() {}
-
 void DownloadFileJob::restart()
 {
     isCompleted = false;
