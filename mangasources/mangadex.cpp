@@ -1,10 +1,6 @@
 #include "mangadex.h"
 
-#include "thirdparty/simdjson.cpp"
-
-using namespace simdjson;
-
-#define asQstring(jo) QString(jo.get_c_str())
+using namespace rapidjson;
 
 MangaDex::MangaDex(NetworkManager *dm) : AbstractMangaSource(dm)
 {
@@ -58,7 +54,6 @@ bool MangaDex::updateMangaList(UpdateProgressToken *token)
     QRegularExpression mangaidrx(R"lit(<a title="([^"]*?)"[^<]*?href=['"]/title/([^/]+)/[^<]*?class=")lit");
 
     MangaList mangas;
-    ;
 
     auto job = networkManager->downloadAsString(basedictUrl + "1", -1);
 
@@ -143,16 +138,17 @@ Result<MangaChapterCollection, QString> MangaDex::updateMangaInfoFinishedLoading
 
     try
     {
-        padded_string json(job->buffer.data(), job->buffer.size());
-        simdjson::dom::parser parser;
-        auto doc = parser.parse(json);
+        Document doc;
+        ParseResult res = doc.Parse(job->buffer.data());
+        if (!res)
+            return Err(QString("Coulnd't parse mangainfos."));
 
-        auto mangaObject = doc["manga"];
+        auto &mangaObject = doc["manga"];
 
-        info->author = htmlToPlainText(asQstring(mangaObject["author"]));
-        info->artist = htmlToPlainText(asQstring(mangaObject["artist"]));
+        info->author = htmlToPlainText(QString(mangaObject["author"].GetString()));
+        info->artist = htmlToPlainText(QString(mangaObject["artist"].GetString()));
 
-        int statusi = mangaObject["status"].get_int64();
+        int statusi = mangaObject["status"].GetInt64();
 
         if (statusi >= 0 && statusi < statuses.length())
             info->status = statuses[statusi];
@@ -160,32 +156,32 @@ Result<MangaChapterCollection, QString> MangaDex::updateMangaInfoFinishedLoading
         info->releaseYear = "";
 
         info->genres = "";
-        auto genresArray = mangaObject["genres"];
-        for (auto g : genresArray)
+        auto genresArray = mangaObject["genres"].GetArray();
+        for (const auto &g : genresArray)
         {
-            int gn = g.get_int64();
+            int gn = g.GetInt64();
             if (genreMap.contains(gn))
                 info->genres += genreMap[gn] + " ";
         }
 
-        info->summary = htmlToPlainText(asQstring(mangaObject["description"])).remove(bbrx);
+        info->summary = htmlToPlainText(QString(mangaObject["description"].GetString())).remove(bbrx);
 
-        info->coverUrl = baseUrl + asQstring(mangaObject["cover_url"]);
+        info->coverUrl = baseUrl + QString(mangaObject["cover_url"].GetString());
 
-        auto chaptersObject = doc["chapter"].get_object();
+        auto &chaptersObject = doc["chapter"];
 
-        for (const auto &chapter : chaptersObject)
+        for (auto it = chaptersObject.MemberBegin(); it != chaptersObject.MemberEnd(); ++it)
         {
-            auto chapterKey = chapter.key.data();
-            auto chapterObject = chapter.value;
-            auto language = asQstring(chapterObject["lang_code"]);
+            auto chapterKey = it->name.GetString();
+            auto &chapterObject = it->value;
+            auto language = QString(chapterObject["lang_code"].GetString());
 
             if (language != "gb")
                 continue;
 
-            auto numChapter = asQstring(chapterObject["chapter"]);
+            auto numChapter = QString(chapterObject["chapter"].GetString());
 
-            auto chapterTitle = "Ch. " + numChapter + " " + asQstring(chapterObject["title"]);
+            auto chapterTitle = "Ch. " + numChapter + " " + QString(chapterObject["title"].GetString());
 
             auto chapterUrl = QString("https://mangadex.org/api/?type=chapter&id=") + chapterKey;
 
@@ -195,7 +191,7 @@ Result<MangaChapterCollection, QString> MangaDex::updateMangaInfoFinishedLoading
             newchapters.insert(0, mangaChapter);
         }
     }
-    catch (simdjson::simdjson_error &)
+    catch (QException &)
     {
         return Err(QString("Coulnd't parse mangainfos."));
     }
@@ -215,22 +211,24 @@ Result<QStringList, QString> MangaDex::getPageList(const QString &chapterUrl)
         return Err(job->errorString);
 
     QStringList imageUrls;
+
     try
     {
-        padded_string json(job->buffer.data(), job->buffer.size());
-        simdjson::dom::parser parser;
-        auto jsonObject = parser.parse(json);
+        Document doc;
+        ParseResult res = doc.Parse(job->buffer.data());
+        if (!res)
+            return Err(QString("Coulnd't parse pagelist."));
 
-        auto hash = asQstring(jsonObject["hash"]);
+        auto hash = QString(doc["hash"].GetString());
 
-        auto server = asQstring(jsonObject["server"]);
+        auto server = QString(doc["server"].GetString());
 
-        auto pagesArray = jsonObject["page_array"];
+        auto pagesArray = doc["page_array"].GetArray();
 
-        for (auto page : pagesArray)
-            imageUrls.append(server + hash + "/" + asQstring(page));
+        for (const auto &page : pagesArray)
+            imageUrls.append(server + hash + "/" + page.GetString());
     }
-    catch (simdjson::simdjson_error &)
+    catch (QException &)
     {
         return Err(QString("Coulnd't parse pagelist."));
     }

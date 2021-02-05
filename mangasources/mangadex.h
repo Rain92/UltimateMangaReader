@@ -3,7 +3,12 @@
 
 #include "abstractmangasource.h"
 #include "mangainfo.h"
-#include "thirdparty/simdjson.h"
+
+#define RAPIDJSON_ASSERT(x) \
+    if (!(x))               \
+        throw QException();
+
+#include "thirdparty/rapidjson.h"
 
 class MangaDex : public AbstractMangaSource
 {
