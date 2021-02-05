@@ -41,4 +41,12 @@ enum MangaOrderMethod
 
 };
 
+enum DitheringMode
+{
+    NoDithering,
+    HWDithering,
+    SWHWDithering
+
+};
+
 #endif  // ENUMS_H

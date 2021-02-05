@@ -28,6 +28,7 @@ public:
 signals:
     void activeMangasChanged();
     void mangaOrderMethodChanged();
+    void ditheringMethodChanged();
 
 private slots:
     void on_pushButtonOk_clicked();

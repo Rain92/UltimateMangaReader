@@ -66,7 +66,7 @@ protected:
     NetworkManager *networkManager;
     QTextDocument htmlConverter;
 
-    void genrateCoverThumbnail(QSharedPointer<MangaInfo> mangainfo);
+    void generateCoverThumbnail(QSharedPointer<MangaInfo> mangainfo);
     void fillMangaInfo(QSharedPointer<MangaInfo> info, const QString &buffer,
                        const QRegularExpression &authorrx, const QRegularExpression &artistrx,
                        const QRegularExpression &statusrx, const QRegularExpression &yearrx,

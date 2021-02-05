@@ -280,10 +280,8 @@ bool MangaReaderWidget::addImageToCache(const QString &path, bool isPreload)
     }
     else
     {
-        auto imgl = loadJpegFast(path);
-        if (imgl.isNull())
-            imgl = QImage(path);
-        auto img = QSharedPointer<QImage>(new QImage(imgl));
+        auto img = QSharedPointer<QImage>(
+            new QImage(loadQImageFast(path, settings->ditheringMode == SWHWDithering)));
 
         if (!img || img->isNull())
             return false;

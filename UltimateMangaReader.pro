@@ -45,6 +45,7 @@ FORMS += \
     widgets/wifidialog.ui
 
 HEADERS += \
+    dithering.h \
     downloadbufferjob.h \
     enums.h \
     greyscaleimage.h \

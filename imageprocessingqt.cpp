@@ -123,7 +123,7 @@ QSize calcRescaleSize(QSize imgSize, QSize screenSize, bool rot90, bool manhwaMo
 }
 
 QImage processImageQt(const QByteArray &array, const QString &filepath, QSize screenSize,
-                      bool doublePageFullscreen, bool trim, bool manhwaMode)
+                      bool doublePageFullscreen, bool trim, bool manhwaMode, bool useSWDither)
 {
     QImage img;
     if (!img.loadFromData(array))
@@ -132,7 +132,7 @@ QImage processImageQt(const QByteArray &array, const QString &filepath, QSize sc
     auto rot90 = calcRotationInfo(img.size(), screenSize, doublePageFullscreen);
 
     QImage ret;
-    auto greyImg = img.convertToFormat(QImage::Format_Grayscale8);
+    QImage greyImg = img.convertToFormat(QImage::Format_Grayscale8);
     bool res = false;
 
     if (!greyImg.isNull())
@@ -166,7 +166,16 @@ QImage processImageQt(const QByteArray &array, const QString &filepath, QSize sc
     }
 
     if (res)
+    {
+        if (useSWDither && ret.isNull() && ret.format() == QImage::Format_Grayscale8 &&
+            ret.bytesPerLine() == ret.width())
+        {
+            auto buffer = QByteArray::fromRawData((const char *)ret.bits(), ret.sizeInBytes());
+            dither_auto(buffer, ret.width(), ret.height());
+        }
+
         return ret;
-    else
-        return QImage();
+    }
+
+    return QImage();
 }

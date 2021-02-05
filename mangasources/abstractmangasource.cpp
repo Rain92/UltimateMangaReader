@@ -212,14 +212,13 @@ Result<void, QString> AbstractMangaSource::updatePageList(QSharedPointer<MangaIn
     return Ok();
 }
 
-void AbstractMangaSource::genrateCoverThumbnail(QSharedPointer<MangaInfo> mangainfo)
+void AbstractMangaSource::generateCoverThumbnail(QSharedPointer<MangaInfo> mangainfo)
 {
     QString scpath = mangainfo->coverThumbnailPath();
 
     if (!QFile::exists(scpath))
     {
-        QImage img;
-        img.load(mangainfo->coverPath);
+        QImage img = loadQImageFast(mangainfo->coverPath);
         img = img.scaled(SIZES.favoriteCoverSize * qApp->devicePixelRatio(),
                          SIZES.favoriteCoverSize * qApp->devicePixelRatio(), Qt::KeepAspectRatio,
                          Qt::SmoothTransformation);
@@ -288,7 +287,7 @@ void AbstractMangaSource::downloadCoverAsync(QSharedPointer<MangaInfo> mangainfo
     auto coverjob = networkManager->downloadAsFile(mangainfo->coverUrl, mangainfo->coverPath);
 
     auto lambda = [this, mangainfo]() {
-        genrateCoverThumbnail(mangainfo);
+        generateCoverThumbnail(mangainfo);
         mangainfo->sendCoverLoaded();
     };
 

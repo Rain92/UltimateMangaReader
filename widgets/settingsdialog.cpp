@@ -51,6 +51,8 @@ void SettingsDialog::resetUI()
     ui->checkBoxTrim->setChecked(settings->trimPages);
     ui->checkBoxManhwaMode->setChecked(settings->manhwaMode);
 
+    ui->comboBoxDithering->setCurrentIndex(settings->ditheringMode);
+
     ui->comboBoxTab->setCurrentIndex(settings->tabAdvance);
     ui->comboBoxSwipe->setCurrentIndex(settings->swipeAdvance);
     ui->comboBoxHWButton->setCurrentIndex(settings->buttonAdvance);
@@ -83,14 +85,20 @@ void SettingsDialog::updateSettings()
     settings->trimPages = ui->checkBoxTrim->isChecked();
     settings->manhwaMode = ui->checkBoxManhwaMode->isChecked();
 
+    auto oldDitheringMode = settings->ditheringMode;
+    settings->ditheringMode = static_cast<DitheringMode>(ui->comboBoxDithering->currentIndex());
+
+    if (oldDitheringMode != settings->ditheringMode)
+        emit ditheringMethodChanged();
+
     settings->tabAdvance = static_cast<AdvancePageGestureDirection>(ui->comboBoxTab->currentIndex());
     settings->swipeAdvance = static_cast<AdvancePageGestureDirection>(ui->comboBoxSwipe->currentIndex());
     settings->buttonAdvance = static_cast<AdvancePageHWButton>(ui->comboBoxHWButton->currentIndex());
 
-    auto oldOrder = settings->mangaOrder;
+    auto oldMangaOrder = settings->mangaOrder;
     settings->mangaOrder = static_cast<MangaOrderMethod>(ui->comboBoxMangaOrder->currentIndex());
 
-    if (oldOrder != settings->mangaOrder)
+    if (oldMangaOrder != settings->mangaOrder)
         emit mangaOrderMethodChanged();
 
     settings->scheduleSerialize();

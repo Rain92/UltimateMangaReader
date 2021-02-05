@@ -198,6 +198,9 @@ MainWidget::MainWidget(QWidget *parent)
     QObject::connect(settingsDialog, &SettingsDialog::mangaOrderMethodChanged, core,
                      &UltimateMangaReaderCore::sortMangaLists);
 
+    QObject::connect(settingsDialog, &SettingsDialog::ditheringMethodChanged, this,
+                     &MainWidget::updateDitheringMode);
+
     // SuspendManager
 
     QObject::connect(core->suspendManager, &SuspendManager::suspending, this, &MainWidget::onSuspend);
@@ -236,6 +239,7 @@ void MainWidget::showEvent(QShowEvent *event)
     QWidget::showEvent(event);
     core->updateActiveScources();
     core->enableTimers(true);
+    updateDitheringMode();
 
     QTimer::singleShot(500, this, &MainWidget::onResume);
 }
@@ -355,6 +359,17 @@ void MainWidget::disableFrontLight()
     KoboPlatformFunctions::setFrontlightLevel(0, 0);
 #endif
 }
+
+void MainWidget::updateDitheringMode()
+{
+#ifdef KOBO
+    if (core->settings.ditheringMode == NoDithering)
+        KoboPlatformFunctions::enableDithering(false);
+    else
+        KoboPlatformFunctions::enableDithering(true);
+#endif
+}
+
 void MainWidget::setupFrontLight()
 {
     setFrontLight(core->settings.lightValue, core->settings.comflightValue);

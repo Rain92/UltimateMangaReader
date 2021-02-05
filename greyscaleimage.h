@@ -11,6 +11,7 @@
 #include <QScopeGuard>
 #include <cstring>
 
+#include "dithering.h"
 #include "thirdparty/ne10_imgproc.h"
 
 class GreyscaleImage

@@ -81,6 +81,8 @@ private:
     void adjustUI();
     void disableFrontLight();
 
+    void updateDitheringMode();
+
     void timerTick();
     void onSuspend();
     void onResume();

@@ -10,6 +10,8 @@
 #include <QScopeGuard>
 #include <cstring>
 
+#include "dithering.h"
+
 inline QPair<int, int> getTrimRectHelper(const uchar *linePtr, int imgWidth, int limitLeft, int limitRight,
                                          const uchar threshold);
 
@@ -22,6 +24,6 @@ bool calcRotationInfo(QSize imgSize, QSize screenSize, bool doublePageFullscreen
 QImage rescaleImageQt(const QImage &img, QSize rescaleSize, bool rot90);
 
 QImage processImageQt(const QByteArray &array, const QString &filepath, QSize screenSize,
-                      bool doublePageFullscreen, bool trim, bool manhwaMode);
+                      bool doublePageFullscreen, bool trim, bool manhwaMode, bool useSWDither);
 
 #endif  // IMAGEPROCESSINGQT_H

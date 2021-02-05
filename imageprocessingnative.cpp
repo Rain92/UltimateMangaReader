@@ -19,18 +19,42 @@ bool isPng(const QByteArray &buffer)
            buffer.data()[1] == PNG_MAGIC_NUMBER_1;
 }
 
-QImage loadJpegFast(const QString &path)
+QImage loadQImageFast(const QString &path, bool useSWDithering)
 {
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly))
         return QImage();
 
-    auto array = file.readAll();
+    auto buffer = file.readAll();
     file.close();
 
     GreyscaleImage img;
-    if (!img.loadFromJpeg(array))
-        return QImage();
+
+    if (isPng(buffer))
+    {
+        img.loadFromPng(buffer);
+    }
+    else if (isJpeg(buffer))
+    {
+        img.loadFromJpeg(buffer);
+    }
+
+    if (img.isNull())
+    {
+        QImage ret(path);
+
+        if (useSWDithering && ret.isNull() && ret.format() == QImage::Format_Grayscale8 &&
+            ret.bytesPerLine() == ret.width())
+        {
+            auto buffer = QByteArray::fromRawData((const char *)ret.bits(), ret.sizeInBytes());
+            dither_auto(buffer, ret.width(), ret.height());
+        }
+
+        return ret;
+    }
+
+    if (useSWDithering)
+        img.dither();
 
     return img.toQImage();
 }
@@ -88,7 +112,7 @@ GreyscaleImage loadFromJpegAndRotate(const QByteArray &buffer, QSize screenSize,
 }
 
 QImage processImageN(const QByteArray &buffer, const QString &filepath, QSize screenSize,
-                     bool doublePageFullscreen, bool trim, bool manhwaMode)
+                     bool doublePageFullscreen, bool trim, bool manhwaMode, bool useSWDither)
 {
     GreyscaleImage img;
 
@@ -123,6 +147,9 @@ QImage processImageN(const QByteArray &buffer, const QString &filepath, QSize sc
 
     if (!img.saveAsJpeg(filepath))
         return QImage();
+
+    if (useSWDither)
+        img.dither();
 
     QImage retimg = img.toQImage();
 

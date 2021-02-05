@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>420</width>
-    <height>620</height>
+    <height>640</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -70,7 +70,7 @@
         <x>0</x>
         <y>0</y>
         <width>418</width>
-        <height>618</height>
+        <height>638</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -187,6 +187,55 @@ newly downloaded images</string>
 for very long pages</string>
          </property>
         </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <item>
+          <widget class="QLabel" name="label_7">
+           <property name="text">
+            <string>Enable dithering:     </string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="comboBoxDithering">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <item>
+            <property name="text">
+             <string>No dithering</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Hardware</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Software + Hardware</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_4">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
        </item>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_3">
