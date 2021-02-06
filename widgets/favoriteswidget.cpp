@@ -109,6 +109,8 @@ void FavoritesWidget::moveFavoriteToFront(int i)
 
     ui->tableWidget->removeRow(i);
     insertRow(favoritesManager->favoriteinfos.at(0), 0);
+
+    ui->tableWidget->scrollToTop();
 }
 
 void FavoritesWidget::mangaUpdated(bool updated)
