@@ -168,23 +168,24 @@
        <item>
         <widget class="QCheckBox" name="checkBoxDoublePages">
          <property name="text">
-          <string>Show double pages in portrait mode</string>
+          <string>Show double pages in portrait mode 
+(requires clear cache after change)</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QCheckBox" name="checkBoxTrim">
          <property name="text">
-          <string>Trim pages: remove white margins from 
-newly downloaded images</string>
+          <string>Trim pages: remove white margins 
+(requires clear cache after change)</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QCheckBox" name="checkBoxManhwaMode">
          <property name="text">
-          <string>Enable Manhwa Mode: Enables vertical scrolling 
-for very long pages</string>
+          <string>Enable Manhwa Mode: Enables vertical scrolling for 
+very long pages (requires clear cache after change)</string>
          </property>
         </widget>
        </item>
