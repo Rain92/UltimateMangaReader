@@ -3,6 +3,7 @@
 
 #include <turbojpeg.h>
 
+#include <QDebug>
 #include <QImage>
 
 #include "dithering.h"

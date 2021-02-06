@@ -89,13 +89,14 @@ bool calcRotationInfo(QSize imgSize, QSize screenSize, bool doublePageFullscreen
 
 QSize fitToSize(QSize imgSize, QSize maxSize)
 {
-    if (maxSize.width() / imgSize.width() < maxSize.height() / imgSize.height())
+    bool fitToWidth = (float)maxSize.width() / imgSize.width() < (float)maxSize.height() / imgSize.height();
+    if (fitToWidth)
     {
-        return QSize(maxSize.width(), (imgSize.height() * maxSize.width()) / imgSize.width());
+        return QSize(maxSize.width(), ((float)imgSize.height() * maxSize.width()) / imgSize.width());
     }
-    else
+    else  // fit to height
     {
-        return QSize((imgSize.width() * maxSize.height()) / imgSize.height(), maxSize.height());
+        return QSize((float)(imgSize.width() * maxSize.height()) / imgSize.height(), maxSize.height());
     }
 }
 

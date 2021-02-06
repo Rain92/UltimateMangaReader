@@ -59,7 +59,8 @@ QImage loadQImageFast(const QString &path, bool useSWDithering)
     return img.toQImage();
 }
 
-GreyscaleImage loadFromJpegAndRotate(const QByteArray &buffer, QSize screenSize, bool doublePageFullscreen)
+GreyscaleImage loadFromJpegAndRotate(const QByteArray &buffer, QSize screenSize, bool doublePageFullscreen,
+                                     bool &rot90)
 {
     int flags = TJFLAG_FASTDCT | TJFLAG_FASTUPSAMPLE;
     int inSubsamp, inColorspace;
@@ -80,7 +81,7 @@ GreyscaleImage loadFromJpegAndRotate(const QByteArray &buffer, QSize screenSize,
                             &inColorspace) < 0)
         return img;
 
-    bool rot90 = calcRotationInfo(QSize(width, height), screenSize, doublePageFullscreen);
+    rot90 = calcRotationInfo(QSize(width, height), screenSize, doublePageFullscreen);
 
     if (rot90)
     {
@@ -121,10 +122,15 @@ QImage processImageN(const QByteArray &buffer, const QString &filepath, QSize sc
     if (isPng(buffer))
     {
         img.loadFromPng(buffer);
+
+        rot90 = calcRotationInfo(img.size(), screenSize, doublePageFullscreen);
+
+        if (rot90)
+            img = img.rotate90();
     }
     else if (isJpeg(buffer))
     {
-        img = loadFromJpegAndRotate(buffer, screenSize, doublePageFullscreen);
+        img = loadFromJpegAndRotate(buffer, screenSize, doublePageFullscreen, rot90);
 
         if (!img.isValid())
             return QImage();
