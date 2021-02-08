@@ -231,7 +231,7 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const QStr
 
     emit activity();
     auto sjob = qSharedPointerCast<DownloadScaledImageJob>(job);
-    connect(sjob.get(), &DownloadScaledImageJob::completed, [sjob, this]() mutable {
+    connect(sjob.get(), &DownloadScaledImageJob::completed, this, [sjob, this]() mutable {
         if (sjob->resultImage)
             emit downloadedImage(sjob->filepath, {sjob->resultImage});
         sjob.clear();
@@ -263,7 +263,6 @@ void NetworkManager::loadCertificates(const QString &certsPath)
 {
     auto sslConfig = QSslConfiguration::defaultConfiguration();
     sslConfig.setProtocol(QSsl::AnyProtocol);
-    auto certs = sslConfig.caCertificates();
 
     QList<QSslCertificate> caCertificates = QSslCertificate::fromPath(certsPath + "/cacert.pem", QSsl::Pem);
     if (caCertificates.size() != 0)

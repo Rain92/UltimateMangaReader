@@ -60,7 +60,7 @@ void UltimateMangaReaderCore::enableTimers(bool enabled)
         autoSuspendTimer.start();
         timerTick();
         QTimer::singleShot(1000 * 60 - QTime::currentTime().second() * 1000 - QTime::currentTime().msec(),
-                           [this]() {
+                           this, [this]() {
                                timer.start();
                                timerTick();
                            });

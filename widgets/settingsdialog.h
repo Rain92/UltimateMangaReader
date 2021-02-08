@@ -16,8 +16,8 @@ class SettingsDialog;
 class SettingsDialog : public QDialog
 {
     Q_OBJECT
-    Q_ENUMS(AdvancePageGestureDirection)
-    Q_ENUMS(AdvancePageHWButton)
+    Q_ENUM(AdvancePageGestureDirection)
+    Q_ENUM(AdvancePageHWButton)
 
 public:
     explicit SettingsDialog(Settings *settings, QWidget *parent = nullptr);

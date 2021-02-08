@@ -72,9 +72,9 @@ void DownloadQueue::startSingle()
 
     if (!job->isCompleted)
     {
-        QObject::connect(job.get(), &DownloadJobBase::completed,
+        QObject::connect(job.get(), &DownloadJobBase::completed, this,
                          [this, job]() { downloadFinished(job, true); });
-        QObject::connect(job.get(), &DownloadJobBase::downloadError,
+        QObject::connect(job.get(), &DownloadJobBase::downloadError, this,
                          [this, job]() { downloadFinished(job, false); });
     }
     else

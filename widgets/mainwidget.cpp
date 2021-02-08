@@ -326,7 +326,7 @@ void MainWidget::onResume()
     core->enableTimers(true);
 
     wifiDialog->connect();
-    QTimer::singleShot(200, [this]() {
+    QTimer::singleShot(200, this, [this]() {
         setupFrontLight();
         if (!core->networkManager->connected)
             wifiDialog->open();
