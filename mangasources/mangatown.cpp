@@ -129,13 +129,14 @@ Result<QStringList, QString> MangaTown::getPageList(const QString &chapterUrl)
 
     return Ok(imageUrls);
 }
+
 Result<QString, QString> MangaTown::getImageUrl(const QString &pageUrl)
 {
     QRegularExpression imgUrlRx(R"lit(<img\s*(?:id="image")?\s*src="([^"]*?)"\s*(?:id="image")?)lit");
 
     auto job = networkManager->downloadAsString(pageUrl);
 
-    if (!job->await(7000))
+    if (!job->await(6000))
         return Err(job->errorString);
 
     auto match = imgUrlRx.match(job->bufferStr);

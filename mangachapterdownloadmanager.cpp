@@ -82,12 +82,15 @@ void MangaChapterDownloadManager::processNextJob()
                 if (!res.isOk())
                 {
                     pagesErrors++;
-                    emit error(QString("Stoping Download. Couldn't download page %1 of chapter %2: %3")
+                    emit error(QString("Couldn't download page %1 of chapter %2: %3")
                                    .arg(c)
                                    .arg(p)
                                    .arg(res.unwrapErr()));
                 }
-                mangaInfo->chapters[c].imageUrlList[p] = res.unwrap();
+                else
+                {
+                    mangaInfo->chapters[c].imageUrlList[p] = res.unwrap();
+                }
             }
 
             auto &imageUrl = mangaInfo->chapters[c].imageUrlList[p];
