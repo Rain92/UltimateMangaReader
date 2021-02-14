@@ -1,5 +1,7 @@
 #include "dithering.h"
 
+#define SIMD_NEON_PREFECH_SIZE 384
+
 static inline uint32_t div255(uint32_t v)
 {
     uint32_t _v = v + 128;
@@ -69,6 +71,7 @@ void dither_NEON(QByteArray &buffer, int width, int height)
 
         uint16x4_t vcx = vdup_n_u16(cx);
 
+        __builtin_prefetch(buffer.data() + SIMD_NEON_PREFECH_SIZE);
         uint8x8_t vecn = vld1_u8((uchar *)buffer.data());
 
         int line_leftover = (8 - width) & 7;  // (8 - width % 8) % 8
@@ -111,6 +114,8 @@ void dither_NEON(QByteArray &buffer, int width, int height)
                     int offset = cp + 8;
                     if (x + 8 >= width)
                         offset -= line_leftover;
+
+                    __builtin_prefetch(buffer.data() + offset + SIMD_NEON_PREFECH_SIZE);
                     vecn = vld1_u8((uchar *)buffer.data() + offset);
                 }
 
