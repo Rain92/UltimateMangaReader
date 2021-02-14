@@ -9,7 +9,6 @@
 #include "dithering.h"
 #include "greyscaleimage.h"
 #include "imageprocessingqt.h"
-#include "thirdparty/ne10_imgproc.h"
 
 bool isJpeg(const QByteArray &buffer);
 bool isPng(const QByteArray &buffer);

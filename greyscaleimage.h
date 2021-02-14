@@ -12,7 +12,7 @@
 #include <cstring>
 
 #include "dithering.h"
-#include "thirdparty/ne10_imgproc.h"
+#include "thirdparty/simdimageresize.h"
 
 class GreyscaleImage
 {

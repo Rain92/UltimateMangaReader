@@ -77,17 +77,14 @@ GreyscaleImage GreyscaleImage::resize(QSize newSize)
     QByteArray newBuffer;
     newBuffer.resize(newSize.width() * newSize.height());
 #ifdef __ARM_NEON__
-    img_resize_bilinear_grey_neon((uchar *)newBuffer.data(), newSize.width(), newSize.height(),
-                                  (uchar *)buffer.data(), width, height, width);
+    Simd::Neon::ResizeBilinear((uint8_t *)buffer.data(), width, height, width, (uint8_t *)newBuffer.data(),
+                               newSize.width(), newSize.height(), newSize.width(), 1);
 #else
-    img_resize_bilinear_grey_c((uchar *)newBuffer.data(), newSize.width(), newSize.height(),
-                               (uchar *)buffer.data(), width, height, width);
+    Simd::Base::ResizeBilinear((uint8_t *)buffer.data(), width, height, width, (uint8_t *)newBuffer.data(),
+                               newSize.width(), newSize.height(), newSize.width(), 1);
 #endif
-
     return GreyscaleImage(newSize, qMove(newBuffer));
 }
-
-//#define DIV255(V) (V >> 8)
 
 void GreyscaleImage::dither()
 {

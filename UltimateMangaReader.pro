@@ -66,10 +66,10 @@ HEADERS += \
     sizes.h \
     staticsettings.h \
     suspendmanager.h \
-    thirdparty/ne10_imgproc.h \
     thirdparty/picoproto.h \
     thirdparty/rapidjson.h \
     thirdparty/result.h \
+    thirdparty/simdimageresize.h \
     ultimatemangareadercore.h \
     widgets/batteryicon.h \
     widgets/customgesturerecognizer.h \
@@ -132,8 +132,8 @@ SOURCES += \
     networkmanager.cpp \
     readingprogress.cpp \
     suspendmanager.cpp \
-    thirdparty/ne10_imgproc.cpp \
     thirdparty/picoproto.cc \
+    thirdparty/simdimageresize.cpp \
     ultimatemangareadercore.cpp \
     widgets/batteryicon.cpp \
     widgets/customgesturerecognizer.cpp \
