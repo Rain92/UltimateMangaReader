@@ -71,7 +71,7 @@ bool DownloadScaledImageJob::processImage(QByteArray &&array)
     QImage pimg;
 
     if (isJpeg(array) || isPng(array))
-        pimg = processImageN(array, filepath, screenSize, settings->doublePageFullscreen, settings->trimPages,
+        pimg = processImageN(array, filepath, screenSize, settings->doublePageMode, settings->trimPages,
                              settings->manhwaMode, settings->ditheringMode == SWHWDithering);
     if (!pimg.isNull())
     {
@@ -81,9 +81,8 @@ bool DownloadScaledImageJob::processImage(QByteArray &&array)
     {
         qDebug() << "Fast decoding failed, using fallback!";
 
-        pimg =
-            processImageQt(array, filepath, screenSize, settings->doublePageFullscreen, settings->trimPages,
-                           settings->manhwaMode, settings->ditheringMode == SWHWDithering);
+        pimg = processImageQt(array, filepath, screenSize, settings->doublePageMode, settings->trimPages,
+                              settings->manhwaMode, settings->ditheringMode == SWHWDithering);
 
         if (!pimg.isNull())
             resultImage.reset(new QImage(pimg));

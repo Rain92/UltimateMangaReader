@@ -79,12 +79,16 @@ QRect getTrimRect(const QByteArray &buffer, int imgWidth, int imgHeight, int str
     return QRect(leftMin, top, ntw, height);
 }
 
-bool calcRotationInfo(QSize imgSize, QSize screenSize, bool doublePageFullscreen)
+int calcRotationInfo(QSize imgSize, QSize screenSize, DoublePageMode doublePageMode)
 {
-    bool rot90 = doublePageFullscreen &&
-                 (imgSize.width() <= imgSize.height()) != (screenSize.width() <= screenSize.height());
+    bool rot90 = (imgSize.width() <= imgSize.height()) != (screenSize.width() <= screenSize.height());
 
-    return rot90;
+    if (rot90 && doublePageMode == DoublePage90CW)
+        return 90;
+    else if (rot90 && doublePageMode == DoublePage90CCW)
+        return -90;
+
+    return 0;
 }
 
 QSize fitToSize(QSize imgSize, QSize maxSize)
@@ -124,13 +128,13 @@ QSize calcRescaleSize(QSize imgSize, QSize screenSize, bool rot90, bool manhwaMo
 }
 
 QImage processImageQt(const QByteArray &array, const QString &filepath, QSize screenSize,
-                      bool doublePageFullscreen, bool trim, bool manhwaMode, bool useSWDither)
+                      DoublePageMode doublePageMode, bool trim, bool manhwaMode, bool useSWDither)
 {
     QImage img;
     if (!img.loadFromData(array))
         return QImage();
 
-    auto rot90 = calcRotationInfo(img.size(), screenSize, doublePageFullscreen);
+    auto rot90 = calcRotationInfo(img.size(), screenSize, doublePageMode);
 
     QImage ret;
     QImage greyImg = img.convertToFormat(QImage::Format_Grayscale8);
@@ -145,9 +149,9 @@ QImage processImageQt(const QByteArray &array, const QString &filepath, QSize sc
             greyImg = greyImg.copy(trimRect);
         }
 
-        if (rot90)
-            greyImg = greyImg.transformed(QTransform().rotate(90));
-        auto rescaleSize = calcRescaleSize(greyImg.size(), screenSize, rot90, manhwaMode);
+        if (rot90 != 0)
+            greyImg = greyImg.transformed(QTransform().rotate(rot90));
+        auto rescaleSize = calcRescaleSize(greyImg.size(), screenSize, rot90 != 0, manhwaMode);
 
         ret = greyImg.scaled(rescaleSize.width(), rescaleSize.height(), Qt::KeepAspectRatio,
                              Qt::SmoothTransformation);
@@ -157,9 +161,9 @@ QImage processImageQt(const QByteArray &array, const QString &filepath, QSize sc
     // if something went wrong with the greyscale img -> use original
     if (!res)
     {
-        if (rot90)
-            img = img.transformed(QTransform().rotate(90));
-        auto rescaleSize = calcRescaleSize(img.size(), screenSize, rot90, manhwaMode);
+        if (rot90 != 0)
+            img = img.transformed(QTransform().rotate(rot90));
+        auto rescaleSize = calcRescaleSize(img.size(), screenSize, rot90 != 0, manhwaMode);
 
         ret = img.scaled(rescaleSize.width(), rescaleSize.height(), Qt::KeepAspectRatio,
                          Qt::SmoothTransformation);

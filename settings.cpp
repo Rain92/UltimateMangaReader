@@ -10,7 +10,7 @@ Settings::Settings()
       swipeAdvance(Left),
       buttonAdvance(Down),
       mangaOrder(OrderByPopularity),
-      doublePageFullscreen(true),
+      doublePageMode(DoublePage90CW),
       trimPages(true),
       manhwaMode(true),
       ditheringMode(SWHWDithering),
@@ -50,7 +50,7 @@ void Settings::serialize()
 QDataStream &operator<<(QDataStream &str, const Settings &m)
 {
     str << m.lightValue << m.comflightValue << m.hideErrorMessages << m.tabAdvance << m.swipeAdvance
-        << m.buttonAdvance << m.mangaOrder << m.doublePageFullscreen << m.trimPages << m.manhwaMode
+        << m.buttonAdvance << m.mangaOrder << m.doublePageMode << m.trimPages << m.manhwaMode
         << m.enabledMangaSources << m.ditheringMode;
 
     return str;
@@ -60,7 +60,7 @@ QDataStream &operator>>(QDataStream &str, Settings &m)
 {
     m.enabledMangaSources.clear();
     str >> m.lightValue >> m.comflightValue >> m.hideErrorMessages >> m.tabAdvance >> m.swipeAdvance >>
-        m.buttonAdvance >> m.mangaOrder >> m.doublePageFullscreen >> m.trimPages >> m.manhwaMode >>
+        m.buttonAdvance >> m.mangaOrder >> m.doublePageMode >> m.trimPages >> m.manhwaMode >>
         m.enabledMangaSources >> m.ditheringMode;
 
     return str;

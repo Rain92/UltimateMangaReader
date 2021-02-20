@@ -166,18 +166,60 @@
         </widget>
        </item>
        <item>
-        <widget class="QCheckBox" name="checkBoxDoublePages">
-         <property name="text">
-          <string>Show double pages in portrait mode 
-(requires clear cache after change)</string>
-         </property>
-        </widget>
+        <layout class="QHBoxLayout" name="horizontalLayout_5">
+         <item>
+          <widget class="QLabel" name="label_8">
+           <property name="text">
+            <string>Show double pages:
+(requires clear cache)</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="comboBoxDoublePageMode">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <item>
+            <property name="text">
+             <string>Without rotation</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Fullscreen, rotated CW</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Fullscreen, rotated CCW</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_5">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
        </item>
        <item>
         <widget class="QCheckBox" name="checkBoxTrim">
          <property name="text">
           <string>Trim pages: remove white margins 
-(requires clear cache after change)</string>
+(requires clear cache)</string>
          </property>
         </widget>
        </item>
@@ -185,7 +227,7 @@
         <widget class="QCheckBox" name="checkBoxManhwaMode">
          <property name="text">
           <string>Enable Manhwa Mode: Enables vertical scrolling for 
-very long pages (requires clear cache after change)</string>
+very long pages (requires clear cache)</string>
          </property>
         </widget>
        </item>

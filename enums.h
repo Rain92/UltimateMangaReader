@@ -49,4 +49,12 @@ enum DitheringMode
 
 };
 
+enum DoublePageMode
+{
+    DoublePageNoRotation,
+    DoublePage90CW,
+    DoublePage90CCW
+
+};
+
 #endif  // ENUMS_H

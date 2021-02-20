@@ -7,6 +7,7 @@
 #include <QImage>
 
 #include "dither.h"
+#include "enums.h"
 
 inline QPair<int, int> getTrimRectHelper(const uchar *linePtr, int imgWidth, int limitLeft, int limitRight,
                                          const uchar threshold);
@@ -15,11 +16,11 @@ QRect getTrimRect(const QByteArray &buffer, int imgWidth, int imgHeight, int str
 
 QSize calcRescaleSize(QSize imgSize, QSize screenSize, bool doublePageFullscreen, bool manhwaMode);
 
-bool calcRotationInfo(QSize imgSize, QSize screenSize, bool doublePageFullscreen);
+int calcRotationInfo(QSize imgSize, QSize screenSize, DoublePageMode doublePageMode);
 
 QImage rescaleImageQt(const QImage &img, QSize rescaleSize, bool rot90);
 
 QImage processImageQt(const QByteArray &array, const QString &filepath, QSize screenSize,
-                      bool doublePageFullscreen, bool trim, bool manhwaMode, bool useSWDither);
+                      DoublePageMode doublePageMode, bool trim, bool manhwaMode, bool useSWDither);
 
 #endif  // IMAGEPROCESSINGQT_H

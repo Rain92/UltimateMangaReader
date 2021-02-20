@@ -28,7 +28,7 @@ public:
 
     MangaOrderMethod mangaOrder;
 
-    bool doublePageFullscreen;
+    DoublePageMode doublePageMode;
     bool trimPages;
     bool manhwaMode;
     DitheringMode ditheringMode;

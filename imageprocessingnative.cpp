@@ -59,8 +59,8 @@ QImage loadQImageFast(const QString &path, bool useSWDithering)
     return img.toQImage();
 }
 
-GreyscaleImage loadFromJpegAndRotate(const QByteArray &buffer, QSize screenSize, bool doublePageFullscreen,
-                                     bool &rot90)
+GreyscaleImage loadFromJpegAndRotate(const QByteArray &buffer, QSize screenSize,
+                                     DoublePageMode doublePageMode, int &rot90)
 {
     int flags = TJFLAG_FASTDCT | TJFLAG_FASTUPSAMPLE;
     int inSubsamp, inColorspace;
@@ -81,9 +81,9 @@ GreyscaleImage loadFromJpegAndRotate(const QByteArray &buffer, QSize screenSize,
                             &inColorspace) < 0)
         return img;
 
-    rot90 = calcRotationInfo(QSize(width, height), screenSize, doublePageFullscreen);
+    rot90 = calcRotationInfo(QSize(width, height), screenSize, doublePageMode);
 
-    if (rot90)
+    if (rot90 != 0)
     {
         unsigned char *dstBuf = nullptr; /* Dynamically allocate the JPEG buffer */
         unsigned long dstSize = 0;
@@ -91,7 +91,10 @@ GreyscaleImage loadFromJpegAndRotate(const QByteArray &buffer, QSize screenSize,
         tjtransform xform;
         memset(&xform, 0, sizeof(tjtransform));
         xform.options = TJXOPT_GRAY | TJXOPT_TRIM;
-        xform.op = TJXOP_ROT90;
+        if (rot90 == 90)
+            xform.op = TJXOP_ROT90;
+        if (rot90 == -90)
+            xform.op = TJXOP_ROT270;
 
         if (tjTransform(tjInstanceT, (uchar *)buffer.data(), buffer.size(), 1, &dstBuf, &dstSize, &xform,
                         flags) < 0)
@@ -113,24 +116,24 @@ GreyscaleImage loadFromJpegAndRotate(const QByteArray &buffer, QSize screenSize,
 }
 
 QImage processImageN(const QByteArray &buffer, const QString &filepath, QSize screenSize,
-                     bool doublePageFullscreen, bool trim, bool manhwaMode, bool useSWDither)
+                     DoublePageMode doublePageMode, bool trim, bool manhwaMode, bool useSWDither)
 {
     GreyscaleImage img;
 
-    bool rot90 = false;
+    int rot90 = 0;
 
     if (isPng(buffer))
     {
         img.loadFromPng(buffer);
 
-        rot90 = calcRotationInfo(img.size(), screenSize, doublePageFullscreen);
+        rot90 = calcRotationInfo(img.size(), screenSize, doublePageMode);
 
-        if (rot90)
-            img = img.rotate(90);
+        if (rot90 <= 0)
+            img = img.rotate(rot90);
     }
     else if (isJpeg(buffer))
     {
-        img = loadFromJpegAndRotate(buffer, screenSize, doublePageFullscreen, rot90);
+        img = loadFromJpegAndRotate(buffer, screenSize, doublePageMode, rot90);
 
         if (!img.isValid())
             return QImage();
@@ -147,7 +150,7 @@ QImage processImageN(const QByteArray &buffer, const QString &filepath, QSize sc
         img = img.crop(trimRect);
     }
 
-    auto rescaleSize = calcRescaleSize(img.size(), screenSize, rot90, manhwaMode);
+    auto rescaleSize = calcRescaleSize(img.size(), screenSize, rot90 != 0, manhwaMode);
 
     img = img.resize(rescaleSize);
 

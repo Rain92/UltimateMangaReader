@@ -15,9 +15,10 @@ bool isPng(const QByteArray &buffer);
 
 QImage loadQImageFast(const QString &path, bool useSWDithering = false);
 
-GreyscaleImage loadFromJpegAndRotate(const QByteArray &buffer, QSize screenSize, bool doublePageFullscreen);
+GreyscaleImage loadFromJpegAndRotate(const QByteArray &buffer, QSize screenSize,
+                                     DoublePageMode doublePageMode, int &rot90);
 
 QImage processImageN(const QByteArray &buffer, const QString &filepath, QSize screenSize,
-                     bool doublePageFullscreen, bool trim, bool manhwaMode, bool useSWDither);
+                     DoublePageMode doublePageMode, bool trim, bool manhwaMode, bool useSWDither);
 
 #endif  // IMAGEPROCESSINGNATIVE_H

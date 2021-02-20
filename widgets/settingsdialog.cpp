@@ -47,7 +47,7 @@ void SettingsDialog::resetUI()
     internalChange = true;
     ui->checkBoxHideErrorMessages->setChecked(settings->hideErrorMessages);
 
-    ui->checkBoxDoublePages->setChecked(settings->doublePageFullscreen);
+    ui->comboBoxDoublePageMode->setCurrentIndex(settings->doublePageMode);
     ui->checkBoxTrim->setChecked(settings->trimPages);
     ui->checkBoxManhwaMode->setChecked(settings->manhwaMode);
 
@@ -81,7 +81,7 @@ void SettingsDialog::updateSettings()
 
     settings->hideErrorMessages = ui->checkBoxHideErrorMessages->isChecked();
 
-    settings->doublePageFullscreen = ui->checkBoxDoublePages->isChecked();
+    settings->doublePageMode = static_cast<DoublePageMode>(ui->comboBoxDoublePageMode->currentIndex());
     settings->trimPages = ui->checkBoxTrim->isChecked();
     settings->manhwaMode = ui->checkBoxManhwaMode->isChecked();
 
