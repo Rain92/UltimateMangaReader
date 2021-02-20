@@ -1,4 +1,4 @@
-#include "dithering.h"
+#include "dither.h"
 
 #define SIMD_NEON_PREFECH_SIZE 384
 
@@ -144,7 +144,7 @@ void dither_fallback(QByteArray &buffer, int width, int height)
             buffer[p] = dither_o8x8(x, y, buffer[p]);
 }
 
-void dither_auto(QByteArray &buffer, int width, int height)
+void ditherBuffer(QByteArray &buffer, int width, int height)
 {
 #ifdef __ARM_NEON__
     dither_NEON(buffer, width, height);

@@ -88,19 +88,22 @@ GreyscaleImage GreyscaleImage::resize(QSize newSize)
 
 void GreyscaleImage::dither()
 {
-    dither_auto(buffer, width, height);
+    ditherBuffer(buffer, width, height);
 }
 
-GreyscaleImage GreyscaleImage::rotate90()
+GreyscaleImage GreyscaleImage::rotate(int rotation)
 {
-    QByteArray newBuffer;
-    newBuffer.resize(width * height);
-    int nw = height;
-    int nh = width;
-    for (int y = 0; y < nh; y++)
-        for (int x = 0; x < nw; x++)
-            //                p2[y * nw + x] = p1[x * width + (width - 1 - y)];
-            newBuffer[y * nw + x] = buffer[(height - 1 - x) * width + y];
+    if (rotation % 90 != 0)
+        return GreyscaleImage();
+
+    if (rotation == 0)
+        return GreyscaleImage(*this);
+
+    int rot = ((rotation % 360) + 360) % 360;
+    int nw = rotation == 180 ? width : height;
+    int nh = rotation == 180 ? height : width;
+
+    auto newBuffer = rotateBuffer(buffer, width, height, rot);
 
     return GreyscaleImage({nw, nh}, qMove(newBuffer));
 }

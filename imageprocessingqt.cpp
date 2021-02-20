@@ -172,7 +172,7 @@ QImage processImageQt(const QByteArray &array, const QString &filepath, QSize sc
             ret.bytesPerLine() == ret.width())
         {
             auto buffer = QByteArray::fromRawData((const char *)ret.bits(), ret.sizeInBytes());
-            dither_auto(buffer, ret.width(), ret.height());
+            ditherBuffer(buffer, ret.width(), ret.height());
         }
 
         return ret;

@@ -47,7 +47,7 @@ QImage loadQImageFast(const QString &path, bool useSWDithering)
             ret.bytesPerLine() == ret.width())
         {
             auto imgbuffer = QByteArray::fromRawData((const char *)ret.bits(), ret.sizeInBytes());
-            dither_auto(imgbuffer, ret.width(), ret.height());
+            ditherBuffer(imgbuffer, ret.width(), ret.height());
         }
 
         return ret;
@@ -126,7 +126,7 @@ QImage processImageN(const QByteArray &buffer, const QString &filepath, QSize sc
         rot90 = calcRotationInfo(img.size(), screenSize, doublePageFullscreen);
 
         if (rot90)
-            img = img.rotate90();
+            img = img.rotate(90);
     }
     else if (isJpeg(buffer))
     {

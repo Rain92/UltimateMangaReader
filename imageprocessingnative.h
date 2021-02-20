@@ -6,7 +6,7 @@
 
 #include <QImage>
 
-#include "dithering.h"
+#include "dither.h"
 #include "greyscaleimage.h"
 #include "imageprocessingqt.h"
 

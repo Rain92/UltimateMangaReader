@@ -45,12 +45,13 @@ FORMS += \
     widgets/wifidialog.ui
 
 HEADERS += \
-    dithering.h \
+    dither.h \
     downloadbufferjob.h \
     enums.h \
     greyscaleimage.h \
     imageprocessingnative.h \
     imageprocessingqt.h \
+    imagerotate.h \
     mangachaptercollection.h \
     mangachapterdownloadmanager.h \
     mangacontroller.h \
@@ -113,11 +114,12 @@ HEADERS += \
     widgets/wifidialog.h
 
 SOURCES += \
-    dithering.cpp \
+    dither.cpp \
     downloadbufferjob.cpp \
     greyscaleimage.cpp \
     imageprocessingnative.cpp \
     imageprocessingqt.cpp \
+    imagerotate.cpp \
     mangachaptercollection.cpp \
     mangachapterdownloadmanager.cpp \
     mangacontroller.cpp \

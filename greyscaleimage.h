@@ -11,7 +11,8 @@
 #include <QScopeGuard>
 #include <cstring>
 
-#include "dithering.h"
+#include "dither.h"
+#include "imagerotate.h"
 #include "thirdparty/simdimageresize.h"
 
 class GreyscaleImage
@@ -35,12 +36,16 @@ public:
 
     GreyscaleImage resize(QSize newSize);
     void dither();
-    GreyscaleImage rotate90();
+    GreyscaleImage rotate(int rotation);
     GreyscaleImage crop(const QRect &rect);
 
     bool saveAsJpeg(const QString &path);
 
     QImage toQImage();
+
+private:
+    GreyscaleImage rotate_neon(int rot);
+    GreyscaleImage transpose_neon();
 };
 
 #endif  // GREYSCALEIMAGE_H

@@ -6,7 +6,7 @@
 #include <QDebug>
 #include <QImage>
 
-#include "dithering.h"
+#include "dither.h"
 
 inline QPair<int, int> getTrimRectHelper(const uchar *linePtr, int imgWidth, int limitLeft, int limitRight,
                                          const uchar threshold);
