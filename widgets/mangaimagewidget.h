@@ -1,17 +1,25 @@
-#ifndef MANGAIMAGECONTAINER_H
-#define MANGAIMAGECONTAINER_H
+#ifndef MANGAIMAGEWIDGETH_H
+#define MANGAIMAGEWIDGETH_H
 
+#include <QApplication>
+#include <QDebug>
 #include <QElapsedTimer>
+#include <QFileInfo>
 #include <QFrame>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QScreen>
 
-class MangaImageContainer : public QFrame
+#ifdef KOBO
+#include "koboplatformfunctions.h"
+#endif
+
+class MangaImageWidget : public QFrame
 {
     Q_OBJECT
 
 public:
-    explicit MangaImageContainer(QWidget *parent);
+    explicit MangaImageWidget(QWidget *parent);
 
     void setImage(QSharedPointer<QImage> img);
     void clearImage();
@@ -21,6 +29,7 @@ public:
 protected:
     virtual void paintEvent(QPaintEvent *) override;
     virtual void mousePressEvent(QMouseEvent *event) override;
+    virtual void mouseReleaseEvent(QMouseEvent *event) override;
     virtual void mouseMoveEvent(QMouseEvent *event) override;
 
 private:
@@ -31,4 +40,4 @@ private:
     QSharedPointer<QImage> errorImage;
 };
 
-#endif  // MANGAIMAGECONTAINER_H
+#endif  // MANGAIMAGEWIDGETH_H

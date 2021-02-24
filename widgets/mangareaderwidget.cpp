@@ -203,24 +203,24 @@ void MangaReaderWidget::showImage(const QString &path)
         if (i != -1)
         {
             qDebug() << "Cachehit:" << i;
-            ui->mangaImageContainer->setImage(imgcache[i].first);
+            ui->mangaImageWidget->setImage(imgcache[i].first);
         }
         else
         {
             if (addImageToCache(path, false))
             {
                 i = searchCache(path);
-                ui->mangaImageContainer->setImage(imgcache[i].first);
+                ui->mangaImageWidget->setImage(imgcache[i].first);
             }
             else
             {
-                ui->mangaImageContainer->showErrorImage();
+                ui->mangaImageWidget->showErrorImage();
             }
         }
     }
     else
     {
-        ui->mangaImageContainer->showErrorImage();
+        ui->mangaImageWidget->showErrorImage();
     }
 }
 
@@ -311,7 +311,7 @@ int MangaReaderWidget::searchCache(const QString &path) const
 void MangaReaderWidget::clearCache()
 {
     imgcache.clear();
-    ui->mangaImageContainer->clearImage();
+    ui->mangaImageWidget->clearImage();
 }
 
 void MangaReaderWidget::setSettings(Settings *settings)

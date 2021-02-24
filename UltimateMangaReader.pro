@@ -90,7 +90,6 @@ HEADERS += \
     widgets/errormessagewidget.h \
     widgets/favoriteswidget.h \
     widgets/mainwidget.h \
-    widgets/mangaimagecontainer.h \
     downloadfilejob.h \
     downloadimageandrescalejob.h \
     downloadstringjob.h \
@@ -98,6 +97,7 @@ HEADERS += \
     mangaindex.h \
     mangainfo.h \
     widgets/homewidget.h \
+    widgets/mangaimagewidget.h \
     widgets/mangainfowidget.h \
     widgets/mangareaderwidget.h \
     favorite.h \
@@ -153,7 +153,6 @@ SOURCES += \
     widgets/errormessagewidget.cpp \
     widgets/favoriteswidget.cpp \
     widgets/mainwidget.cpp \
-    widgets/mangaimagecontainer.cpp \
     downloadfilejob.cpp \
     downloadimageandrescalejob.cpp \
     downloadstringjob.cpp \
@@ -162,6 +161,7 @@ SOURCES += \
     mangaindex.cpp \
     mangainfo.cpp \
     widgets/homewidget.cpp \
+    widgets/mangaimagewidget.cpp \
     widgets/mangainfowidget.cpp \
     widgets/mangareaderwidget.cpp \
     favorite.cpp \

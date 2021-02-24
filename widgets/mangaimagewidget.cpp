@@ -1,12 +1,6 @@
-#include "mangaimagecontainer.h"
+#include "mangaimagewidget.h"
 
-#include <QApplication>
-#include <QDebug>
-#include <QFileInfo>
-#include <QPainter>
-#include <QScreen>
-
-MangaImageContainer::MangaImageContainer(QWidget *parent)
+MangaImageWidget::MangaImageWidget(QWidget *parent)
     : QFrame(parent),
       lastY(0),
       vOffset(0),
@@ -15,7 +9,7 @@ MangaImageContainer::MangaImageContainer(QWidget *parent)
 {
 }
 
-void MangaImageContainer::setImage(QSharedPointer<QImage> img)
+void MangaImageWidget::setImage(QSharedPointer<QImage> img)
 {
     showError = false;
     vOffset = 0;
@@ -23,7 +17,7 @@ void MangaImageContainer::setImage(QSharedPointer<QImage> img)
     update();
 }
 
-void MangaImageContainer::clearImage()
+void MangaImageWidget::clearImage()
 {
     showError = false;
     vOffset = 0;
@@ -31,7 +25,7 @@ void MangaImageContainer::clearImage()
     update();
 }
 
-void MangaImageContainer::setVOffset(int y)
+void MangaImageWidget::setVOffset(int y)
 {
     if (!image || image.isNull())
         return;
@@ -45,7 +39,7 @@ void MangaImageContainer::setVOffset(int y)
     }
 }
 
-void MangaImageContainer::showErrorImage()
+void MangaImageWidget::showErrorImage()
 {
     showError = true;
     vOffset = 0;
@@ -53,19 +47,31 @@ void MangaImageContainer::showErrorImage()
     update();
 }
 
-void MangaImageContainer::mousePressEvent(QMouseEvent *event)
+void MangaImageWidget::mousePressEvent(QMouseEvent *event)
 {
     lastY = event->y();
 }
 
-void MangaImageContainer::mouseMoveEvent(QMouseEvent *event)
+void MangaImageWidget::mouseReleaseEvent(QMouseEvent *event)
+{
+    lastY = event->y();
+#ifdef KOBO
+    KoboPlatformFunctions::setFullScreenRefreshMode(WaveForm_GC16);
+    this->update();
+#endif
+}
+
+void MangaImageWidget::mouseMoveEvent(QMouseEvent *event)
 {
     int deltay = lastY - event->y();
     lastY = event->y();
     setVOffset(vOffset + 2 * deltay);
+#ifdef KOBO
+    KoboPlatformFunctions::setFullScreenRefreshMode(WaveForm_A2);
+#endif
 }
 
-void MangaImageContainer::paintEvent(QPaintEvent *)
+void MangaImageWidget::paintEvent(QPaintEvent *)
 {
     //    QElapsedTimer t;
     //    t.start();
