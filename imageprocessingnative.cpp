@@ -128,7 +128,7 @@ QImage processImageN(const QByteArray &buffer, const QString &filepath, QSize sc
 
         rot90 = calcRotationInfo(img.size(), screenSize, doublePageMode);
 
-        if (rot90 <= 0)
+        if (rot90 != 0)
             img = img.rotate(rot90);
     }
     else if (isJpeg(buffer))
