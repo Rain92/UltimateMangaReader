@@ -1,10 +1,30 @@
 #include "greyscaleimage.h"
 
+#define JPEG_MAGIC_NUMBER_0 (char)0xFF
+#define JPEG_MAGIC_NUMBER_1 (char)0xD8
+
+#define PNG_MAGIC_NUMBER_0 (char)0x89
+#define PNG_MAGIC_NUMBER_1 (char)0x50
+
+bool isJpeg(const QByteArray &buffer)
+{
+    return buffer.size() > 2 && buffer.data()[0] == JPEG_MAGIC_NUMBER_0 &&
+           buffer.data()[1] == JPEG_MAGIC_NUMBER_1;
+}
+
+bool isPng(const QByteArray &buffer)
+{
+    return buffer.size() > 2 && buffer.data()[0] == PNG_MAGIC_NUMBER_0 &&
+           buffer.data()[1] == PNG_MAGIC_NUMBER_1;
+}
+
 GreyscaleImage::GreyscaleImage() : buffer(), width(0), height(0) {}
+
 GreyscaleImage::GreyscaleImage(QSize size) : buffer(), width(size.width()), height(size.height())
 {
     buffer.resize(width * height);
 }
+
 GreyscaleImage::GreyscaleImage(QSize size, QByteArray &&buffer)
     : buffer(buffer), width(size.width()), height(size.height())
 {
@@ -15,6 +35,7 @@ bool GreyscaleImage::isValid()
 {
     return width > 0 && height > 0 && buffer.size() == width * height;
 }
+
 bool GreyscaleImage::isNull()
 {
     return !isValid();
@@ -23,6 +44,22 @@ bool GreyscaleImage::isNull()
 QSize GreyscaleImage::size()
 {
     return QSize(width, height);
+}
+
+bool GreyscaleImage::loadFromEncoded(const QByteArray &data)
+{
+    if (isPng(data))
+    {
+        return loadFromPng(data);
+    }
+    else if (isJpeg(data))
+    {
+        return loadFromJpeg(data);
+    }
+    else
+    {
+        return false;
+    }
 }
 
 bool GreyscaleImage::loadFromJpeg(const QByteArray &data)
@@ -108,8 +145,11 @@ GreyscaleImage GreyscaleImage::rotate(int rotation)
     return GreyscaleImage({nw, nh}, qMove(newBuffer));
 }
 
-GreyscaleImage GreyscaleImage::crop(const QRect &rect)
+GreyscaleImage GreyscaleImage::crop(QRect rect)
 {
+    if (!rect.isValid() || rect.right() > this->width || rect.bottom() > this->height)
+        return *this;
+
     QByteArray newBuffer;
     newBuffer.resize(rect.width() * rect.height());
     for (int c = 0, p1 = width * rect.y() + rect.x(), p2 = 0; c < rect.height();

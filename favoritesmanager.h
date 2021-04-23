@@ -1,6 +1,7 @@
 #ifndef READINGSTATEMANAGER_H
 #define READINGSTATEMANAGER_H
 
+#include <QString>
 #include <QTimer>
 #include <QtConcurrent/QtConcurrent>
 
@@ -24,6 +25,8 @@ public:
     void serialize();
     void clearFavorites();
     void resetUpdatedStatus();
+
+    int findFavorite(const QString &title);
 
     QList<QSharedPointer<MangaInfo>> favoriteinfos;
     QList<Favorite> favorites;

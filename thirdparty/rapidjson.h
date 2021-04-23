@@ -14,6 +14,13 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
 
+
+#define RAPIDJSON_ASSERT_THROWS
+
+#ifdef __ARM_NEON__
+#define RAPIDJSON_NEON
+#endif
+
 #ifndef RAPIDJSON_RAPIDJSON_H_
 #define RAPIDJSON_RAPIDJSON_H_
 

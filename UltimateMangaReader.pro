@@ -1,6 +1,7 @@
 
 kobo {
     DEFINES  += KOBO
+    DEFINES  += __ARM_NEON__
     DEFINES  -= DESKTOP
 
     KOBO_PLATFORM_PLUGIN_PATH = $$PWD/../qt5-kobo-platform-plugin

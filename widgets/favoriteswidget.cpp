@@ -119,10 +119,10 @@ void FavoritesWidget::mangaUpdated(bool updated)
     {
         MangaInfo *mi = static_cast<MangaInfo *>(sender());
 
-        int i = 0;
-        while (favoritesManager->favoriteinfos.at(i)->title != mi->title &&
-               favoritesManager->favoriteinfos.at(i)->title != mi->title)
-            i++;
+        int i = favoritesManager->findFavorite(mi->title);
+
+        if (i == -1)
+            return;
 
         moveFavoriteToFront(i);
     }
@@ -132,10 +132,10 @@ void FavoritesWidget::coverLoaded()
 {
     MangaInfo *mi = static_cast<MangaInfo *>(sender());
 
-    int i = 0;
-    while (favoritesManager->favoriteinfos.at(i)->title != mi->title &&
-           favoritesManager->favoriteinfos.at(i)->title != mi->title)
-        i++;
+    int i = favoritesManager->findFavorite(mi->title);
+
+    if (i == -1)
+        return;
 
     QWidget *titlewidget = makeIconTextWidget(favoritesManager->favoriteinfos.at(i)->coverThumbnailPath(),
                                               favoritesManager->favoriteinfos.at(i)->title);

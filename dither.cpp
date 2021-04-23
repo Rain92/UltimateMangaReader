@@ -8,7 +8,7 @@ static inline uint32_t div255(uint32_t v)
     return ((_v >> 8U) + _v) >> 8U;
 }
 
-static uint8_t dither_o8x8(unsigned short int x, unsigned short int y, uint8_t v)
+static inline uint8_t dither_o8x8(unsigned short int x, unsigned short int y, uint8_t v)
 {
     // c.f.,
     // https://github.com/ImageMagick/ImageMagick/blob/ecfeac404e75f304004f0566557848c53030bad6/config/thresholds.xml#L107

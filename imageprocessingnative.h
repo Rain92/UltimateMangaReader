@@ -10,9 +10,6 @@
 #include "greyscaleimage.h"
 #include "imageprocessingqt.h"
 
-bool isJpeg(const QByteArray &buffer);
-bool isPng(const QByteArray &buffer);
-
 QImage loadQImageFast(const QString &path, bool useSWDithering = true);
 
 GreyscaleImage loadFromJpegAndRotate(const QByteArray &buffer, QSize screenSize,

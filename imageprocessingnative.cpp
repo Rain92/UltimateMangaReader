@@ -1,24 +1,6 @@
 
 #include "imageprocessingnative.h"
 
-#define JPEG_MAGIC_NUMBER_0 (char)0xFF
-#define JPEG_MAGIC_NUMBER_1 (char)0xD8
-
-#define PNG_MAGIC_NUMBER_0 (char)0x89
-#define PNG_MAGIC_NUMBER_1 (char)0x50
-
-bool isJpeg(const QByteArray &buffer)
-{
-    return buffer.size() > 2 && buffer.data()[0] == JPEG_MAGIC_NUMBER_0 &&
-           buffer.data()[1] == JPEG_MAGIC_NUMBER_1;
-}
-
-bool isPng(const QByteArray &buffer)
-{
-    return buffer.size() > 2 && buffer.data()[0] == PNG_MAGIC_NUMBER_0 &&
-           buffer.data()[1] == PNG_MAGIC_NUMBER_1;
-}
-
 QImage loadQImageFast(const QString &path, bool useSWDithering)
 {
     QFile file(path);
@@ -30,14 +12,7 @@ QImage loadQImageFast(const QString &path, bool useSWDithering)
 
     GreyscaleImage img;
 
-    if (isPng(buffer))
-    {
-        img.loadFromPng(buffer);
-    }
-    else if (isJpeg(buffer))
-    {
-        img.loadFromJpeg(buffer);
-    }
+    img.loadFromEncoded(buffer);
 
     if (img.isNull())
     {
@@ -126,6 +101,9 @@ QImage processImageN(const QByteArray &buffer, const QString &filepath, QSize sc
     {
         img.loadFromPng(buffer);
 
+        if (!img.isValid())
+            return QImage();
+
         rot90 = calcRotationInfo(img.size(), screenSize, doublePageMode);
 
         if (rot90 != 0)
@@ -147,7 +125,8 @@ QImage processImageN(const QByteArray &buffer, const QString &filepath, QSize sc
     {
         auto trimRect = getTrimRect(img.buffer, img.width, img.height, img.width);
 
-        img = img.crop(trimRect);
+        if (trimRect.isValid())
+            img = img.crop(trimRect);
     }
 
     auto rescaleSize = calcRescaleSize(img.size(), screenSize, rot90 != 0, manhwaMode);

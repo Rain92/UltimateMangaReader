@@ -59,6 +59,15 @@ bool FavoritesManager::toggleFavorite(QSharedPointer<MangaInfo> info)
     return true;
 }
 
+int FavoritesManager::findFavorite(const QString &title)
+{
+    for (int i = 0; i < favoriteinfos.size(); i++)
+        if (!favoriteinfos.at(i).isNull() && favoriteinfos.at(i)->title == title)
+            return i;
+
+    return -1;
+}
+
 void FavoritesManager::moveFavoriteToFront(int i)
 {
     favorites.move(i, 0);

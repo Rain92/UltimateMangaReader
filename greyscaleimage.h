@@ -15,6 +15,9 @@
 #include "imagerotate.h"
 #include "thirdparty/simdimageresize.h"
 
+bool isJpeg(const QByteArray &buffer);
+bool isPng(const QByteArray &buffer);
+
 class GreyscaleImage
 {
 public:
@@ -31,13 +34,14 @@ public:
     bool isValid();
     bool isNull();
 
+    bool loadFromEncoded(const QByteArray &data);
     bool loadFromJpeg(const QByteArray &data);
     bool loadFromPng(const QByteArray &data);
 
     GreyscaleImage resize(QSize newSize);
     void dither();
     GreyscaleImage rotate(int rotation);
-    GreyscaleImage crop(const QRect &rect);
+    GreyscaleImage crop(QRect rect);
 
     bool saveAsJpeg(const QString &path);
 
