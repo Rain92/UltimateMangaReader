@@ -1,9 +1,12 @@
 #include <QtCore>
 
 #include "mainwidget.h"
+#include "stacktrace.h"
 
 int main(int argc, char *argv[])
 {
+    registerBacktraceHandlers();
+
     QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QGuiApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
 

@@ -17,6 +17,7 @@ else { # default is desktop
 
 QT    += core gui widgets network svg
 CONFIG += c++17
+QMAKE_LFLAGS += -rdynamic
 
 LIBS +=  -lturbojpeg -lpng
 
@@ -66,6 +67,7 @@ HEADERS += \
     networkmanager.h \
     readingprogress.h \
     sizes.h \
+    stacktrace.h \
     staticsettings.h \
     suspendmanager.h \
     thirdparty/picoproto.h \
