@@ -141,16 +141,15 @@ bool MangaReaderWidget::gestureEvent(QGestureEvent *event)
                 showMenuBar(false);
         }
         else if (pos.y() < this->height() * SIZES.readerBottomMenuThreshold ||
-                 pos.y() > this->height() * (1.0 - SIZES.readerBottomMenuThreshold))
+                 pos.y() > this->height() * (1.0 - SIZES.readerBottomMenuThreshold) ||
+                 (pos.x() > this->width() * SIZES.readerPageSideThreshold &&
+                  pos.x() < this->width() * (1 - SIZES.readerPageSideThreshold)))
         {
             showMenuBar(true);
         }
         else
         {
             auto tabSide = pos.x() < this->width() / 2 ? Left : Right;
-            if (pos.x() > this->width() * SIZES.readerPageSideThreshold &&
-                pos.x() < this->width() * (1 - SIZES.readerPageSideThreshold))
-                tabSide = settings->tabAdvance;
 
             emit advancPageClicked(conditionalReverse(Forward, settings->tabAdvance != tabSide));
         }
