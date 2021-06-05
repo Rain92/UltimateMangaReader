@@ -43,8 +43,8 @@ void FavoritesWidget::showFavoritesList()
 {
     bool res = favoritesManager->loadInfos();
 
-    if (res)
-        favoritesManager->updateInfos();
+    //    if (res)
+    favoritesManager->updateInfos();
 
     bool updateNeeded = ui->tableWidget->rowCount() != favoritesManager->favorites.count();
     if (!updateNeeded)
