@@ -107,7 +107,7 @@ void DownloadBufferJob::timeout()
     reply->abort();
 }
 
-bool DownloadBufferJob::await(int timeout, bool retry)
+bool DownloadBufferJob::await(int timeout, bool retry, int maxRetries)
 {
     timeoutTimer.stop();
 
@@ -125,10 +125,10 @@ bool DownloadBufferJob::await(int timeout, bool retry)
         if (!retry || errorString.contains("Protocol"))
             return false;
 
-        if (rem > 0)
+        if (rem > 0 && maxRetries > 0)
         {
             restart();
-            return await(rem, retry);
+            return await(rem, retry, maxRetries - 1);
         }
     }
     if (rem <= 20)

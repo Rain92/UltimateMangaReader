@@ -25,7 +25,7 @@ public:
                       const QList<std::tuple<const char *, const char *>> &customHeaders = {});
     virtual ~DownloadBufferJob() = default;
 
-    bool await(int timeout = 7000, bool retry = true);
+    bool await(int timeout = 7000, bool retry = true, int maxRetries = 10);
 
     void start() override;
     void restart() override;
