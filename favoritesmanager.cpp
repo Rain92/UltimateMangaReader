@@ -135,8 +135,9 @@ void FavoritesManager::updateInfos()
 
 void FavoritesManager::resetUpdatedStatus()
 {
-    for (const auto &fav : qAsConst(favoriteinfos))
-        fav->updated = false;
+    for (auto &fav : favoriteinfos)
+        if (!fav.isNull())
+            fav->updated = false;
 }
 
 void FavoritesManager::clearFavorites()
