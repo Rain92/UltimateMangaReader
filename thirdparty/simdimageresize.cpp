@@ -28,6 +28,7 @@
 #include <math.h>
 
 #include <algorithm>
+#include <cstddef>
 
 namespace Simd
 {
