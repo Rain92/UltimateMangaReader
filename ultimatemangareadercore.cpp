@@ -21,9 +21,9 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
 
     //    mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaOwl(networkManager)));
     //    mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaGo(networkManager)));
+    //    mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaDex(networkManager)));
 
     mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaPanda(networkManager)));
-    mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaDex(networkManager)));
     mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaHub(networkManager)));
     mangaSources.append(QSharedPointer<AbstractMangaSource>(new Mangakakalot(networkManager)));
     mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaTown(networkManager)));
@@ -44,10 +44,12 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
     connect(mangaController, &MangaController::activity, this, &UltimateMangaReaderCore::activity);
 
     autoSuspendTimer.setInterval(CONF.autoSuspendIntervalMinutes * 60 * 1000);
-    connect(&autoSuspendTimer, &QTimer::timeout, [this]() {
-        qDebug() << "Auto Suspend!";
-        suspendManager->suspend();
-    });
+    connect(&autoSuspendTimer, &QTimer::timeout,
+            [this]()
+            {
+                qDebug() << "Auto Suspend!";
+                suspendManager->suspend();
+            });
 }
 
 void UltimateMangaReaderCore::enableTimers(bool enabled)
@@ -60,7 +62,9 @@ void UltimateMangaReaderCore::enableTimers(bool enabled)
         autoSuspendTimer.start();
         timerTick();
         QTimer::singleShot(1000 * 60 - QTime::currentTime().second() * 1000 - QTime::currentTime().msec(),
-                           this, [this]() {
+                           this,
+                           [this]()
+                           {
                                timer.start();
                                timerTick();
                            });

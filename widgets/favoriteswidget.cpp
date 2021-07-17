@@ -57,7 +57,12 @@ void FavoritesWidget::showFavoritesList()
             }
 
     if (!updateNeeded)
+    {
+        for (int i = 0; i < ui->tableWidget->rowCount(); i++)
+            updateStatus(i);
+
         return;
+    }
 
     ui->tableWidget->setRowCount(0);
 
@@ -71,6 +76,21 @@ void FavoritesWidget::showFavoritesList()
         QObject::connect(favoritesManager->favoriteinfos[r].get(), &MangaInfo::coverLoaded, this,
                          &FavoritesWidget::coverLoaded);
     }
+}
+
+void FavoritesWidget::updateStatus(int row)
+{
+    auto &fav = favoritesManager->favoriteinfos.at(row);
+    ReadingProgress progress(fav->hostname, fav->title);
+
+    QString statusstring = (fav->updated ? "New chapters!\n" : fav->status + "\n") +
+                           "Chapters: " + QString::number(fav->chapters.size());
+
+    QString progressstring = "Chapter: " + QString::number(progress.index.chapter + 1) +
+                             "\nPage: " + QString::number(progress.index.page + 1);
+
+    ui->tableWidget->item(row, 2)->setText(statusstring);
+    ui->tableWidget->item(row, 3)->setText(progressstring);
 }
 
 void FavoritesWidget::insertRow(const QSharedPointer<MangaInfo> &fav, int row)

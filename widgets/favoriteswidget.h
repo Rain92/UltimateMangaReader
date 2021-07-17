@@ -38,6 +38,7 @@ private:
     Ui::FavoritesWidget *ui;
 
     void insertRow(const QSharedPointer<MangaInfo> &fav, int row);
+    void updateStatus(int row);
     void adjustUI();
     void moveFavoriteToFront(int i);
 

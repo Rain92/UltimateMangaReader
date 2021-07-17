@@ -43,7 +43,8 @@ MainWidget::MainWidget(QWidget *parent)
                      &UltimateMangaReaderCore::updateMangaLists);
 
     QObject::connect(downloadMangaChaptersDialog, &DownloadMangaChaptersDialog::downloadConfirmed,
-                     [this](auto m, auto f, auto t) {
+                     [this](auto m, auto f, auto t)
+                     {
                          downloadStatusDialog->open();
                          core->mangaChapterDownloadManager->downloadMangaChapters(m, f, t);
                      });
@@ -65,10 +66,12 @@ MainWidget::MainWidget(QWidget *parent)
     wifiIcons[1] =
         QIcon(wifion.scaledToHeight(SIZES.wifiIconSize * qApp->devicePixelRatio(), Qt::SmoothTransformation));
 
-    QObject::connect(core->networkManager, &NetworkManager::connectionStatusChanged, [this](bool connected) {
-        auto icon = connected ? wifiIcons[1] : wifiIcons[0];
-        ui->toolButtonWifiIcon->setIcon(icon);
-    });
+    QObject::connect(core->networkManager, &NetworkManager::connectionStatusChanged,
+                     [this](bool connected)
+                     {
+                         auto icon = connected ? wifiIcons[1] : wifiIcons[0];
+                         ui->toolButtonWifiIcon->setIcon(icon);
+                     });
 
     // MangaChapterDownloadManager
     QObject::connect(core->mangaChapterDownloadManager, &MangaChapterDownloadManager::error, this,
@@ -102,13 +105,15 @@ MainWidget::MainWidget(QWidget *parent)
                      [this]() { ui->mangaReaderWidget->clearCache(); });
 
     // MangaController
-    QObject::connect(core->mangaController, &MangaController::currentMangaChanged, [this](auto info) {
-        ui->mangaInfoWidget->setManga(info);
-        bool state = core->favoritesManager->isFavorite(info);
-        ui->mangaInfoWidget->setFavoriteButtonState(state);
-        setWidgetTab(MangaInfoTab);
-        ui->mangaReaderWidget->clearCache();
-    });
+    QObject::connect(core->mangaController, &MangaController::currentMangaChanged,
+                     [this](auto info)
+                     {
+                         ui->mangaInfoWidget->setManga(info);
+                         bool state = core->favoritesManager->isFavorite(info);
+                         ui->mangaInfoWidget->setFavoriteButtonState(state);
+                         setWidgetTab(MangaInfoTab);
+                         ui->mangaReaderWidget->clearCache();
+                     });
 
     QObject::connect(core->mangaController, &MangaController::completedImagePreloadSignal,
                      ui->mangaReaderWidget,
@@ -139,30 +144,37 @@ MainWidget::MainWidget(QWidget *parent)
                      &HomeWidget::currentMangaSourceChanged);
 
     // MangaInfoWidget
-    QObject::connect(ui->mangaInfoWidget, &MangaInfoWidget::toggleFavoriteClicked, [this](auto info) {
-        bool newstate = core->favoritesManager->toggleFavorite(info);
-        ui->mangaInfoWidget->setFavoriteButtonState(newstate);
-    });
+    QObject::connect(ui->mangaInfoWidget, &MangaInfoWidget::toggleFavoriteClicked,
+                     [this](auto info)
+                     {
+                         bool newstate = core->favoritesManager->toggleFavorite(info);
+                         ui->mangaInfoWidget->setFavoriteButtonState(newstate);
+                     });
 
-    QObject::connect(ui->mangaInfoWidget, &MangaInfoWidget::readMangaClicked, [this](auto index) {
-        setWidgetTab(MangaReaderTab);
-        core->mangaController->setCurrentIndex(index);
-        QTimer::singleShot(50, core->mangaController, &MangaController::preloadNeighbours);
-    });
+    QObject::connect(ui->mangaInfoWidget, &MangaInfoWidget::readMangaClicked,
+                     [this](auto index)
+                     {
+                         setWidgetTab(MangaReaderTab);
+                         core->mangaController->setCurrentIndex(index);
+                         QTimer::singleShot(50, core->mangaController, &MangaController::preloadNeighbours);
+                     });
 
     QObject::connect(ui->mangaInfoWidget, &MangaInfoWidget::readMangaContinueClicked,
                      [this]() { setWidgetTab(MangaReaderTab); });
 
-    QObject::connect(ui->mangaInfoWidget, &MangaInfoWidget::downloadMangaClicked, [this]() {
-        downloadMangaChaptersDialog->show(core->mangaController->currentManga,
-                                          core->mangaController->currentIndex.chapter);
-    });
+    QObject::connect(ui->mangaInfoWidget, &MangaInfoWidget::downloadMangaClicked,
+                     [this]()
+                     {
+                         downloadMangaChaptersDialog->show(core->mangaController->currentManga,
+                                                           core->mangaController->currentIndex.chapter);
+                     });
 
     // FavoritesWidget
     ui->favoritesWidget->favoritesManager = core->favoritesManager;
 
     QObject::connect(ui->favoritesWidget, &FavoritesWidget::favoriteClicked,
-                     [this](auto mangainfo, auto jumptoreader) {
+                     [this](auto mangainfo, auto jumptoreader)
+                     {
                          core->mangaController->setCurrentManga(mangainfo);
                          if (jumptoreader)
                              setWidgetTab(MangaReaderTab);
@@ -238,7 +250,6 @@ void MainWidget::showEvent(QShowEvent *event)
 {
     QWidget::showEvent(event);
     core->updateActiveScources();
-    core->enableTimers(true);
     updateDitheringMode();
 
     QTimer::singleShot(500, this, &MainWidget::onResume);
@@ -326,11 +337,13 @@ void MainWidget::onResume()
     core->enableTimers(true);
 
     wifiDialog->connect();
-    QTimer::singleShot(200, this, [this]() {
-        setupFrontLight();
-        if (!core->networkManager->connected)
-            wifiDialog->open();
-    });
+    QTimer::singleShot(200, this,
+                       [this]()
+                       {
+                           setupFrontLight();
+                           if (!core->networkManager->connected)
+                               wifiDialog->open();
+                       });
 }
 
 void MainWidget::setupVirtualKeyboard()

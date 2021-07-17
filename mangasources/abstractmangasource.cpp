@@ -147,7 +147,8 @@ void AbstractMangaSource::updateMangaInfoAsync(QSharedPointer<MangaInfo> info, b
 
     auto job = networkManager->downloadAsString(info->url, 2000, mangaInfoPostDataStr);
 
-    auto lambda = [oldnumchapters, info, job, updateCover, this] {
+    auto lambda = [oldnumchapters, info, job, updateCover, this]
+    {
         {
             QMutexLocker locker(info->updateMutex.get());
             auto res = updateMangaInfoFinishedLoading(job, info);
@@ -286,7 +287,8 @@ void AbstractMangaSource::downloadCoverAsync(QSharedPointer<MangaInfo> mangainfo
 
     auto coverjob = networkManager->downloadAsFile(mangainfo->coverUrl, mangainfo->coverPath);
 
-    auto lambda = [this, mangainfo]() {
+    auto lambda = [this, mangainfo]()
+    {
         generateCoverThumbnail(mangainfo);
         mangainfo->sendCoverLoaded();
     };
