@@ -29,6 +29,7 @@ RESOURCES += \
     resources.qrc
 
 FORMS += \
+    widgets/aboutdialog.ui \
     widgets/downloadmangachaptersdialog.ui \
     widgets/downloadstatusdialog.ui \
     widgets/errormessagewidget.ui \
@@ -47,6 +48,7 @@ FORMS += \
     widgets/wifidialog.ui
 
 HEADERS += \
+    aboutinfo.h \
     dither.h \
     downloadbufferjob.h \
     enums.h \
@@ -75,6 +77,7 @@ HEADERS += \
     thirdparty/result.h \
     thirdparty/simdimageresize.h \
     ultimatemangareadercore.h \
+    widgets/aboutdialog.h \
     widgets/batteryicon.h \
     widgets/customgesturerecognizer.h \
     downloadimagedescriptor.h \
@@ -140,6 +143,7 @@ SOURCES += \
     thirdparty/picoproto.cc \
     thirdparty/simdimageresize.cpp \
     ultimatemangareadercore.cpp \
+    widgets/aboutdialog.cpp \
     widgets/batteryicon.cpp \
     widgets/customgesturerecognizer.cpp \
     downloadjobbase.cpp \

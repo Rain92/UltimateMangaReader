@@ -7,25 +7,13 @@
     <x>0</x>
     <y>0</y>
     <width>172</width>
-    <height>253</height>
+    <height>307</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
-   <property name="leftMargin">
-    <number>9</number>
-   </property>
-   <property name="topMargin">
-    <number>4</number>
-   </property>
-   <property name="rightMargin">
-    <number>9</number>
-   </property>
-   <property name="bottomMargin">
-    <number>8</number>
-   </property>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <property name="leftMargin">
@@ -147,6 +135,38 @@
      </property>
      <property name="text">
       <string>Clear Downloads</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QFrame" name="frame_4">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="baseSize">
+      <size>
+       <width>0</width>
+       <height>1</height>
+      </size>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::HLine</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Plain</enum>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="pushButtonAbout">
+     <property name="focusPolicy">
+      <enum>Qt::NoFocus</enum>
+     </property>
+     <property name="text">
+      <string>About</string>
      </property>
     </widget>
    </item>

@@ -15,11 +15,13 @@ MenuDialog::MenuDialog(QWidget *parent) : QDialog(parent), ui(new Ui::MenuDialog
     ui->pushButtonSettings->setFixedHeight(SIZES.buttonSize);
     ui->pushButtonClearDownloads->setFixedHeight(SIZES.buttonSize);
     ui->pushButtonUpdateMangaList->setFixedHeight(SIZES.buttonSize);
+    ui->pushButtonAbout->setFixedHeight(SIZES.buttonSize);
 
     ui->pushButtonExit->setProperty("type", "borderless");
     ui->pushButtonSettings->setProperty("type", "borderless");
     ui->pushButtonClearDownloads->setProperty("type", "borderless");
     ui->pushButtonUpdateMangaList->setProperty("type", "borderless");
+    ui->pushButtonAbout->setProperty("type", "borderless");
 }
 
 MenuDialog::~MenuDialog()
@@ -46,7 +48,13 @@ void MenuDialog::on_pushButtonClearDownloads_clicked()
 {
     done(ClearDownloadsButton);
 }
+
 void MenuDialog::on_pushButtonUpdateMangaList_clicked()
 {
     done(UpdateMangaListsButton);
+}
+
+void MenuDialog::on_pushButtonAbout_clicked()
+{
+    done(AboutButton);
 }

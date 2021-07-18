@@ -27,6 +27,7 @@ MainWidget::MainWidget(QWidget *parent)
     screensaverDialog = new ScreensaverDialog(this);
     downloadMangaChaptersDialog = new DownloadMangaChaptersDialog(this);
     downloadStatusDialog = new DownloadStatusDialog(this);
+    aboutDialog = new AboutDialog(this);
 
     updateMangaListsDialog->installEventFilter(this);
     wifiDialog->installEventFilter(this);
@@ -535,6 +536,9 @@ void MainWidget::menuDialogButtonPressed(MenuButton button)
             break;
         case UpdateMangaListsButton:
             updateMangaListsDialog->open();
+            break;
+        case AboutButton:
+            aboutDialog->open();
             break;
     }
 }

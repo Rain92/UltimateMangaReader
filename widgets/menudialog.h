@@ -10,6 +10,7 @@ enum MenuButton
     ExitButton = 3,
     SettingsButton,
     ClearDownloadsButton,
+    AboutButton,
     UpdateMangaListsButton
 };
 
@@ -32,6 +33,8 @@ private slots:
     void on_pushButtonSettings_clicked();
     void on_pushButtonClearDownloads_clicked();
     void on_pushButtonUpdateMangaList_clicked();
+
+    void on_pushButtonAbout_clicked();
 
 private:
     Ui::MenuDialog *ui;

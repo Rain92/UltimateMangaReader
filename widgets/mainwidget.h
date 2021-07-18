@@ -6,6 +6,7 @@
 #include <QStandardItemModel>
 #include <QStringListModel>
 
+#include "aboutdialog.h"
 #include "clearcachedialog.h"
 #include "downloadmangachaptersdialog.h"
 #include "downloadstatusdialog.h"
@@ -100,6 +101,7 @@ private:
     MenuDialog *menuDialog;
     SettingsDialog *settingsDialog;
     UpdateMangaListsDialog *updateMangaListsDialog;
+    AboutDialog *aboutDialog;
     ClearCacheDialog *clearCacheDialog;
     WifiDialog *wifiDialog;
     ScreensaverDialog *screensaverDialog;
