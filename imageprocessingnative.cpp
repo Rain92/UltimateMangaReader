@@ -45,12 +45,14 @@ GreyscaleImage loadFromJpegAndRotate(const QByteArray &buffer, QSize screenSize,
 
     GreyscaleImage img;
 
-    auto handleguard = qScopeGuard([&] {
-        if (tjInstanceD)
-            tjDestroy(tjInstanceD);
-        if (tjInstanceT)
-            tjDestroy(tjInstanceT);
-    });
+    auto handleguard = qScopeGuard(
+        [&]
+        {
+            if (tjInstanceD)
+                tjDestroy(tjInstanceD);
+            if (tjInstanceT)
+                tjDestroy(tjInstanceT);
+        });
 
     if (tjDecompressHeader3(tjInstanceD, (uchar *)buffer.data(), buffer.size(), &width, &height, &inSubsamp,
                             &inColorspace) < 0)
@@ -133,8 +135,9 @@ QImage processImageN(const QByteArray &buffer, const QString &filepath, QSize sc
 
     img = img.resize(rescaleSize);
 
-    if (!img.saveAsJpeg(filepath))
-        return QImage();
+    if (filepath != "")
+        if (!img.saveAsJpeg(filepath))
+            return QImage();
 
     if (useSWDither)
         img.dither();

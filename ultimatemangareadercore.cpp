@@ -47,7 +47,7 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
     connect(&autoSuspendTimer, &QTimer::timeout,
             [this]()
             {
-                qDebug() << "Auto Suspend!";
+                //                qDebug() << "Auto Suspend!";
                 suspendManager->suspend();
             });
 }

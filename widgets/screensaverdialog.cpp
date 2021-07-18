@@ -36,13 +36,17 @@ void ScreensaverDialog::showRandomScreensaver()
     {
         int i = QRandomGenerator::global()->generate() % files.count();
 
-        auto file = CONF.screensaverDir + files[i];
+        auto fp = CONF.screensaverDir + files[i];
 
-        QPixmap pic(file);
-        QPixmap scaled =
-            pic.scaled(this->width(), this->height(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        QFile file(fp);
+        file.open(QIODevice::ReadOnly);
 
-        ui->labelImage->setPixmap(scaled);
+        QImage img =
+            processImageN(file.readAll(), "", this->size(), DoublePageNoRotation, false, false, true);
+
+        QPixmap pic = QPixmap::fromImage(img);
+        ui->labelImage->setPixmap(pic);
+        file.close();
     }
 
     ui->labelImage->showFullScreen();

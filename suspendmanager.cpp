@@ -9,6 +9,9 @@ SuspendManager::SuspendManager(NetworkManager *networkManager, QObject *parent)
 
 bool SuspendManager::suspend()
 {
+    if (sleeping)
+        return true;
+
     emit suspending();
     qApp->processEvents();
 
