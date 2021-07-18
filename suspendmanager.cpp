@@ -3,7 +3,7 @@
 SuspendManager::SuspendManager(NetworkManager *networkManager, QObject *parent)
     : QObject(parent), sleeping(false), networkManager(networkManager), timer()
 {
-    timer.setInterval(60 * 1000);
+    timer.setInterval(60 * 5000);
     connect(&timer, &QTimer::timeout, this, &SuspendManager::suspendInternal);
 }
 
@@ -11,6 +11,9 @@ bool SuspendManager::suspend()
 {
     emit suspending();
     qApp->processEvents();
+
+    if (sleeping == false)
+        qDebug() << QTime::currentTime().toString("hh:mm:ss") << "Going to sleep...";
 
     sleeping = true;
 
@@ -24,7 +27,6 @@ bool SuspendManager::suspendInternal()
     if (networkManager->connected)
         networkManager->disconnectWifi();
 
-    qDebug() << QTime::currentTime().toString("hh:mm:ss") << "Going to sleep...";
 #ifdef KOBO
     int handleSE = open("/sys/power/state-extended", O_RDWR);
     if (!handleSE)
@@ -42,8 +44,6 @@ bool SuspendManager::suspendInternal()
 
     QThread::sleep(2);
     QProcess::execute("sync", {});
-
-    qDebug() << QTime::currentTime().toString("hh:mm:ss") << "suspending to RAM";
 
     int handleS = open("/sys/power/state", O_RDWR);
     if (!handleS)
@@ -71,6 +71,8 @@ bool SuspendManager::suspendInternal()
 
     close(handleS);
 #endif
+
+    sleeping = true;
 
     return true;
 }
