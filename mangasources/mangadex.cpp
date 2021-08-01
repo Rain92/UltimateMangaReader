@@ -2,11 +2,39 @@
 
 using namespace rapidjson;
 
+inline QString getStringSafe(const GenericValue<UTF8<>> &jsonobject, const char *member)
+{
+    if (!jsonobject.HasMember(member))
+        return "";
+
+    auto &jm = jsonobject[member];
+
+    if (jm.IsNull())
+        return "";
+
+    return jm.GetString();
+}
+
+QString padChapterNumber(const QString &number, int places = 4)
+{
+    auto range = number.split('-');
+    QStringList result;
+    std::transform(range.begin(), range.end(), std::back_inserter(result),
+                   [places](QString chapter)
+                   {
+                       chapter = chapter.trimmed();
+                       auto digits = chapter.split('.')[0].length();
+                       return QString("0").repeated(qMax(0, places - digits)) + chapter;
+                   });
+    return result.join('-');
+}
+
 MangaDex::MangaDex(NetworkManager *dm) : AbstractMangaSource(dm)
 {
     name = "MangaDex";
-    baseUrl = "https://api.mangadex.org";
-    basedictUrl = baseUrl + "/manga?limit=100&offset=";
+    apiUrl = "https://api.mangadex.org";
+    baseUrl = apiUrl;
+    serverUrls = {"http://s2.mangadex.org/data/", "http://s5.mangadex.org/data/"};
 
     networkManager->addCookie(".mangadex.org", "mangadex_h_toggle", "1");
     networkManager->addCookie(".mangadex.org", "mangadex_title_mode", "2");
@@ -50,85 +78,78 @@ MangaDex::MangaDex(NetworkManager *dm) : AbstractMangaSource(dm)
 bool MangaDex::updateMangaList(UpdateProgressToken *token)
 {
     MangaList mangas;
-
-    auto job = networkManager->downloadAsString(basedictUrl + "0", -1);
-
-    if (!job->await(7000))
-    {
-        token->sendError(job->errorString);
-        return false;
-    }
-
     token->sendProgress(10);
 
     QElapsedTimer timer;
     timer.start();
 
-    try
-    {
-        Document doc;
-        ParseResult res = doc.Parse(job->buffer.data());
-        if (!res)
-            return false;
+    auto mangasQuerry = apiUrl +
+                        "/manga?limit=100&offset=%1"
+                        "&publicationDemographic[]=%2"
+                        "&order[createdAt]=%3"
+                        "&contentRating[]=safe"
+                        "&contentRating[]=suggestive"
+                        "&contentRating[]=erotica"
+                        "&contentRating[]=pornographic";
 
-        if (doc.HasMember("result") && QString(doc["result"].GetString()) == "error")
-            return false;
+    // ugly workaround, current search limit is 10000 entries
+    // so we need to search multiple times with different filters
+    const char *demographics[] = {"seinen", "none", "none", "josei", "shoujo", "shounen"};
+    const char *order[] = {"asc", "asc", "desc", "asc", "asc", "asc"};
 
-        auto results = doc["results"].GetArray();
-        qDebug() << "has results";
+    int maxnummangas = 50000;
+    int matches = 0;
 
-        for (const auto &r : results)
+    QSet<QString> mangaids;
+
+    for (uint i = 0; i < sizeof(demographics) / (sizeof(demographics[0])); i++)
+        for (int offset = 0; offset < 10000; offset += 100)
         {
-            auto title = QString(r["data"]["attributes"]["title"]["en"].GetString());
-            auto url = QString("/manga/") + r["data"]["id"].GetString();
-            mangas.append(title, url);
-            //                        matches++;
+            auto mangasUrl = mangasQuerry.arg(offset).arg(demographics[i], order[i]);
+            auto job = networkManager->downloadAsString(mangasUrl, -1);
+
+            if (!job->await(7000))
+            {
+                token->sendError(job->errorString);
+                return false;
+            }
+
+            try
+            {
+                Document doc;
+                ParseResult res = doc.Parse(job->buffer.data());
+                if (!res)
+                    return false;
+
+                if (doc.HasMember("result") && QString(doc["result"].GetString()) == "error")
+                    return false;
+
+                auto results = doc["results"].GetArray();
+
+                for (const auto &r : results)
+                {
+                    auto title = getStringSafe(r["data"]["attributes"]["title"], "en");
+                    auto id = getStringSafe(r["data"], "id");
+                    auto url = QString("/manga/") + id;
+
+                    if (!mangaids.contains(id))
+                    {
+                        mangas.append(title, url);
+                        matches++;
+                        mangaids.insert(id);
+                    }
+                }
+
+                token->sendProgress(10 + 90 * matches / maxnummangas);
+
+                if (results.Size() < 100)
+                    break;
+            }
+            catch (QException &)
+            {
+                return false;
+            }
         }
-    }
-    catch (QException &)
-    {
-        return false;
-    }
-    //    qDebug() << "Mangadex update:" << t.elapsed() << info->title;
-
-    //    auto nummangasrxmatch = nummangasrx.match(job->bufferStr);
-
-    //    int nominalSize = 1;
-    //    if (nummangasrxmatch.hasMatch())
-    //        nominalSize = nummangasrxmatch.captured(1).remove(',').toInt();
-
-    //    int pages = (nominalSize + 99) / 100;
-    //    qDebug() << "pages" << pages;
-
-    //    auto lambda = [&](QSharedPointer<DownloadStringJob> job) {
-    //        int matches = 0;
-    //        for (auto &match : getAllRxMatches(mangaidrx, job->bufferStr))
-    //        {
-    //            auto title = htmlToPlainText(match.captured(1));
-    //            auto url = "/api/?type=manga&id=" + match.captured(2);
-    //            mangas.append(title, url);
-    //            matches++;
-    //        }
-
-    //        token->sendProgress(10 + 90 * mangas.size / nominalSize);
-
-    //        qDebug() << "matches:" << matches;
-    //    };
-
-    //    lambda(job);
-
-    //    QList<QString> urls;
-    //    for (int i = 2; i <= pages; i++)
-    //        urls.append(basedictUrl + QString::number(i));
-
-    //    DownloadQueue queue(networkManager, urls, 2, lambda, true);
-    //    queue.setCancellationToken(&token->canceled);
-    //    queue.start();
-    //    if (!queue.awaitCompletion())
-    //    {
-    //        token->sendError(queue.lastErrorMessage);
-    //        return false;
-    //    }
 
     this->mangaList = mangas;
 
@@ -137,18 +158,6 @@ bool MangaDex::updateMangaList(UpdateProgressToken *token)
     token->sendProgress(100);
 
     return true;
-}
-
-QString padChapterNumber(const QString &number, int places = 4)
-{
-    auto range = number.split('-');
-    QStringList result;
-    std::transform(range.begin(), range.end(), std::back_inserter(result), [places](QString chapter) {
-        chapter = chapter.trimmed();
-        auto digits = chapter.split('.')[0].length();
-        return QString("0").repeated(qMax(0, places - digits)) + chapter;
-    });
-    return result.join('-');
 }
 
 Result<MangaChapterCollection, QString> MangaDex::updateMangaInfoFinishedLoading(
@@ -160,94 +169,128 @@ Result<MangaChapterCollection, QString> MangaDex::updateMangaInfoFinishedLoading
 
     MangaChapterCollection newchapters;
 
-    try
+    //    try
+    //    {
+    Document doc;
+    ParseResult res = doc.Parse(job->buffer.data());
+    if (!res)
+        return Err(QString("Coulnd't parse mangainfos.1"));
+
+    auto &mangaObject = doc["data"]["attributes"];
+
+    //        info->author = htmlToPlainText(QString(mangaObject["author"].GetString()));
+    //        info->artist = htmlToPlainText(QString(mangaObject["artist"].GetString()));
+
+    info->status = getStringSafe(mangaObject, "status");
+
+    info->releaseYear = getStringSafe(mangaObject, "year");
+
+    info->genres = getStringSafe(mangaObject, "publicationDemographic");
+
+    info->summary = htmlToPlainText(getStringSafe(mangaObject["description"], "en")).remove(bbrx);
+
+    auto rels = doc["relationships"].GetArray();
+
+    for (const auto &rel : rels)
     {
-        Document doc;
-        ParseResult res = doc.Parse(job->buffer.data());
-        if (!res)
-            return Err(QString("Coulnd't parse mangainfos.1"));
-
-        auto &mangaObject = doc["data"]["attributes"];
-
-        //        info->author = htmlToPlainText(QString(mangaObject["author"].GetString()));
-        //        info->artist = htmlToPlainText(QString(mangaObject["artist"].GetString()));
-
-        if (mangaObject.HasMember("status") && !mangaObject["status"].IsNull())
-            info->status = QString(mangaObject["status"].GetString());
-
-        if (mangaObject.HasMember("year") && !mangaObject["year"].IsNull())
-            info->releaseYear = QString(mangaObject["year"].GetString());
-
-        if (mangaObject.HasMember("publicationDemographic"))
-            info->genres = QString(mangaObject["publicationDemographic"].GetString());
-
-        info->summary = htmlToPlainText(QString(mangaObject["description"]["en"].GetString())).remove(bbrx);
-
-        //        "https://uploads.mangadex.org/covers/{}/{}.256.jpg"
-
-        auto rels = doc["relationships"].GetArray();
-
-        for (const auto &rel : rels)
+        auto id = getStringSafe(rel, "id");
+        qDebug() << id << rel["type"].GetString();
+        if (getStringSafe(rel, "type") == "cover_art")
         {
-            auto id = QString(rel["id"].GetString());
-            qDebug() << id << rel["type"].GetString();
-            if (QString(rel["type"].GetString()) == "cover_art")
-            {
-                auto jobCover = networkManager->downloadAsString("https://api.mangadex.org/cover/" + id, -1);
+            auto jobCover = networkManager->downloadAsString(apiUrl + "/cover/" + id, -1);
 
-                if (jobCover->await(3000))
+            if (jobCover->await(3000))
+            {
+                Document coverdoc;
+                ParseResult cres = coverdoc.Parse(jobCover->buffer.data());
+                if (cres)
                 {
-                    Document coverdoc;
-                    ParseResult cres = coverdoc.Parse(jobCover->buffer.data());
-                    if (cres)
-                    {
-                        info->coverUrl = QString("https://uploads.mangadex.org/covers/%1/%2.256.jpg")
-                                             .arg(doc["data"]["id"].GetString(),
-                                                  coverdoc["data"]["attributes"]["fileName"].GetString());
-                    }
+                    info->coverUrl = QString("https://uploads.mangadex.org/covers/%1/%2.256.jpg")
+                                         .arg(getStringSafe(doc["data"], "id"),
+                                              getStringSafe(coverdoc["data"]["attributes"], "fileName"));
                 }
             }
         }
-
-        //        auto &chaptersObject = doc["chapter"];
-
-        //        for (auto it = chaptersObject.MemberBegin(); it != chaptersObject.MemberEnd(); ++it)
-        //        {
-        //            auto chapterKey = it->name.GetString();
-        //            auto &chapterObject = it->value;
-        //            auto language = QString(chapterObject["lang_code"].GetString());
-
-        //            if (language != "gb")
-        //                continue;
-
-        //            auto numChapter = QString(chapterObject["chapter"].GetString());
-
-        //            auto chapterTitle = "Ch. " + numChapter + " " +
-        //            QString(chapterObject["title"].GetString());
-
-        //            auto chapterUrl = QString("https://mangadex.org/api/?type=chapter&id=") + chapterKey;
-
-        //            MangaChapter mangaChapter(chapterTitle, chapterUrl);
-        //            mangaChapter.chapterNumber = padChapterNumber(numChapter);
-
-        //            newchapters.insert(0, mangaChapter);
-        //        }
     }
-    catch (QException &)
+
+    int totalchapters = 100;
+    QStringList chapternumberlist;
+
+    for (int offset = 0; offset < totalchapters; offset += 100)
     {
-        return Err(QString("Coulnd't parse mangainfos.2"));
-    }
-    //    qDebug() << "Mangadex update:" << t.elapsed() << info->title;
+        auto params = QString("manga=%1&limit=100&offset=%2&translatedLanguage[]=en")
+                          .arg(getStringSafe(doc["data"], "id"))
+                          .arg(offset);
+        auto jobChapters = networkManager->downloadAsString(apiUrl + "/chapter?" + params, -1);
 
-    //    std::sort(newchapters.begin(), newchapters.end(),
-    //              [](auto a, auto b) { return a.chapterNumber < b.chapterNumber; });
+        if (jobChapters->await(3000))
+        {
+            Document chaptersdoc;
+            ParseResult cres = chaptersdoc.Parse(jobChapters->buffer.data());
+
+            if (getStringSafe(chaptersdoc, "result") == "error")
+                return Err(QString("Couldn't parse chapter list."));
+
+            auto results = chaptersdoc["results"].GetArray();
+
+            totalchapters = chaptersdoc["total"].GetInt();
+
+            for (const auto &r : results)
+            {
+                auto chapterId = getStringSafe(r["data"], "id");
+
+                if (chapterId == "")
+                    continue;
+
+                QString numChapter = getStringSafe(r["data"]["attributes"], "chapter");
+                if (numChapter == "")
+                    numChapter = "0";
+
+                QString chapterTitle = "Ch. " + numChapter;
+
+                if (!r["data"]["attributes"]["title"].IsNull())
+                    chapterTitle += " " + getStringSafe(r["data"]["attributes"], "title");
+
+                MangaChapter mangaChapter(chapterTitle, chapterId);
+                mangaChapter.chapterNumber = padChapterNumber(numChapter);
+                newchapters.append(mangaChapter);
+                chapternumberlist.append(padChapterNumber(numChapter));
+            }
+            if (results.Size() < 100)
+                break;
+        }
+    }
+
+    int size = newchapters.size();
+
+    QVector<int> indices(size);
+    QVector<int> indicesInv(size);
+    for (int i = 0; i < size; ++i)
+        indices[i] = i;
+
+    std::sort(
+        indices.begin(), indices.end(),
+        [&chapternumberlist](int a, int b)
+        { return QString::compare(chapternumberlist[a], chapternumberlist[b], Qt::CaseInsensitive) < 0; });
+
+    for (int i = 0; i < size; ++i)
+        indicesInv[indices[i]] = i;
+
+    for (int i = 0; i < size; i++)
+        while (i != indicesInv[i])
+        {
+            int j = indicesInv[i];
+
+            newchapters.swapItemsAt(i, j);
+            indicesInv.swapItemsAt(i, j);
+        }
 
     return Ok(newchapters);
 }
 
 Result<QStringList, QString> MangaDex::getPageList(const QString &chapterUrl)
 {
-    auto job = networkManager->downloadAsString(chapterUrl);
+    auto job = networkManager->downloadAsString(apiUrl + "/chapter/" + chapterUrl);
 
     if (!job->await(7000))
         return Err(job->errorString);
@@ -256,23 +299,22 @@ Result<QStringList, QString> MangaDex::getPageList(const QString &chapterUrl)
 
     try
     {
-        Document doc;
-        ParseResult res = doc.Parse(job->buffer.data());
-        if (!res)
-            return Err(QString("Coulnd't parse pagelist."));
+        Document chapterdoc;
+        ParseResult cres = chapterdoc.Parse(job->buffer.data());
 
-        auto hash = QString(doc["hash"].GetString());
+        if (getStringSafe(chapterdoc, "result") == "error")
+            return Err(QString("Couldn't parse page list."));
 
-        auto server = QString(doc["server"].GetString());
+        auto hash = getStringSafe(chapterdoc["data"]["attributes"], "hash");
 
-        auto pagesArray = doc["page_array"].GetArray();
+        auto pages = chapterdoc["data"]["attributes"]["data"].GetArray();
 
-        for (const auto &page : pagesArray)
-            imageUrls.append(server + hash + "/" + page.GetString());
+        for (const auto &page : pages)
+            imageUrls.append(serverUrls.first() + hash + "/" + page.GetString());
     }
     catch (QException &)
     {
-        return Err(QString("Coulnd't parse pagelist."));
+        return Err(QString("Coulnd't parse page list."));
     }
 
     return Ok(imageUrls);

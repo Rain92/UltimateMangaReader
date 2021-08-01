@@ -1,6 +1,8 @@
 #ifndef MANGADEX_H
 #define MANGADEX_H
 
+#include <QSet>
+
 #include "abstractmangasource.h"
 #include "mangainfo.h"
 
@@ -23,7 +25,8 @@ public:
 
 private:
     void login();
-    QString basedictUrl;
+    QString apiUrl;
+    QVector<QString> serverUrls;
 
     QVector<QString> statuses;
     QVector<QString> demographies;
