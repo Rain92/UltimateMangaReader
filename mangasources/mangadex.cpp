@@ -169,121 +169,126 @@ Result<MangaChapterCollection, QString> MangaDex::updateMangaInfoFinishedLoading
 
     MangaChapterCollection newchapters;
 
-    //    try
-    //    {
-    Document doc;
-    ParseResult res = doc.Parse(job->buffer.data());
-    if (!res)
-        return Err(QString("Coulnd't parse mangainfos.1"));
-
-    auto &mangaObject = doc["data"]["attributes"];
-
-    //        info->author = htmlToPlainText(QString(mangaObject["author"].GetString()));
-    //        info->artist = htmlToPlainText(QString(mangaObject["artist"].GetString()));
-
-    info->status = getStringSafe(mangaObject, "status");
-
-    info->releaseYear = getStringSafe(mangaObject, "year");
-
-    info->genres = getStringSafe(mangaObject, "publicationDemographic");
-
-    info->summary = htmlToPlainText(getStringSafe(mangaObject["description"], "en")).remove(bbrx);
-
-    auto rels = doc["relationships"].GetArray();
-
-    for (const auto &rel : rels)
+    try
     {
-        auto id = getStringSafe(rel, "id");
-        qDebug() << id << rel["type"].GetString();
-        if (getStringSafe(rel, "type") == "cover_art")
-        {
-            auto jobCover = networkManager->downloadAsString(apiUrl + "/cover/" + id, -1);
+        Document doc;
+        ParseResult res = doc.Parse(job->buffer.data());
+        if (!res)
+            return Err(QString("Coulnd't parse manga infos."));
 
-            if (jobCover->await(3000))
+        auto &mangaObject = doc["data"]["attributes"];
+
+        //        info->author = htmlToPlainText(QString(mangaObject["author"].GetString()));
+        //        info->artist = htmlToPlainText(QString(mangaObject["artist"].GetString()));
+
+        info->status = getStringSafe(mangaObject, "status");
+
+        info->releaseYear = getStringSafe(mangaObject, "year");
+
+        info->genres = getStringSafe(mangaObject, "publicationDemographic");
+
+        info->summary = htmlToPlainText(getStringSafe(mangaObject["description"], "en")).remove(bbrx);
+
+        auto rels = doc["relationships"].GetArray();
+
+        for (const auto &rel : rels)
+        {
+            auto id = getStringSafe(rel, "id");
+
+            if (getStringSafe(rel, "type") == "cover_art")
             {
-                Document coverdoc;
-                ParseResult cres = coverdoc.Parse(jobCover->buffer.data());
-                if (cres)
+                auto jobCover = networkManager->downloadAsString(apiUrl + "/cover/" + id, -1);
+
+                if (jobCover->await(3000))
                 {
-                    info->coverUrl = QString("https://uploads.mangadex.org/covers/%1/%2.256.jpg")
-                                         .arg(getStringSafe(doc["data"], "id"),
-                                              getStringSafe(coverdoc["data"]["attributes"], "fileName"));
+                    Document coverdoc;
+                    ParseResult cres = coverdoc.Parse(jobCover->buffer.data());
+                    if (cres)
+                    {
+                        info->coverUrl = QString("https://uploads.mangadex.org/covers/%1/%2.256.jpg")
+                                             .arg(getStringSafe(doc["data"], "id"),
+                                                  getStringSafe(coverdoc["data"]["attributes"], "fileName"));
+                    }
                 }
             }
         }
-    }
 
-    int totalchapters = 100;
-    QStringList chapternumberlist;
+        int totalchapters = 100;
+        QStringList chapternumberlist;
 
-    for (int offset = 0; offset < totalchapters; offset += 100)
-    {
-        auto params = QString("manga=%1&limit=100&offset=%2&translatedLanguage[]=en")
-                          .arg(getStringSafe(doc["data"], "id"))
-                          .arg(offset);
-        auto jobChapters = networkManager->downloadAsString(apiUrl + "/chapter?" + params, -1);
-
-        if (jobChapters->await(3000))
+        for (int offset = 0; offset < totalchapters; offset += 100)
         {
-            Document chaptersdoc;
-            ParseResult cres = chaptersdoc.Parse(jobChapters->buffer.data());
+            auto params = QString("manga=%1&limit=100&offset=%2&translatedLanguage[]=en")
+                              .arg(getStringSafe(doc["data"], "id"))
+                              .arg(offset);
+            auto jobChapters = networkManager->downloadAsString(apiUrl + "/chapter?" + params, -1);
 
-            if (getStringSafe(chaptersdoc, "result") == "error")
-                return Err(QString("Couldn't parse chapter list."));
-
-            auto results = chaptersdoc["results"].GetArray();
-
-            totalchapters = chaptersdoc["total"].GetInt();
-
-            for (const auto &r : results)
+            if (jobChapters->await(3000))
             {
-                auto chapterId = getStringSafe(r["data"], "id");
+                Document chaptersdoc;
+                ParseResult cres = chaptersdoc.Parse(jobChapters->buffer.data());
 
-                if (chapterId == "")
-                    continue;
+                if (getStringSafe(chaptersdoc, "result") == "error")
+                    return Err(QString("Couldn't parse chapter list."));
 
-                QString numChapter = getStringSafe(r["data"]["attributes"], "chapter");
-                if (numChapter == "")
-                    numChapter = "0";
+                auto results = chaptersdoc["results"].GetArray();
 
-                QString chapterTitle = "Ch. " + numChapter;
+                totalchapters = chaptersdoc["total"].GetInt();
 
-                if (!r["data"]["attributes"]["title"].IsNull())
-                    chapterTitle += " " + getStringSafe(r["data"]["attributes"], "title");
+                for (const auto &r : results)
+                {
+                    auto chapterId = getStringSafe(r["data"], "id");
 
-                MangaChapter mangaChapter(chapterTitle, chapterId);
-                mangaChapter.chapterNumber = padChapterNumber(numChapter);
-                newchapters.append(mangaChapter);
-                chapternumberlist.append(padChapterNumber(numChapter));
+                    if (chapterId == "")
+                        continue;
+
+                    QString numChapter = getStringSafe(r["data"]["attributes"], "chapter");
+                    if (numChapter == "")
+                        numChapter = "0";
+
+                    QString chapterTitle = "Ch. " + numChapter;
+
+                    if (!r["data"]["attributes"]["title"].IsNull())
+                        chapterTitle += " " + getStringSafe(r["data"]["attributes"], "title");
+
+                    MangaChapter mangaChapter(chapterTitle, chapterId);
+                    mangaChapter.chapterNumber = padChapterNumber(numChapter);
+                    newchapters.append(mangaChapter);
+                    chapternumberlist.append(padChapterNumber(numChapter));
+                }
+                if (results.Size() < 100)
+                    break;
             }
-            if (results.Size() < 100)
-                break;
         }
+        int size = newchapters.size();
+
+        QVector<int> indices(size);
+        QVector<int> indicesInv(size);
+        for (int i = 0; i < size; ++i)
+            indices[i] = i;
+
+        std::sort(indices.begin(), indices.end(),
+                  [&chapternumberlist](int a, int b) {
+                      return QString::compare(chapternumberlist[a], chapternumberlist[b],
+                                              Qt::CaseInsensitive) < 0;
+                  });
+
+        for (int i = 0; i < size; ++i)
+            indicesInv[indices[i]] = i;
+
+        for (int i = 0; i < size; i++)
+            while (i != indicesInv[i])
+            {
+                int j = indicesInv[i];
+
+                newchapters.swapItemsAt(i, j);
+                indicesInv.swapItemsAt(i, j);
+            }
     }
-
-    int size = newchapters.size();
-
-    QVector<int> indices(size);
-    QVector<int> indicesInv(size);
-    for (int i = 0; i < size; ++i)
-        indices[i] = i;
-
-    std::sort(
-        indices.begin(), indices.end(),
-        [&chapternumberlist](int a, int b)
-        { return QString::compare(chapternumberlist[a], chapternumberlist[b], Qt::CaseInsensitive) < 0; });
-
-    for (int i = 0; i < size; ++i)
-        indicesInv[indices[i]] = i;
-
-    for (int i = 0; i < size; i++)
-        while (i != indicesInv[i])
-        {
-            int j = indicesInv[i];
-
-            newchapters.swapItemsAt(i, j);
-            indicesInv.swapItemsAt(i, j);
-        }
+    catch (QException &)
+    {
+        return Err(QString("Coulnd't parse manga ìnfos."));
+    }
 
     return Ok(newchapters);
 }
