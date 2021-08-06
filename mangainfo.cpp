@@ -67,7 +67,7 @@ void MangaInfo::updateCompeted(bool updated, const QList<QPair<int, int> > &move
         emit chaptersMoved(moveMap);
     }
 
-    emit updatedSignal(updated);
+    emit updatedSignal(this->updated);
 }
 
 void MangaInfo::sendCoverLoaded()
