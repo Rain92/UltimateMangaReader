@@ -131,6 +131,7 @@ Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::getMangaInfo(con
     if (!moveMapping.empty())
     {
         info->updated = true;
+        removeChapterPages(info, moveMapping);
         reorderChapterPages(info, moveMapping);
     }
 
@@ -161,6 +162,7 @@ void AbstractMangaSource::updateMangaInfoAsync(QSharedPointer<MangaInfo> info, b
             if (!moveMapping.empty())
             {
                 info->updated = true;
+                removeChapterPages(info, moveMapping);
                 reorderChapterPages(info, moveMapping);
             };
 
@@ -227,6 +229,28 @@ void AbstractMangaSource::generateCoverThumbnail(QSharedPointer<MangaInfo> manga
     }
 }
 
+void AbstractMangaSource::removeChapterPages(QSharedPointer<MangaInfo> info,
+                                             QList<QPair<int, int>> moveMapping)
+{
+    QSet<int> remidx;
+    for (const auto &[i1, i2] : moveMapping)
+    {
+        if (i2 < 0)
+            remidx.insert(i1);
+    }
+
+    auto imagespath = CONF.mangaimagesdir(info->hostname, info->title);
+    QDir dir(imagespath);
+
+    for (const auto &info : dir.entryInfoList(QDir::NoDotAndDotDot | QDir::Files))
+    {
+        int chidx = info.baseName().split('_').first().toInt();
+
+        if (remidx.contains(chidx))
+            QFile::remove(info.absoluteFilePath());
+    }
+}
+
 void AbstractMangaSource::reorderChapterPages(QSharedPointer<MangaInfo> info,
                                               QList<QPair<int, int>> moveMapping)
 {
@@ -238,20 +262,20 @@ void AbstractMangaSource::reorderChapterPages(QSharedPointer<MangaInfo> info,
         id2.chapter = i2;
         if (i2 < 0)
         {
-            auto oldpath = getImagePath(id1);
-            QFile::remove(oldpath);
-            continue;
         }
-        for (int pi = 0; pi < info->chapters[i2].pageUrlList.count(); pi++)
+        else
         {
-            id1.page = pi;
-            id2.page = pi;
-            auto oldpath = getImagePath(id1);
-            auto newpath = getImagePath(id2) + '_';
-            QFile::rename(oldpath, newpath);
+            for (int pi = 0; pi < info->chapters[i2].pageUrlList.count(); pi++)
+            {
+                id1.page = pi;
+                id2.page = pi;
+                auto oldpath = getImagePath(id1);
+                auto newpath = getImagePath(id2) + '_';
+                QFile::rename(oldpath, newpath);
+            }
         }
 
-        //        qDebug() << "moving chapter pages:" << i1 << "->" << i2;
+        qDebug() << "moving chapter pages:" << i1 << "->" << i2;
     }
     for (const auto &[i1, i2] : moveMapping)
     {
