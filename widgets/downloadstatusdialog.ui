@@ -181,7 +181,7 @@
         <enum>Qt::NoFocus</enum>
        </property>
        <property name="text">
-        <string>Ok</string>
+        <string> Ok </string>
        </property>
       </widget>
      </item>

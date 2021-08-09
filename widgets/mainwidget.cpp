@@ -389,15 +389,21 @@ void MainWidget::setupFrontLight()
     setFrontLight(core->settings.lightValue, core->settings.comflightValue);
 
 #ifdef KOBO
-    ui->mangaReaderWidget->setFrontLightPanelState(0, koboDevice.frontlightMaxLevel,
-                                                   core->settings.lightValue, 0, koboDevice.frontlightMaxTemp,
-                                                   core->settings.comflightValue);
+    ui->mangaReaderWidget->setFrontLightPanelState(
+        koboDevice.frontlightSettings.frontlightMin, koboDevice.frontlightSettings.frontlightMax,
+        core->settings.lightValue, koboDevice.frontlightSettings.naturalLightMin,
+        koboDevice.frontlightSettings.naturalLightMax, core->settings.comflightValue);
 #endif
 }
 
 void MainWidget::setFrontLight(int light, int comflight)
 {
 #ifdef KOBO
+    if (!koboDevice.frontlightSettings.hasFrontLight)
+        return;
+
+    if (koboDevice.frontlightSettings.naturalLightInverted)
+        comflight = koboDevice.frontlightSettings.naturalLightMax - comflight;
     KoboPlatformFunctions::setFrontlightLevel(light, comflight);
 #endif
 
