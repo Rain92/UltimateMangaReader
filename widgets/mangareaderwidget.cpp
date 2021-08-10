@@ -23,12 +23,12 @@ MangaReaderWidget::MangaReaderWidget(QWidget *parent)
             [this]() { ui->horizontalSliderLight->setValue(ui->horizontalSliderLight->value() - 1); });
     connect(ui->toolButtonMoreLight, &QToolButton::clicked,
             [this]() { ui->horizontalSliderLight->setValue(ui->horizontalSliderLight->value() + 1); });
-    connect(ui->toolButtonLessComfLight, &QToolButton::clicked, [this]() {
-        ui->horizontalSliderComfLight->setValue(ui->horizontalSliderComfLight->value() + 1);
-    });
-    connect(ui->toolButtonMoreComfLight, &QToolButton::clicked, [this]() {
-        ui->horizontalSliderComfLight->setValue(ui->horizontalSliderComfLight->value() - 1);
-    });
+    connect(ui->toolButtonLessComfLight, &QToolButton::clicked,
+            [this]()
+            { ui->horizontalSliderComfLight->setValue(ui->horizontalSliderComfLight->value() + 1); });
+    connect(ui->toolButtonMoreComfLight, &QToolButton::clicked,
+            [this]()
+            { ui->horizontalSliderComfLight->setValue(ui->horizontalSliderComfLight->value() - 1); });
 
 #ifdef DESKTOP
     QGestureRecognizer::registerRecognizer(new TapGestureRecognizer());
@@ -279,8 +279,8 @@ bool MangaReaderWidget::addImageToCache(const QString &path, bool isPreload)
     }
     else
     {
-        auto img = QSharedPointer<QImage>(
-            new QImage(loadQImageFast(path, settings->ditheringMode == SWHWDithering)));
+        auto img =
+            QSharedPointer<QImage>(new QImage(loadQImageFast(path, settings->ditheringMode >= SWDithering)));
 
         if (!img || img->isNull())
             return false;

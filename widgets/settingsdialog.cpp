@@ -51,7 +51,7 @@ void SettingsDialog::resetUI()
     ui->checkBoxTrim->setChecked(settings->trimPages);
     ui->checkBoxManhwaMode->setChecked(settings->manhwaMode);
 
-    ui->comboBoxDithering->setCurrentIndex(settings->ditheringMode);
+    ui->comboBoxDithering->setCurrentIndex(settings->ditheringMode / 2);
 
     ui->comboBoxTab->setCurrentIndex(settings->tabAdvance);
     ui->comboBoxSwipe->setCurrentIndex(settings->swipeAdvance);
@@ -86,7 +86,8 @@ void SettingsDialog::updateSettings()
     settings->manhwaMode = ui->checkBoxManhwaMode->isChecked();
 
     auto oldDitheringMode = settings->ditheringMode;
-    settings->ditheringMode = static_cast<DitheringMode>(ui->comboBoxDithering->currentIndex());
+
+    settings->ditheringMode = static_cast<DitheringMode>(ui->comboBoxDithering->currentIndex() * 2);
 
     if (oldDitheringMode != settings->ditheringMode)
         emit ditheringMethodChanged();

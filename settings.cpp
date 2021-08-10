@@ -13,7 +13,7 @@ Settings::Settings()
       doublePageMode(DoublePage90CW),
       trimPages(true),
       manhwaMode(true),
-      ditheringMode(SWHWDithering),
+      ditheringMode(SWDithering),
       timer()
 {
     QObject::connect(&timer, &QTimer::timeout, [this]() { this->serialize(); });

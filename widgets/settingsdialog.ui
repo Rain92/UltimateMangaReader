@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>420</width>
-    <height>640</height>
+    <height>628</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -70,7 +70,7 @@
         <x>0</x>
         <y>0</y>
         <width>418</width>
-        <height>638</height>
+        <height>626</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -255,12 +255,7 @@ very long pages (requires clear cache)</string>
            </item>
            <item>
             <property name="text">
-             <string>Hardware</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Software + Hardware</string>
+             <string>Full dithering</string>
             </property>
            </item>
           </widget>

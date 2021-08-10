@@ -43,10 +43,9 @@ enum MangaOrderMethod
 
 enum DitheringMode
 {
-    NoDithering,
-    HWDithering,
-    SWHWDithering
-
+    NoDithering = 0,
+    HWDithering = 1,
+    SWDithering = 2
 };
 
 enum DoublePageMode
