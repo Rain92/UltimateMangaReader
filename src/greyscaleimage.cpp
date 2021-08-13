@@ -69,10 +69,12 @@ bool GreyscaleImage::loadFromJpeg(const QByteArray &data)
     int flags = TJFLAG_FASTDCT | TJFLAG_FASTUPSAMPLE;
     int inSubsamp, inColorspace;
 
-    auto handleguard = qScopeGuard([&] {
-        if (tjInstanceD)
-            tjDestroy(tjInstanceD);
-    });
+    auto handleguard = qScopeGuard(
+        [&]
+        {
+            if (tjInstanceD)
+                tjDestroy(tjInstanceD);
+        });
 
     if (tjDecompressHeader3(tjInstanceD, (uchar *)data.data(), data.size(), &width, &height, &inSubsamp,
                             &inColorspace) < 0)
@@ -169,10 +171,12 @@ bool GreyscaleImage::saveAsJpeg(const QString &path)
 
     tjhandle tjInstanceC = tjInitCompress();
 
-    auto handleguard = qScopeGuard([&] {
-        if (tjInstanceC)
-            tjDestroy(tjInstanceC);
-    });
+    auto handleguard = qScopeGuard(
+        [&]
+        {
+            if (tjInstanceC)
+                tjDestroy(tjInstanceC);
+        });
 
     uchar *newJpegBuf = nullptr; /* Dynamically allocate the JPEG buffer */
     ulong newJpegSize = 0;
@@ -181,10 +185,12 @@ bool GreyscaleImage::saveAsJpeg(const QString &path)
                     &newJpegSize, outSubsamp, outQual, flags) < 0)
         return false;
 
-    auto guard2 = qScopeGuard([&] {
-        if (newJpegBuf)
-            free(newJpegBuf);
-    });
+    auto guard2 = qScopeGuard(
+        [&]
+        {
+            if (newJpegBuf)
+                free(newJpegBuf);
+        });
 
     QFile file(path);
     if (!file.open(QIODevice::WriteOnly))
