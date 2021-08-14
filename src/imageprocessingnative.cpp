@@ -18,18 +18,8 @@ QImage loadQImageFast(const QString &path, bool useSWDithering)
     {
         QImage ret(path);
 
-        if (useSWDithering && !ret.isNull() && ret.format() == QImage::Format_Grayscale8 &&
-            ret.bytesPerLine() == ret.width())
-        {
-            auto imgbuffer = QByteArray::fromRawData((const char *)ret.bits(), ret.sizeInBytes());
-            ditherBuffer(imgbuffer, ret.width(), ret.height());
-        }
-
         return ret;
     }
-
-    if (useSWDithering)
-        img.dither();
 
     return img.toQImage();
 }
@@ -138,9 +128,6 @@ QImage processImageN(const QByteArray &buffer, const QString &filepath, QSize sc
     if (filepath != "")
         if (!img.saveAsJpeg(filepath))
             return QImage();
-
-    if (useSWDither)
-        img.dither();
 
     QImage retimg = img.toQImage();
 

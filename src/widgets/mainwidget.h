@@ -24,7 +24,6 @@
 #include "wifidialog.h"
 
 #ifdef KOBO
-#include "kobokey.h"
 #include "koboplatformfunctions.h"
 #define POWERBUTTON KoboKey::Key_Power
 #define SLEEPCOVERBUTTON KoboKey::Key_SleepCover

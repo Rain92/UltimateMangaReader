@@ -172,13 +172,6 @@ QImage processImageQt(const QByteArray &array, const QString &filepath, QSize sc
 
     if (res)
     {
-        if (useSWDither && ret.isNull() && ret.format() == QImage::Format_Grayscale8 &&
-            ret.bytesPerLine() == ret.width())
-        {
-            auto buffer = QByteArray::fromRawData((const char *)ret.bits(), ret.sizeInBytes());
-            ditherBuffer(buffer, ret.width(), ret.height());
-        }
-
         return ret;
     }
 

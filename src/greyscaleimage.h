@@ -39,7 +39,6 @@ public:
     bool loadFromPng(const QByteArray &data);
 
     GreyscaleImage resize(QSize newSize);
-    void dither();
     GreyscaleImage rotate(int rotation);
     GreyscaleImage crop(QRect rect);
 

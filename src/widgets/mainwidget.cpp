@@ -378,9 +378,9 @@ void MainWidget::updateDitheringMode()
 {
 #ifdef KOBO
     if (core->settings.ditheringMode == NoDithering)
-        KoboPlatformFunctions::enableDithering(false);
+        KoboPlatformFunctions::enableDithering(false, false);
     else
-        KoboPlatformFunctions::enableDithering(true);
+        KoboPlatformFunctions::enableDithering(true, false);
 #endif
 }
 

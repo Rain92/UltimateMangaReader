@@ -125,11 +125,6 @@ GreyscaleImage GreyscaleImage::resize(QSize newSize)
     return GreyscaleImage(newSize, qMove(newBuffer));
 }
 
-void GreyscaleImage::dither()
-{
-    ditherBuffer(buffer, width, height);
-}
-
 GreyscaleImage GreyscaleImage::rotate(int rotation)
 {
     if (rotation % 90 != 0)

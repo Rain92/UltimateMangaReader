@@ -50,7 +50,6 @@ FORMS += \
 
 HEADERS += \
     src/aboutinfo.h \
-    src/dither.h \
     src/downloadbufferjob.h \
     src/downloadfilejob.h \
     src/downloadimageandrescalejob.h \
@@ -122,7 +121,6 @@ HEADERS += \
 
 
 SOURCES += \
-    src/dither.cpp \
     src/downloadbufferjob.cpp \
     src/downloadfilejob.cpp \
     src/downloadimageandrescalejob.cpp \
