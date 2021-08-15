@@ -11,7 +11,6 @@
 #include <QScopeGuard>
 #include <cstring>
 
-#include "dither.h"
 #include "imagerotate.h"
 #include "thirdparty/simdimageresize.h"
 
