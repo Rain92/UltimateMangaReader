@@ -118,18 +118,19 @@ bool MangaDex::updateMangaList(UpdateProgressToken *token)
             {
                 Document doc;
                 ParseResult res = doc.Parse(job->buffer.data());
+
                 if (!res)
                     return false;
 
                 if (doc.HasMember("result") && QString(doc["result"].GetString()) == "error")
                     return false;
 
-                auto results = doc["results"].GetArray();
+                auto results = doc["data"].GetArray();
 
                 for (const auto &r : results)
                 {
-                    auto title = getStringSafe(r["data"]["attributes"]["title"], "en");
-                    auto id = getStringSafe(r["data"], "id");
+                    auto title = getStringSafe(r["attributes"]["title"], "en");
+                    auto id = getStringSafe(r, "id");
                     auto url = QString("/manga/") + id;
 
                     if (!mangaids.contains(id))
@@ -189,7 +190,7 @@ Result<MangaChapterCollection, QString> MangaDex::updateMangaInfoFinishedLoading
 
         info->summary = htmlToPlainText(getStringSafe(mangaObject["description"], "en")).remove(bbrx);
 
-        auto rels = doc["relationships"].GetArray();
+        auto rels = doc["data"]["relationships"].GetArray();
 
         for (const auto &rel : rels)
         {
@@ -231,25 +232,25 @@ Result<MangaChapterCollection, QString> MangaDex::updateMangaInfoFinishedLoading
                 if (getStringSafe(chaptersdoc, "result") == "error")
                     return Err(QString("Couldn't parse chapter list."));
 
-                auto results = chaptersdoc["results"].GetArray();
+                auto results = chaptersdoc["data"].GetArray();
 
                 totalchapters = chaptersdoc["total"].GetInt();
 
                 for (const auto &r : results)
                 {
-                    auto chapterId = getStringSafe(r["data"], "id");
+                    auto chapterId = getStringSafe(r, "id");
 
                     if (chapterId == "")
                         continue;
 
-                    QString numChapter = getStringSafe(r["data"]["attributes"], "chapter");
+                    QString numChapter = getStringSafe(r["attributes"], "chapter");
                     if (numChapter == "")
                         numChapter = "0";
 
                     QString chapterTitle = "Ch. " + numChapter;
 
-                    if (!r["data"]["attributes"]["title"].IsNull())
-                        chapterTitle += " " + getStringSafe(r["data"]["attributes"], "title");
+                    if (!r["attributes"]["title"].IsNull())
+                        chapterTitle += " " + getStringSafe(r["attributes"], "title");
 
                     MangaChapter mangaChapter(chapterTitle, chapterId);
                     mangaChapter.chapterNumber = padChapterNumber(numChapter);
