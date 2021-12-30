@@ -15,7 +15,7 @@ NetworkManager::NetworkManager(QObject *parent)
       fileDownloads()
 {
 #ifdef KOBO
-    QString sslCertPath = "/mnt/onboard/.adds/qt-linux-5.15.2-kobo/lib/ssl_certs";
+    QString sslCertPath = "/mnt/onboard/.adds/qt-linux-5.15-kde-kobo/lib/ssl_certs";
     if (qEnvironmentVariableIsSet("QTPATH"))
         sslCertPath = qEnvironmentVariable("QTPATH") + "/lib/ssl_certs";
     loadCertificates(sslCertPath);
@@ -164,7 +164,8 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsFile(const QString &ur
     qDebug() << "Downloading as file:" << urlf;
 
     auto job = QSharedPointer<DownloadFileJob>(new DownloadFileJob(networkManager, urlf, localPath),
-                                               [this](DownloadFileJob *j) {
+                                               [this](DownloadFileJob *j)
+                                               {
                                                    this->fileDownloads.remove(j->originalUrl);
                                                    j->deleteLater();
                                                });
@@ -220,7 +221,8 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const QStr
     auto job = QSharedPointer<DownloadFileJob>(
         new DownloadScaledImageJob(networkManager, urlf, localPath, imageRescaleSize, settings,
                                    applicableCustomHeaders, ed),
-        [this](DownloadScaledImageJob *j) {
+        [this](DownloadScaledImageJob *j)
+        {
             this->fileDownloads.remove(j->originalUrl);
             j->deleteLater();
         });
@@ -231,11 +233,13 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const QStr
 
     emit activity();
     auto sjob = qSharedPointerCast<DownloadScaledImageJob>(job);
-    connect(sjob.get(), &DownloadScaledImageJob::completed, this, [sjob, this]() mutable {
-        if (sjob->resultImage)
-            emit downloadedImage(sjob->filepath, {sjob->resultImage});
-        sjob.clear();
-    });
+    connect(sjob.get(), &DownloadScaledImageJob::completed, this,
+            [sjob, this]() mutable
+            {
+                if (sjob->resultImage)
+                    emit downloadedImage(sjob->filepath, {sjob->resultImage});
+                sjob.clear();
+            });
     return job;
 }
 

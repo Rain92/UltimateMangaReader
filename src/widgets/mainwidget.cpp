@@ -325,6 +325,7 @@ void MainWidget::timerTick()
 void MainWidget::onSuspend()
 {
     core->enableTimers(false);
+    wifiDialog->close();
     screensaverDialog->showRandomScreensaver();
 
     disableFrontLight();
