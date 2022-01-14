@@ -296,7 +296,7 @@ Result<MangaChapterCollection, QString> MangaDex::updateMangaInfoFinishedLoading
 
 Result<QStringList, QString> MangaDex::getPageList(const QString &chapterUrl)
 {
-    auto job = networkManager->downloadAsString(apiUrl + "/chapter/" + chapterUrl);
+    auto job = networkManager->downloadAsString(apiUrl + "/at-home/server/" + chapterUrl);
 
     if (!job->await(7000))
         return Err(job->errorString);
@@ -311,9 +311,9 @@ Result<QStringList, QString> MangaDex::getPageList(const QString &chapterUrl)
         if (getStringSafe(chapterdoc, "result") == "error")
             return Err(QString("Couldn't parse page list."));
 
-        auto hash = getStringSafe(chapterdoc["data"]["attributes"], "hash");
+        auto hash = getStringSafe(chapterdoc["chapter"], "hash");
 
-        auto pages = chapterdoc["data"]["attributes"]["data"].GetArray();
+        auto pages = chapterdoc["chapter"]["data"].GetArray();
 
         for (const auto &page : pages)
             imageUrls.append(serverUrls.first() + hash + "/" + page.GetString());
