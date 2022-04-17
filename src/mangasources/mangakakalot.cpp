@@ -3,26 +3,27 @@
 Mangakakalot::Mangakakalot(NetworkManager *networkManager) : AbstractMangaSource(networkManager)
 {
     name = "Mangakakalot";
-    baseUrl = "https://mangakakalot.com/";
-    dictionaryUrl = baseUrl + "manga_list?type=topview&category=all&state=all&page=";
+    baseUrl = "https://manganato.com/";
+    dictionaryUrl = baseUrl + "genre-all/%1?type=topview";
 
     networkManager->addCookie("mangakakalot.com", "content_lazyload", "off");
     networkManager->addCookie("manganelo.com", "content_lazyload", "off");
-    networkManager->addSetCustomRequestHeader("mangakakalot", "Referer",
-                                              R"(https://mangakakalot.com/chapter/)");
+    networkManager->addCookie("manganato.com", "content_lazyload", "off");
+
     networkManager->addSetCustomRequestHeader(".mkkl", "Referer", R"(https://readmanganato.com/)");
 }
 
 bool Mangakakalot::updateMangaList(UpdateProgressToken *token)
 {
-    QString rxstart(R"(<div class="main-wrapper">)");
-    QString rxend(R"(<div class="panel_page_number">)");
-    QRegularExpression mangarx(R"lit(<h3>\s*<a(?: rel="nofollow")? href="([^"]*)"\s*title="([^"]*)")lit");
+    QString rxstart(R"(panel-content-genres)");
+    QString rxend(R"(panel-genres-list)");
+    QRegularExpression mangarx(
+        R"lit(class="content-genres-item">\s*<a[^>]* href="([^"]*)"\s*title="([^"]*)")lit");
 
-    QRegularExpression nummangasrx("Total: ([0-9,]+)");
-    QRegularExpression numpagesrx(R"(Last\(([0-9]+)\))");
+    QRegularExpression nummangasrx(R"((?:Total\s?:|TOTAL\s?:)\s?([0-9,]+))");
+    QRegularExpression numpagesrx(R"(>(?:LAST|Last)\s?\(([0-9,]+)\)<)");
 
-    auto job = networkManager->downloadAsString(dictionaryUrl + "1");
+    auto job = networkManager->downloadAsString(dictionaryUrl.arg(1));
 
     if (!job->await(7000))
     {
@@ -75,7 +76,7 @@ bool Mangakakalot::updateMangaList(UpdateProgressToken *token)
 
     QList<QString> urls;
     for (int i = 2; i <= pages; i++)
-        urls.append(dictionaryUrl + QString::number(i));
+        urls.append(dictionaryUrl.arg(i));
 
     DownloadQueue queue(networkManager, urls, CONF.parallelDownloadsHigh, lambda, true);
     queue.setCancellationToken(&token->canceled);
