@@ -184,7 +184,7 @@ Result<MangaChapterCollection, QString> MangaDex::updateMangaInfoFinishedLoading
 
         info->status = getStringSafe(mangaObject, "status");
 
-        info->releaseYear = getStringSafe(mangaObject, "year");
+        //info->releaseYear = getStringSafe(mangaObject, "year");
 
         info->genres = getStringSafe(mangaObject, "publicationDemographic");
 
