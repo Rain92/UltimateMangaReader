@@ -18,6 +18,9 @@ NetworkManager::NetworkManager(QObject *parent)
     QString sslCertPath = "/mnt/onboard/.adds/qt-linux-5.15-kde-kobo/lib/ssl_certs";
     if (qEnvironmentVariableIsSet("QTPATH"))
         sslCertPath = qEnvironmentVariable("QTPATH") + "/lib/ssl_certs";
+
+    //    qDebug() << "Loading certificates from" << sslCertPath;
+
     loadCertificates(sslCertPath);
 #endif
 }

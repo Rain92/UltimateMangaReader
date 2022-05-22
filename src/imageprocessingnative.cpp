@@ -5,7 +5,10 @@ QImage loadQImageFast(const QString &path, bool useSWDithering)
 {
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly))
+    {
+        qDebug() << "loadQImageFast failed for image:" << path;
         return QImage();
+    }
 
     auto buffer = file.readAll();
     file.close();

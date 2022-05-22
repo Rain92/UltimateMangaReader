@@ -86,10 +86,14 @@ Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::loadMangaInfo(co
         try
         {
             auto info = MangaInfo::deserialize(this, path);
-            if (update)
-                info->mangaSource->updateMangaInfoAsync(info);
+            // reload broken favs
+            if (!(info->coverUrl == "" || info->chapters.count() == 0))
+            {
+                if (update)
+                    info->mangaSource->updateMangaInfoAsync(info);
 
-            return Ok(info);
+                return Ok(info);
+            }
         }
         catch (QException &)
         {
@@ -215,7 +219,7 @@ Result<void, QString> AbstractMangaSource::updatePageList(QSharedPointer<MangaIn
     return Ok();
 }
 
-void AbstractMangaSource::generateCoverThumbnail(QSharedPointer<MangaInfo> mangainfo)
+bool AbstractMangaSource::generateCoverThumbnail(QSharedPointer<MangaInfo> mangainfo)
 {
     QString scpath = mangainfo->coverThumbnailPath();
 
@@ -225,8 +229,15 @@ void AbstractMangaSource::generateCoverThumbnail(QSharedPointer<MangaInfo> manga
         img = img.scaled(SIZES.favoriteCoverSize * qApp->devicePixelRatio(),
                          SIZES.favoriteCoverSize * qApp->devicePixelRatio(), Qt::KeepAspectRatio,
                          Qt::SmoothTransformation);
-        img.save(scpath);
+
+        bool res = img.save(scpath);
+
+        if (!res)
+            qDebug() << "Failed to save thumbnail:" << scpath;
+
+        return res;
     }
+    return false;
 }
 
 void AbstractMangaSource::removeChapterPages(QSharedPointer<MangaInfo> info,
@@ -307,17 +318,20 @@ void AbstractMangaSource::downloadCoverAsync(QSharedPointer<MangaInfo> mangainfo
     }
 
     if (!updateCover && QFile::exists(mangainfo->coverPath))
-        return;
-
-    auto coverjob = networkManager->downloadAsFile(mangainfo->coverUrl, mangainfo->coverPath);
-
-    auto lambda = [this, mangainfo]()
     {
-        generateCoverThumbnail(mangainfo);
-        mangainfo->sendCoverLoaded();
-    };
-
-    executeOnJobCompletion(coverjob, lambda);
+        if (generateCoverThumbnail(mangainfo))
+            mangainfo->sendCoverLoaded();
+    }
+    else
+    {
+        auto generateThumbnailLambda = [this, mangainfo]()
+        {
+            generateCoverThumbnail(mangainfo);
+            mangainfo->sendCoverLoaded();
+        };
+        auto coverjob = networkManager->downloadAsFile(mangainfo->coverUrl, mangainfo->coverPath);
+        executeOnJobCompletion(coverjob, generateThumbnailLambda);
+    }
 }
 
 QString AbstractMangaSource::htmlToPlainText(const QString &str)

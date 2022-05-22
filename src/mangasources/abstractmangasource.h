@@ -68,7 +68,7 @@ protected:
     void removeChapterPages(QSharedPointer<MangaInfo> info, QList<QPair<int, int>> moveMapping);
     void reorderChapterPages(QSharedPointer<MangaInfo> info, QList<QPair<int, int>> moveMapping);
 
-    void generateCoverThumbnail(QSharedPointer<MangaInfo> mangainfo);
+    bool generateCoverThumbnail(QSharedPointer<MangaInfo> mangainfo);
     void fillMangaInfo(QSharedPointer<MangaInfo> info, const QString &buffer,
                        const QRegularExpression &authorrx, const QRegularExpression &artistrx,
                        const QRegularExpression &statusrx, const QRegularExpression &yearrx,
