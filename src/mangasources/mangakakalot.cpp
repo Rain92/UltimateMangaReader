@@ -10,6 +10,7 @@ Mangakakalot::Mangakakalot(NetworkManager *networkManager) : AbstractMangaSource
     networkManager->addCookie("manganelo.com", "content_lazyload", "off");
     networkManager->addSetCustomRequestHeader("mangakakalot", "Referer",
                                               R"(https://mangakakalot.com/chapter/)");
+    networkManager->addSetCustomRequestHeader(".mkkl", "Referer", R"(https://readmanganato.com/)");
 }
 
 bool Mangakakalot::updateMangaList(UpdateProgressToken *token)
@@ -49,7 +50,8 @@ bool Mangakakalot::updateMangaList(UpdateProgressToken *token)
         pages = numpagesrxmatch.captured(1).toInt();
 
     const int matchesPerPage = 24;
-    auto lambda = [&](QSharedPointer<DownloadStringJob> job) {
+    auto lambda = [&](QSharedPointer<DownloadStringJob> job)
+    {
         int spos = job->bufferStr.indexOf(rxstart);
         int epos = job->bufferStr.indexOf(rxend);
 
