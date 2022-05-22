@@ -163,12 +163,19 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsFile(const QString &ur
 
     qDebug() << "Downloading as file:" << urlf;
 
-    auto job = QSharedPointer<DownloadFileJob>(new DownloadFileJob(networkManager, urlf, localPath),
-                                               [this](DownloadFileJob *j)
-                                               {
-                                                   this->fileDownloads.remove(j->originalUrl);
-                                                   j->deleteLater();
-                                               });
+    QList<std::tuple<const char *, const char *>> applicableCustomHeaders;
+
+    for (const auto &[domain, name, value] : qAsConst(customHeaders))
+        if (urlf.contains(domain))
+            applicableCustomHeaders.append(std::tuple<const char *, const char *>(name, value));
+
+    auto job = QSharedPointer<DownloadFileJob>(
+        new DownloadFileJob(networkManager, urlf, localPath, applicableCustomHeaders),
+        [this](DownloadFileJob *j)
+        {
+            this->fileDownloads.remove(j->originalUrl);
+            j->deleteLater();
+        });
 
     job->start();
 

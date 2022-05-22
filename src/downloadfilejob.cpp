@@ -102,7 +102,9 @@ void DownloadFileJob::onError(QNetworkReply::NetworkError)
     file.remove();
 
     if (errorString == "")
-        errorString = "Download error: " + reply->errorString();
+        errorString = "Download error " +
+                      reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toString() + ": " +
+                      reply->errorString();
 
     qDebug() << "Error string:" << errorString;
     emit downloadError();
