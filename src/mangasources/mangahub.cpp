@@ -32,7 +32,8 @@ bool MangaHub::updateMangaList(UpdateProgressToken *token)
     const int matchesPerPage = 30;
     int noMatchCounter = 0;
 
-    auto lambda = [&](QSharedPointer<DownloadStringJob> job) {
+    auto lambda = [&](QSharedPointer<DownloadStringJob> job)
+    {
         int matches = 0;
         for (auto &match : getAllRxMatches(mangarx, job->bufferStr))
         {
@@ -61,7 +62,7 @@ bool MangaHub::updateMangaList(UpdateProgressToken *token)
         for (int i = oldPages + 1; i <= pages; i++)
             urls.append(dicturl + QString::number(i));
 
-        DownloadQueue queue(networkManager, urls, CONF.parallelDownloadsMid, lambda, true);
+        DownloadQueue queue(networkManager, urls, CONF.parallelDownloadsLow, lambda, true);
         queue.setCancellationToken(&token->canceled);
         queue.start();
         if (!queue.awaitCompletion())

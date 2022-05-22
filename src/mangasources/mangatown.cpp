@@ -5,6 +5,9 @@ MangaTown::MangaTown(NetworkManager *networkManager) : AbstractMangaSource(netwo
     name = "MangaTown";
     baseUrl = "https://www.mangatown.com";
     dictionaryUrl = "https://www.mangatown.com/directory/";
+
+    networkManager->addSetCustomRequestHeader("mangahere.org", "Referer", R"(https://www.mangatown.com/)");
+    networkManager->addSetCustomRequestHeader("mangahere.com", "Referer", R"(https://www.mangatown.com/)");
 }
 
 bool MangaTown::updateMangaList(UpdateProgressToken *token)
@@ -37,7 +40,8 @@ bool MangaTown::updateMangaList(UpdateProgressToken *token)
     qDebug() << "pages:" << pages;
 
     const int matchesPerPage = 30;
-    auto lambda = [&](QSharedPointer<DownloadStringJob> job) {
+    auto lambda = [&](QSharedPointer<DownloadStringJob> job)
+    {
         int matches = 0;
         for (auto &match : getAllRxMatches(mangarx, job->bufferStr))
         {
