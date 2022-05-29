@@ -90,7 +90,8 @@ bool MangaDex::updateMangaList(UpdateProgressToken *token)
                         "&contentRating[]=safe"
                         "&contentRating[]=suggestive"
                         "&contentRating[]=erotica"
-                        "&contentRating[]=pornographic";
+                        "&contentRating[]=pornographic"
+                        "&availableTranslatedLanguage[]=en";
 
     // ugly workaround, current search limit is 10000 entries
     // so we need to search multiple times with different filters
