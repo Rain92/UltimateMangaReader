@@ -166,7 +166,6 @@ Result<MangaChapterCollection, QString> MangaDex::updateMangaInfoFinishedLoading
 {
     //    QElapsedTimer t;
     //    t.start();
-    QRegularExpression bbrx(R"(\[.*?\])");
 
     MangaChapterCollection newchapters;
 
@@ -188,7 +187,7 @@ Result<MangaChapterCollection, QString> MangaDex::updateMangaInfoFinishedLoading
 
         info->genres = getStringSafe(mangaObject, "publicationDemographic");
 
-        info->summary = htmlToPlainText(getStringSafe(mangaObject["description"], "en")).remove(bbrx);
+        info->summary = getStringSafe(mangaObject["description"], "en");
 
         auto rels = doc["data"]["relationships"].GetArray();
 
