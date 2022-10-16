@@ -34,7 +34,7 @@ MangaDex::MangaDex(NetworkManager *dm) : AbstractMangaSource(dm)
     name = "MangaDex";
     apiUrl = "https://api.mangadex.org";
     baseUrl = apiUrl;
-    serverUrls = {"http://s2.mangadex.org/data/", "http://s5.mangadex.org/data/"};
+    serverUrls = {"http://uploads.mangadex.org/data/", "http://s5.mangadex.org/data/"};
 
     networkManager->addCookie(".mangadex.org", "mangadex_h_toggle", "1");
     networkManager->addCookie(".mangadex.org", "mangadex_title_mode", "2");
@@ -184,7 +184,7 @@ Result<MangaChapterCollection, QString> MangaDex::updateMangaInfoFinishedLoading
 
         info->status = getStringSafe(mangaObject, "status");
 
-        //info->releaseYear = getStringSafe(mangaObject, "year");
+        // info->releaseYear = getStringSafe(mangaObject, "year");
 
         info->genres = getStringSafe(mangaObject, "publicationDemographic");
 
