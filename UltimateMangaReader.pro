@@ -82,6 +82,7 @@ HEADERS += \
     src/mangasources/mangapanda.h \
     src/mangasources/mangaplus.h \
     src/mangasources/mangatown.h \
+    src/mangasources/readmanga.h \
     src/mangasources/updateprogresstoken.h \
     src/networkmanager.h \
     src/readingprogress.h \
@@ -152,6 +153,7 @@ SOURCES += \
     src/mangasources/mangapanda.cpp \
     src/mangasources/mangaplus.cpp \
     src/mangasources/mangatown.cpp \
+    src/mangasources/readmanga.cpp \
     src/mangasources/updateprogresstoken.cpp \
     src/networkmanager.cpp \
     src/readingprogress.cpp \

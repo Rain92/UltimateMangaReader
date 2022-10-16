@@ -32,5 +32,6 @@
         <file>images/icons/file-error.png</file>
         <file>images/mangahostlogos/mangago.png</file>
         <file>images/mangahostlogos/mangaplus.png</file>
+        <file>images/mangahostlogos/readmanga.png</file>
     </qresource>
 </RCC>
