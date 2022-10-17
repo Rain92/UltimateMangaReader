@@ -164,8 +164,6 @@ bool MangaDex::updateMangaList(UpdateProgressToken *token)
 Result<MangaChapterCollection, QString> MangaDex::updateMangaInfoFinishedLoading(
     QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info)
 {
-    //    QElapsedTimer t;
-    //    t.start();
     QRegularExpression bbrx(R"(\[.*?\])");
 
     MangaChapterCollection newchapters;
@@ -179,12 +177,10 @@ Result<MangaChapterCollection, QString> MangaDex::updateMangaInfoFinishedLoading
 
         auto &mangaObject = doc["data"]["attributes"];
 
-        //        info->author = htmlToPlainText(QString(mangaObject["author"].GetString()));
-        //        info->artist = htmlToPlainText(QString(mangaObject["artist"].GetString()));
-
         info->status = getStringSafe(mangaObject, "status");
 
-        // info->releaseYear = getStringSafe(mangaObject, "year");
+        if (mangaObject.HasMember("year"))
+            info->releaseYear = QString(mangaObject["year"].GetInt());
 
         info->genres = getStringSafe(mangaObject, "publicationDemographic");
 
@@ -227,7 +223,7 @@ Result<MangaChapterCollection, QString> MangaDex::updateMangaInfoFinishedLoading
             if (jobChapters->await(3000))
             {
                 Document chaptersdoc;
-                ParseResult cres = chaptersdoc.Parse(jobChapters->buffer.data());
+                chaptersdoc.Parse(jobChapters->buffer.data());
 
                 if (getStringSafe(chaptersdoc, "result") == "error")
                     return Err(QString("Couldn't parse chapter list."));
@@ -288,7 +284,7 @@ Result<MangaChapterCollection, QString> MangaDex::updateMangaInfoFinishedLoading
     }
     catch (QException &)
     {
-        return Err(QString("Coulnd't parse manga ìnfos."));
+        return Err(QString("Coulnd't parse manga infos."));
     }
 
     return Ok(newchapters);
@@ -306,7 +302,7 @@ Result<QStringList, QString> MangaDex::getPageList(const QString &chapterUrl)
     try
     {
         Document chapterdoc;
-        ParseResult cres = chapterdoc.Parse(job->buffer.data());
+        chapterdoc.Parse(job->buffer.data());
 
         if (getStringSafe(chapterdoc, "result") == "error")
             return Err(QString("Couldn't parse page list."));
