@@ -43,7 +43,7 @@ bool ReadManga::updateMangaList(UpdateProgressToken *token)
         qDebug() << "matches:" << matches;
     };
 
-    DownloadQueue queue(networkManager, urls, CONF.parallelDownloadsHigh, lambda, true);
+    DownloadQueue queue(networkManager, urls, 1, lambda, true);
     queue.setCancellationToken(&token->canceled);
     queue.start();
     if (!queue.awaitCompletion())
