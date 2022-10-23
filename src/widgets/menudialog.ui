@@ -14,6 +14,12 @@
    <string>Dialog</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="leftMargin">
+    <number>9</number>
+   </property>
+   <property name="topMargin">
+    <number>4</number>
+   </property>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <property name="leftMargin">
@@ -25,7 +31,7 @@
         <string>...</string>
        </property>
        <property name="icon">
-        <iconset resource="../resources.qrc">
+        <iconset resource="../../resources.qrc">
          <normaloff>:/images/icons/menu.png</normaloff>:/images/icons/menu.png</iconset>
        </property>
        <property name="iconSize">
@@ -205,7 +211,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="../resources.qrc"/>
+  <include location="../../resources.qrc"/>
  </resources>
  <connections/>
 </ui>
