@@ -179,7 +179,7 @@ Result<MangaChapterCollection, QString> MangaDex::updateMangaInfoFinishedLoading
 
         info->status = getStringSafe(mangaObject, "status");
 
-        if (mangaObject.HasMember("year"))
+        if (mangaObject.HasMember("year") && !mangaObject["year"].IsNull())
             info->releaseYear = QString(mangaObject["year"].GetInt());
 
         info->genres = getStringSafe(mangaObject, "publicationDemographic");
@@ -235,18 +235,20 @@ Result<MangaChapterCollection, QString> MangaDex::updateMangaInfoFinishedLoading
                 for (const auto &r : results)
                 {
                     auto chapterId = getStringSafe(r, "id");
+                    const auto &attributes = r["attributes"];
+                    auto externalUrl = getStringSafe(attributes, "externalUrl");
 
-                    if (chapterId == "")
+                    if (chapterId == "" || externalUrl != "")
                         continue;
 
-                    QString numChapter = getStringSafe(r["attributes"], "chapter");
+                    QString numChapter = getStringSafe(attributes, "chapter");
                     if (numChapter == "")
                         numChapter = "0";
 
                     QString chapterTitle = "Ch. " + numChapter;
 
                     if (!r["attributes"]["title"].IsNull())
-                        chapterTitle += " " + getStringSafe(r["attributes"], "title");
+                        chapterTitle += " " + getStringSafe(attributes, "title");
 
                     MangaChapter mangaChapter(chapterTitle, chapterId);
                     mangaChapter.chapterNumber = padChapterNumber(numChapter);
