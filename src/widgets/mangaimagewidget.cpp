@@ -49,12 +49,12 @@ void MangaImageWidget::showErrorImage()
 
 void MangaImageWidget::mousePressEvent(QMouseEvent *event)
 {
-    lastY = event->y();
+    lastY = event->pos().y();
 }
 
 void MangaImageWidget::mouseReleaseEvent(QMouseEvent *event)
 {
-    lastY = event->y();
+    lastY = event->pos().y();
 #ifdef KOBO
     KoboPlatformFunctions::setFullScreenRefreshMode(WaveForm_GC16);
     this->update();
@@ -63,8 +63,8 @@ void MangaImageWidget::mouseReleaseEvent(QMouseEvent *event)
 
 void MangaImageWidget::mouseMoveEvent(QMouseEvent *event)
 {
-    int deltay = lastY - event->y();
-    lastY = event->y();
+    int deltay = lastY - event->pos().y();
+    lastY = event->pos().y();
     setVOffset(vOffset + 2 * deltay);
 #ifdef KOBO
     KoboPlatformFunctions::setFullScreenRefreshMode(WaveForm_A2);

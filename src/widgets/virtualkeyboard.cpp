@@ -371,7 +371,7 @@ void VirtualKeyboard::translateKey(QKeyEvent* event)
 
 void VirtualKeyboard::mousePressEvent(QMouseEvent* event)
 {
-    VirtualKey* pKey = findKeyByMousePos(event->x(), event->y());
+    VirtualKey* pKey = findKeyByMousePos(event->pos().x(), event->pos().y());
     if (pKey)
     {
         activateKey(pKey, QEvent::KeyPress);

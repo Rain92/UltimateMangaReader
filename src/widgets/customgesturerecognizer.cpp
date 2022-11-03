@@ -41,8 +41,8 @@ QGestureRecognizer::Result SwipeGestureRecognizer::recognize(QGesture *state,
             this->velocityValue = 1;
             this->time.start();
             this->state = State::Started;
-            q->setHotSpot(ev->screenPos());
-            this->startPosition = ev->screenPos().toPoint();
+            q->setHotSpot(ev->globalPos());
+            this->startPosition = ev->globalPos();
             result = QGestureRecognizer::MayBeGesture;
             break;
         }
@@ -66,7 +66,7 @@ QGestureRecognizer::Result SwipeGestureRecognizer::recognize(QGesture *state,
                 result = QGestureRecognizer::CancelGesture;
             else
             {
-                auto mousepos = ev->screenPos().toPoint();
+                auto mousepos = ev->globalPos();
 
                 int xDistance = mousepos.x() - this->startPosition.x();
                 int yDistance = mousepos.y() - this->startPosition.y();
@@ -86,7 +86,7 @@ QGestureRecognizer::Result SwipeGestureRecognizer::recognize(QGesture *state,
                 {
                     // measure the distance to check if the direction changed
 
-                    this->startPosition = ev->screenPos().toPoint();
+                    this->startPosition = ev->globalPos();
                     q->setSwipeAngle(this->swipeAngle);
                     //                qDebug() << this->swipeAngle;
 
@@ -174,7 +174,7 @@ QGestureRecognizer::Result TapGestureRecognizer::recognize(QGesture *state,
     {
         case QEvent::MouseButtonPress:
         {
-            this->position = ev->screenPos();
+            this->position = ev->globalPos();
             q->setHotSpot(this->position);
             timer.start();
             this->pressed = true;
@@ -190,7 +190,7 @@ QGestureRecognizer::Result TapGestureRecognizer::recognize(QGesture *state,
             {
                 this->pressed = false;
                 //            qDebug() << "released!";
-                auto p = ev->screenPos().toPoint();
+                auto p = ev->globalPos();
                 QPoint delta = p - this->position.toPoint();
                 if (delta.manhattanLength() <= TAPRADIUS &&
                     timer.elapsed() < TIMEOUT)

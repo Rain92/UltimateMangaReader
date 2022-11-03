@@ -108,7 +108,7 @@ Result<QString, QString> MangaController::getImageUrl(const MangaIndex &index)
 void MangaController::currentIndexChangedInternal(bool preload)
 {
     emit currentIndexChanged(
-        {currentIndex, currentManga->chapters.count(), currentIndex.currentChapter().pageUrlList.count()});
+        {currentIndex, static_cast<int>(currentManga->chapters.count()), static_cast<int>(currentIndex.currentChapter().pageUrlList.count())});
 
     updateCurrentImage();
 
@@ -210,7 +210,7 @@ void MangaController::preloadPopular()
         return;
 
     if (currentManga->chapters.count() > 1 && currentIndex.chapter != currentManga->chapters.count() - 1)
-        preloadImage({currentManga->chapters.count() - 1, 0});
+        preloadImage({static_cast<int>(currentManga->chapters.count() - 1), 0});
 }
 
 void MangaController::preloadNeighbours()

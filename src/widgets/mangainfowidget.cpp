@@ -156,12 +156,12 @@ void MangaInfoWidget::on_toolButtonAddFavorites_clicked()
 
 void MangaInfoWidget::on_listViewChapters_clicked(const QModelIndex &index)
 {
-    emit readMangaClicked({currentmanga->chapters.count() - 1 - index.row(), 0});
+    emit readMangaClicked({static_cast<int>(currentmanga->chapters.count() - 1 - index.row()), 0});
 }
 
 void MangaInfoWidget::on_pushButtonReadLatest_clicked()
 {
-    emit readMangaClicked({currentmanga->chapters.count() - 1, 0});
+    emit readMangaClicked({static_cast<int>(currentmanga->chapters.count() - 1), 0});
 }
 
 void MangaInfoWidget::on_pushButtonReadContinue_clicked()

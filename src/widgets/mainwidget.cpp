@@ -524,7 +524,7 @@ bool MainWidget::eventFilter(QObject *, QEvent *event)
 
 void MainWidget::on_toolButtonMenu_clicked()
 {
-    menuDialog->move(this->mapToGlobal({0, 0}));
+    menuDialog->move(this->mapToGlobal(QPoint{0, 0}));
     menuDialog->open();
 }
 

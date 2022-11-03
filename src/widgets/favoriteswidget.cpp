@@ -184,7 +184,6 @@ QWidget *FavoritesWidget::makeIconTextWidget(const QString &path, const QString 
     vlayout->addWidget(textlabel);
     vlayout->setContentsMargins(0, 0, 0, 0);
     vlayout->setSpacing(2);
-    vlayout->setMargin(0);
     widget->setLayout(vlayout);
 
     widget->setProperty("ptext", text);

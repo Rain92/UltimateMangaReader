@@ -180,7 +180,7 @@ Result<MangaChapterCollection, QString> MangaDex::updateMangaInfoFinishedLoading
         info->status = getStringSafe(mangaObject, "status");
 
         if (mangaObject.HasMember("year") && !mangaObject["year"].IsNull())
-            info->releaseYear = QString(mangaObject["year"].GetInt());
+            info->releaseYear = QString::number(mangaObject["year"].GetInt());
 
         info->genres = getStringSafe(mangaObject, "publicationDemographic");
 
