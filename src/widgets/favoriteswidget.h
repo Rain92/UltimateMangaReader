@@ -28,6 +28,7 @@ public:
 
 signals:
     void favoriteClicked(QSharedPointer<MangaInfo> fav, bool current);
+    void error(const QString &error);
 
 private slots:
     void on_tableWidget_cellClicked(int row, int column);

@@ -31,7 +31,8 @@ enum ClearDownloadCacheLevel
 {
     ClearImages = 3,
     ClearInfos,
-    ClearAll
+    ClearAll,
+    ClearInvalidFavs
 };
 
 enum MangaOrderMethod

@@ -20,11 +20,13 @@ void ClearCacheDialog::adjustUI()
     ui->pushButtonClear1->setFixedHeight(SIZES.buttonSize);
     ui->pushButtonClear2->setFixedHeight(SIZES.buttonSize);
     ui->pushButtonClear3->setFixedHeight(SIZES.buttonSize);
+    ui->pushButtonClearInvalidFavs->setFixedHeight(SIZES.buttonSize);
 
     ui->pushButtonCancel->setProperty("type", "borderless");
     ui->pushButtonClear1->setProperty("type", "borderless");
     ui->pushButtonClear2->setProperty("type", "borderless");
     ui->pushButtonClear3->setProperty("type", "borderless");
+    ui->pushButtonClearInvalidFavs->setProperty("type", "borderless");
 
     ui->labelTitle->setStyleSheet("font-size: 15pt");
 }
@@ -71,3 +73,11 @@ void ClearCacheDialog::on_pushButtonClear3_clicked()
     emit finished(ClearAll);
     close();
 }
+
+
+void ClearCacheDialog::on_pushButtonClearInvalidFavs_clicked()
+{
+    emit finished(ClearInvalidFavs);
+    close();
+}
+

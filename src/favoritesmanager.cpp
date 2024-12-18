@@ -145,3 +145,18 @@ void FavoritesManager::clearFavorites()
     favorites.clear();
     favoriteinfos.clear();
 }
+
+void FavoritesManager::clearInvalidFavorites()
+{
+    loadInfos();
+
+    for (int i = 0; i < favorites.length(); i++)
+    {
+        if (favoriteinfos[i].isNull())
+        {
+            favorites.removeAt(i);
+            favoriteinfos.removeAt(i);
+        }
+    }
+    serialize();
+}

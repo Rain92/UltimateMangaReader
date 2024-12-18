@@ -181,6 +181,9 @@ MainWidget::MainWidget(QWidget *parent)
                              setWidgetTab(MangaReaderTab);
                      });
 
+    QObject::connect(ui->favoritesWidget, &FavoritesWidget::error, this, &MainWidget::showErrorMessage);
+
+
     // MangaReaderWidget
     ui->mangaReaderWidget->setSettings(&core->settings);
 

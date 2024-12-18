@@ -193,7 +193,22 @@ QWidget *FavoritesWidget::makeIconTextWidget(const QString &path, const QString 
 
 void FavoritesWidget::on_tableWidget_cellClicked(int row, int column)
 {
-    moveFavoriteToFront(row);
+    int actualRow = 0;
+    for (int i = 0; i < row || favoritesManager->favoriteinfos[actualRow].isNull();
+         actualRow++)
+        if(!favoritesManager->favoriteinfos[actualRow].isNull())
+            i++;
+
+
+    if (favoritesManager->favoriteinfos[actualRow].isNull())
+    {
+        emit error("Couldn't load manga!");
+        return;
+    }
+
+    qDebug() << "clicked fav" << row << favoritesManager->favorites[actualRow].title;
+
+    moveFavoriteToFront(actualRow);
 
     emit favoriteClicked(favoritesManager->favoriteinfos.first(), column >= 2);
 }

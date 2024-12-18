@@ -31,6 +31,8 @@ private slots:
 
     void on_pushButtonClear3_clicked();
 
+    void on_pushButtonClearInvalidFavs_clicked();
+
 private:
     Ui::ClearCacheDialog *ui;
 

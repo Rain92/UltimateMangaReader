@@ -24,6 +24,7 @@ public:
     bool loadInfos();
     void serialize();
     void clearFavorites();
+    void clearInvalidFavorites();
     void resetUpdatedStatus();
 
     int findFavorite(const QString &title);
