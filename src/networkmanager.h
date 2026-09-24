@@ -2,6 +2,7 @@
 #define DOWNLOADMANAGER_H
 
 #include <QNetworkReply>
+#include <QPointer>
 
 #include "downloadbufferjob.h"
 #include "downloadfilejob.h"
@@ -54,6 +55,8 @@ private:
 
     QMap<QString, QWeakPointer<DownloadFileJob>> fileDownloads;
     QString fixUrl(const QString &url);
+    QList<std::tuple<const char *, const char *>> applicableCustomHeaders(const QString &url) const;
+    void releaseFileDownload(const QString &url);
 };
 
 #endif  // DOWNLOADMANAGER_H

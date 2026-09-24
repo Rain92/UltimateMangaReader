@@ -46,6 +46,8 @@ void MangaChapterDownloadManager::processNextJob()
 
     emit downloadStart(mangaInfo->title);
 
+    QSet<int> failedChapters;
+
     for (int c = fromChapter; c <= toChapterInclusive && !cancelled; c++)
     {
         // 3 trys
@@ -58,12 +60,12 @@ void MangaChapterDownloadManager::processNextJob()
                 emit downloadPagelistProgress(c + 1 - fromChapter, toChapterInclusive + 1 - fromChapter);
                 break;
             }
-            else if (i > 2)
+            else if (i == 2)
             {
-                cancelled = true;
+                failedChapters.insert(c);
+                // skip chapters that can't be loaded (e.g. removed from the source) but keep going
                 emit error(
-                    QString("Couldn't download pagelst for chapter %1: %2").arg(c + 1).arg(res.unwrapErr()));
-                return;
+                    QString("Couldn't download pagelist for chapter %1: %2").arg(c + 1).arg(res.unwrapErr()));
             }
         }
     }
@@ -72,7 +74,7 @@ void MangaChapterDownloadManager::processNextJob()
     QList<FileDownloadDescriptor> imageDescriptors;
     for (int c = fromChapter; c <= toChapterInclusive && !cancelled; c++)
     {
-        if (!mangaInfo->chapters[c].pagesLoaded)
+        if (failedChapters.contains(c) || !mangaInfo->chapters[c].pagesLoaded)
             continue;
         for (int p = 0; p < mangaInfo->chapters[c].pageUrlList.count() && !cancelled; p++)
         {
@@ -83,8 +85,8 @@ void MangaChapterDownloadManager::processNextJob()
                 {
                     pagesErrors++;
                     emit error(QString("Couldn't download page %1 of chapter %2: %3")
-                                   .arg(c)
-                                   .arg(p)
+                                   .arg(p + 1)
+                                   .arg(c + 1)
                                    .arg(res.unwrapErr()));
                 }
                 else
@@ -109,6 +111,13 @@ void MangaChapterDownloadManager::processNextJob()
         }
     }
     mangaInfo->serialize();
+
+    if (imageDescriptors.isEmpty())
+    {
+        // the queue never emits allCompleted without jobs
+        downloadQueueJobsCompleted();
+        return;
+    }
 
     downloadQueue.appendDownloads(imageDescriptors);
 }

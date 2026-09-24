@@ -10,8 +10,11 @@ class DownloadJobBase : public QObject
 
 protected:
     QNetworkAccessManager *networkManager;
-    QScopedPointer<QNetworkReply> reply;
+    std::unique_ptr<QNetworkReply> reply;
+    QPointer<QNetworkAccessManager> managerGuard;
     QList<std::tuple<const char *, const char *>> customHeaders;
+
+    QNetworkRequest createRequest() const;
 
 signals:
     void completed();
@@ -20,7 +23,7 @@ signals:
 public:
     DownloadJobBase(QNetworkAccessManager *networkManager, const QString &url,
                     const QList<std::tuple<const char *, const char *>> &customHeaders = {});
-    virtual ~DownloadJobBase() = default;
+    virtual ~DownloadJobBase();
 
     QString url;
     QString originalUrl;
@@ -28,6 +31,7 @@ public:
     QString errorString;
 
     QList<QNetworkCookie> getCookies();
+    bool hasFailed() const;
 
     virtual void start() = 0;
     virtual void restart() = 0;

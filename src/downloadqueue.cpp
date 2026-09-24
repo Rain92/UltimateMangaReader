@@ -114,7 +114,7 @@ void DownloadQueue::downloadFinished(QSharedPointer<DownloadJobBase> job, bool s
         clearQuene();
     }
 
-    job->disconnect();
+    job->disconnect(this);
 
     completed++;
     runningJobs--;

@@ -119,6 +119,25 @@ QString NetworkManager::fixUrl(const QString &url)
     return url;
 }
 
+void NetworkManager::releaseFileDownload(const QString &url)
+{
+    // only remove the entry if it wasn't replaced by a newer job for the same url
+    auto it = fileDownloads.find(url);
+    if (it != fileDownloads.end() && it.value().isNull())
+        fileDownloads.erase(it);
+}
+
+QList<std::tuple<const char *, const char *>> NetworkManager::applicableCustomHeaders(const QString &url) const
+{
+    QList<std::tuple<const char *, const char *>> headers;
+
+    for (const auto &[domain, name, value] : qAsConst(customHeaders))
+        if (url.contains(domain))
+            headers.append(std::tuple<const char *, const char *>(name, value));
+
+    return headers;
+}
+
 QSharedPointer<DownloadStringJob> NetworkManager::downloadAsString(const QString &url, int timeout,
                                                                    const QByteArray &postData)
 {
@@ -127,7 +146,8 @@ QSharedPointer<DownloadStringJob> NetworkManager::downloadAsString(const QString
     qDebug() << "Downloading as string:" << urlf;
 
     auto job = QSharedPointer<DownloadStringJob>(
-        new DownloadStringJob(networkManager, urlf, timeout, postData), &QObject::deleteLater);
+        new DownloadStringJob(networkManager, urlf, timeout, postData, applicableCustomHeaders(urlf)),
+        &QObject::deleteLater);
 
     job->start();
 
@@ -143,7 +163,8 @@ QSharedPointer<DownloadBufferJob> NetworkManager::downloadToBuffer(const QString
     qDebug() << "Downloading to buffer:" << urlf;
 
     auto job = QSharedPointer<DownloadBufferJob>(
-        new DownloadBufferJob(networkManager, urlf, timeout, postData), &QObject::deleteLater);
+        new DownloadBufferJob(networkManager, urlf, timeout, postData, applicableCustomHeaders(urlf)),
+        &QObject::deleteLater);
 
     job->start();
 
@@ -158,7 +179,8 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsFile(const QString &ur
     if (fileDownloads.contains(urlf))
     {
         auto job = fileDownloads.value(urlf).toStrongRef();
-        if (job)
+        // don't hand out failed jobs, start a new download instead
+        if (job && !job->hasFailed())
             return job;
         else
             fileDownloads.remove(urlf);
@@ -166,17 +188,13 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsFile(const QString &ur
 
     qDebug() << "Downloading as file:" << urlf;
 
-    QList<std::tuple<const char *, const char *>> applicableCustomHeaders;
-
-    for (const auto &[domain, name, value] : qAsConst(customHeaders))
-        if (urlf.contains(domain))
-            applicableCustomHeaders.append(std::tuple<const char *, const char *>(name, value));
-
+    QPointer<NetworkManager> self(this);
     auto job = QSharedPointer<DownloadFileJob>(
-        new DownloadFileJob(networkManager, urlf, localPath, applicableCustomHeaders),
-        [this](DownloadFileJob *j)
+        new DownloadFileJob(networkManager, urlf, localPath, applicableCustomHeaders(urlf)),
+        [self](DownloadFileJob *j)
         {
-            this->fileDownloads.remove(j->originalUrl);
+            if (self)
+                self->releaseFileDownload(j->originalUrl);
             j->deleteLater();
         });
 
@@ -214,7 +232,8 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const QStr
     if (fileDownloads.contains(urlf))
     {
         auto job = qSharedPointerCast<DownloadScaledImageJob>(fileDownloads.value(urlf).toStrongRef());
-        if (job)
+        // don't hand out failed jobs, start a new download instead
+        if (job && !job->hasFailed())
             return job;
         else
             fileDownloads.remove(urlf);
@@ -222,18 +241,14 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const QStr
 
     qDebug() << "Downloading as image:" << urlf;
 
-    QList<std::tuple<const char *, const char *>> applicableCustomHeaders;
-
-    for (const auto &[domain, name, value] : qAsConst(customHeaders))
-        if (urlf.contains(domain))
-            applicableCustomHeaders.append(std::tuple<const char *, const char *>(name, value));
-
+    QPointer<NetworkManager> self(this);
     auto job = QSharedPointer<DownloadFileJob>(
         new DownloadScaledImageJob(networkManager, urlf, localPath, imageRescaleSize, settings,
-                                   applicableCustomHeaders, ed),
-        [this](DownloadScaledImageJob *j)
+                                   applicableCustomHeaders(urlf), ed),
+        [self](DownloadScaledImageJob *j)
         {
-            this->fileDownloads.remove(j->originalUrl);
+            if (self)
+                self->releaseFileDownload(j->originalUrl);
             j->deleteLater();
         });
 
@@ -242,14 +257,23 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const QStr
     fileDownloads.insert(urlf, job.toWeakRef());
 
     emit activity();
+
+    if (job->isCompleted || job->errorString != "")
+        return job;
+
+    // keep the job alive until it finished, even if the caller drops it
     auto sjob = qSharedPointerCast<DownloadScaledImageJob>(job);
+    auto keepAlive = QSharedPointer<QSharedPointer<DownloadScaledImageJob>>::create(sjob);
     connect(sjob.get(), &DownloadScaledImageJob::completed, this,
-            [sjob, this]() mutable
+            [keepAlive, this]()
             {
-                if (sjob->resultImage)
-                    emit downloadedImage(sjob->filepath, {sjob->resultImage});
-                sjob.clear();
+                auto j = *keepAlive;
+                keepAlive->clear();
+                if (j && j->resultImage)
+                    emit downloadedImage(j->filepath, {j->resultImage});
             });
+    connect(sjob.get(), &DownloadJobBase::downloadError, this, [keepAlive]() { keepAlive->clear(); });
+
     return job;
 }
 
@@ -263,7 +287,7 @@ void NetworkManager::addCookie(const QString &domain, const char *key, const cha
 {
     QNetworkCookie c = QNetworkCookie(QByteArray(key), QByteArray(value));
     c.setDomain(domain);
-    c.setExpirationDate(QDateTime::currentDateTime().addDays(1));
+    c.setExpirationDate(QDateTime::currentDateTime().addYears(10));
 
     networkManager->cookieJar()->insertCookie(c);
 }

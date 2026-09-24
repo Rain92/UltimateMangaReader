@@ -80,8 +80,9 @@ QString MangaInfo::coverThumbnailPath() const
     if (coverPath == "" || coverPath.length() < 4)
         return "";
 
-    QString scpath = coverPath;
-    scpath.insert(scpath.length() - 4, "_scaled");
+    // thumbnails are saved as jpg unless the cover is a png
+    QFileInfo coverInfo(coverPath);
+    QString filetype = coverInfo.suffix().toLower() == "png" ? ".png" : ".jpg";
 
-    return scpath;
+    return coverInfo.path() + "/" + coverInfo.completeBaseName() + "_scaled" + filetype;
 }

@@ -24,10 +24,9 @@ void DownloadFileJob::start()
     {
         if (file.open(QIODevice::WriteOnly | QIODevice::Truncate))
         {
-            QNetworkRequest request(url);
-
-            for (const auto &[name, value] : qAsConst(customHeaders))
-                request.setRawHeader(name, value);
+            QNetworkRequest request = createRequest();
+            // abort stalled downloads, otherwise a DownloadQueue waits forever
+            request.setTransferTimeout(20000);
 
             reply.reset(networkManager->get(request));
             //            reply->setParent(nullptr);
@@ -36,7 +35,6 @@ void DownloadFileJob::start()
                              &DownloadFileJob::downloadFileReadyRead);
             QObject::connect(reply.get(), &QNetworkReply::finished, this,
                              &DownloadFileJob::downloadFileFinished);
-            QObject::connect(reply.get(), &QNetworkReply::errorOccurred, this, &DownloadFileJob::onError);
             QObject::connect(reply.get(), &QNetworkReply::sslErrors, this, &DownloadJobBase::onSslErrors);
         }
         else
@@ -117,10 +115,11 @@ bool DownloadFileJob::await(int timeout)
 
     awaitSignal(this, {SIGNAL(completed()), SIGNAL(downloadError())}, timeout);
 
-    if (errorString != "" || errorString.contains("Protocol"))
-        return false;
-    else if (!isCompleted)
+    if (isCompleted)
+        return true;
+
+    if (errorString == "")
         errorString = "Download timeout.";
 
-    return isCompleted;
+    return false;
 }

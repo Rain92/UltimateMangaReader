@@ -50,8 +50,13 @@ Result<void, QString> MangaController::assurePagesLoaded()
     if (currentIndex.chapter >= currentManga->chapters.count() || currentIndex.chapter < 0)
         currentIndex.chapter = qMax(0, currentManga->chapters.count() - 1);
 
-    if (!currentIndex.currentChapter().pagesLoaded ||
-        currentIndex.currentChapter().imageUrlList[currentIndex.page] == "")
+    auto &chapter = currentIndex.currentChapter();
+    bool pageOnDisk = chapter.pagesLoaded && currentIndex.page < chapter.imageUrlList.count() &&
+                      QFile::exists(currentManga->mangaSource->getImagePath(DownloadImageDescriptor(
+                          "", currentManga->title, currentIndex.chapter, currentIndex.page)));
+
+    if (!pageOnDisk && (!chapter.pagesLoaded || currentIndex.page >= chapter.imageUrlList.count() ||
+                        chapter.imageUrlList[currentIndex.page] == ""))
     {
         auto res = currentManga->mangaSource->updatePageList(currentManga, currentIndex.chapter);
 
@@ -122,6 +127,15 @@ void MangaController::currentIndexChangedInternal(bool preload)
 
 void MangaController::updateCurrentImage()
 {
+    // already downloaded pages don't need an image url (which might need a network request)
+    auto cachedPath = currentManga->mangaSource->getImagePath(
+        DownloadImageDescriptor("", currentManga->title, currentIndex.chapter, currentIndex.page));
+    if (QFile::exists(cachedPath))
+    {
+        emit currentImageChanged(cachedPath);
+        return;
+    }
+
     auto imageUrl = getImageUrl(currentIndex);
 
     if (!imageUrl.isOk())
@@ -185,6 +199,11 @@ void MangaController::advanceMangaPage(PageTurnDirection direction)
 
 void MangaController::preloadImage(const MangaIndex &index)
 {
+    auto cachedPath = currentManga->mangaSource->getImagePath(
+        DownloadImageDescriptor("", currentManga->title, index.chapter, index.page));
+    if (QFile::exists(cachedPath))
+        return;
+
     auto imageUrl = getImageUrl(index);
 
     if (!imageUrl.isOk())

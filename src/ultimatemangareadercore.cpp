@@ -20,9 +20,10 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
     settings.deserialize();
 
     mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaDex(networkManager)));
-    mangaSources.append(QSharedPointer<AbstractMangaSource>(new ReadManga(networkManager)));
     mangaSources.append(QSharedPointer<AbstractMangaSource>(new Mangakakalot(networkManager)));
     mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaTown(networkManager)));
+    mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaHere(networkManager)));
+    mangaSources.append(QSharedPointer<AbstractMangaSource>(new Comick(networkManager)));
     mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaPlus(networkManager)));
 
     currentMangaSource = mangaSources.first().get();

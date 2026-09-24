@@ -5,16 +5,17 @@
 DownloadBufferJob::DownloadBufferJob(QNetworkAccessManager *networkManager, const QString &url, int timeout,
                                      const QByteArray &postdata,
                                      const QList<std::tuple<const char *, const char *> > &customHeaders)
-    : DownloadJobBase(networkManager, url, customHeaders), timeoutTime(timeout), postData(postdata), buffer()
+    : DownloadJobBase(networkManager, url, customHeaders),
+      timeoutTime(timeout),
+      postData(postdata),
+      buffer(),
+      httpStatus(0)
 {
 }
 
 void DownloadBufferJob::start()
 {
-    QNetworkRequest request(url);
-
-    for (const auto &[name, value] : qAsConst(customHeaders))
-        request.setRawHeader(name, value);
+    QNetworkRequest request = createRequest();
 
     if (postData.isEmpty())
     {
@@ -33,7 +34,8 @@ void DownloadBufferJob::start()
 
     if (timeoutTime > 0)
     {
-        QObject::connect(&timeoutTimer, &QTimer::timeout, this, &DownloadBufferJob::timeout);
+        QObject::connect(&timeoutTimer, &QTimer::timeout, this, &DownloadBufferJob::timeout,
+                         Qt::UniqueConnection);
         timeoutTimer.start(timeoutTime);
     }
 }
@@ -42,6 +44,7 @@ void DownloadBufferJob::restart()
 {
     isCompleted = false;
     errorString = "";
+    httpStatus = 0;
     buffer.clear();
 
     start();
@@ -93,6 +96,8 @@ void DownloadBufferJob::onError(QNetworkReply::NetworkError)
 {
     timeoutTimer.stop();
 
+    httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+
     if (errorString == "")
         errorString = "Download error: " + reply->errorString();
 
@@ -102,9 +107,12 @@ void DownloadBufferJob::onError(QNetworkReply::NetworkError)
 
 void DownloadBufferJob::timeout()
 {
+    timeoutTimer.stop();
     errorString = "Download error: timeout";
     reply.get()->disconnect();
     reply->abort();
+
+    emit downloadError();
 }
 
 bool DownloadBufferJob::await(int timeout, bool retry, int maxRetries)
@@ -122,7 +130,10 @@ bool DownloadBufferJob::await(int timeout, bool retry, int maxRetries)
     int rem = timeout - time.elapsed();
     if (errorString != "")
     {
-        if (!retry || errorString.contains("Protocol"))
+        // client errors won't go away by retrying right away
+        bool clientError = httpStatus >= 400 && httpStatus < 500 && httpStatus != 408 && httpStatus != 429;
+
+        if (!retry || clientError || errorString.contains("Protocol"))
             return false;
 
         if (rem > 0 && maxRetries > 0)

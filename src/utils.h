@@ -81,7 +81,7 @@ private:
             lambda();
         if (lambda2)
             lambda2(job);
-        job.get()->disconnect();
+        job.get()->disconnect(this);
         job.clear();
         deleteLater();
     }

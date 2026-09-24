@@ -19,6 +19,7 @@ protected:
 
 public:
     QByteArray buffer;
+    int httpStatus;
 
     DownloadBufferJob(QNetworkAccessManager *networkManager, const QString &url, int timeout = 6000,
                       const QByteArray &postData = QByteArray(),

@@ -2,7 +2,6 @@
     <qresource prefix="/">
         <file>eink.qss</file>
         <file>images/mangahostlogos/mangadex.png</file>
-        <file>images/mangahostlogos/mangapanda.png</file>
         <file>images/icons/darker.png</file>
         <file>images/icons/lighter.png</file>
         <file>images/icons/moon.png</file>
@@ -10,13 +9,10 @@
         <file>images/icons/favourite-star.png</file>
         <file>images/icons/favourite-star-full.png</file>
         <file>images/icons/backspace.png</file>
-        <file>images/mangahostlogos/jaiminisbox.png</file>
         <file>images/icons/batterycharging.png</file>
         <file>images/mangahostlogos/mangakakalot.png</file>
         <file>images/icons/batteryempty.png</file>
         <file>images/icons/batteryfull.png</file>
-        <file>images/mangahostlogos/mangahub.png</file>
-        <file>images/mangahostlogos/mangaowl.png</file>
         <file>images/icons/keyboardicons.svg</file>
         <file>images/icons/home.png</file>
         <file>images/icons/wifi.png</file>
@@ -30,8 +26,7 @@
         <file>images/mangahostlogos/mangatown.png</file>
         <file>images/icons/ultimatemangareader.png</file>
         <file>images/icons/file-error.png</file>
-        <file>images/mangahostlogos/mangago.png</file>
         <file>images/mangahostlogos/mangaplus.png</file>
-        <file>images/mangahostlogos/readmanga.png</file>
+        <file>images/mangahostlogos/comick.png</file>
     </qresource>
 </RCC>

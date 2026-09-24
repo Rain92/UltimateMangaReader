@@ -61,6 +61,7 @@ public:
 
 protected:
     QByteArray mangaInfoPostDataStr;
+    int mangaInfoTimeout;
 
     NetworkManager *networkManager;
     QTextDocument htmlConverter;
@@ -68,6 +69,7 @@ protected:
     void removeChapterPages(QSharedPointer<MangaInfo> info, QList<QPair<int, int>> moveMapping);
     void reorderChapterPages(QSharedPointer<MangaInfo> info, QList<QPair<int, int>> moveMapping);
 
+    QString defaultCoverPath(QSharedPointer<MangaInfo> mangainfo);
     bool generateCoverThumbnail(QSharedPointer<MangaInfo> mangainfo);
     void fillMangaInfo(QSharedPointer<MangaInfo> info, const QString &buffer,
                        const QRegularExpression &authorrx, const QRegularExpression &artistrx,

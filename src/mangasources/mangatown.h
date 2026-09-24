@@ -18,6 +18,8 @@ public:
 
 private:
     QString dictionaryUrl;
+
+    QString licensedMessage(const QString &buffer);
 };
 
 #endif  // MANGATOWN_H
