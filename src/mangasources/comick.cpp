@@ -614,43 +614,48 @@ void Comick::updateMangaInfoAsync(QSharedPointer<MangaInfo> info, bool updateCov
 
 bool Comick::updateMangaList(UpdateProgressToken *token)
 {
-    MangaList mangas;
-    mangas.absoluteUrls = false;
-    QSet<QString> urls;
+    // a retry continues with the sitemaps the failed attempt didn't get
+    auto &state = token->resumeState<ComickUpdateState>();
+    state.mangas.absoluteUrls = false;
 
-    token->sendProgress(0);
+    token->sendProgress(token->sourcesProgress.value(name));
 
     QElapsedTimer timer;
     timer.start();
 
     // the most popular and the newest titles come from the search api (real titles),
     // the rest of the catalogue from the sitemaps (only slugs)
-    if (!fetchSearch("user_follow_count", popularPages, mangas, urls, token, 0, 18))
-        qDebug() << "Comick: popular titles incomplete:" << mangas.size;
-
-    if (!token->canceled && !fetchSearch("created_at", latestPages, mangas, urls, token, 18, 20))
-        qDebug() << "Comick: newest titles incomplete:" << mangas.size;
-
-    if (token->canceled)
+    if (!state.searched)
     {
-        token->sendError(QString("Download cancelled"));
-        return false;
+        if (!fetchSearch("user_follow_count", popularPages, state.mangas, state.urls, token, 0, 18))
+            qDebug() << "Comick: popular titles incomplete:" << state.mangas.size;
+
+        if (!token->canceled && !fetchSearch("created_at", latestPages, state.mangas, state.urls, token, 18, 20))
+            qDebug() << "Comick: newest titles incomplete:" << state.mangas.size;
+
+        if (token->canceled)
+        {
+            token->sendError(QString("Download cancelled"));
+            return false;
+        }
+
+        state.searched = true;
     }
 
-    if (!fetchSitemaps(mangas, urls, token))
+    if (!fetchSitemaps(state, token))
     {
         // keep the partial list if there is nothing better (first update), the error is shown anyway
-        if (mangas.size > this->mangaList.size)
+        if (state.mangas.size > this->mangaList.size)
         {
-            qDebug() << "Comick: keeping partial manga list:" << mangas.size;
-            this->mangaList = mangas;
+            qDebug() << "Comick: keeping partial manga list:" << state.mangas.size;
+            this->mangaList = state.mangas;
         }
         return false;
     }
 
-    this->mangaList = mangas;
+    this->mangaList = state.mangas;
 
-    qDebug() << "mangas:" << mangas.size << "time:" << timer.elapsed();
+    qDebug() << "mangas:" << state.mangas.size << "time:" << timer.elapsed();
 
     token->sendProgress(100);
 
@@ -716,7 +721,7 @@ bool Comick::fetchSearch(const QString &order, int pages, MangaList &mangas, QSe
     return true;
 }
 
-bool Comick::fetchSitemaps(MangaList &mangas, QSet<QString> &urls, UpdateProgressToken *token)
+bool Comick::fetchSitemaps(ComickUpdateState &state, UpdateProgressToken *token)
 {
     QRegularExpression sitemaprx(R"lit(<loc>\s*([^<\s]*/sitemap-comic-(\d+)\.xml)\s*</loc>)lit");
 
@@ -738,10 +743,12 @@ bool Comick::fetchSitemaps(MangaList &mangas, QSet<QString> &urls, UpdateProgres
         return false;
     }
 
-    int done = 0;
-    for (const auto &sitemapUrl : std::as_const(sitemaps))
+    for (auto it = sitemaps.cbegin(); it != sitemaps.cend(); ++it)
     {
-        auto job = networkManager->downloadToBuffer(sitemapUrl, 30000);
+        if (state.sitemapsDone.contains(it.key()))
+            continue;
+
+        auto job = networkManager->downloadToBuffer(it.value(), 30000);
 
         if (!job->await(30000))
         {
@@ -770,17 +777,18 @@ bool Comick::fetchSitemaps(MangaList &mangas, QSet<QString> &urls, UpdateProgres
                 auto slug = decodeXmlEntities(QString::fromUtf8(buffer.mid(spos, epos - spos)).trimmed());
                 auto url = "/comic/" + slug;
 
-                if (!slug.isEmpty() && !slug.contains('/') && !urls.contains(url))
+                if (!slug.isEmpty() && !slug.contains('/') && !state.urls.contains(url))
                 {
-                    urls.insert(url);
-                    mangas.append(titleFromSlug(slug), url);
+                    state.urls.insert(url);
+                    state.mangas.append(titleFromSlug(slug), url);
                 }
             }
 
             pos = epos;
         }
 
-        token->sendProgress(20 + 80 * ++done / sitemaps.size());
+        state.sitemapsDone.insert(it.key());
+        token->sendProgress(qMin(99, 20 + 80 * state.sitemapsDone.size() / sitemaps.size()));
     }
 
     return true;

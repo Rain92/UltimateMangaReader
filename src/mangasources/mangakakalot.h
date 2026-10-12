@@ -6,6 +6,16 @@
 #include "abstractmangasource.h"
 #include "mangainfo.h"
 
+// What an update of the manga list got done so far, see UpdateProgressToken::resumeState().
+struct MangakakalotUpdateState
+{
+    bool popularDone = false;
+    // slug, title
+    QList<QPair<QString, QString>> popular;
+    // by sitemap url
+    QHash<QString, QStringList> sitemapSlugs;
+};
+
 class Mangakakalot : public AbstractMangaSource
 {
 public:

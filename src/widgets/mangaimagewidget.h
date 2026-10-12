@@ -35,6 +35,9 @@ protected:
     virtual void mouseMoveEvent(QMouseEvent *event) override;
 
 private:
+    QSize displaySize(const QImage &img, QSize deviceSize, bool *tall = nullptr) const;
+    QSize deviceSize() const;
+
     int lastY;
     int vOffset;
     bool showError;

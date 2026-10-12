@@ -12,9 +12,14 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
       mangaChapterDownloadManager(new MangaChapterDownloadManager(networkManager, this)),
       suspendManager(new SuspendManager(networkManager, this)),
       settings(),
+      standbyManager(new StandbyManager(&settings, suspendManager, networkManager,
+                                        mangaChapterDownloadManager, this)),
       timer(),
+      clockAlignTimer(),
       autoSuspendTimer(),
-      currentDay(QDate::currentDate().day())
+      autoSuspendStart(0),
+      currentDay(QDate::currentDate().day()),
+      updatingMangaLists(false)
 {
     setupDirectories();
     settings.deserialize();
@@ -36,46 +41,96 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
     timer.setInterval(CONF.globalTickIntervalSeconds * 1000);
     connect(&timer, &QTimer::timeout, this, &UltimateMangaReaderCore::timerTick);
 
+    clockAlignTimer.setSingleShot(true);
+    connect(&clockAlignTimer, &QTimer::timeout, this,
+            [this]()
+            {
+                timer.start();
+                timerTick();
+            });
+
     // auto suspend
     connect(networkManager, &NetworkManager::activity, this, &UltimateMangaReaderCore::activity);
     connect(mangaController, &MangaController::activity, this, &UltimateMangaReaderCore::activity);
 
-    autoSuspendTimer.setInterval(CONF.autoSuspendIntervalMinutes * 60 * 1000);
+    autoSuspendTimer.setSingleShot(true);
     connect(&autoSuspendTimer, &QTimer::timeout,
             [this]()
             {
                 //                qDebug() << "Auto Suspend!";
                 suspendManager->suspend();
             });
+
+    // standby
+    standbyManager->setWakeDeadline([this]() { return msUntilAutoSuspend(); });
+    connect(standbyManager, &StandbyManager::resumed, this, &UltimateMangaReaderCore::resumedFromStandby);
 }
 
 void UltimateMangaReaderCore::enableTimers(bool enabled)
 {
-    if (enabled == timer.isActive())
+    if (enabled == (timer.isActive() || clockAlignTimer.isActive()))
         return;
 
     if (enabled)
     {
-        autoSuspendTimer.start();
-        timerTick();
-        QTimer::singleShot(1000 * 60 - QTime::currentTime().second() * 1000 - QTime::currentTime().msec(),
-                           this,
-                           [this]()
-                           {
-                               timer.start();
-                               timerTick();
-                           });
+        restartAutoSuspend();
+        alignClock();
     }
     else
     {
         autoSuspendTimer.stop();
+        clockAlignTimer.stop();
         timer.stop();
+    }
+}
+
+// Ticks now and restarts the minute tick at the next full minute.
+void UltimateMangaReaderCore::alignClock()
+{
+    timer.stop();
+    timerTick();
+    QTime now = QTime::currentTime();
+    clockAlignTimer.start(1000 * 60 - now.second() * 1000 - now.msec());
+}
+
+void UltimateMangaReaderCore::restartAutoSuspend()
+{
+    autoSuspendStart = StandbyManager::bootTimeMs();
+    autoSuspendTimer.start(CONF.autoSuspendIntervalMinutes * 60 * 1000);
+}
+
+qint64 UltimateMangaReaderCore::msUntilAutoSuspend() const
+{
+    if (!autoSuspendTimer.isActive())
+        return -1;
+
+    qint64 elapsed = StandbyManager::bootTimeMs() - autoSuspendStart;
+    return qMax<qint64>(0, CONF.autoSuspendIntervalMinutes * 60 * 1000 - elapsed);
+}
+
+// QTimers stood still while suspended, catch them up with the time that passed.
+void UltimateMangaReaderCore::resumedFromStandby()
+{
+    if (!autoSuspendTimer.isActive())
+        return;
+
+    qint64 remaining = msUntilAutoSuspend();
+    if (remaining > 0)
+    {
+        autoSuspendTimer.start(remaining);
+        alignClock();
+    }
+    else
+    {
+        autoSuspendTimer.stop();
+        QTimer::singleShot(0, suspendManager, [this]() { suspendManager->suspend(); });
     }
 }
 
 void UltimateMangaReaderCore::activity()
 {
-    autoSuspendTimer.start();
+    restartAutoSuspend();
+    standbyManager->postpone();
 }
 
 void UltimateMangaReaderCore::timerTick()
@@ -177,27 +232,47 @@ void UltimateMangaReaderCore::clearDownloadCache(ClearDownloadCacheLevel level)
 
 void UltimateMangaReaderCore::updateMangaLists(QSharedPointer<UpdateProgressToken> progressToken)
 {
+    // the updates run event loops, a cancelled one might still be waiting for its last download
+    if (updatingMangaLists)
+    {
+        progressToken->sendError("The previous update is still stopping, please try again.");
+        return;
+    }
+    updatingMangaLists = true;
+    standbyManager->setInhibited(true);
+
+    bool ok = true;
     for (const auto& name : progressToken->sourcesProgress.keys())
     {
         if (progressToken->sourcesProgress[name] == 100)
             continue;
 
-        progressToken->currentSourceName = name;
-        auto ms = activeMangaSources[name];
-        if (ms->updateMangaList(progressToken.get()))
-        {
-            ms->mangaList.filter();
-            ms->serializeMangaList();
-        }
-        else
-        {
-            sortMangaLists();
-            return;
-        }
-    }
-    progressToken->sendFinished();
+        // it might have been disabled meanwhile
+        auto ms = activeMangaSources.value(name);
+        if (!ms)
+            continue;
 
-    sortMangaLists();
+        progressToken->currentSourceName = name;
+        if (!ms->updateMangaList(progressToken.get()))
+        {
+            ok = false;
+            break;
+        }
+
+        // only the updated lists, writing all of them takes a while on the device
+        ms->mangaList.filter();
+        ms->mangaList.sortBy(settings.mangaOrder);
+        ms->serializeMangaList();
+        progressToken->clearResumeState();
+    }
+
+    updatingMangaLists = false;
+    standbyManager->setInhibited(false);
+
+    if (ok)
+        progressToken->sendFinished();
+
+    emit currentMangaSourceChanged(this->currentMangaSource);
 }
 
 void UltimateMangaReaderCore::sortMangaLists()

@@ -8,6 +8,9 @@ kobo {
 
     INCLUDEPATH += $$KOBO_PLATFORM_PLUGIN_PATH/src
 
+    # clock_gettime lives in librt in the Kobo toolchain's glibc 2.15
+    LIBS += -lrt
+
     target.path = /mnt/onboard/.adds/UltimateMangaReader
     INSTALLS += target
 }
@@ -15,7 +18,7 @@ else { # default is desktop
     DEFINES  += DESKTOP
 }
 
-QT    += core gui widgets network svg
+QT    += core gui widgets network svg concurrent
 CONFIG += c++17
 QMAKE_LFLAGS += -rdynamic
 
@@ -88,6 +91,7 @@ HEADERS += \
     src/sizes.h \
     src/stacktrace.h \
     src/staticsettings.h \
+    src/standbymanager.h \
     src/suspendmanager.h \
     src/trimrect.h \
     src/ultimatemangareadercore.h \
@@ -153,6 +157,7 @@ SOURCES += \
     src/networkmanager.cpp \
     src/readingprogress.cpp \
     src/settings.cpp \
+    src/standbymanager.cpp \
     src/suspendmanager.cpp \
     src/trimrect.cpp \
     src/ultimatemangareadercore.cpp \

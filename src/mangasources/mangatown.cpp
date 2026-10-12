@@ -61,38 +61,46 @@ bool MangaTown::updateMangaList(UpdateProgressToken *token)
     const int estimatedPages = qMax(800, (mangaList.size + matchesPerPage - 1) / matchesPerPage);
     const int maxPages = 3 * estimatedPages;
 
+    // a retry continues with the pages the failed attempt didn't get
+    auto &state = token->resumeState<MangaTownUpdateState>();
+    state.mangas.absoluteUrls = false;
+
+    token->sendProgress(token->sourcesProgress.value(name));
+
+    // parallel to state.queuedPages
     QList<QSharedPointer<DownloadStringJob>> jobs;
-    int nextPage = 1;
-    auto requestNextPage = [&]()
+    auto requestPage = [&](const QString &url)
     {
-        if (nextPage > maxPages)
-            return;
-        auto url = QString("%1%2.htm?name.az").arg(dictionaryUrl).arg(nextPage++);
+        state.queuedPages.append(url);
         jobs.append(networkManager->downloadAsString(url, 30000));
     };
+    auto requestNextPage = [&]()
+    {
+        if (state.nextPage > maxPages)
+            return;
+        requestPage(QString("%1%2.htm?name.az").arg(dictionaryUrl).arg(state.nextPage++));
+    };
 
-    for (int i = 0; i < parallelDownloads; i++)
-        requestNextPage();
+    auto queuedPages = state.queuedPages;
+    state.queuedPages.clear();
+    for (const auto &url : std::as_const(queuedPages))
+        requestPage(url);
+
+    if (state.nextPage == 1)
+        for (int i = 0; i < parallelDownloads; i++)
+            requestNextPage();
 
     QElapsedTimer timer;
     timer.start();
 
-    MangaList mangas;
-    mangas.absoluteUrls = false;
-    QSet<QString> urls;
-    QList<qint64> views;
-
-    // short pages are the end of the directory, unless a full page follows them
-    QStringList shortPages;
-    QSet<QString> refetchedPages;
-
-    for (int page = 1; !jobs.isEmpty(); page++)
+    while (!jobs.isEmpty())
     {
-        auto job = jobs.takeFirst();
+        auto job = jobs.first();
 
         if (!job->isCompleted && job->errorString != "")
             job->restart();
 
+        // the page stays queued for a retry
         if (!job->await(30000))
         {
             token->sendError(job->errorString);
@@ -105,45 +113,55 @@ bool MangaTown::updateMangaList(UpdateProgressToken *token)
             return false;
         }
 
-        int oldSize = mangas.size;
+        jobs.removeFirst();
+        auto pageUrl = state.queuedPages.takeFirst();
+
+        int oldSize = state.mangas.size;
         auto matches = getAllRxMatches(mangarx, job->bufferStr);
         for (int i = 0; i < matches.size(); i++)
         {
             auto url = matches[i].captured(1);
-            if (urls.contains(url))
+            if (state.urls.contains(url))
                 continue;
-            urls.insert(url);
+            state.urls.insert(url);
 
             int epos = i + 1 < matches.size() ? matches[i + 1].capturedStart() : job->bufferStr.length();
             auto viewsmatch = viewsrx.match(job->bufferStr, matches[i].capturedEnd());
             bool hasViews = viewsmatch.hasMatch() && viewsmatch.capturedStart() < epos;
 
-            mangas.append(htmlToPlainText(matches[i].captured(2)).trimmed(), url);
-            views.append(hasViews ? viewsmatch.captured(1).toLongLong() : 0);
+            // the html converter is slow and only a few titles have entities. It collapses whitespace like
+            // simplified(), titles are the keys of the cache and must stay the same
+            auto title = matches[i].captured(2);
+            title = title.contains('&') ? htmlToPlainText(title).trimmed() : title.simplified();
+
+            state.mangas.append(title, url);
+            state.views.append(hasViews ? viewsmatch.captured(1).toLongLong() : 0);
         }
 
-        if (matches.size() >= matchesPerPage && mangas.size > oldSize)
+        if (matches.size() >= matchesPerPage && state.mangas.size > oldSize)
         {
             requestNextPage();
 
             // the short pages before this one weren't the end: fetch them once more
-            for (const auto &url : std::as_const(shortPages))
+            for (const auto &url : std::as_const(state.shortPages))
             {
-                refetchedPages.insert(url);
-                jobs.append(networkManager->downloadAsString(url, 30000));
+                state.refetchedPages.insert(url);
+                requestPage(url);
             }
-            shortPages.clear();
+            state.shortPages.clear();
         }
         else
         {
-            qDebug() << "Incomplete page:" << job->originalUrl << matches.size() << mangas.size - oldSize;
-            if (!refetchedPages.contains(job->originalUrl))
-                shortPages.append(job->originalUrl);
+            qDebug() << "Incomplete page:" << pageUrl << matches.size() << state.mangas.size - oldSize;
+            if (!state.refetchedPages.contains(pageUrl))
+                state.shortPages.append(pageUrl);
         }
 
-        token->sendProgress(qMin(99, 10 + 90 * page / estimatedPages));
+        state.processedPages++;
+        token->sendProgress(qMin(99, 10 + 90 * state.processedPages / estimatedPages));
     }
 
+    auto &mangas = state.mangas;
     if (mangas.size == 0)
     {
         token->sendError(QString("Couldn't parse manga list."));
@@ -153,14 +171,15 @@ bool MangaTown::updateMangaList(UpdateProgressToken *token)
     QVector<int> order(mangas.size);
     for (int i = 0; i < mangas.size; i++)
         order[i] = i;
+    const auto &views = state.views;
     std::stable_sort(order.begin(), order.end(), [&views](int a, int b) { return views[a] > views[b]; });
     for (int rank = 0; rank < mangas.size; rank++)
         mangas.popularityRanks[order[rank]] = rank;
 
     this->mangaList = mangas;
 
-    qDebug() << "pages:" << nextPage - 1 << "refetched:" << refetchedPages.size() << "mangas:" << mangas.size
-             << "time:" << timer.elapsed();
+    qDebug() << "pages:" << state.nextPage - 1 << "refetched:" << state.refetchedPages.size()
+             << "mangas:" << mangas.size << "time:" << timer.elapsed();
 
     token->sendProgress(100);
 

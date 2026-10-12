@@ -172,6 +172,9 @@ bool Mangakakalot::updateMangaList(UpdateProgressToken *token)
     QElapsedTimer timer;
     timer.start();
 
+    // a retry only loads the sitemaps the failed attempt didn't get
+    auto &state = token->resumeState<MangakakalotUpdateState>();
+
     auto job = networkManager->downloadAsString(sitemapUrl);
 
     if (!job->await(7000))
@@ -225,7 +228,9 @@ bool Mangakakalot::updateMangaList(UpdateProgressToken *token)
         orderedSlugs.append(slug);
     };
 
-    for (int page = 1; page <= 2 && !token->canceled; page++)
+    if (!state.popularDone)
+        state.popular.clear();
+    for (int page = 1; page <= 2 && !state.popularDone && !token->canceled; page++)
     {
         auto popularJob = networkManager->downloadAsString(popularUrl.arg(page));
         if (!popularJob->await(5000, false))
@@ -235,46 +240,50 @@ bool Mangakakalot::updateMangaList(UpdateProgressToken *token)
         }
 
         for (auto &match : getAllRxMatches(popularrx, popularJob->bufferStr))
-        {
-            auto slug = match.captured(1);
-            auto title = htmlToPlainText(match.captured(2)).trimmed();
-            if (!title.isEmpty() && !knownTitles.contains(slug))
-                knownTitles.insert(slug, title);
-            addSlug(slug);
-        }
+            state.popular.append({match.captured(1), htmlToPlainText(match.captured(2)).trimmed()});
+    }
+    // a failed page only degrades the popularity order
+    state.popularDone = !token->canceled;
+
+    for (const auto &[slug, title] : std::as_const(state.popular))
+    {
+        if (!title.isEmpty() && !knownTitles.contains(slug))
+            knownTitles.insert(slug, title);
+        addSlug(slug);
     }
 
     token->sendProgress(10);
 
-    QVector<QStringList> sitemapSlugs(sitemapUrls.size());
-    int completed = 0;
+    QStringList missingSitemaps;
+    for (const auto &url : std::as_const(sitemapUrls))
+        if (!state.sitemapSlugs.contains(url))
+            missingSitemaps.append(url);
+
     auto lambda = [&](QSharedPointer<DownloadStringJob> job)
     {
-        int index = sitemapUrls.indexOf(job->originalUrl);
-        if (index < 0)
+        if (!sitemapUrls.contains(job->originalUrl))
             return;
 
+        auto &slugs = state.sitemapSlugs[job->originalUrl];
         for (auto &match : getAllRxMatches(slugrx, job->bufferStr))
-            sitemapSlugs[index].append(match.captured(1));
+            slugs.append(match.captured(1));
 
-        completed++;
-        token->sendProgress(10 + 85 * completed / sitemapUrls.size());
-        qDebug() << "sitemap" << index + 1 << "matches:" << sitemapSlugs[index].size();
+        token->sendProgress(10 + 85 * state.sitemapSlugs.size() / sitemapUrls.size());
+        qDebug() << "sitemap" << job->originalUrl << "matches:" << slugs.size();
     };
 
-    DownloadQueue queue(networkManager, sitemapUrls, 2, lambda, true, 60000);
+    DownloadQueue queue(networkManager, missingSitemaps, 2, lambda, true, 60000);
     queue.setCancellationToken(&token->canceled);
     queue.start();
-    if (!queue.awaitCompletion())
+    if (!missingSitemaps.isEmpty() && !queue.awaitCompletion())
     {
         token->sendError(queue.lastErrorMessage);
         return false;
     }
 
-    for (const auto &list : std::as_const(sitemapSlugs))
-        for (const auto &slug : list)
+    for (const auto &url : std::as_const(sitemapUrls))
+        for (const auto &slug : state.sitemapSlugs.value(url))
             addSlug(slug);
-    sitemapSlugs.clear();
 
     // titles are the key of the manga cache and of the favorites, so every entry needs a unique
     // title that stays the same on the next update: known titles are assigned first. the site has

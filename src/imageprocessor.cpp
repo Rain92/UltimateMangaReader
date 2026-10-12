@@ -44,7 +44,8 @@ QImage processDownloadedImage(const ImageProcessingRequest &request)
     return pimg;
 }
 
-ImageProcessor::ImageProcessor(QObject *parent) : QObject(parent), thread(), worker(), nextId(0)
+ImageProcessor::ImageProcessor(QObject *parent)
+    : QObject(parent), thread(), worker(), nextId(0), pending(0)
 {
     thread.setObjectName("imageprocessor");
     worker.moveToThread(&thread);
@@ -68,6 +69,7 @@ ImageProcessor::~ImageProcessor()
 quint64 ImageProcessor::process(const ImageProcessingRequest &request)
 {
     const quint64 id = ++nextId;
+    pending.ref();
 
     QMetaObject::invokeMethod(
         &worker,
@@ -75,8 +77,14 @@ quint64 ImageProcessor::process(const ImageProcessingRequest &request)
         {
             QImage image = processDownloadedImage(request);
             emit finished(id, image);
+            pending.deref();
         },
         Qt::QueuedConnection);
 
     return id;
+}
+
+bool ImageProcessor::isBusy() const
+{
+    return pending.loadRelaxed() > 0;
 }

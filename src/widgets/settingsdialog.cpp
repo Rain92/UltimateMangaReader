@@ -46,6 +46,7 @@ void SettingsDialog::resetUI()
 {
     internalChange = true;
     ui->checkBoxHideErrorMessages->setChecked(settings->hideErrorMessages);
+    ui->checkBoxStandby->setChecked(settings->standbyWhenIdle);
 
     ui->comboBoxDoublePageMode->setCurrentIndex(settings->doublePageMode);
     ui->checkBoxTrim->setChecked(settings->trimPages);
@@ -80,6 +81,7 @@ void SettingsDialog::updateSettings()
         return;
 
     settings->hideErrorMessages = ui->checkBoxHideErrorMessages->isChecked();
+    settings->standbyWhenIdle = ui->checkBoxStandby->isChecked();
 
     settings->doublePageMode = static_cast<DoublePageMode>(ui->comboBoxDoublePageMode->currentIndex());
     settings->trimPages = ui->checkBoxTrim->isChecked();

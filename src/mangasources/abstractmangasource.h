@@ -43,6 +43,8 @@ public:
 
     Result<QSharedPointer<MangaInfo>, QString> loadMangaInfo(const QString &mangaUrl,
                                                              const QString &mangatitle, bool update = true);
+    // The cached info, without downloading anything. If there is none it only has its title and url.
+    QSharedPointer<MangaInfo> loadCachedMangaInfo(const QString &mangaUrl, const QString &mangaTitle);
 
     bool serializeMangaList();
     bool deserializeMangaList();
@@ -50,8 +52,6 @@ public:
     QString getImagePath(const DownloadImageDescriptor &descriptor);
 
     QSharedPointer<DownloadFileJob> downloadImage(const DownloadImageDescriptor &descriptor);
-
-    Result<QString, QString> downloadAwaitImage(const DownloadImageDescriptor &descriptor);
 
     QString htmlToPlainText(const QString &str);
 
@@ -70,7 +70,6 @@ protected:
     void reorderChapterPages(QSharedPointer<MangaInfo> info, QList<QPair<int, int>> moveMapping);
 
     QString defaultCoverPath(QSharedPointer<MangaInfo> mangainfo);
-    bool generateCoverThumbnail(QSharedPointer<MangaInfo> mangainfo);
     void fillMangaInfo(QSharedPointer<MangaInfo> info, const QString &buffer,
                        const QRegularExpression &authorrx, const QRegularExpression &artistrx,
                        const QRegularExpression &statusrx, const QRegularExpression &yearrx,

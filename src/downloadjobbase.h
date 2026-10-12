@@ -33,6 +33,11 @@ public:
     QList<QNetworkCookie> getCookies();
     bool hasFailed() const;
 
+    // Counts reply as active until it finished or got destroyed.
+    static void trackReply(QNetworkReply *reply);
+    // Number of tracked network replies that are still running.
+    static int activeReplies();
+
     virtual void start() = 0;
     virtual void restart() = 0;
     virtual void onSslErrors(const QList<QSslError> &);

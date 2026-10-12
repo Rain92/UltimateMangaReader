@@ -79,6 +79,7 @@ private:
     void setupVirtualKeyboard();
     void setupFrontLight();
     void adjustUI();
+    void updatePageSize();
     void disableFrontLight();
 
     void updateDitheringMode();

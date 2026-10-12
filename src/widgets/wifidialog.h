@@ -2,7 +2,6 @@
 #define WIFIDIALOG_H
 
 #include <QDialog>
-#include <QtConcurrent/QtConcurrent>
 
 #include "networkmanager.h"
 
@@ -19,7 +18,9 @@ public:
     explicit WifiDialog(QWidget* parent, NetworkManager* networkManager);
     ~WifiDialog();
 
-    void connect();
+    // Connects in the background, the dialog only shows up when that fails. With showProgress it shows up
+    // right away (when the user asked for the connection).
+    void connect(bool showProgress = false);
 
 private slots:
     void on_pushButtonRetry_clicked();
@@ -29,7 +30,8 @@ private slots:
 private:
     Ui::WifiDialog* ui;
     NetworkManager* networkManager;
-    QFuture<void> lastConnection;
+
+    void connectFinished(bool connected);
 };
 
 #endif  // WIFIDIALOG_H

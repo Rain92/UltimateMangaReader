@@ -128,30 +128,38 @@ bool MangaHere::updateMangaList(UpdateProgressToken *token)
     QElapsedTimer timer;
     timer.start();
 
-    token->sendProgress(0);
+    // a retry only loads the list itself again
+    auto &state = token->resumeState<MangaHereUpdateState>();
+
+    token->sendProgress(state.popularDone ? 10 : 0);
 
     auto job = networkManager->downloadAsString(mangaListUrl, 180000);
 
-    QList<QString> urls;
-    for (int i = 1; i <= popularPages; i++)
-        urls.append(dictionaryUrl + QString::number(i) + ".htm");
-
-    QVector<QList<QPair<QString, QString>>> popular(popularPages);
-    auto lambda = [&](QSharedPointer<DownloadStringJob> pjob)
+    if (!state.popularDone)
     {
-        int i = urls.indexOf(pjob->originalUrl);
-        if (i < 0)
-            return;
+        QList<QString> urls;
+        for (int i = 1; i <= popularPages; i++)
+            urls.append(dictionaryUrl + QString::number(i) + ".htm");
 
-        for (auto &match : getAllRxMatches(popularrx, pjob->bufferStr))
-            popular[i].append({match.captured(2), match.captured(1)});
-    };
+        state.popular.fill({}, popularPages);
+        auto lambda = [&](QSharedPointer<DownloadStringJob> pjob)
+        {
+            int i = urls.indexOf(pjob->originalUrl);
+            if (i < 0)
+                return;
 
-    // failed pages only degrade the popularity order
-    DownloadQueue queue(networkManager, urls, CONF.parallelDownloadsLow, lambda, false);
-    queue.setCancellationToken(&token->canceled);
-    queue.start();
-    queue.awaitCompletion();
+            for (auto &match : getAllRxMatches(popularrx, pjob->bufferStr))
+                state.popular[i].append({match.captured(2), match.captured(1)});
+        };
+
+        // failed pages only degrade the popularity order
+        DownloadQueue queue(networkManager, urls, CONF.parallelDownloadsLow, lambda, false);
+        queue.setCancellationToken(&token->canceled);
+        queue.start();
+        queue.awaitCompletion();
+
+        state.popularDone = !token->canceled;
+    }
 
     token->sendProgress(10);
 
@@ -196,7 +204,7 @@ bool MangaHere::updateMangaList(UpdateProgressToken *token)
         mangas.append(title.trimmed(), url);
     };
 
-    for (const auto &page : std::as_const(popular))
+    for (const auto &page : std::as_const(state.popular))
         for (const auto &entry : page)
             addManga(entry.first, entry.second);
     int popularCount = mangas.size;

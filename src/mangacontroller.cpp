@@ -4,10 +4,16 @@ MangaController::MangaController(NetworkManager *networkManager, QObject *parent
     : QObject(parent),
       currentIndex(nullptr, 0, 0),
       networkManager(networkManager),
-      preloadQueue(networkManager, {}, 1, false)
+      preloadQueue(networkManager, {}, 1, false),
+      clock(),
+      failedDownloads()
 {
+    clock.start();
+
     QObject::connect(&preloadQueue, &DownloadQueue::singleDownloadCompleted, this,
                      &MangaController::completedImagePreload);
+    QObject::connect(&preloadQueue, &DownloadQueue::singleDownloadFailed, this,
+                     [this](const QString &url) { failedDownloads.insert(url, clock.elapsed()); });
 }
 
 void MangaController::setCurrentManga(QSharedPointer<MangaInfo> mangaInfo)
@@ -148,17 +154,47 @@ void MangaController::updateCurrentImage()
     auto dd = DownloadImageDescriptor(imageUrl.unwrap(), currentManga->title, currentIndex.chapter,
                                       currentIndex.page);
 
-    auto imagePath = currentManga->mangaSource->downloadAwaitImage(dd);
+    // a running preload of the page is reused
+    auto job = currentManga->mangaSource->downloadImage(dd);
 
-    if (imagePath.isOk())
+    if (job->isCompleted)
     {
-        emit currentImageChanged(imagePath.unwrap());
+        emit currentImageChanged(job->filepath);
+        return;
     }
-    else
+
+    if (job->hasFailed())
     {
         emit currentImageChanged("error");
-        emit error(imagePath.unwrapErr());
+        emit error(job->errorString);
+        return;
     }
+
+    // The page is shown when it's done, the previous one stays until then. Waiting for it with a timeout
+    // showed the error page whenever downloading and processing took longer (the download went on
+    // regardless). The network manager keeps the job alive until it finished, the connections end with it.
+    auto manga = currentManga;
+    MangaIndex index(currentIndex.chapter, currentIndex.page);
+    auto isCurrent = [this, manga, index]()
+    { return currentManga == manga && currentIndex.chapter == index.chapter && currentIndex.page == index.page; };
+
+    DownloadFileJob *pageJob = job.get();
+    QObject::connect(pageJob, &DownloadJobBase::completed, this,
+                     [this, pageJob, isCurrent]()
+                     {
+                         if (isCurrent())
+                             emit currentImageChanged(pageJob->filepath);
+                     });
+    QObject::connect(pageJob, &DownloadJobBase::downloadError, this,
+                     [this, pageJob, isCurrent]()
+                     {
+                         failedDownloads.insert(pageJob->originalUrl, clock.elapsed());
+                         if (isCurrent())
+                         {
+                             emit currentImageChanged("error");
+                             emit error(pageJob->errorString);
+                         }
+                     });
 }
 
 void MangaController::advanceMangaPage(PageTurnDirection direction)
@@ -218,6 +254,15 @@ void MangaController::preloadImage(const MangaIndex &index)
     if (QFile::exists(path))
         return;
 
+    // it shows up when the running download is done, a queued one would start over if it failed
+    if (networkManager->isDownloading(imageUrl.unwrap()))
+        return;
+
+    const qint64 skipFailedMs = 2 * 60 * 1000;
+    auto failed = failedDownloads.constFind(networkManager->downloadUrl(imageUrl.unwrap()));
+    if (failed != failedDownloads.constEnd() && clock.elapsed() - failed.value() < skipFailedMs)
+        return;
+
     //    qDebug() << "preload page" << index.page;
 
     preloadQueue.appendDownload(FileDownloadDescriptor(imageUrl.unwrap(), path));
@@ -236,6 +281,9 @@ void MangaController::preloadNeighbours()
 {
     int forward = CONF.forwardPreloads;
     int backward = CONF.backwardPreloads;
+
+    // the pages queued at the previous page turns (which might be behind by now), a running one goes on
+    preloadQueue.clearQuene();
 
     MangaIndexTraverser forwardindex(currentIndex);
     MangaIndexTraverser backwardindex(currentIndex);
@@ -258,7 +306,7 @@ void MangaController::preloadNeighbours()
 
         if (i < backward)
         {
-            auto res = forwardindex.decrement();
+            auto res = backwardindex.decrement();
             if (res.isOk())
             {
                 if (res.unwrap())

@@ -27,6 +27,7 @@ public:
     explicit MangaChapterDownloadManager(NetworkManager *networkManager, QObject *parent = nullptr);
 
     void cancelDownloads();
+    bool isRunning() const { return running; }
     void downloadMangaChapters(QSharedPointer<MangaInfo> mangaInfo, int fromChapter, int toChapterInclusive);
 
 signals:

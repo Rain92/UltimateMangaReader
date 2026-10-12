@@ -9,6 +9,7 @@ class DownloadFileJob : public DownloadJobBase
 
 protected:
     QFile file;
+    int retries;
 
     virtual void downloadFileReadyRead();
     virtual void downloadFileFinished();

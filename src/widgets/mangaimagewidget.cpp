@@ -30,7 +30,8 @@ void MangaImageWidget::setVOffset(int y)
     if (!image || image.isNull())
         return;
 
-    auto newvOffset = qMax(qMin(y, (int)(image->height() / qApp->devicePixelRatio()) - this->height()), 0);
+    int height = displaySize(*image, deviceSize()).height();
+    auto newvOffset = qMax(qMin(y, (int)(height / devicePixelRatioF()) - this->height()), 0);
 
     if (newvOffset != vOffset)
     {
@@ -95,15 +96,50 @@ void MangaImageWidget::paintEvent(QPaintEvent *)
     // Cancelling the high dpi scaling of the painter lets the raster engine blit the image instead of
     // resampling every pixel through its generic (and for a fractional scale lossy) transform path.
     const qreal pixelRatio = painter.device()->devicePixelRatioF();
-    const int deviceWidth = qRound(this->width() * pixelRatio);
-    const int deviceHeight = qRound(this->height() * pixelRatio);
+    const QSize device(qRound(this->width() * pixelRatio), qRound(this->height() * pixelRatio));
 
-    int x = (deviceWidth - img->width()) / 2;
-    int y = (deviceHeight - img->height()) / 2;
+    bool tall = false;
+    const QSize size = displaySize(*img, device, &tall);
 
-    if (img->height() > deviceHeight * 1.1)
-        y = -qRound(vOffset * pixelRatio);
+    int x = (device.width() - size.width()) / 2;
+    int y = tall ? -qRound(vOffset * pixelRatio) : (device.height() - size.height()) / 2;
 
     painter.setWorldTransform(QTransform::fromScale(1.0 / pixelRatio, 1.0 / pixelRatio));
-    painter.drawImage(QPoint(x, y), *img);
+    if (size == img->size())
+    {
+        painter.drawImage(QPoint(x, y), *img);
+    }
+    else
+    {
+        painter.setRenderHint(QPainter::SmoothPixmapTransform);
+        painter.drawImage(QRect(QPoint(x, y), size), *img);
+    }
+}
+
+QSize MangaImageWidget::deviceSize() const
+{
+    return QSize(qRound(this->width() * devicePixelRatioF()), qRound(this->height() * devicePixelRatioF()));
+}
+
+// The size a page is shown at, in device pixels. Pages that were rendered for a larger window (on the desktop,
+// e.g. before the window was resized) are scaled down to fit. tall: the page is scrolled vertically.
+QSize MangaImageWidget::displaySize(const QImage &img, QSize device, bool *tall) const
+{
+    // calcRescaleSize() rounds the width up to a multiple of 4, those pages are still blitted
+    const int tolerance = 4;
+
+    QSize size = img.size();
+    bool isTall = size.height() > device.height() * 1.1;
+
+    if (size.width() > device.width() + tolerance || (!isTall && size.height() > device.height() + tolerance))
+    {
+        // like the manhwa mode of calcRescaleSize()
+        isTall = (double)size.height() / size.width() > 1.6 * device.height() / device.width();
+        size = isTall ? size.scaled(device.width(), INT_MAX, Qt::KeepAspectRatio)
+                      : size.scaled(device, Qt::KeepAspectRatio);
+    }
+
+    if (tall)
+        *tall = isTall;
+    return size;
 }

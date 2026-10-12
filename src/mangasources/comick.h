@@ -12,6 +12,15 @@
 
 #include "thirdparty/rapidjson.h"
 
+// What an update of the manga list got done so far, see UpdateProgressToken::resumeState().
+struct ComickUpdateState
+{
+    MangaList mangas;
+    QSet<QString> urls;
+    bool searched = false;
+    QSet<int> sitemapsDone;
+};
+
 class Comick : public AbstractMangaSource
 {
 public:
@@ -38,7 +47,7 @@ private:
     QString normalizeUrl(const QString &url) const;
     bool fetchSearch(const QString &order, int pages, MangaList &mangas, QSet<QString> &urls,
                      UpdateProgressToken *token, int progressFrom, int progressTo);
-    bool fetchSitemaps(MangaList &mangas, QSet<QString> &urls, UpdateProgressToken *token);
+    bool fetchSitemaps(ComickUpdateState &state, UpdateProgressToken *token);
     Result<MangaChapterCollection, QString> fetchChapters(const QString &slug,
                                                           const MangaChapterCollection &current);
 };

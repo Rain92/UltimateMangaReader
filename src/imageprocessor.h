@@ -1,6 +1,7 @@
 #ifndef IMAGEPROCESSOR_H
 #define IMAGEPROCESSOR_H
 
+#include <QAtomicInt>
 #include <QByteArray>
 #include <QImage>
 #include <QObject>
@@ -52,6 +53,9 @@ public:
     // Returns the id finished() will report the result with.
     quint64 process(const ImageProcessingRequest &request);
 
+    // True while requests are queued or being processed.
+    bool isBusy() const;
+
 signals:
     void finished(quint64 id, const QImage &image);
 
@@ -59,6 +63,7 @@ private:
     QThread thread;
     QObject worker;
     quint64 nextId;
+    QAtomicInt pending;
 };
 
 #endif  // IMAGEPROCESSOR_H

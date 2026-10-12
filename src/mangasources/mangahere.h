@@ -4,6 +4,14 @@
 #include "abstractmangasource.h"
 #include "mangainfo.h"
 
+// What an update of the manga list got done so far, see UpdateProgressToken::resumeState().
+struct MangaHereUpdateState
+{
+    bool popularDone = false;
+    // title, url of each popular page
+    QVector<QList<QPair<QString, QString>>> popular;
+};
+
 class MangaHere : public AbstractMangaSource
 {
 public:

@@ -123,12 +123,10 @@ void UpdateMangaListsDialog::on_pushButtonOk_clicked()
     while ((item = ui->frameMangaScources->layout()->itemAt(i++)) != nullptr)
     {
         auto *checkbox = dynamic_cast<QCheckBox *>(item->widget());
-        if (checkbox != nullptr)
-        {
-            if (checkbox->isChecked() && !(progressToken->sourcesProgress.contains(checkbox->text()) &&
-                                           progressToken->sourcesProgress[checkbox->text()] == 100))
-                progressToken->sourcesProgress.insert(checkbox->text(), 0);
-        }
+        // a retry continues where the sources stopped (the token keeps what they got done)
+        if (checkbox != nullptr && checkbox->isChecked() &&
+            !progressToken->sourcesProgress.contains(checkbox->text()))
+            progressToken->sourcesProgress.insert(checkbox->text(), 0);
     }
 
     if (progressToken->sourcesProgress.count() == 0)

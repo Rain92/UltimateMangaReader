@@ -3,6 +3,9 @@
 
 #include <QNetworkReply>
 #include <QPointer>
+#include <QThread>
+
+#include <atomic>
 
 #include "downloadbufferjob.h"
 #include "downloadfilejob.h"
@@ -17,6 +20,7 @@ class NetworkManager : public QObject
 
 public:
     explicit NetworkManager(QObject *parent = nullptr);
+    ~NetworkManager();
 
     QNetworkAccessManager *networkAccessManager();
 
@@ -32,17 +36,34 @@ public:
     void addCookie(const QString &domain, const char *key, const char *value);
     void addSetCustomRequestHeader(const QString &domain, const char *key, const char *value);
 
+    // Blocks for up to 2 s when there is no connection.
     bool checkInternetConnection();
-    bool connectWifi();
+
+    // True while downloads are running or downloaded images are being processed.
+    bool isBusy() const;
+
+    // Connects on the WiFi thread, the WiFi scripts take seconds (half a minute without a DHCP answer).
+    // Emits wifiConnectFinished when done.
+    void connectWifiAsync();
+    bool isConnectingWifi() const;
+    // Waits for a connect that is still running, which would bring the WiFi up again.
     bool disconnectWifi();
+
+    // The url a download of url is known by (without a decryption key, with a scheme).
+    QString downloadUrl(const QString &url) const;
+    // A download of the file is running (or waiting for a retry).
+    bool isDownloading(const QString &url) const;
 
     static void loadCertificates(const QString &certsPath);
     bool urlExists(const QString &url);
 
-    bool connected;
+    // written on the WiFi thread
+    std::atomic<bool> connected;
 
 signals:
+    // emitted on the WiFi thread
     void connectionStatusChanged(bool connected);
+    void wifiConnectFinished(bool connected);
     void activity();
     void downloadedImage(const QString &path, QSharedPointer<QImage> img);
 
@@ -56,7 +77,15 @@ private:
     QList<std::tuple<QString, const char *, const char *>> customHeaders;
 
     QMap<QString, QWeakPointer<DownloadFileJob>> fileDownloads;
-    QString fixUrl(const QString &url);
+
+    // The WiFi scripts always run on the same thread, the platform plugin runs them with a QProcess that
+    // belongs to the thread that used it first.
+    QThread wifiThread;
+    QObject *wifiWorker;
+    std::atomic<bool> connectingWifi;
+
+    bool connectWifi();
+    QString fixUrl(const QString &url) const;
     QList<std::tuple<const char *, const char *>> applicableCustomHeaders(const QString &url) const;
     void releaseFileDownload(const QString &url);
 };

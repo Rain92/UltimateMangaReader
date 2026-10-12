@@ -4,6 +4,21 @@
 #include "abstractmangasource.h"
 #include "mangainfo.h"
 
+// What an update of the manga list got done so far, see UpdateProgressToken::resumeState().
+struct MangaTownUpdateState
+{
+    MangaList mangas;
+    QSet<QString> urls;
+    QList<qint64> views;
+    int nextPage = 1;
+    // requested but not processed yet, in order
+    QStringList queuedPages;
+    // short pages are the end of the directory, unless a full page follows them
+    QStringList shortPages;
+    QSet<QString> refetchedPages;
+    int processedPages = 0;
+};
+
 class MangaTown : public AbstractMangaSource
 {
 public:

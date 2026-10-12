@@ -55,6 +55,11 @@ private:
     void serializeProgress();
     NetworkManager *networkManager;
     DownloadQueue preloadQueue;
+
+    // Pages that are missing on the server would be requested again (with retries) on every page turn and
+    // hold up the preloads behind them: they are skipped for a while. Opening them still tries.
+    QElapsedTimer clock;
+    QHash<QString, qint64> failedDownloads;
 };
 
 #endif  // MANGACONTROLLER_H

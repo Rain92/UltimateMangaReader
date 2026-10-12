@@ -27,6 +27,7 @@ void DownloadBufferJob::start()
         reply.reset(networkManager->post(request, postData));
     }
     //    reply->setParent(nullptr);
+    trackReply(reply.get());
 
     QObject::connect(reply.get(), &QNetworkReply::finished, this, &DownloadBufferJob::downloadFinished);
     QObject::connect(reply.get(), &QNetworkReply::errorOccurred, this, &DownloadBufferJob::onError);
@@ -109,7 +110,8 @@ void DownloadBufferJob::timeout()
 {
     timeoutTimer.stop();
     errorString = "Download error: timeout";
-    reply.get()->disconnect();
+    // only the job's own handlers: the abort finishes the reply, which releases its activity count
+    reply->disconnect(this);
     reply->abort();
 
     emit downloadError();

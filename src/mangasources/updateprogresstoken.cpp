@@ -1,7 +1,7 @@
 #include "updateprogresstoken.h"
 
 UpdateProgressToken::UpdateProgressToken()
-    : QObject(), currentSourceName(), sourcesProgress(), canceled(false)
+    : QObject(), currentSourceName(), sourcesProgress(), canceled(false), resumeStates()
 {
 }
 
@@ -19,4 +19,9 @@ void UpdateProgressToken::sendError(const QString& message)
 void UpdateProgressToken::sendFinished()
 {
     emit updateFinished();
+}
+
+void UpdateProgressToken::clearResumeState()
+{
+    resumeStates.remove(currentSourceName);
 }

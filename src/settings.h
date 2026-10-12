@@ -32,6 +32,7 @@ public:
     bool trimPages;
     bool manhwaMode;
     DitheringMode ditheringMode;
+    bool standbyWhenIdle;
 
     QMap<QString, bool> enabledMangaSources;
 

@@ -31,6 +31,8 @@ public:
     const int forwardPreloads = 3;
     const int backwardPreloads = 1;
     const int autoSuspendIntervalMinutes = 15;
+    // idle time before the device goes into standby (when enabled in the settings)
+    const int standbyDelaySeconds = 3;
     const int globalTickIntervalSeconds = 60;
     // every cache file uses the same format, so Qt 5 and Qt 6 builds can share a cache
     const QDataStream::Version dataStreamVersion = QDataStream::Qt_5_15;

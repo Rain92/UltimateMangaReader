@@ -342,8 +342,11 @@ bool MangaDex::downloadThrottled(const QStringList &urls, UpdateProgressToken *t
                                  const std::function<bool(int, QSharedPointer<DownloadStringJob>)> &handler)
 {
     // the api allows about 5 requests per second. Its edge servers reject a random part of the
-    // list requests (5-20%) at once with "400 Bad Request", retrying right away almost always works.
+    // list requests at once with "400 Bad Request", retrying right away almost always works.
     // Only slow down when a request fails again, e.g. when the edge rejects most requests for a while.
+    // The edge throttles sustained crawls that way: after a minute or so 30-40% get rejected and about one
+    // page per second gets through, no matter how many requests run at once (measured 2026-10). More only
+    // adds rejected requests.
     const int maxParallel = 2;
     const int minRequestIntervalMs = 350;
     const int maxRequestIntervalMs = 4000;
@@ -361,7 +364,10 @@ bool MangaDex::downloadThrottled(const QStringList &urls, UpdateProgressToken *t
 
     QVector<int> retries(urls.size(), 0);
     QVector<qint64> retryAt(urls.size(), 0);
-    QQueue<QPair<int, QSharedPointer<DownloadStringJob>>> running;
+    QList<QPair<int, QSharedPointer<DownloadStringJob>>> running;
+
+    auto isDone = [](const QSharedPointer<DownloadStringJob> &job)
+    { return job->isCompleted || !job->errorString.isEmpty(); };
 
     while (!pending.isEmpty() || !running.isEmpty())
     {
@@ -369,6 +375,36 @@ bool MangaDex::downloadThrottled(const QStringList &urls, UpdateProgressToken *t
         {
             token->sendError("Download cancelled");
             return false;
+        }
+
+        // the finished ones, in whatever order they finished
+        auto done = std::find_if(running.begin(), running.end(), [&](const auto &r) { return isDone(r.second); });
+        if (done != running.end())
+        {
+            auto [i, job] = *done;
+            running.erase(done);
+
+            if (job->isCompleted && handler(i, job))
+            {
+                apiRequestIntervalMs = apiRequestIntervalMs * 2 / 3;
+                continue;
+            }
+
+            auto error = job->errorString.isEmpty() ? QString("Couldn't parse manga list.") : job->errorString;
+            if (retries[i]++ >= maxRetries)
+            {
+                token->sendError(error);
+                return false;
+            }
+
+            qDebug() << "MangaDex: retrying" << urls[i] << error;
+            if (retries[i] > 1)
+            {
+                apiRequestIntervalMs = apiRequestIntervalMs * 3 / 2;
+                retryAt[i] = clock.elapsed() + qMin(1000 << (retries[i] - 1), 15000);
+            }
+            pending.prepend(i);
+            continue;
         }
 
         auto next = std::find_if(pending.begin(), pending.end(),
@@ -387,7 +423,7 @@ bool MangaDex::downloadThrottled(const QStringList &urls, UpdateProgressToken *t
             apiRequestTimer.start();
             apiRequestCount++;
 
-            running.enqueue({i, networkManager->downloadAsString(urls[i], timeoutMs)});
+            running.append({i, networkManager->downloadAsString(urls[i], timeoutMs)});
             continue;
         }
 
@@ -401,53 +437,33 @@ bool MangaDex::downloadThrottled(const QStringList &urls, UpdateProgressToken *t
             continue;
         }
 
-        // not job->await: it would stop the timeout of the job and block until it finished
-        auto [i, job] = running.head();
-        if (!job->isCompleted && job->errorString.isEmpty())
+        // until any of the running ones finished. Not job->await: it would stop the timeout of the job
+        // and block until it finished
+        QEventLoop loop;
+        for (const auto &r : std::as_const(running))
         {
-            awaitSignal(job.get(), {SIGNAL(completed()), SIGNAL(downloadError())}, stepMs);
-            continue;
+            QObject::connect(r.second.get(), &DownloadJobBase::completed, &loop, &QEventLoop::quit);
+            QObject::connect(r.second.get(), &DownloadJobBase::downloadError, &loop, &QEventLoop::quit);
         }
-        running.dequeue();
-
-        if (job->isCompleted && handler(i, job))
-        {
-            apiRequestIntervalMs = apiRequestIntervalMs * 2 / 3;
-            continue;
-        }
-
-        auto error = job->errorString.isEmpty() ? QString("Couldn't parse manga list.") : job->errorString;
-        if (retries[i]++ >= maxRetries)
-        {
-            token->sendError(error);
-            return false;
-        }
-
-        qDebug() << "MangaDex: retrying" << urls[i] << error;
-        if (retries[i] > 1)
-        {
-            apiRequestIntervalMs = apiRequestIntervalMs * 3 / 2;
-            retryAt[i] = clock.elapsed() + qMin(1000 << (retries[i] - 1), 15000);
-        }
-        pending.prepend(i);
+        QTimer::singleShot(stepMs, &loop, &QEventLoop::quit);
+        loop.exec();
     }
 
     return true;
 }
 
-bool MangaDex::crawlMangaWindow(const QString &query, int maxResults, MangaList &mangas,
-                                QSet<QString> &mangaIds, UpdateProgressToken *token, int &total,
-                                QString &lastCreatedAt, const std::function<void(int)> &progress)
+bool MangaDex::crawlMangaWindow(const QString &query, int maxResults, MangaDexUpdateState &state,
+                                UpdateProgressToken *token)
 {
     const int limit = 100;
+    // offset + limit must not exceed 10000
+    const int numPopular = 2000;
 
-    QVector<QList<QPair<QString, QString>>> pages;
-    int firstPage = 0;
-    total = 0;
+    QList<int> requestedPages;
 
     auto handler = [&](int i, QSharedPointer<DownloadStringJob> job) -> bool
     {
-        int page = firstPage + i;
+        int page = requestedPages[i];
         try
         {
             Document doc;
@@ -458,7 +474,7 @@ bool MangaDex::crawlMangaWindow(const QString &query, int maxResults, MangaList 
                 return false;
 
             if (page == 0 && doc.HasMember("total") && doc["total"].IsInt())
-                total = doc["total"].GetInt();
+                state.total = doc["total"].GetInt();
 
             QList<QPair<QString, QString>> entries;
             for (const auto &r : doc["data"].GetArray())
@@ -471,15 +487,19 @@ bool MangaDex::crawlMangaWindow(const QString &query, int maxResults, MangaList 
                 entries.append({id, getMangaTitle(attributes)});
 
                 auto createdAt = getStringSafe(attributes, "createdAt");
-                if (createdAt > lastCreatedAt)
-                    lastCreatedAt = createdAt;
+                if (createdAt > state.lastCreatedAt)
+                    state.lastCreatedAt = createdAt;
             }
 
-            if (page >= pages.size())
-                pages.resize(page + 1);
-            pages[page] = entries;
+            state.pages.insert(page, entries);
 
-            progress(entries.size());
+            // the first page of the popular titles has the size of the whole catalogue
+            if (state.catalogueSize == 0)
+                state.catalogueSize = state.total;
+            state.processed += entries.size();
+            int expected = state.catalogueSize + qMin(state.catalogueSize, numPopular);
+            if (expected > 0)
+                token->sendProgress(qBound(0, 100 * state.processed / expected, 99));
         }
         catch (QException &)
         {
@@ -488,37 +508,47 @@ bool MangaDex::crawlMangaWindow(const QString &query, int maxResults, MangaList 
         return true;
     };
 
-    if (!downloadThrottled({query.arg(0)}, token, handler))
-        return false;
+    // the pages a failed attempt got are kept
+    if (!state.pages.contains(0))
+    {
+        requestedPages = {0};
+        if (!downloadThrottled({query.arg(0)}, token, handler))
+            return false;
+    }
 
-    int numPages = (qMin(total, maxResults) + limit - 1) / limit;
+    int numPages = (qMin(state.total, maxResults) + limit - 1) / limit;
 
+    requestedPages.clear();
     QStringList urls;
     for (int p = 1; p < numPages; p++)
-        urls.append(query.arg(p * limit));
+        if (!state.pages.contains(p))
+        {
+            requestedPages.append(p);
+            urls.append(query.arg(p * limit));
+        }
 
-    firstPage = 1;
     if (!downloadThrottled(urls, token, handler))
         return false;
 
-    for (const auto &entries : std::as_const(pages))
+    for (const auto &entries : std::as_const(state.pages))
         for (const auto &[id, title] : entries)
-            if (!mangaIds.contains(id))
+            if (!state.mangaIds.contains(id))
             {
-                mangaIds.insert(id);
-                mangas.append(title, "/manga/" + id);
+                state.mangaIds.insert(id);
+                state.mangas.append(title, "/manga/" + id);
             }
+    state.pages.clear();
 
     return true;
 }
 
 bool MangaDex::updateMangaList(UpdateProgressToken *token)
 {
-    MangaList mangas;
-    mangas.absoluteUrls = false;
-    QSet<QString> mangaIds;
+    // a retry continues with the window and the pages the failed attempt didn't get
+    auto &state = token->resumeState<MangaDexUpdateState>();
+    state.mangas.absoluteUrls = false;
 
-    token->sendProgress(0);
+    token->sendProgress(token->sourcesProgress.value(name));
 
     QElapsedTimer timer;
     timer.start();
@@ -534,56 +564,45 @@ bool MangaDex::updateMangaList(UpdateProgressToken *token)
                  "/manga?limit=100&offset=%1&availableTranslatedLanguage[]=en&hasAvailableChapters=true" +
                  contentRatings;
 
-    int total = 0;
-    int catalogueSize = 0;
-    int processed = 0;
-    QString lastCreatedAt;
-
-    auto progress = [&](int entries)
-    {
-        processed += entries;
-        // the first page of the first window has just set total
-        if (catalogueSize == 0)
-            catalogueSize = total;
-        int expected = catalogueSize + qMin(catalogueSize, numPopular);
-        if (expected > 0)
-            token->sendProgress(qBound(0, 100 * processed / expected, 99));
-    };
-
     // most followed titles first, so ordering by popularity is meaningful at the top of the list
-    if (!crawlMangaWindow(query + "&order[followedCount]=desc", numPopular, mangas, mangaIds, token, total,
-                          lastCreatedAt, progress))
-        return false;
-
-    // then the whole catalogue, in windows by creation date
-    QString since;
-    for (int window = 0; window < 100; window++)
+    if (state.window < 0)
     {
-        auto windowQuery = query + "&order[createdAt]=asc";
-        if (!since.isEmpty())
-            windowQuery += "&createdAtSince=" + since;
-
-        lastCreatedAt.clear();
-        if (!crawlMangaWindow(windowQuery, windowSize, mangas, mangaIds, token, total, lastCreatedAt,
-                              progress))
+        if (!crawlMangaWindow(query + "&order[followedCount]=desc", numPopular, state, token))
             return false;
 
-        if (total <= windowSize)
+        state.window = 0;
+        state.total = 0;
+        state.lastCreatedAt.clear();
+    }
+
+    // then the whole catalogue, in windows by creation date
+    for (; state.window < 100; state.window++)
+    {
+        auto windowQuery = query + "&order[createdAt]=asc";
+        if (!state.since.isEmpty())
+            windowQuery += "&createdAtSince=" + state.since;
+
+        if (!crawlMangaWindow(windowQuery, windowSize, state, token))
+            return false;
+
+        if (state.total <= windowSize)
             break;
 
         // createdAtSince is inclusive, the overlapping entries are skipped as duplicates
-        auto next = lastCreatedAt.left(19);
-        if (next.isEmpty() || next <= since)
+        auto next = state.lastCreatedAt.left(19);
+        if (next.isEmpty() || next <= state.since)
         {
             token->sendError("Couldn't page through the manga list.");
             return false;
         }
-        since = next;
+        state.since = next;
+        state.total = 0;
+        state.lastCreatedAt.clear();
     }
 
-    this->mangaList = mangas;
+    this->mangaList = state.mangas;
 
-    qDebug() << "mangas:" << mangas.size << "requests:" << apiRequestCount << "time:" << timer.elapsed();
+    qDebug() << "mangas:" << state.mangas.size << "requests:" << apiRequestCount << "time:" << timer.elapsed();
 
     token->sendProgress(100);
 

@@ -1,5 +1,10 @@
 #include "downloadjobbase.h"
 
+#include <memory>
+#include <utility>
+
+static QAtomicInt activeReplyCount;
+
 DownloadJobBase::DownloadJobBase(QNetworkAccessManager *networkManager, const QString &url,
                                  const QList<std::tuple<const char *, const char *>> &customHeaders)
     : networkManager(networkManager),
@@ -38,7 +43,36 @@ QNetworkRequest DownloadJobBase::createRequest() const
     for (const auto &[name, value] : qAsConst(customHeaders))
         request.setRawHeader(name, value);
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 2, 0)
+    // Qt 6 rejects responses that decompress to more than 10 MiB at a ratio above 40 as archive bombs, the
+    // sitemaps of the manga lists exceed that (Comick: 300 KB -> 16 MB)
+    request.setDecompressedSafetyCheckThreshold(64 * 1024 * 1024);
+#endif
+
     return request;
+}
+
+void DownloadJobBase::trackReply(QNetworkReply *reply)
+{
+    if (!reply)
+        return;
+
+    activeReplyCount.ref();
+
+    // finished isn't emitted for replies deleted while running (e.g. on restart), destroyed is
+    auto counted = std::make_shared<bool>(true);
+    auto release = [counted]()
+    {
+        if (std::exchange(*counted, false))
+            activeReplyCount.deref();
+    };
+    QObject::connect(reply, &QNetworkReply::finished, reply, release);
+    QObject::connect(reply, &QObject::destroyed, release);
+}
+
+int DownloadJobBase::activeReplies()
+{
+    return activeReplyCount.loadRelaxed();
 }
 
 QList<QNetworkCookie> DownloadJobBase::getCookies()

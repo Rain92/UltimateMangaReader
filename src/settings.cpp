@@ -14,6 +14,7 @@ Settings::Settings()
       trimPages(true),
       manhwaMode(true),
       ditheringMode(SWDithering),
+      standbyWhenIdle(false),
       timer()
 {
     QObject::connect(&timer, &QTimer::timeout, [this]() { this->serialize(); });
@@ -53,7 +54,7 @@ QDataStream &operator<<(QDataStream &str, const Settings &m)
 {
     str << m.lightValue << m.comflightValue << m.hideErrorMessages << m.tabAdvance << m.swipeAdvance
         << m.buttonAdvance << m.mangaOrder << m.doublePageMode << m.trimPages << m.manhwaMode
-        << m.enabledMangaSources << m.ditheringMode;
+        << m.enabledMangaSources << m.ditheringMode << m.standbyWhenIdle;
 
     return str;
 }
@@ -64,6 +65,11 @@ QDataStream &operator>>(QDataStream &str, Settings &m)
     str >> m.lightValue >> m.comflightValue >> m.hideErrorMessages >> m.tabAdvance >> m.swipeAdvance >>
         m.buttonAdvance >> m.mangaOrder >> m.doublePageMode >> m.trimPages >> m.manhwaMode >>
         m.enabledMangaSources >> m.ditheringMode;
+
+    // added later, older settings files end before it
+    m.standbyWhenIdle = false;
+    if (!str.atEnd())
+        str >> m.standbyWhenIdle;
 
     return str;
 }

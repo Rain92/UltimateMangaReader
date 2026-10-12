@@ -99,6 +99,11 @@ qint64 dirSize(const QString& path);
 bool removeDir(const QString& path, const QString& ignore = "");
 void activateScroller(QAbstractScrollArea* pArea);
 
+// The device pixel ratio the main window is painted with. It can differ from qApp->devicePixelRatio(), on
+// Wayland with fractional scaling that is the ratio of the screens rounded up (2 instead of 1.25).
+qreal windowPixelRatio();
+void setWindowPixelRatio(qreal ratio);
+
 qint64 getCacheSize();
 qint64 getFreeSpace();
 

@@ -13,6 +13,7 @@
 #include "mangatown.h"
 #include "comick.h"
 #include "settings.h"
+#include "standbymanager.h"
 #include "suspendmanager.h"
 #include "utils.h"
 
@@ -37,6 +38,8 @@ public:
     SuspendManager *suspendManager;
 
     Settings settings;
+
+    StandbyManager *standbyManager;
 
 public:
     void setCurrentMangaSource(AbstractMangaSource *mangaSource);
@@ -67,10 +70,17 @@ signals:
 
 private:
     QTimer timer;
+    QTimer clockAlignTimer;
     QTimer autoSuspendTimer;
+    qint64 autoSuspendStart;
     int currentDay;
+    bool updatingMangaLists;
 
     void timerTick();
+    void alignClock();
+    void restartAutoSuspend();
+    qint64 msUntilAutoSuspend() const;
+    void resumedFromStandby();
     void setupDirectories();
 };
 

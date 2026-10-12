@@ -1,7 +1,14 @@
 #include "favoritesmanager.h"
 
+#include "mangainfo.h"
+
 FavoritesManager::FavoritesManager(const QMap<QString, AbstractMangaSource *> &mangasources, QObject *parent)
-    : QObject(parent), favoriteinfos(), favorites(), mangasources(mangasources)
+    : QObject(parent),
+      favoriteinfos(),
+      favorites(),
+      mangasources(mangasources),
+      infosLoaded(false),
+      lastUpdates()
 {
     deserialize();
 }
@@ -46,7 +53,9 @@ bool FavoritesManager::toggleFavorite(QSharedPointer<MangaInfo> info)
         if (favorites[i].hostname == info->hostname && favorites[i].title == info->title)
         {
             favorites.removeAt(i);
-            favoriteinfos.removeAt(i);
+            // the infos are only there once the favorites were shown
+            if (infosLoaded)
+                favoriteinfos.removeAt(i);
 
             serialize();
 
@@ -56,15 +65,16 @@ bool FavoritesManager::toggleFavorite(QSharedPointer<MangaInfo> info)
 
     // add
     favorites.prepend(Favorite::fromMangaInfo(info.get()));
-    favoriteinfos.prepend(info);
+    if (infosLoaded)
+        favoriteinfos.prepend(info);
     serialize();
     return true;
 }
 
-int FavoritesManager::findFavorite(const QString &title)
+int FavoritesManager::findFavorite(const MangaInfo *info) const
 {
     for (int i = 0; i < favoriteinfos.size(); i++)
-        if (!favoriteinfos.at(i).isNull() && favoriteinfos.at(i)->title == title)
+        if (favoriteinfos.at(i).get() == info)
             return i;
 
     return -1;
@@ -72,66 +82,84 @@ int FavoritesManager::findFavorite(const QString &title)
 
 void FavoritesManager::moveFavoriteToFront(int i)
 {
+    if (i <= 0 || i >= favorites.length())
+        return;
+
     favorites.move(i, 0);
-    favoriteinfos.move(i, 0);
+    if (infosLoaded)
+        favoriteinfos.move(i, 0);
 
     serialize();
 }
 
-bool FavoritesManager::loadInfos()
+QSharedPointer<MangaInfo> FavoritesManager::loadInfo(const Favorite &fav)
 {
-    if (favorites.length() == favoriteinfos.length())
-        return true;
+    auto source = mangasources.value(fav.hostname);
+    if (!source)
+        return {};
 
-    bool res = true;
+    return source->loadCachedMangaInfo(fav.mangaUrl, fav.title);
+}
+
+void FavoritesManager::loadInfos()
+{
+    if (infosLoaded)
+        return;
 
     favoriteinfos.clear();
-    for (int i = 0; i < favorites.length(); i++)
-    {
-        auto &fav = favorites[i];
-        if (mangasources.contains(fav.hostname) &&
-            mangasources[fav.hostname]->mangaList.titles.contains(fav.title))
-        {
-            auto mi = mangasources[fav.hostname]->loadMangaInfo(fav.mangaUrl, fav.title, false);
+    for (const auto &fav : qAsConst(favorites))
+        favoriteinfos.append(loadInfo(fav));
 
-            if (mi.isOk())
-            {
-                favoriteinfos.append(mi.unwrap());
-            }
-            else
-            {
-                res = false;
-                favoriteinfos.append(QSharedPointer<MangaInfo>(nullptr));
-                emit error(mi.unwrapErr());
-            }
-        }
-        else
-        {
-            favorites.removeAt(i--);
-        }
+    infosLoaded = true;
+}
+
+QSharedPointer<MangaInfo> FavoritesManager::requireInfo(int i)
+{
+    loadInfos();
+
+    if (i < 0 || i >= favorites.length())
+        return {};
+
+    auto &info = favoriteinfos[i];
+    if (info && !info->chapters.isEmpty())
+        return info;
+
+    const auto &fav = favorites[i];
+    auto source = mangasources.value(fav.hostname);
+    if (!source)
+        return {};
+
+    auto res = source->loadMangaInfo(fav.mangaUrl, fav.title);
+    if (res.isErr())
+    {
+        emit error(res.unwrapErr());
+        return {};
     }
-    return res;
+
+    info = res.unwrap();
+    return info;
 }
 
 void FavoritesManager::updateInfos()
 {
-    for (int i = 0; i < favoriteinfos.length(); i++)
-    {
-        if (!favoriteinfos[i].isNull())
-        {
-            mangasources[favoriteinfos[i]->hostname]->updateMangaInfoAsync(favoriteinfos[i], false);
-        }
-        else
-        {
-            auto &fav = favorites[i];
-            if (mangasources.contains(fav.hostname))
-            {
-                auto mi = mangasources[fav.hostname]->loadMangaInfo(fav.mangaUrl, fav.title, false);
+    loadInfos();
 
-                if (mi.isOk())
-                    favoriteinfos[i] = mi.unwrap();
-            }
-        }
+    // tab switches would pile up downloads otherwise
+    const qint64 minUpdateIntervalMs = 60 * 1000;
+
+    for (const auto &info : qAsConst(favoriteinfos))
+    {
+        // the source might have been disabled since the infos were loaded
+        auto source = info ? mangasources.value(info->hostname) : nullptr;
+        if (!source)
+            continue;
+
+        auto &lastUpdate = lastUpdates[info->hostname + '/' + info->title];
+        if (lastUpdate.isValid() && lastUpdate.elapsed() < minUpdateIntervalMs && !info->chapters.isEmpty())
+            continue;
+        lastUpdate.start();
+
+        source->updateMangaInfoAsync(info, false);
     }
 }
 
@@ -146,16 +174,30 @@ void FavoritesManager::clearFavorites()
 {
     favorites.clear();
     favoriteinfos.clear();
+    infosLoaded = true;
 }
 
 void FavoritesManager::clearInvalidFavorites()
 {
     loadInfos();
 
-    for (int i = 0; i < favorites.length(); i++)
+    for (int i = favorites.length() - 1; i >= 0; i--)
     {
-        if (favoriteinfos[i].isNull())
+        // the infos that aren't cached are downloaded first, only the ones that fail are invalid
+        bool valid = favoriteinfos[i] && !favoriteinfos[i]->chapters.isEmpty();
+        if (!valid && favoriteinfos[i])
         {
+            auto res = favoriteinfos[i]->mangaSource->loadMangaInfo(favorites[i].mangaUrl, favorites[i].title);
+            if (res.isOk())
+            {
+                favoriteinfos[i] = res.unwrap();
+                valid = true;
+            }
+        }
+
+        if (!valid)
+        {
+            qDebug() << "Removing invalid favorite:" << favorites[i].hostname << favorites[i].title;
             favorites.removeAt(i);
             favoriteinfos.removeAt(i);
         }

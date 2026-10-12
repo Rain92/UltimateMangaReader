@@ -54,11 +54,7 @@ MainWidget::MainWidget(QWidget *parent)
                      core->mangaChapterDownloadManager, &MangaChapterDownloadManager::cancelDownloads);
 
     // NetworkManager
-#ifdef KOBO
-    core->networkManager->setDownloadSettings({koboDevice.width, koboDevice.height}, &core->settings);
-#else
-    core->networkManager->setDownloadSettings(this->size() * qApp->devicePixelRatio(), &core->settings);
-#endif
+    updatePageSize();
 
     QPixmap wifioff(":/images/icons/no-wifi.png");
     QPixmap wifion(":/images/icons/wifi.png");
@@ -67,7 +63,8 @@ MainWidget::MainWidget(QWidget *parent)
     wifiIcons[1] =
         QIcon(wifion.scaledToHeight(SIZES.wifiIconSize * qApp->devicePixelRatio(), Qt::SmoothTransformation));
 
-    QObject::connect(core->networkManager, &NetworkManager::connectionStatusChanged,
+    // emitted on the WiFi thread
+    QObject::connect(core->networkManager, &NetworkManager::connectionStatusChanged, this,
                      [this](bool connected)
                      {
                          auto icon = connected ? wifiIcons[1] : wifiIcons[0];
@@ -103,7 +100,13 @@ MainWidget::MainWidget(QWidget *parent)
                      &HomeWidget::updateSourcesList);
 
     QObject::connect(core, &UltimateMangaReaderCore::downloadCacheCleared,
-                     [this]() { ui->mangaReaderWidget->clearCache(); });
+                     [this]()
+                     {
+                         ui->mangaReaderWidget->clearCache();
+                         // clearing can remove favorites
+                         if (ui->stackedWidget->currentIndex() == FavoritesTab)
+                             ui->favoritesWidget->showFavoritesList();
+                     });
 
     // MangaController
     QObject::connect(core->mangaController, &MangaController::currentMangaChanged,
@@ -268,7 +271,8 @@ void MainWidget::showEvent(QShowEvent *event)
                            {
                                core->favoritesManager->loadInfos();
                                auto &infos = core->favoritesManager->favoriteinfos;
-                               if (favoriteIndex < 0 || favoriteIndex >= infos.count())
+                               if (favoriteIndex < 0 || favoriteIndex >= infos.count() ||
+                                   !infos[favoriteIndex])
                                {
                                    qDebug() << "UMR_OPEN_FAVORITE: no favorite" << favoriteIndex;
                                    return;
@@ -280,6 +284,12 @@ void MainWidget::showEvent(QShowEvent *event)
 
 bool MainWidget::event(QEvent *event)
 {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
+    // e.g. the fractional scale of a Wayland window, which only arrives after it is shown
+    if (event->type() == QEvent::DevicePixelRatioChange)
+        updatePageSize();
+#endif
+
     if (event->type() == QEvent::KeyPress)
         return buttonPressEvent(static_cast<QKeyEvent *>(event));
     else if (event->type() == QEvent::KeyRelease)
@@ -360,14 +370,9 @@ void MainWidget::onResume()
     screensaverDialog->close();
     core->enableTimers(true);
 
+    // in the background, connecting takes seconds when the WiFi was off. The dialog only shows up if it fails.
     wifiDialog->connect();
-    QTimer::singleShot(200, this,
-                       [this]()
-                       {
-                           setupFrontLight();
-                           if (!core->networkManager->connected)
-                               wifiDialog->open();
-                       });
+    QTimer::singleShot(200, this, &MainWidget::setupFrontLight);
 }
 
 void MainWidget::setupVirtualKeyboard()
@@ -469,10 +474,18 @@ void MainWidget::resizeEvent(QResizeEvent *event)
 
     errorMessageWidget->setFixedWidth(this->width());
 
+    updatePageSize();
+}
+
+// The pages are rendered for the screen (in device pixels) when they are downloaded.
+void MainWidget::updatePageSize()
+{
+    setWindowPixelRatio(devicePixelRatioF());
+
 #ifdef KOBO
     core->networkManager->setDownloadSettings({koboDevice.width, koboDevice.height}, &core->settings);
 #else
-    core->networkManager->setDownloadSettings(this->size() * qApp->devicePixelRatio(), &core->settings);
+    core->networkManager->setDownloadSettings(this->size() * devicePixelRatioF(), &core->settings);
 #endif
 }
 
@@ -574,6 +587,6 @@ void MainWidget::menuDialogButtonPressed(MenuButton button)
 
 void MainWidget::on_toolButtonWifiIcon_clicked()
 {
-    if (!core->networkManager->checkInternetConnection())
-        wifiDialog->open();
+    // checks the connection in the background, while connected the dialog only shows up if it got lost
+    wifiDialog->connect(!core->networkManager->connected);
 }

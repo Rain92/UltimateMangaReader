@@ -13,8 +13,16 @@ NetworkManager::NetworkManager(QObject *parent)
       imageProcessor(new ImageProcessor(this)),
       settings(nullptr),
       customHeaders(),
-      fileDownloads()
+      fileDownloads(),
+      wifiThread(),
+      wifiWorker(new QObject()),
+      connectingWifi(false)
 {
+    wifiThread.setObjectName("wifi");
+    wifiWorker->moveToThread(&wifiThread);
+    connect(&wifiThread, &QThread::finished, wifiWorker, &QObject::deleteLater);
+    wifiThread.start();
+
 #ifdef KOBO
     QString sslCertPath = "/mnt/onboard/.adds/qt-linux-5.15-kde-kobo/lib/ssl_certs";
     if (qEnvironmentVariableIsSet("QTPATH"))
@@ -26,9 +34,38 @@ NetworkManager::NetworkManager(QObject *parent)
 #endif
 }
 
+NetworkManager::~NetworkManager()
+{
+    // a running connect finishes first
+    wifiThread.quit();
+    wifiThread.wait();
+}
+
 QNetworkAccessManager *NetworkManager::networkAccessManager()
 {
     return this->networkManager;
+}
+
+void NetworkManager::connectWifiAsync()
+{
+    if (connectingWifi.exchange(true))
+        return;
+
+    QMetaObject::invokeMethod(
+        wifiWorker,
+        [this]()
+        {
+            bool ok = connectWifi();
+            connectingWifi = false;
+            QMetaObject::invokeMethod(
+                this, [this, ok]() { emit wifiConnectFinished(ok); }, Qt::QueuedConnection);
+        },
+        Qt::QueuedConnection);
+}
+
+bool NetworkManager::isConnectingWifi() const
+{
+    return connectingWifi;
 }
 
 bool NetworkManager::connectWifi()
@@ -75,17 +112,24 @@ bool NetworkManager::connectWifi()
 
 bool NetworkManager::disconnectWifi()
 {
-    if (!connected)
-        return true;
+    QMetaObject::invokeMethod(
+        wifiWorker,
+        [this]()
+        {
+            if (!connected)
+                return;
 
 #ifdef KOBO
-    QElapsedTimer t;
-    t.start();
-    KoboPlatformFunctions::disableWiFiConnection();
-    qDebug() << "Disconnected in" << t.elapsed() << "ms.";
+            QElapsedTimer t;
+            t.start();
+            KoboPlatformFunctions::disableWiFiConnection();
+            qDebug() << "Disconnected in" << t.elapsed() << "ms.";
 #endif
 
-    connected = false;
+            connected = false;
+            emit connectionStatusChanged(false);
+        },
+        Qt::BlockingQueuedConnection);
 
     return true;
 }
@@ -112,7 +156,23 @@ bool NetworkManager::checkInternetConnection()
     return connected;
 }
 
-QString NetworkManager::fixUrl(const QString &url)
+bool NetworkManager::isBusy() const
+{
+    return DownloadJobBase::activeReplies() > 0 || imageProcessor->isBusy();
+}
+
+QString NetworkManager::downloadUrl(const QString &url) const
+{
+    return fixUrl(url.section('|', 0, 0));
+}
+
+bool NetworkManager::isDownloading(const QString &url) const
+{
+    auto job = fileDownloads.value(downloadUrl(url)).toStrongRef();
+    return job && !job->isCompleted && !job->hasFailed();
+}
+
+QString NetworkManager::fixUrl(const QString &url) const
 {
     if (url.startsWith("//"))
         return "http:" + url;
@@ -321,6 +381,7 @@ bool NetworkManager::urlExists(const QString &url)
     QNetworkRequest request(url);
 
     auto reply = networkManager->head(request);
+    DownloadJobBase::trackReply(reply);
 
     awaitSignal(reply, {SIGNAL(finished())}, 2000);
 

@@ -5,7 +5,7 @@
 DownloadFileJob::DownloadFileJob(QNetworkAccessManager *networkManager, const QString &url,
                                  const QString &localFilePath,
                                  const QList<std::tuple<const char *, const char *>> &customHeaders)
-    : DownloadJobBase(networkManager, url, customHeaders), filepath(localFilePath)
+    : DownloadJobBase(networkManager, url, customHeaders), retries(0), filepath(localFilePath)
 {
 }
 
@@ -30,6 +30,7 @@ void DownloadFileJob::start()
 
             reply.reset(networkManager->get(request));
             //            reply->setParent(nullptr);
+            trackReply(reply.get());
 
             QObject::connect(reply.get(), &QNetworkReply::readyRead, this,
                              &DownloadFileJob::downloadFileReadyRead);
@@ -98,6 +99,20 @@ void DownloadFileJob::onError(QNetworkReply::NetworkError)
     }
 
     file.remove();
+
+    // overloaded servers, rate limits and connection problems often go away after a moment. Only the last
+    // attempt counts as failed, until then the job is handed out to whoever asks for the same file.
+    const int maxRetries = 2;
+    int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    bool transient = status == 0 || status == 408 || status == 429 || status >= 500;
+    if (transient && retries < maxRetries && errorString == "")
+    {
+        int delayMs = 1000 << retries++;
+        qDebug() << "Retrying in" << delayMs << "ms:" << url << reply->errorString();
+        // not right away: this runs in a signal of the reply that restart() deletes
+        QTimer::singleShot(delayMs, this, &DownloadFileJob::restart);
+        return;
+    }
 
     if (errorString == "")
         errorString = "Download error " +

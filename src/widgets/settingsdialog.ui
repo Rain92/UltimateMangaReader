@@ -166,6 +166,14 @@
         </widget>
        </item>
        <item>
+        <widget class="QCheckBox" name="checkBoxStandby">
+         <property name="text">
+          <string>Standby when idle: saves battery, but the first
+tap after a few idle seconds reacts slower</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <layout class="QHBoxLayout" name="horizontalLayout_5">
          <item>
           <widget class="QLabel" name="label_8">
