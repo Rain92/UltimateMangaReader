@@ -4,30 +4,16 @@
 #include <QImage>
 
 #include "downloadfilejob.h"
-#include "imageprocessingnative.h"
-#include "imageprocessingqt.h"
+#include "imageprocessor.h"
 #include "settings.h"
-#include "utils.h"
-
-enum EncryptionType
-{
-    NoEncryption = 0,
-    XorEncryption
-};
-
-struct EncryptionDescriptor
-{
-    EncryptionType type = NoEncryption;
-    QByteArray key = {};
-};
 
 class DownloadScaledImageJob : public DownloadFileJob
 {
     Q_OBJECT
 
 public:
-    DownloadScaledImageJob(QNetworkAccessManager *networkManager, const QString &url, const QString &path,
-                           QSize screenSize, Settings *settings,
+    DownloadScaledImageJob(QNetworkAccessManager *networkManager, ImageProcessor *imageProcessor,
+                           const QString &url, const QString &path, QSize screenSize, Settings *settings,
                            const QList<std::tuple<const char *, const char *>> &customHeaders = {},
                            const EncryptionDescriptor &encryption = {});
     virtual ~DownloadScaledImageJob() = default;
@@ -38,11 +24,13 @@ public:
     QSharedPointer<QImage> resultImage;
 
 private:
+    ImageProcessor *imageProcessor;
     QSize screenSize;
     Settings *settings;
     EncryptionDescriptor encryption;
+    quint64 processingId;
 
-    bool processImage(QByteArray &&array);
+    void processingFinished(quint64 id, const QImage &image);
 };
 
 #endif  // DOWNLOADIMAGEANDRESCALEJOB_H

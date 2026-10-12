@@ -1,15 +1,19 @@
 #include "downloadimageandrescalejob.h"
 
 DownloadScaledImageJob::DownloadScaledImageJob(
-    QNetworkAccessManager *networkManager, const QString &url, const QString &path, QSize screenSize,
-    Settings *settings, const QList<std::tuple<const char *, const char *>> &customHeaders,
-    const EncryptionDescriptor &encryption)
+    QNetworkAccessManager *networkManager, ImageProcessor *imageProcessor, const QString &url,
+    const QString &path, QSize screenSize, Settings *settings,
+    const QList<std::tuple<const char *, const char *>> &customHeaders, const EncryptionDescriptor &encryption)
     : DownloadFileJob(networkManager, url, path, customHeaders),
       resultImage(nullptr),
+      imageProcessor(imageProcessor),
       screenSize(screenSize),
       settings(settings),
-      encryption(encryption)
+      encryption(encryption),
+      processingId(0)
 {
+    QObject::connect(imageProcessor, &ImageProcessor::finished, this,
+                     &DownloadScaledImageJob::processingFinished);
 }
 
 void DownloadScaledImageJob::downloadFileReadyRead()
@@ -37,58 +41,37 @@ void DownloadScaledImageJob::downloadFileFinished()
     if (reply->error() != QNetworkReply::NoError)
     {
         onError(QNetworkReply::NetworkError());
+        return;
     }
-    else
-    {
-        if (processImage(reply->readAll()))
-        {
-            isCompleted = true;
-            emit completed();
-        }
-        else
-        {
-            errorString = "Failed to load or process image.";
-            emit downloadError();
-        }
-    }
+
+    // the image is processed on the image processor's thread, see processingFinished()
+    ImageProcessingRequest request;
+    request.data = reply->readAll();
+    request.filepath = filepath;
+    request.screenSize = screenSize;
+    request.doublePageMode = settings->doublePageMode;
+    request.trim = settings->trimPages;
+    request.manhwaMode = settings->manhwaMode;
+    request.swDither = settings->ditheringMode >= SWDithering;
+    request.encryption = encryption;
+
+    processingId = imageProcessor->process(request);
 }
 
-bool DownloadScaledImageJob::processImage(QByteArray &&array)
+void DownloadScaledImageJob::processingFinished(quint64 id, const QImage &image)
 {
-    //    QElapsedTimer t;
-    //    t.start();
+    if (id != processingId)
+        return;
 
-    if (encryption.type == XorEncryption)
+    if (!image.isNull())
     {
-#ifdef KOBO
-        decryptXorInplace_NEON(array, encryption.key);
-#else
-        decryptXorInplace(array, encryption.key);
-#endif
-    }
-
-    //    qDebug() << "Image processing decrypt:" << t.elapsed();
-    QImage pimg;
-
-    if (isJpeg(array) || isPng(array))
-        pimg = processImageN(array, filepath, screenSize, settings->doublePageMode, settings->trimPages,
-                             settings->manhwaMode, settings->ditheringMode >= SWDithering);
-    if (!pimg.isNull())
-    {
-        resultImage.reset(new QImage(pimg));
+        resultImage.reset(new QImage(image));
+        isCompleted = true;
+        emit completed();
     }
     else
     {
-        qDebug() << "Fast decoding failed, using fallback!";
-
-        pimg = processImageQt(array, filepath, screenSize, settings->doublePageMode, settings->trimPages,
-                              settings->manhwaMode, settings->ditheringMode >= SWDithering);
-
-        if (!pimg.isNull())
-            resultImage.reset(new QImage(pimg));
+        errorString = "Failed to load or process image.";
+        emit downloadError();
     }
-
-    //    qDebug() << "Image processing:" << t.elapsed();
-
-    return !pimg.isNull();
 }

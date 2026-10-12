@@ -257,6 +257,25 @@ void MainWidget::showEvent(QShowEvent *event)
     updateDitheringMode();
 
     QTimer::singleShot(500, this, &MainWidget::onResume);
+
+    // UMR_OPEN_FAVORITE=<n> opens the n-th favorite in the reader right away (for profiling over ssh,
+    // where the screen can't be tapped)
+    bool ok = false;
+    int favoriteIndex = qEnvironmentVariableIntValue("UMR_OPEN_FAVORITE", &ok);
+    if (ok)
+        QTimer::singleShot(1500, this,
+                           [this, favoriteIndex]()
+                           {
+                               core->favoritesManager->loadInfos();
+                               auto &infos = core->favoritesManager->favoriteinfos;
+                               if (favoriteIndex < 0 || favoriteIndex >= infos.count())
+                               {
+                                   qDebug() << "UMR_OPEN_FAVORITE: no favorite" << favoriteIndex;
+                                   return;
+                               }
+                               core->mangaController->setCurrentManga(infos[favoriteIndex]);
+                               setWidgetTab(MangaReaderTab);
+                           });
 }
 
 bool MainWidget::event(QEvent *event)

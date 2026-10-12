@@ -1,5 +1,6 @@
 #include "abstractmangasource.h"
 
+#include "imageprocessingnative.h"
 #include "mangainfo.h"
 
 AbstractMangaSource::AbstractMangaSource(NetworkManager *networkManager)

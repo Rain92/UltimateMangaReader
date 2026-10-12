@@ -7,11 +7,7 @@
 #include <QImage>
 
 #include "enums.h"
-
-inline QPair<int, int> getTrimRectHelper(const uchar *linePtr, int imgWidth, int limitLeft, int limitRight,
-                                         const uchar threshold);
-
-QRect getTrimRect(const QByteArray &buffer, int imgWidth, int imgHeight, int stride);
+#include "trimrect.h"
 
 QSize calcRescaleSize(QSize imgSize, QSize screenSize, bool doublePageFullscreen, bool manhwaMode);
 

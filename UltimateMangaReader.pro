@@ -19,7 +19,7 @@ QT    += core gui widgets network svg
 CONFIG += c++17
 QMAKE_LFLAGS += -rdynamic
 
-LIBS +=  -lturbojpeg -lpng
+LIBS +=  -lturbojpeg -lpng -lwebp
 
 TARGET = UltimateMangaReader
 
@@ -63,6 +63,7 @@ HEADERS += \
     src/greyscaleimage.h \
     src/imageprocessingnative.h \
     src/imageprocessingqt.h \
+    src/imageprocessor.h \
     src/imagerotate.h \
     src/mangachapter.h \
     src/mangachaptercollection.h \
@@ -81,12 +82,14 @@ HEADERS += \
     src/mangasources/mangatown.h \
     src/mangasources/updateprogresstoken.h \
     src/networkmanager.h \
+    src/perftimer.h \
     src/readingprogress.h \
     src/settings.h \
     src/sizes.h \
     src/stacktrace.h \
     src/staticsettings.h \
     src/suspendmanager.h \
+    src/trimrect.h \
     src/ultimatemangareadercore.h \
     src/utils.h \
     src/widgets/aboutdialog.h \
@@ -128,6 +131,7 @@ SOURCES += \
     src/greyscaleimage.cpp \
     src/imageprocessingnative.cpp \
     src/imageprocessingqt.cpp \
+    src/imageprocessor.cpp \
     src/imagerotate.cpp \
     src/main.cpp \
     src/mangachapter.cpp \
@@ -150,6 +154,7 @@ SOURCES += \
     src/readingprogress.cpp \
     src/settings.cpp \
     src/suspendmanager.cpp \
+    src/trimrect.cpp \
     src/ultimatemangareadercore.cpp \
     src/utils.cpp \
     src/widgets/aboutdialog.cpp \

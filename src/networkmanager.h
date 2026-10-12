@@ -8,6 +8,7 @@
 #include "downloadfilejob.h"
 #include "downloadimageandrescalejob.h"
 #include "downloadstringjob.h"
+#include "imageprocessor.h"
 #include "settings.h"
 
 class NetworkManager : public QObject
@@ -47,6 +48,7 @@ signals:
 
 private:
     QNetworkAccessManager *networkManager;
+    ImageProcessor *imageProcessor;
 
     QSize imageRescaleSize;
     Settings *settings;

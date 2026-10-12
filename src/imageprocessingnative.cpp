@@ -1,8 +1,11 @@
-
 #include "imageprocessingnative.h"
 
-QImage loadQImageFast(const QString &path, bool useSWDithering)
+#include "perftimer.h"
+
+QImage loadQImageFast(const QString &path, bool)
 {
+    PerfTimer timer("loadQImageFast");
+
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly))
     {
@@ -12,108 +15,117 @@ QImage loadQImageFast(const QString &path, bool useSWDithering)
 
     auto buffer = file.readAll();
     file.close();
+    timer.lap("read");
 
-    GreyscaleImage img;
-
-    img.loadFromEncoded(buffer);
+    QImage img = decodeToQImage(buffer);
 
     if (img.isNull())
-    {
-        QImage ret(path);
-
-        return ret;
-    }
-
-    return img.toQImage();
-}
-
-GreyscaleImage loadFromJpegAndRotate(const QByteArray &buffer, QSize screenSize,
-                                     DoublePageMode doublePageMode, int &rot90)
-{
-    int flags = TJFLAG_FASTDCT | TJFLAG_FASTUPSAMPLE;
-    int inSubsamp, inColorspace;
-    int width, height;
-
-    tjhandle tjInstanceD = tjInitDecompress(), tjInstanceT = tjInitTransform();
-
-    GreyscaleImage img;
-
-    auto handleguard = qScopeGuard(
-        [&]
-        {
-            if (tjInstanceD)
-                tjDestroy(tjInstanceD);
-            if (tjInstanceT)
-                tjDestroy(tjInstanceT);
-        });
-
-    if (tjDecompressHeader3(tjInstanceD, (uchar *)buffer.data(), buffer.size(), &width, &height, &inSubsamp,
-                            &inColorspace) < 0)
-        return img;
-
-    rot90 = calcRotationInfo(QSize(width, height), screenSize, doublePageMode);
-
-    if (rot90 != 0)
-    {
-        unsigned char *dstBuf = nullptr; /* Dynamically allocate the JPEG buffer */
-        unsigned long dstSize = 0;
-
-        tjtransform xform;
-        memset(&xform, 0, sizeof(tjtransform));
-        xform.options = TJXOPT_GRAY | TJXOPT_TRIM;
-        if (rot90 == 90)
-            xform.op = TJXOP_ROT90;
-        if (rot90 == -90)
-            xform.op = TJXOP_ROT270;
-
-        if (tjTransform(tjInstanceT, (uchar *)buffer.data(), buffer.size(), 1, &dstBuf, &dstSize, &xform,
-                        flags) < 0)
-        {
-            tjFree(dstBuf);
-            return img;
-        }
-        auto nbuffer = QByteArray::fromRawData((char *)dstBuf, dstSize);
-
-        img.loadFromJpeg(nbuffer);
-        tjFree(dstBuf);
-    }
-    else
-    {
-        img.loadFromJpeg(buffer);
-    }
+        return QImage(path);
 
     return img;
 }
 
+// The size a JPEG has to be decoded at so that the page is never upscaled afterwards.
+static QSize minDecodeSize(QSize jpegSize, QSize screenSize, int rot90, bool trim, bool manhwaMode)
+{
+    QSize rotated = rot90 != 0 ? jpegSize.transposed() : jpegSize;
+    QSize target = calcRescaleSize(rotated, screenSize, rot90 != 0, manhwaMode);
+
+    // trimmed pages end up being rescaled by a larger factor, so leave some headroom
+    if (trim)
+        target = QSize(qRound(target.width() * 1.1), qRound(target.height() * 1.1));
+
+    return rot90 != 0 ? target.transposed() : target;
+}
+
+static QImage finishPage(GreyscaleImage &img, int rot90, const QString &filepath, QSize screenSize,
+                         bool trim, bool manhwaMode, PerfTimer &timer);
+
 QImage processImageN(const QByteArray &buffer, const QString &filepath, QSize screenSize,
                      DoublePageMode doublePageMode, bool trim, bool manhwaMode, bool useSWDither)
 {
+    Q_UNUSED(useSWDither)
+    PerfTimer timer("processImageN");
+
     GreyscaleImage img;
 
     int rot90 = 0;
 
     if (isPng(buffer))
     {
-        img.loadFromPng(buffer);
-
-        if (!img.isValid())
+        if (!img.loadFromPng(buffer) || !img.isValid())
             return QImage();
 
         rot90 = calcRotationInfo(img.size(), screenSize, doublePageMode);
-
-        if (rot90 != 0)
-            img = img.rotate(rot90);
     }
     else if (isJpeg(buffer))
     {
-        img = loadFromJpegAndRotate(buffer, screenSize, doublePageMode, rot90);
+        QSize jpegSize;
+        if (!readJpegSize(buffer, jpegSize))
+            return QImage();
 
-        if (!img.isValid())
+        rot90 = calcRotationInfo(jpegSize, screenSize, doublePageMode);
+
+        // Decode reduced in size right away, the decoder's DCT scaling is cheaper than
+        // decoding everything and resizing afterwards.
+        QSize minSize = minDecodeSize(jpegSize, screenSize, rot90, trim, manhwaMode);
+        if (!img.loadFromJpeg(buffer, minSize) || !img.isValid())
+            return QImage();
+    }
+    else if (isWebp(buffer))
+    {
+        QSize webpSize;
+        if (!readWebpSize(buffer, webpSize))
+            return QImage();
+
+        rot90 = calcRotationInfo(webpSize, screenSize, doublePageMode);
+
+        if (!img.loadFromWebp(buffer) || !img.isValid())
             return QImage();
     }
     else
     {
         return QImage();
+    }
+    timer.lap("decode");
+
+    return finishPage(img, rot90, filepath, screenSize, trim, manhwaMode, timer);
+}
+
+QImage processDecodedImage(const QImage &decoded, const QString &filepath, QSize screenSize,
+                           DoublePageMode doublePageMode, bool trim, bool manhwaMode)
+{
+    PerfTimer timer("processDecodedImage");
+
+    if (decoded.isNull())
+        return QImage();
+
+    QImage grey = decoded.format() == QImage::Format_Grayscale8
+                      ? decoded
+                      : decoded.convertToFormat(QImage::Format_Grayscale8);
+    if (grey.isNull())
+        return QImage();
+    timer.lap("togrey");
+
+    // GreyscaleImage buffers have no line padding
+    const int width = grey.width();
+    QByteArray packed(width * grey.height(), Qt::Uninitialized);
+    for (int y = 0; y < grey.height(); y++)
+        memcpy(packed.data() + y * width, grey.constScanLine(y), width);
+
+    GreyscaleImage img(grey.size(), std::move(packed));
+    int rot90 = calcRotationInfo(img.size(), screenSize, doublePageMode);
+    return finishPage(img, rot90, filepath, screenSize, trim, manhwaMode, timer);
+}
+
+// Rotates, trims, rescales and saves a decoded page: the part of the pipeline all decoders share.
+static QImage finishPage(GreyscaleImage &img, int rot90, const QString &filepath, QSize screenSize,
+                         bool trim, bool manhwaMode, PerfTimer &timer)
+{
+    if (rot90 != 0)
+    {
+        img = img.rotate(rot90);
+        timer.lap("rotate");
     }
 
     if (trim)
@@ -122,17 +134,22 @@ QImage processImageN(const QByteArray &buffer, const QString &filepath, QSize sc
 
         if (trimRect.isValid())
             img = img.crop(trimRect);
+        timer.lap("trim");
     }
 
     auto rescaleSize = calcRescaleSize(img.size(), screenSize, rot90 != 0, manhwaMode);
 
-    img = img.resize(rescaleSize);
+    QImage retimg = img.resizeToQImage(rescaleSize);
+    timer.lap("resize");
+    if (retimg.isNull())
+        return retimg;
 
     if (filepath != "")
-        if (!img.saveAsJpeg(filepath))
+    {
+        if (!saveQImageAsJpeg(retimg, filepath))
             return QImage();
-
-    QImage retimg = img.toQImage();
+        timer.lap("save");
+    }
 
     return retimg;
 }

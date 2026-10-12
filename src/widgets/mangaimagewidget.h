@@ -10,6 +10,8 @@
 #include <QPainter>
 #include <QScreen>
 
+#include "perftimer.h"
+
 #ifdef KOBO
 #include "koboplatformfunctions.h"
 #endif

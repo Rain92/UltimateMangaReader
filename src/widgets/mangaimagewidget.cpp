@@ -73,11 +73,9 @@ void MangaImageWidget::mouseMoveEvent(QMouseEvent *event)
 
 void MangaImageWidget::paintEvent(QPaintEvent *)
 {
-    //    QElapsedTimer t;
-    //    t.start();
+    PerfTimer timer("paintEvent");
 
     QPainter painter(this);
-    auto pixelRatio = qApp->devicePixelRatio();
     auto img = image;
 
     if (!img || img.isNull())
@@ -93,15 +91,19 @@ void MangaImageWidget::paintEvent(QPaintEvent *)
         }
     }
 
-    auto scaledSize = img->size();
+    // The pages are already rendered at screen resolution, so they are placed in device pixels.
+    // Cancelling the high dpi scaling of the painter lets the raster engine blit the image instead of
+    // resampling every pixel through its generic (and for a fractional scale lossy) transform path.
+    const qreal pixelRatio = painter.device()->devicePixelRatioF();
+    const int deviceWidth = qRound(this->width() * pixelRatio);
+    const int deviceHeight = qRound(this->height() * pixelRatio);
 
-    int x = (this->size().width() - scaledSize.width() / pixelRatio) / 2;
-    int y = (this->size().height() - scaledSize.height() / pixelRatio) / 2;
+    int x = (deviceWidth - img->width()) / 2;
+    int y = (deviceHeight - img->height()) / 2;
 
-    if (img->height() > this->height() * pixelRatio * 1.1)
-        y = -vOffset;
+    if (img->height() > deviceHeight * 1.1)
+        y = -qRound(vOffset * pixelRatio);
 
-    painter.drawImage(QRect(x, y, img->width() / pixelRatio, img->height() / pixelRatio), *img);
-
-    //    qDebug() << "Image Painting:" << t.elapsed();
+    painter.setWorldTransform(QTransform::fromScale(1.0 / pixelRatio, 1.0 / pixelRatio));
+    painter.drawImage(QPoint(x, y), *img);
 }

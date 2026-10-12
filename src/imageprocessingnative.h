@@ -11,10 +11,11 @@
 
 QImage loadQImageFast(const QString &path, bool useSWDithering = true);
 
-GreyscaleImage loadFromJpegAndRotate(const QByteArray &buffer, QSize screenSize,
-                                     DoublePageMode doublePageMode, int &rot90);
-
 QImage processImageN(const QByteArray &buffer, const QString &filepath, QSize screenSize,
                      DoublePageMode doublePageMode, bool trim, bool manhwaMode, bool useSWDither);
+
+// Rotates, trims, rescales and saves an image decoded by Qt (any format) with the native pipeline.
+QImage processDecodedImage(const QImage &decoded, const QString &filepath, QSize screenSize,
+                           DoublePageMode doublePageMode, bool trim, bool manhwaMode);
 
 #endif  // IMAGEPROCESSINGNATIVE_H

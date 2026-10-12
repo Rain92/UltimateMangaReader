@@ -16,6 +16,18 @@
 
 bool isJpeg(const QByteArray &buffer);
 bool isPng(const QByteArray &buffer);
+bool isWebp(const QByteArray &buffer);
+
+// Reads the image size from the WebP header only.
+bool readWebpSize(const QByteArray &data, QSize &size);
+
+// Reads the image size from the JPEG header only.
+bool readJpegSize(const QByteArray &data, QSize &size);
+
+// Decodes a JPEG or PNG straight into a Format_Grayscale8 QImage (no intermediate buffer).
+QImage decodeToQImage(const QByteArray &data);
+
+bool saveQImageAsJpeg(const QImage &image, const QString &path, int quality = 85);
 
 class GreyscaleImage
 {
@@ -29,25 +41,28 @@ public:
     int width;
     int height;
 
-    QSize size();
-    bool isValid();
-    bool isNull();
+    QSize size() const;
+    bool isValid() const;
+    bool isNull() const;
 
     bool loadFromEncoded(const QByteArray &data);
-    bool loadFromJpeg(const QByteArray &data);
+    // With a valid minSize the JPEG is decoded with the decoder's DCT scaling at the smallest
+    // size that is still at least minSize in both dimensions.
+    bool loadFromJpeg(const QByteArray &data, QSize minSize = QSize());
     bool loadFromPng(const QByteArray &data);
+    // Takes the luma plane of the WebP (lossy or lossless, no alpha). libwebp's rescaling while
+    // decoding isn't used: on the Cortex-A9 it is slower than a full decode plus the NEON resize.
+    bool loadFromWebp(const QByteArray &data);
 
-    GreyscaleImage resize(QSize newSize);
-    GreyscaleImage rotate(int rotation);
-    GreyscaleImage crop(QRect rect);
+    GreyscaleImage resize(QSize newSize) const;
+    // Resizes straight into a Format_Grayscale8 QImage
+    QImage resizeToQImage(QSize newSize) const;
+    GreyscaleImage rotate(int rotation) const;
+    GreyscaleImage crop(QRect rect) const;
 
-    bool saveAsJpeg(const QString &path);
+    bool saveAsJpeg(const QString &path) const;
 
-    QImage toQImage();
-
-private:
-    GreyscaleImage rotate_neon(int rot);
-    GreyscaleImage transpose_neon();
+    QImage toQImage() const;
 };
 
 #endif  // GREYSCALEIMAGE_H

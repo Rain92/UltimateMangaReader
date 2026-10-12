@@ -190,58 +190,44 @@ void decryptXorInplace(QByteArray& data, const QByteArray& key)
 #ifdef __ARM_NEON__
 void decryptXorInplace_NEON(QByteArray& data, const QByteArray& key)
 {
-    //    QElapsedTimer t;
-    //    t.start();
+    const int keyLength = key.length();
+    if (keyLength <= 0 || data.isEmpty())
+        return;
 
-    QByteArray key2;
-    key2.append(key);
-    key2.append(key);
+    // The key repeated until any 16 byte window starting inside the first period is valid,
+    // so every iteration processes 16 bytes regardless of the key length.
+    QByteArray keyStream;
+    keyStream.reserve(keyLength + 16 + keyLength);
+    while (keyStream.length() < keyLength + 16)
+        keyStream.append(key);
 
     uint8_t* datap = (uint8_t*)data.data();
-    uint8_t* key2p = (uint8_t*)key2.data();
+    const uint8_t* keyp = (const uint8_t*)keyStream.constData();
+    const qsizetype length = data.length();
 
-    uint8x16_t vdata, vkey, vres, vmask;
-    int incr = qMin(16, key.length());
-    int rounds = data.length() / incr;
-
+    qsizetype doff = 0;
     int koff = 0;
-    int doff = 0;
-
-    uint8_t mask[16];
-    for (int i = 0; i < 16; i++)
-        mask[i] = i < incr ? 255 : 0;
-
-    vmask = vld1q_u8(mask);
-
-    for (int i = 0; i < rounds; i++)
+    for (; doff + 16 <= length; doff += 16)
     {
-        /* load */
-        vkey = vld1q_u8(key2p + koff);
-        vdata = vld1q_u8(datap + doff);
+        uint8x16_t vkey = vld1q_u8(keyp + koff);
+        uint8x16_t vdata = vld1q_u8(datap + doff);
+        vst1q_u8(datap + doff, veorq_u8(vdata, vkey));
 
-        /* res = data ^ key */
-        vres = veorq_u8(vdata, vkey);
-
-        // mask result if key is smaller than 16
-        if (key.length() < 16)
-            vres = vbslq_u8(vmask, vres, vdata);
-
-        /* store */
-        vst1q_u8(datap + doff, vres);
-
-        doff += incr;
-        koff += incr;
-        if (koff >= key.length())
-            koff -= key.length();
+        koff += 16;
+        if (koff >= keyLength)
+        {
+            koff -= keyLength;
+            if (koff >= keyLength)  // keys shorter than 16 bytes
+                koff %= keyLength;
+        }
     }
 
-    // take care of leftovers
-    for (; doff < data.length(); doff++, koff++)
+    for (; doff < length; doff++)
     {
-        data[doff] = data[doff] ^ key2[koff];
+        datap[doff] ^= keyp[koff];
+        if (++koff == keyLength)
+            koff = 0;
     }
-
-    //    qDebug() << "Xor NEON:" << t.elapsed();
 }
 #endif
 

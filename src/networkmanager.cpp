@@ -10,6 +10,7 @@ NetworkManager::NetworkManager(QObject *parent)
     : QObject(parent),
       connected(false),
       networkManager(new QNetworkAccessManager(this)),
+      imageProcessor(new ImageProcessor(this)),
       settings(nullptr),
       customHeaders(),
       fileDownloads()
@@ -243,8 +244,8 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const QStr
 
     QPointer<NetworkManager> self(this);
     auto job = QSharedPointer<DownloadFileJob>(
-        new DownloadScaledImageJob(networkManager, urlf, localPath, imageRescaleSize, settings,
-                                   applicableCustomHeaders(urlf), ed),
+        new DownloadScaledImageJob(networkManager, imageProcessor, urlf, localPath, imageRescaleSize,
+                                   settings, applicableCustomHeaders(urlf), ed),
         [self](DownloadScaledImageJob *j)
         {
             if (self)
