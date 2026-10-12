@@ -111,7 +111,6 @@ HEADERS += \
     src/widgets/updatemangalistsdialog.h \
     src/widgets/virtualkeyboard.h \
     src/widgets/wifidialog.h \
-    thirdparty/picoproto.h \
     thirdparty/rapidjson.h \
     thirdparty/result.h \
     thirdparty/simdimageresize.h \
@@ -175,6 +174,5 @@ SOURCES += \
     src/widgets/updatemangalistsdialog.cpp \
     src/widgets/virtualkeyboard.cpp \
     src/widgets/wifidialog.cpp \
-    thirdparty/picoproto.cc \
     thirdparty/simdimageresize.cpp \
 

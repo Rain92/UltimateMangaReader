@@ -32,6 +32,18 @@ public:
     const int backwardPreloads = 1;
     const int autoSuspendIntervalMinutes = 15;
     const int globalTickIntervalSeconds = 60;
+    // every cache file uses the same format, so Qt 5 and Qt 6 builds can share a cache
+    const QDataStream::Version dataStreamVersion = QDataStream::Qt_5_15;
+
+    // paths in cache files are relative to the cache dir, so a cache can be moved (e.g. desktop -> device)
+    inline QString relativeCachePath(const QString &path)
+    {
+        return path.isEmpty() ? path : QDir(cacheDir).relativeFilePath(path);
+    }
+    inline QString absoluteCachePath(const QString &path)
+    {
+        return path.isEmpty() || QDir::isAbsolutePath(path) ? path : cacheDir + path;
+    }
 
     inline QString mangasourcedir(const QString &hostname) { return cacheDir + hostname + "/"; }
     inline QString mangainfodir(const QString &hostname, const QString &title)

@@ -18,6 +18,7 @@ void ReadingProgress::serialize(const QString &hostname, const QString &title)
         return;
 
     QDataStream out(&file);
+    out.setVersion(CONF.dataStreamVersion);
     out << *this;
 
     file.close();
@@ -31,6 +32,7 @@ bool ReadingProgress::deserialize(const QString &hostname, const QString &title)
         return false;
 
     QDataStream in2(&file);
+    in2.setVersion(CONF.dataStreamVersion);
     in2 >> *this;
 
     file.close();

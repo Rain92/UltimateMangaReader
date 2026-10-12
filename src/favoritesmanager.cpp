@@ -13,6 +13,7 @@ void FavoritesManager::deserialize()
         return;
 
     QDataStream in(&file);
+    in.setVersion(CONF.dataStreamVersion);
     in >> favorites;
     file.close();
 }
@@ -24,6 +25,7 @@ void FavoritesManager::serialize()
         return;
 
     QDataStream out(&file);
+    out.setVersion(CONF.dataStreamVersion);
     out << favorites;
     file.close();
 }

@@ -16,23 +16,35 @@ QSharedPointer<MangaInfo> MangaInfo::deserialize(AbstractMangaSource *mangasourc
         return mi;
 
     QDataStream in(&file);
+    in.setVersion(CONF.dataStreamVersion);
     in >> mi->hostname >> mi->title >> mi->url >> mi->author >> mi->artist >> mi->releaseYear >> mi->status >>
         mi->genres >> mi->summary >> mi->coverUrl >> mi->coverPath >> mi->chapters;
 
     file.close();
+
+    // older versions stored absolute paths, the cover always lives in the manga's own directory
+    if (QDir::isAbsolutePath(mi->coverPath))
+        mi->coverPath = CONF.mangainfodir(mi->hostname, mi->title) + QFileInfo(mi->coverPath).fileName();
+    else
+        mi->coverPath = CONF.absoluteCachePath(mi->coverPath);
 
     return mi;
 }
 
 void MangaInfo::serialize()
 {
+    // an info that never loaded would end up in the root of the cache
+    if (hostname.isEmpty() || title.isEmpty())
+        return;
+
     QFile file(CONF.mangainfodir(hostname, title) + "mangainfo.dat");
     if (!file.open(QIODevice::WriteOnly))
         return;
 
     QDataStream out(&file);
+    out.setVersion(CONF.dataStreamVersion);
     out << hostname << title << url << author << artist << releaseYear << status << genres << summary
-        << coverUrl << coverPath << chapters;
+        << coverUrl << CONF.relativeCachePath(coverPath) << chapters;
 
     file.close();
 }

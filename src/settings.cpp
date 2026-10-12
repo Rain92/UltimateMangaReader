@@ -26,6 +26,7 @@ void Settings::deserialize()
         return;
 
     QDataStream in(&file);
+    in.setVersion(CONF.dataStreamVersion);
     in >> *this;
     file.close();
 }
@@ -43,6 +44,7 @@ void Settings::serialize()
         return;
 
     QDataStream out(&file);
+    out.setVersion(CONF.dataStreamVersion);
     out << *this;
     file.close();
 }

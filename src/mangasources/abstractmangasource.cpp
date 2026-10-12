@@ -14,6 +14,7 @@ bool AbstractMangaSource::serializeMangaList()
         return false;
 
     QDataStream out(&file);
+    out.setVersion(CONF.dataStreamVersion);
     out << mangaList;
     file.close();
 
@@ -27,6 +28,7 @@ bool AbstractMangaSource::deserializeMangaList()
         return false;
 
     QDataStream in(&file);
+    in.setVersion(CONF.dataStreamVersion);
     in >> mangaList;
     file.close();
 
