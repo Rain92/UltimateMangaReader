@@ -23,3 +23,5 @@ int flowTests(const QString &source, const QString &title, const QString &url);
 // Updates the manga list, cancels an update and updates it again, through the core like the gui.
 int listFlowTests(const QString &source);
 int storageTests(const QString &server);
+// The Lua engine, its libraries and the sources of scripts, against tests/harness/testserver.py.
+int scriptTests(const QString &server);

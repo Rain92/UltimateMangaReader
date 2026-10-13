@@ -1,0 +1,631 @@
+#include "luasource.h"
+
+#include <QDir>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QPointer>
+#include <algorithm>
+#include <numeric>
+
+#include "lualibs.h"
+#include "staticsettings.h"
+#include "updateprogresstoken.h"
+
+using lua::push;
+using lua::rawField;
+using lua::stringField;
+using lua::toQString;
+
+static LuaSource *sourceOf(lua_State *L)
+{
+    return static_cast<LuaSource *>(LuaEngine::of(L)->host);
+}
+
+template <typename T>
+static int collect(lua_State *L)
+{
+    static_cast<T *>(lua_touserdata(L, 1))->~T();
+    return 0;
+}
+
+// --- http
+
+// The download until its response was taken, then the response (the user value), so the buffer goes now and not
+// when the collector gets to the request.
+struct Request
+{
+    QSharedPointer<DownloadBufferJob> job;
+};
+static const char *requestType = "umr.Request";
+
+static bool integerField(lua_State *L, int index, const char *name, int &value)
+{
+    bool found = rawField(L, index, name) == LUA_TNUMBER;
+    if (found)
+        value = int(lua_tointeger(L, -1));
+    lua_pop(L, 1);
+    return found;
+}
+
+// http.get(url [, options]), http.start(url [, options])
+static DownloadRequest requestFromArgs(lua_State *L)
+{
+    DownloadRequest request;
+    request.url = QString::fromUtf8(luaL_checkstring(L, 1));
+    if (lua_isnoneornil(L, 2))
+        return request;
+
+    luaL_checktype(L, 2, LUA_TTABLE);
+    integerField(L, 2, "timeout", request.timeout);
+    integerField(L, 2, "transferTimeout", request.transferTimeout);
+    integerField(L, 2, "retries", request.maxRetries);
+    int maxBytes = 0;
+    if (integerField(L, 2, "maxBytes", maxBytes))
+        request.maxBytes = maxBytes;
+    request.headOnly = rawField(L, 2, "head") == LUA_TBOOLEAN && lua_toboolean(L, -1);
+    lua_pop(L, 1);
+
+    if (rawField(L, 2, "headers") == LUA_TTABLE)
+    {
+        lua_pushnil(L);
+        while (lua_next(L, -2))
+        {
+            if (lua_type(L, -2) == LUA_TSTRING && lua_type(L, -1) == LUA_TSTRING)
+                request.headers.append(HttpHeader{lua_tostring(L, -2), lua_tostring(L, -1)});
+            lua_pop(L, 1);
+        }
+    }
+    lua_pop(L, 1);
+    return request;
+}
+
+// The response of the finished request at index, fails with its error.
+static int pushResponse(lua_State *L, int index)
+{
+    auto request = static_cast<Request *>(lua_touserdata(L, index));
+    if (!request->job)
+    {
+        lua_getiuservalue(L, index, 1);
+        return 1;
+    }
+    auto job = request->job;
+    if (!job->isCompleted)
+        lua::raise(L, job->error);
+
+    lua_createtable(L, 0, 3);
+    push(L, job->url);
+    lua_setfield(L, -2, "url");
+    lua_pushinteger(L, job->httpStatus);
+    lua_setfield(L, -2, "status");
+    lua_pushlstring(L, job->buffer.constData(), size_t(job->buffer.size()));
+    lua_setfield(L, -2, "body");
+
+    lua_pushvalue(L, -1);
+    lua_setiuservalue(L, index, 1);
+    request->job.reset();
+    return 1;
+}
+
+static int requestWaited(lua_State *L, int, lua_KContext index)
+{
+    return pushResponse(L, int(index));
+}
+
+// Waits for the request at index (yields until it's finished).
+static int waitFor(lua_State *L, int index)
+{
+    auto request = static_cast<Request *>(lua_touserdata(L, index));
+    if (request->job && !request->job->isFinished())
+        LuaEngine::wait(L, {request->job, 0});
+    else if (LuaEngine::shouldYield(L))
+        // e.g. the pages of a list update that were downloaded meanwhile, the GUI goes on between them
+        LuaEngine::wait(L, {nullptr, 0});
+    else
+        return pushResponse(L, index);
+    return lua_yieldk(L, 0, index, requestWaited);
+}
+
+static int httpStart(lua_State *L)
+{
+    auto request = requestFromArgs(L);
+    auto userdata = static_cast<Request *>(lua_newuserdatauv(L, sizeof(Request), 1));
+    new (userdata) Request{sourceOf(L)->startDownload(request)};
+    luaL_setmetatable(L, requestType);
+    return 1;
+}
+
+static int httpGet(lua_State *L)
+{
+    httpStart(L);
+    return waitFor(L, lua_gettop(L));
+}
+
+static int requestWait(lua_State *L)
+{
+    luaL_checkudata(L, 1, requestType);
+    lua_settop(L, 1);
+    return waitFor(L, 1);
+}
+
+static int requestFailed(lua_State *L)
+{
+    auto request = static_cast<Request *>(luaL_checkudata(L, 1, requestType));
+    lua_pushboolean(L, request->job && request->job->hasFailed());
+    return 1;
+}
+
+static int requestRestart(lua_State *L)
+{
+    auto request = static_cast<Request *>(luaL_checkudata(L, 1, requestType));
+    if (!request->job)
+        return luaL_error(L, "the request has its response");
+    request->job->restart();
+    return 0;
+}
+
+// --- sleep, log
+
+static int sleepFor(lua_State *L)
+{
+    LuaEngine::wait(L, {nullptr, int(luaL_checkinteger(L, 1))});
+    return lua_yield(L, 0);
+}
+
+static int logMessage(lua_State *L)
+{
+    QStringList parts;
+    int count = lua_gettop(L);
+    luaL_checkstack(L, 2, "too many values to log");
+    for (int i = 1; i <= count; i++)
+    {
+        parts.append(QString::fromUtf8(luaL_tolstring(L, i, nullptr)));
+        lua_pop(L, 1);
+    }
+    qDebug().noquote() << sourceOf(L)->name + ":" << parts.join(' ');
+    return 0;
+}
+
+// --- list updates
+
+// update.progress(p), update.cancelled() of fetchMangaList(update), for as long as the update runs
+struct UpdateHandle
+{
+    QPointer<UpdateProgressToken> token;
+};
+static const char *updateHandleType = "umr.UpdateHandle";
+
+static UpdateProgressToken *tokenOf(lua_State *L)
+{
+    auto handle = static_cast<UpdateHandle *>(lua_touserdata(L, lua_upvalueindex(1)));
+    if (!handle->token)
+        luaL_error(L, "the update is over");
+    return handle->token;
+}
+
+static int updateProgress(lua_State *L)
+{
+    tokenOf(L)->sendProgress(int(luaL_checkinteger(L, 1)));
+    return 0;
+}
+
+static int updateCancelled(lua_State *L)
+{
+    lua_pushboolean(L, tokenOf(L)->canceled);
+    return 1;
+}
+
+static int updateClearState(lua_State *L)
+{
+    tokenOf(L)->clearResumeState();
+    return 0;
+}
+
+// The table a list update keeps for a retry (UpdateProgressToken::resumeState()), in the registry of the script.
+struct ScriptTable
+{
+    ScriptTable(std::shared_ptr<LuaEngine> engine, int ref) : engine(std::move(engine)), ref(ref) {}
+    ScriptTable(const ScriptTable &) = delete;
+    ~ScriptTable() { luaL_unref(engine->state(), LUA_REGISTRYINDEX, ref); }
+
+    std::shared_ptr<LuaEngine> engine;
+    int ref;
+};
+struct LuaUpdateState
+{
+    std::shared_ptr<ScriptTable> table;
+};
+
+// --- conversions
+
+static void pushImageLink(lua_State *L, const ImageLink &link)
+{
+    lua_createtable(L, 0, 5);
+    push(L, link.url);
+    lua_setfield(L, -2, "url");
+    if (!link.xorKey.isEmpty())
+    {
+        lua_pushlstring(L, link.xorKey.constData(), size_t(link.xorKey.size()));
+        lua_setfield(L, -2, "xorKey");
+    }
+    if (!link.appendUrl.isEmpty())
+    {
+        push(L, link.appendUrl);
+        lua_setfield(L, -2, "appendUrl");
+    }
+    if (link.expires > 0)
+    {
+        lua_pushinteger(L, link.expires);
+        lua_setfield(L, -2, "expires");
+    }
+    lua_createtable(L, 0, int(link.headers.size()));
+    for (const auto &header : link.headers)
+    {
+        lua_pushlstring(L, header.name.constData(), size_t(header.name.size()));
+        lua_pushlstring(L, header.value.constData(), size_t(header.value.size()));
+        lua_rawset(L, -3);
+    }
+    lua_setfield(L, -2, "headers");
+}
+
+// a url or {url, headers, xorKey, appendUrl, expires}
+static Result<ImageLink> toImageLink(lua_State *L, int index)
+{
+    if (lua_type(L, index) == LUA_TSTRING)
+        return ImageLink::fromUrl(toQString(L, index));
+    if (lua_type(L, index) != LUA_TTABLE)
+        return Err(Error::Parse, "The script returned no image.");
+
+    ImageLink link;
+    link.url = stringField(L, index, "url");
+    link.appendUrl = stringField(L, index, "appendUrl");
+    if (rawField(L, index, "xorKey") == LUA_TSTRING)
+    {
+        size_t length = 0;
+        const char *key = lua_tolstring(L, -1, &length);
+        link.xorKey = QByteArray(key, qsizetype(length));
+    }
+    lua_pop(L, 1);
+    if (rawField(L, index, "expires") == LUA_TNUMBER)
+        link.expires = lua_tointeger(L, -1);
+    lua_pop(L, 1);
+    if (rawField(L, index, "headers") == LUA_TTABLE)
+    {
+        lua_pushnil(L);
+        while (lua_next(L, -2))
+        {
+            if (lua_type(L, -2) == LUA_TSTRING && lua_type(L, -1) == LUA_TSTRING)
+                link.headers.append(HttpHeader{lua_tostring(L, -2), lua_tostring(L, -1)});
+            lua_pop(L, 1);
+        }
+    }
+    lua_pop(L, 1);
+
+    if (link.url.isEmpty())
+        return Err(Error::Parse, "The script returned an image without url.");
+    return link;
+}
+
+static QStringList stringList(lua_State *L, int index, const char *name)
+{
+    QStringList list;
+    if (rawField(L, index, name) == LUA_TTABLE)
+    {
+        lua_Integer n = lua_Integer(lua_rawlen(L, -1));
+        list.reserve(qsizetype(n));
+        for (lua_Integer i = 1; i <= n; i++)
+        {
+            lua_rawgeti(L, -1, i);
+            list.append(toQString(L, -1));
+            lua_pop(L, 1);
+        }
+    }
+    lua_pop(L, 1);
+    return list;
+}
+
+static QList<double> numberList(lua_State *L, int index, const char *name)
+{
+    QList<double> list;
+    if (rawField(L, index, name) == LUA_TTABLE)
+    {
+        lua_Integer n = lua_Integer(lua_rawlen(L, -1));
+        list.reserve(qsizetype(n));
+        for (lua_Integer i = 1; i <= n; i++)
+        {
+            lua_rawgeti(L, -1, i);
+            list.append(lua_tonumber(L, -1));
+            lua_pop(L, 1);
+        }
+    }
+    lua_pop(L, 1);
+    return list;
+}
+
+static QList<int> integerList(lua_State *L, int index, const char *name)
+{
+    QList<int> list;
+    if (rawField(L, index, name) == LUA_TTABLE)
+    {
+        lua_Integer n = lua_Integer(lua_rawlen(L, -1));
+        list.reserve(qsizetype(n));
+        for (lua_Integer i = 1; i <= n; i++)
+        {
+            lua_rawgeti(L, -1, i);
+            list.append(int(lua_tointeger(L, -1)));
+            lua_pop(L, 1);
+        }
+    }
+    lua_pop(L, 1);
+    return list;
+}
+
+// --- the source
+
+LuaSource::LuaSource(NetworkManager *networkManager, LuaLimits limits)
+    : MangaSourceBase(networkManager), engine(std::make_shared<LuaEngine>(limits)), hasResolveImage(false)
+{
+    engine->host = this;
+}
+
+Result<QSharedPointer<LuaSource>> LuaSource::load(NetworkManager *networkManager, const QString &directory,
+                                                  LuaLimits limits)
+{
+    QDir dir(directory);
+    QFile manifestFile(dir.filePath("manifest.json"));
+    if (!manifestFile.open(QIODevice::ReadOnly))
+        return Err(Error::Storage, QString("Couldn't read %1.").arg(manifestFile.fileName()));
+    QJsonParseError parseError;
+    auto manifest = QJsonDocument::fromJson(manifestFile.readAll(), &parseError).object();
+    if (parseError.error != QJsonParseError::NoError)
+        return Err(Error::Parse, QString("%1: %2").arg(manifestFile.fileName(), parseError.errorString()));
+
+    QFile scriptFile(dir.filePath("source.lua"));
+    if (!scriptFile.open(QIODevice::ReadOnly))
+        return Err(Error::Storage, QString("Couldn't read %1.").arg(scriptFile.fileName()));
+
+    QSharedPointer<LuaSource> source(new LuaSource(networkManager, limits));
+    source->name = manifest["name"].toString();
+    source->baseUrl = manifest["baseUrl"].toString();
+    if (source->name.isEmpty())
+        return Err(Error::Parse, QString("%1 has no name.").arg(manifestFile.fileName()));
+    for (const auto &rule : manifest["headers"].toArray())
+    {
+        auto object = rule.toObject();
+        source->headerRules.add(object["domain"].toString(), object["name"].toString().toUtf8(),
+                                object["value"].toString().toUtf8());
+    }
+
+    auto opened = LuaEngine::protect(source->engine->state(), 0, [&source](lua_State *L) {
+        lua::openLibraries(L);
+
+        luaL_newmetatable(L, requestType);
+        lua_pushcfunction(L, collect<Request>);
+        lua_setfield(L, -2, "__gc");
+        static const luaL_Reg requestMethods[] = {
+            {"wait", requestWait}, {"failed", requestFailed}, {"restart", requestRestart}, {nullptr, nullptr}};
+        luaL_newlib(L, requestMethods);
+        lua_setfield(L, -2, "__index");
+        lua_pop(L, 1);
+
+        luaL_newmetatable(L, updateHandleType);
+        lua_pushcfunction(L, collect<UpdateHandle>);
+        lua_setfield(L, -2, "__gc");
+        lua_pop(L, 1);
+
+        static const luaL_Reg httpFunctions[] = {{"get", httpGet}, {"start", httpStart}, {nullptr, nullptr}};
+        luaL_newlib(L, httpFunctions);
+        lua_pushinteger(L, CONF.parallelDownloadsHigh);
+        lua_setfield(L, -2, "parallel");
+        lua_setglobal(L, "http");
+
+        lua_register(L, "sleep", sleepFor);
+        lua_register(L, "log", logMessage);
+
+        lua_createtable(L, 0, 2);
+        push(L, source->name);
+        lua_setfield(L, -2, "name");
+        push(L, source->baseUrl);
+        lua_setfield(L, -2, "baseUrl");
+        lua_setglobal(L, "source");
+    });
+    if (!opened)
+        return Err(opened.error());
+
+    auto loaded = source->engine->run(scriptFile.readAll(), source->name + "/source.lua");
+    if (!loaded)
+        return Err(loaded.error());
+
+    auto L = source->engine->state();
+    source->hasResolveImage = lua_getglobal(L, "resolveImage") == LUA_TFUNCTION;
+    lua_pop(L, 1);
+
+    return source;
+}
+
+Task<MangaListUpdate> LuaSource::fetchMangaList(UpdateProgressToken *token, MangaList current)
+{
+    // a table of the script that a retry gets again
+    auto &state = token->resumeState<LuaUpdateState>();
+    auto engine = this->engine;
+
+    auto pushArgs = [&state, token, engine, &current](lua_State *L) {
+        lua_createtable(L, 0, 6);
+
+        if (!state.table)
+        {
+            lua_newtable(L);
+            state.table = std::make_shared<ScriptTable>(engine, luaL_ref(L, LUA_REGISTRYINDEX));
+        }
+        lua_rawgeti(L, LUA_REGISTRYINDEX, state.table->ref);
+        lua_setfield(L, -2, "state");
+
+        lua_pushinteger(L, current.size);
+        lua_setfield(L, -2, "currentSize");
+        lua_pushinteger(L, token->sourcesProgress.value(token->currentSourceName));
+        lua_setfield(L, -2, "lastProgress");
+
+        auto handle = static_cast<UpdateHandle *>(lua_newuserdatauv(L, sizeof(UpdateHandle), 0));
+        new (handle) UpdateHandle{token};
+        luaL_setmetatable(L, updateHandleType);
+        for (auto [name, function] : {std::pair{"progress", updateProgress},
+                                      std::pair{"cancelled", updateCancelled},
+                                      std::pair{"clearState", updateClearState}})
+        {
+            lua_pushvalue(L, -1);
+            lua_pushcclosure(L, function, 1);
+            lua_setfield(L, -3, name);
+        }
+        lua_pop(L, 1);
+        return 1;
+    };
+
+    // {titles, urls [, popularity | ranks] [, absoluteUrls]} and a message if something is missing (Partial)
+    auto convert = [](lua_State *L, int count) -> Result<MangaListUpdate> {
+        int index = lua_gettop(L) - count + 1;
+        if (count < 1 || lua_type(L, index) != LUA_TTABLE)
+            return Err(Error::Parse, "The script returned no manga list.");
+
+        MangaList list;
+        list.titles = stringList(L, index, "titles");
+        list.urls = stringList(L, index, "urls");
+        if (list.titles.size() != list.urls.size())
+            return Err(Error::Parse, "The script returned more titles than urls or the other way round.");
+        list.size = int(list.titles.size());
+        list.absoluteUrls = rawField(L, index, "absoluteUrls") == LUA_TBOOLEAN && lua_toboolean(L, -1);
+        lua_pop(L, 1);
+
+        // the most popular first, the order of the list for the same popularity (a sort in the script takes
+        // ~0.6 s on the device for 24000 mangas)
+        auto popularity = numberList(L, index, "popularity");
+        if (!popularity.isEmpty())
+        {
+            if (popularity.size() != list.size)
+                return Err(Error::Parse, "The script returned a popularity for some of the mangas only.");
+            QList<int> order(list.size);
+            std::iota(order.begin(), order.end(), 0);
+            std::stable_sort(order.begin(), order.end(),
+                             [&popularity](int a, int b) { return popularity[a] > popularity[b]; });
+            list.popularityRanks.resize(list.size);
+            for (int rank = 0; rank < list.size; rank++)
+                list.popularityRanks[order[rank]] = rank;
+        }
+        else
+        {
+            auto ranks = integerList(L, index, "ranks");
+            list.popularityRanks.reserve(list.size);
+            for (int i = 0; i < list.size; i++)
+                list.popularityRanks.append(i < ranks.size() ? ranks[i] - 1 : i);
+        }
+
+        if (count >= 2 && lua_type(L, index + 1) == LUA_TSTRING)
+            return MangaListUpdate::partial(list, {Error::Failed, toQString(L, index + 1), 0});
+        return MangaListUpdate::complete(list);
+    };
+
+    QElapsedTimer timer;
+    timer.start();
+    auto result = co_await engine->call<MangaListUpdate>("fetchMangaList", pushArgs, convert);
+    qDebug() << name << "list update:" << timer.elapsed() << "ms, script memory" << engine->memoryInUse() / 1024
+             << "KB, at most" << engine->memoryPeak() / 1024 << "KB";
+    co_return result ? *result : MangaListUpdate::failed(result.error());
+}
+
+Task<Result<MangaDetails>> LuaSource::fetchMangaInfo(QString mangaUrl, MangaChapterCollection known)
+{
+    auto pushArgs = [&mangaUrl, &known](lua_State *L) {
+        push(L, mangaUrl);
+        lua_createtable(L, int(known.size()), 0);
+        lua_Integer i = 0;
+        for (const auto &chapter : std::as_const(known))
+        {
+            lua_createtable(L, 0, 2);
+            push(L, chapter.chapterTitle);
+            lua_setfield(L, -2, "title");
+            push(L, chapter.chapterUrl);
+            lua_setfield(L, -2, "url");
+            lua_rawseti(L, -2, ++i);
+        }
+        return 2;
+    };
+
+    // {author, artist, releaseYear, genres, status, summary, cover, coverFallbacks, chapters = {{title, url}}}
+    auto convert = [](lua_State *L, int count) -> Result<MangaDetails> {
+        int index = lua_gettop(L) - count + 1;
+        if (count < 1 || lua_type(L, index) != LUA_TTABLE)
+            return Err(Error::Parse, "The script returned no manga info.");
+
+        MangaDetails details;
+        details.author = stringField(L, index, "author");
+        details.artist = stringField(L, index, "artist");
+        details.releaseYear = stringField(L, index, "releaseYear");
+        details.genres = stringField(L, index, "genres");
+        details.status = stringField(L, index, "status");
+        details.summary = stringField(L, index, "summary");
+        details.coverUrl = stringField(L, index, "cover");
+        details.coverFallbackUrls = stringList(L, index, "coverFallbacks");
+
+        if (rawField(L, index, "chapters") == LUA_TTABLE)
+        {
+            lua_Integer n = lua_Integer(lua_rawlen(L, -1));
+            for (lua_Integer i = 1; i <= n; i++)
+            {
+                if (lua_rawgeti(L, -1, i) == LUA_TTABLE)
+                    details.chapters.append(MangaChapter(stringField(L, -1, "title"), stringField(L, -1, "url")));
+                lua_pop(L, 1);
+            }
+        }
+        lua_pop(L, 1);
+        return details;
+    };
+
+    co_return co_await engine->call<MangaDetails>("fetchMangaInfo", pushArgs, convert);
+}
+
+Task<Result<QList<ImageLink>>> LuaSource::fetchPageList(QString chapterUrl)
+{
+    auto pushArgs = [&chapterUrl](lua_State *L) {
+        push(L, chapterUrl);
+        return 1;
+    };
+
+    // the pages: urls or images (see toImageLink())
+    auto convert = [](lua_State *L, int count) -> Result<QList<ImageLink>> {
+        int index = lua_gettop(L) - count + 1;
+        if (count < 1 || lua_type(L, index) != LUA_TTABLE)
+            return Err(Error::Parse, "The script returned no page list.");
+
+        QList<ImageLink> pages;
+        lua_Integer n = lua_Integer(lua_rawlen(L, index));
+        for (lua_Integer i = 1; i <= n; i++)
+        {
+            lua_rawgeti(L, index, i);
+            auto page = toImageLink(L, -1);
+            lua_pop(L, 1);
+            if (!page)
+                return Err(page.error());
+            pages.append(*page);
+        }
+        return pages;
+    };
+
+    co_return co_await engine->call<QList<ImageLink>>("fetchPageList", pushArgs, convert);
+}
+
+Task<Result<ImageLink>> LuaSource::resolveImage(ImageLink page)
+{
+    if (!hasResolveImage)
+        co_return page;
+
+    auto pushArgs = [&page](lua_State *L) {
+        pushImageLink(L, page);
+        return 1;
+    };
+    auto convert = [](lua_State *L, int count) -> Result<ImageLink> {
+        if (count < 1)
+            return Err(Error::Parse, "The script returned no image.");
+        return toImageLink(L, lua_gettop(L) - count + 1);
+    };
+
+    co_return co_await engine->call<ImageLink>("resolveImage", pushArgs, convert);
+}

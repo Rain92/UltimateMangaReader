@@ -5,7 +5,11 @@
 UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
     : QObject(parent),
       networkManager(new NetworkManager(this)),
-      sources(new SourceRegistry(&settings, SourceRegistry::builtInSources(networkManager), this)),
+      sources(new SourceRegistry(
+          &settings,
+          SourceRegistry::withScriptSources(SourceRegistry::builtInSources(networkManager), networkManager,
+                                            CONF.sourcesDir),
+          this)),
       repository(new MangaRepository(networkManager, sources, this)),
       mangaLists(),
       mangaController(new MangaController(networkManager, repository, this)),

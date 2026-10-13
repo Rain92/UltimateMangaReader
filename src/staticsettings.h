@@ -7,6 +7,7 @@
 //   /cache/mangalists/ -> <source>_mangalist.dat
 //   /cache/<source>/<hash of the manga url>/ -> mangainfo.dat progress.dat cover.<type> cover_scaled.<type>
 //   /cache/<source>/<hash of the manga url>/images/ -> <hash of the chapter url>_<page>.jpg
+//   /sources/<source>/ -> manifest.json source.lua (the scripts of sources, see LuaSource)
 
 #define CONF StaticSettings::get()
 
@@ -22,6 +23,7 @@ public:
     QString cacheDir;
     QString mangaListDir;
     QString screensaverDir;
+    QString sourcesDir;
     const int imageCacheSize = 7;
     const int parallelDownloadsLow = 4;
     const int parallelDownloadsMid = 6;
@@ -68,6 +70,7 @@ private:
     {
         cacheDir = QCoreApplication::applicationDirPath() + "/cache/";
         screensaverDir = QCoreApplication::applicationDirPath() + "/screensavers/";
+        sourcesDir = QCoreApplication::applicationDirPath() + "/sources/";
         mangaListDir = cacheDir + "mangalists/";
     };
 };

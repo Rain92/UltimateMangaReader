@@ -17,6 +17,12 @@ public:
                    QObject *parent = nullptr);
     // The sources that are built into the app.
     static QList<QSharedPointer<MangaSourceBase>> builtInSources(NetworkManager *networkManager);
+    // The sources of the scripts in the subdirectories of directory (see LuaSource). A script replaces the source of
+    // the same name in sources. The ones that can't be loaded are left out, logged and their errors added to errors.
+    static QList<QSharedPointer<MangaSourceBase>> withScriptSources(QList<QSharedPointer<MangaSourceBase>> sources,
+                                                                   NetworkManager *networkManager,
+                                                                   const QString &directory,
+                                                                   QStringList *errors = nullptr);
 
     // All of them, in the order they are shown.
     QStringList names() const;

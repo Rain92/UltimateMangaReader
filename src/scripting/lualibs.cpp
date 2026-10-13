@@ -1,0 +1,564 @@
+// clang-format off
+#include "json.h"
+// clang-format on
+
+#include "lualibs.h"
+
+#include <QRegularExpression>
+#include <QTextDocument>
+
+#include "lauxlib.h"
+#include "luaengine.h"
+
+namespace lua
+{
+
+QString toQString(lua_State *L, int index)
+{
+    size_t length = 0;
+    const char *chars = lua_tolstring(L, index, &length);
+    return chars ? QString::fromUtf8(chars, qsizetype(length)) : QString();
+}
+
+void push(lua_State *L, const QString &string)
+{
+    auto utf8 = string.toUtf8();
+    lua_pushlstring(L, utf8.constData(), size_t(utf8.size()));
+}
+
+void pushError(lua_State *L, const Error &error)
+{
+    lua_createtable(L, 0, 3);
+    lua_pushstring(L, LuaEngine::codeName(error.code));
+    lua_setfield(L, -2, "code");
+    push(L, error.message);
+    lua_setfield(L, -2, "message");
+    lua_pushinteger(L, error.httpStatus);
+    lua_setfield(L, -2, "status");
+}
+
+void raise(lua_State *L, const Error &error)
+{
+    pushError(L, error);
+    lua_error(L);
+    Q_UNREACHABLE();
+}
+
+int rawField(lua_State *L, int index, const char *name)
+{
+    index = lua_absindex(L, index);
+    lua_pushstring(L, name);
+    return lua_rawget(L, index);
+}
+
+QString stringField(lua_State *L, int index, const char *name)
+{
+    QString value = rawField(L, index, name) == LUA_TSTRING ? toQString(L, -1) : QString();
+    lua_pop(L, 1);
+    return value;
+}
+
+// --- re
+
+// The positions of a QString and those of its UTF-8 encoding (what the scripts see), from checkpoints.
+// (Bytes that weren't UTF-8 became U+FFFD, they shift the positions.)
+class PositionMap
+{
+public:
+    explicit PositionMap(const QString *text = nullptr, qsizetype utf8Size = -1) { reset(text, utf8Size); }
+
+    void reset(const QString *text, qsizetype utf8Size)
+    {
+        this->text = text;
+        // each other character takes more bytes in UTF-8 than in UTF-16
+        ascii = !text || utf8Size == text->size();
+        checkpoints.clear();
+    }
+
+    qsizetype toUtf8(qsizetype position)
+    {
+        if (ascii)
+            return position;
+        index();
+        position = qBound(0, position, text->size());
+        qsizetype pos16 = position / interval * interval, pos8 = checkpoints[position / interval];
+        auto data = text->utf16();
+        while (pos16 < position)
+            pos8 += utf8Length(data[pos16++]);
+        return pos8;
+    }
+
+    // the character that the byte at position belongs to
+    qsizetype toUtf16(qsizetype position)
+    {
+        if (ascii)
+            return position;
+        index();
+        // the last checkpoint at or before position
+        auto checkpoint = std::upper_bound(checkpoints.cbegin(), checkpoints.cend(), position) - 1;
+        qsizetype pos16 = (checkpoint - checkpoints.cbegin()) * interval, pos8 = *checkpoint;
+        auto data = text->utf16();
+        while (pos8 < position && pos16 < text->size())
+            pos8 += utf8Length(data[pos16++]);
+        return pos16;
+    }
+
+private:
+    static constexpr qsizetype interval = 128;
+
+    const QString *text;
+    bool ascii;
+    // the UTF-8 positions of every interval-th character
+    QList<qsizetype> checkpoints;
+
+    // a surrogate pair takes 4 bytes (without branches, so the loops vectorize)
+    static int utf8Length(char16_t c) { return 1 + (c >= 0x80) + (c >= 0x800) - ((c & 0xf800) == 0xd800); }
+
+    void index()
+    {
+        if (!checkpoints.isEmpty())
+            return;
+        auto data = text->utf16();
+        qsizetype size = text->size();
+        checkpoints.resize(size / interval + 1);
+        qsizetype pos8 = 0;
+        for (qsizetype block = 0; block * interval < size; block++)
+        {
+            checkpoints[block] = pos8;
+            qsizetype end = qMin(size, (block + 1) * interval);
+            int length = 0;
+            for (qsizetype pos16 = block * interval; pos16 < end; pos16++)
+                length += utf8Length(data[pos16]);
+            pos8 += length;
+        }
+        // the end, when it's at a checkpoint
+        if (size % interval == 0)
+            checkpoints.last() = pos8;
+    }
+};
+
+// re.text(s): a text that is searched more than once, converted once
+struct Text
+{
+    QString text;
+    PositionMap map;
+};
+
+struct Regex
+{
+    QRegularExpression rx;
+};
+
+static const char *textType = "umr.Text";
+static const char *regexType = "umr.Regex";
+
+template <typename T>
+static int collect(lua_State *L)
+{
+    static_cast<T *>(lua_touserdata(L, 1))->~T();
+    return 0;
+}
+
+// The subject of a search: a re.text() or a string (converted now).
+class Subject
+{
+public:
+    Subject(lua_State *L, int index)
+    {
+        if (auto text = static_cast<Text *>(luaL_testudata(L, index, textType)))
+        {
+            string = &text->text;
+            map = &text->map;
+            return;
+        }
+        size_t length = 0;
+        const char *chars = luaL_checklstring(L, index, &length);
+        owned = QString::fromUtf8(chars, qsizetype(length));
+        ownedMap.reset(&owned, qsizetype(length));
+        string = &owned;
+        map = &ownedMap;
+    }
+
+    const QString *string;
+    PositionMap *map;
+
+private:
+    QString owned;
+    PositionMap ownedMap;
+};
+
+static Regex *checkRegex(lua_State *L)
+{
+    return static_cast<Regex *>(luaL_checkudata(L, 1, regexType));
+}
+
+// The start of the search (init, from 1) as a position of the string, -1 if it is behind its end.
+static qsizetype startPosition(lua_State *L, int index, Subject &subject)
+{
+    lua_Integer init = luaL_optinteger(L, index, 1);
+    if (init < 1)
+        init = 1;
+    qsizetype position = subject.map->toUtf16(qsizetype(init - 1));
+    return position > subject.string->size() ? -1 : position;
+}
+
+// Matches must start before limit (a position from 1), without a limit (nil) anywhere.
+static qsizetype limitPosition(lua_State *L, int index, Subject &subject)
+{
+    if (lua_isnoneornil(L, index))
+        return -1;
+    return subject.map->toUtf16(qsizetype(qMax<lua_Integer>(luaL_checkinteger(L, index) - 1, 0)));
+}
+
+// The groups of the match, or the whole match without groups.
+static int pushCaptures(lua_State *L, const QRegularExpressionMatch &match)
+{
+    int groups = match.lastCapturedIndex();
+    int count = qMax(1, match.regularExpression().captureCount());
+    luaL_checkstack(L, count, "too many captures");
+    if (match.regularExpression().captureCount() == 0)
+    {
+        push(L, match.captured(0));
+        return 1;
+    }
+    for (int i = 1; i <= count; i++)
+        push(L, i <= groups ? match.captured(i) : QString());
+    return count;
+}
+
+// rx:match(s [, init [, limit]]): the captures of the first match, nil without one
+static int regexMatch(lua_State *L)
+{
+    auto regex = checkRegex(L);
+    Subject subject(L, 2);
+    qsizetype start = startPosition(L, 3, subject);
+    qsizetype limit = limitPosition(L, 4, subject);
+    if (start < 0)
+        return 0;
+
+    auto match = regex->rx.match(*subject.string, start);
+    if (!match.hasMatch() || (limit >= 0 && match.capturedStart() >= limit))
+        return 0;
+    return pushCaptures(L, match);
+}
+
+// rx:find(s [, init [, limit]]): first, last (the bytes of the match, from 1) and the captures, nil without one
+static int regexFind(lua_State *L)
+{
+    auto regex = checkRegex(L);
+    Subject subject(L, 2);
+    qsizetype start = startPosition(L, 3, subject);
+    qsizetype limit = limitPosition(L, 4, subject);
+    if (start < 0)
+        return 0;
+
+    auto match = regex->rx.match(*subject.string, start);
+    if (!match.hasMatch() || (limit >= 0 && match.capturedStart() >= limit))
+        return 0;
+    lua_pushinteger(L, subject.map->toUtf8(match.capturedStart()) + 1);
+    lua_pushinteger(L, subject.map->toUtf8(match.capturedEnd()));
+    return 2 + pushCaptures(L, match);
+}
+
+// rx:all(s [, init [, limit]]): all matches, each a table with the groups at 1.. (the whole match at 0) and
+// first, last (its bytes)
+static int regexAll(lua_State *L)
+{
+    auto regex = checkRegex(L);
+    Subject subject(L, 2);
+    qsizetype start = startPosition(L, 3, subject);
+    qsizetype limit = limitPosition(L, 4, subject);
+    lua_newtable(L);
+    if (start < 0)
+        return 1;
+
+    int groups = regex->rx.captureCount();
+    lua_Integer n = 0;
+    auto it = regex->rx.globalMatch(*subject.string, start);
+    while (it.hasNext())
+    {
+        auto match = it.next();
+        if (limit >= 0 && match.capturedStart() >= limit)
+            break;
+
+        lua_createtable(L, groups + 1, 2);
+        for (int i = 0; i <= groups; i++)
+        {
+            push(L, match.captured(i));
+            lua_rawseti(L, -2, i);
+        }
+        lua_pushinteger(L, subject.map->toUtf8(match.capturedStart()) + 1);
+        lua_setfield(L, -2, "first");
+        lua_pushinteger(L, subject.map->toUtf8(match.capturedEnd()));
+        lua_setfield(L, -2, "last");
+        lua_rawseti(L, -2, ++n);
+    }
+    return 1;
+}
+
+// the state of rx:gmatch(): the regex, the subject and the iterator (upvalues)
+struct GlobalMatch
+{
+    QString subject;
+    QRegularExpressionMatchIterator it;
+    qsizetype limit;
+};
+static const char *globalMatchType = "umr.GlobalMatch";
+
+static int globalMatchNext(lua_State *L)
+{
+    auto state = static_cast<GlobalMatch *>(lua_touserdata(L, lua_upvalueindex(1)));
+    if (!state->it.hasNext())
+        return 0;
+    auto match = state->it.next();
+    if (state->limit >= 0 && match.capturedStart() >= state->limit)
+    {
+        state->it = {};
+        return 0;
+    }
+    return pushCaptures(L, match);
+}
+
+// rx:gmatch(s [, init [, limit]]): an iterator over the captures of the matches, like string.gmatch()
+static int regexGmatch(lua_State *L)
+{
+    auto regex = checkRegex(L);
+    Subject subject(L, 2);
+    qsizetype start = startPosition(L, 3, subject);
+    qsizetype limit = limitPosition(L, 4, subject);
+
+    auto state = static_cast<GlobalMatch *>(lua_newuserdatauv(L, sizeof(GlobalMatch), 0));
+    new (state) GlobalMatch{*subject.string, {}, limit};
+    luaL_setmetatable(L, globalMatchType);
+    if (start >= 0)
+        state->it = regex->rx.globalMatch(state->subject, start);
+    lua_pushcclosure(L, globalMatchNext, 1);
+    return 1;
+}
+
+// rx:replace(s, replacement): with \1 for the groups (QString::replace())
+static int regexReplace(lua_State *L)
+{
+    auto regex = checkRegex(L);
+    auto string = toQString(L, 2);
+    auto replacement = QString::fromUtf8(luaL_checkstring(L, 3));
+    push(L, string.replace(regex->rx, replacement));
+    return 1;
+}
+
+// re.compile(pattern [, flags]): flags "i" (ignore case), "s" (. matches newlines), "m" (^ and $ at lines), "x"
+static int reCompile(lua_State *L)
+{
+    auto pattern = QString::fromUtf8(luaL_checkstring(L, 1));
+    QByteArray flags = luaL_optstring(L, 2, "");
+
+    QRegularExpression::PatternOptions options;
+    for (char flag : flags)
+    {
+        if (flag == 'i')
+            options |= QRegularExpression::CaseInsensitiveOption;
+        else if (flag == 's')
+            options |= QRegularExpression::DotMatchesEverythingOption;
+        else if (flag == 'm')
+            options |= QRegularExpression::MultilineOption;
+        else if (flag == 'x')
+            options |= QRegularExpression::ExtendedPatternSyntaxOption;
+        else
+            return luaL_error(L, "unknown regex flag '%c'", flag);
+    }
+
+    QRegularExpression rx(pattern, options);
+    if (!rx.isValid())
+        return luaL_error(L, "invalid regex %s: %s", luaL_checkstring(L, 1), qPrintable(rx.errorString()));
+    rx.optimize();
+
+    auto regex = static_cast<Regex *>(lua_newuserdatauv(L, sizeof(Regex), 0));
+    new (regex) Regex{rx};
+    luaL_setmetatable(L, regexType);
+    return 1;
+}
+
+// re.text(s): s for more than one search (converted once)
+static int reText(lua_State *L)
+{
+    size_t length = 0;
+    const char *chars = luaL_checklstring(L, 1, &length);
+    auto text = static_cast<Text *>(lua_newuserdatauv(L, sizeof(Text), 0));
+    new (text) Text{QString::fromUtf8(chars, qsizetype(length)), PositionMap()};
+    text->map.reset(&text->text, qsizetype(length));
+    luaL_setmetatable(L, textType);
+    // The collector only sees the userdata, it should work as if the text was allocated as well. (Without this
+    // the texts of a list update with hundreds of pages pile up: 180 MB more on the device for MangaTown.)
+    lua_gc(L, LUA_GCSTEP, int(text->text.size() * 2 / 1024));
+    return 1;
+}
+
+static void openRe(lua_State *L)
+{
+    luaL_newmetatable(L, regexType);
+    lua_pushcfunction(L, collect<Regex>);
+    lua_setfield(L, -2, "__gc");
+    static const luaL_Reg regexMethods[] = {{"match", regexMatch}, {"find", regexFind},     {"all", regexAll},
+                                            {"gmatch", regexGmatch}, {"replace", regexReplace}, {nullptr, nullptr}};
+    luaL_newlib(L, regexMethods);
+    lua_setfield(L, -2, "__index");
+    lua_pop(L, 1);
+
+    luaL_newmetatable(L, textType);
+    lua_pushcfunction(L, collect<Text>);
+    lua_setfield(L, -2, "__gc");
+    lua_pop(L, 1);
+
+    luaL_newmetatable(L, globalMatchType);
+    lua_pushcfunction(L, collect<GlobalMatch>);
+    lua_setfield(L, -2, "__gc");
+    lua_pop(L, 1);
+
+    static const luaL_Reg functions[] = {{"compile", reCompile}, {"text", reText}, {nullptr, nullptr}};
+    luaL_newlib(L, functions);
+    lua_setglobal(L, "re");
+}
+
+// --- text, html
+
+static int textTrim(lua_State *L)
+{
+    push(L, toQString(L, 1).trimmed());
+    return 1;
+}
+
+static int textSimplify(lua_State *L)
+{
+    push(L, toQString(L, 1).simplified());
+    return 1;
+}
+
+// like MangaSourceBase::htmlToPlainText()
+static QString htmlToPlainText(const QString &html)
+{
+    // never destroyed: that would be after the application, which it needs
+    static auto converter = new QTextDocument;
+    converter->setHtml(html);
+    return converter->toPlainText();
+}
+
+static int htmlText(lua_State *L)
+{
+    luaL_checkstring(L, 1);
+    push(L, htmlToPlainText(toQString(L, 1)));
+    return 1;
+}
+
+// like MangaSourceBase::genresFromHtml()
+static int htmlGenres(lua_State *L)
+{
+    luaL_checkstring(L, 1);
+    push(L, htmlToPlainText(toQString(L, 1))
+                .trimmed()
+                .remove('\n')
+                .replace(", ", " ")
+                .replace("/ ", " ")
+                .replace(",", " "));
+    return 1;
+}
+
+// --- json
+
+// deeper json fails (the conversion is recursive)
+static const int maxJsonDepth = 200;
+
+static void pushJson(lua_State *L, const rapidjson::Value &value, int depth = 0)
+{
+    if (depth > maxJsonDepth)
+        raise(L, {Error::Parse, "The json is nested too deeply.", 0});
+    luaL_checkstack(L, 3, "json nested too deeply");
+    switch (value.GetType())
+    {
+        case rapidjson::kNullType:
+            lua_pushlightuserdata(L, nullptr);
+            break;
+        case rapidjson::kFalseType:
+        case rapidjson::kTrueType:
+            lua_pushboolean(L, value.GetBool());
+            break;
+        case rapidjson::kStringType:
+            lua_pushlstring(L, value.GetString(), value.GetStringLength());
+            break;
+        case rapidjson::kNumberType:
+            if (value.IsInt64())
+                lua_pushinteger(L, value.GetInt64());
+            else
+                lua_pushnumber(L, value.GetDouble());
+            break;
+        case rapidjson::kArrayType:
+        {
+            lua_createtable(L, int(value.Size()), 0);
+            lua_Integer i = 0;
+            for (const auto &element : value.GetArray())
+            {
+                pushJson(L, element, depth + 1);
+                lua_rawseti(L, -2, ++i);
+            }
+            break;
+        }
+        case rapidjson::kObjectType:
+        {
+            lua_createtable(L, 0, int(value.MemberCount()));
+            for (const auto &member : value.GetObject())
+            {
+                lua_pushlstring(L, member.name.GetString(), member.name.GetStringLength());
+                pushJson(L, member.value, depth + 1);
+                lua_rawset(L, -3);
+            }
+            break;
+        }
+    }
+}
+
+// json.decode(s): tables, json.null for null
+static int jsonDecode(lua_State *L)
+{
+    size_t length = 0;
+    const char *chars = luaL_checklstring(L, 1, &length);
+    rapidjson::Document document;
+    // not recursive, for any depth
+    document.Parse<rapidjson::kParseIterativeFlag>(chars, length);
+    if (document.HasParseError())
+        raise(L, {Error::Parse, QString("Invalid json (at %1).").arg(document.GetErrorOffset()), 0});
+    pushJson(L, document);
+    return 1;
+}
+
+// --- raise
+
+static int raiseError(lua_State *L)
+{
+    Error error;
+    error.code = LuaEngine::codeFromName(QString::fromUtf8(luaL_checkstring(L, 1)));
+    error.message = QString::fromUtf8(luaL_optstring(L, 2, ""));
+    error.httpStatus = int(luaL_optinteger(L, 3, 0));
+    raise(L, error);
+}
+
+void openLibraries(lua_State *L)
+{
+    openRe(L);
+
+    static const luaL_Reg textFunctions[] = {{"trim", textTrim}, {"simplify", textSimplify}, {nullptr, nullptr}};
+    luaL_newlib(L, textFunctions);
+    lua_setglobal(L, "text");
+
+    static const luaL_Reg htmlFunctions[] = {{"text", htmlText}, {"genres", htmlGenres}, {nullptr, nullptr}};
+    luaL_newlib(L, htmlFunctions);
+    lua_setglobal(L, "html");
+
+    static const luaL_Reg jsonFunctions[] = {{"decode", jsonDecode}, {nullptr, nullptr}};
+    luaL_newlib(L, jsonFunctions);
+    lua_pushlightuserdata(L, nullptr);
+    lua_setfield(L, -2, "null");
+    lua_setglobal(L, "json");
+
+    lua_register(L, "raise", raiseError);
+}
+
+}  // namespace lua

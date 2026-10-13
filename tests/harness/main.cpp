@@ -18,7 +18,7 @@ QTextStream out(stdout);
 
 static int usage()
 {
-    out << "usage: harness [--cache <dir>] [--record <dir> | --replay <dir>] <command>\n"
+    out << "usage: harness [--cache <dir>] [--record <dir> | --replay <dir>] [--sources <dir>] <command>\n"
            "  capture <source> <picks file>   the infos, chapters, pages and images of the picked mangas\n"
            "  list <source>                   the update of the manga list\n"
            "  pick <source>                   updates the list, prints mangas for a picks file\n"
@@ -27,8 +27,10 @@ static int usage()
            "  listflow <source>               list updates (and a cancelled one) through the core like the gui\n"
            "  jobs <port>                     the download jobs, against testserver.py\n"
            "  storage <port>                  the storage of the app, against testserver.py\n"
+           "  scripts <port>                  the scripts of sources (Lua), against testserver.py\n"
            "--record writes the responses of the sites into the directory, --replay answers the requests from\n"
-           "there. The cache is a temporary directory unless --cache is given.\n";
+           "there. The cache is a temporary directory unless --cache is given. --sources adds the scripts of\n"
+           "sources in the directory (they replace the built-in ones of the same name).\n";
     return 2;
 }
 
@@ -93,7 +95,7 @@ int main(int argc, char **argv)
     QApplication app(argc, argv);
 
     QStringList args = app.arguments().mid(1);
-    QString cacheDir, fixturesDir;
+    QString cacheDir, fixturesDir, sourcesDir;
     auto mode = Fixtures::Mode::Live;
     while (args.size() >= 2 && args[0].startsWith("--"))
     {
@@ -105,6 +107,8 @@ int main(int argc, char **argv)
             mode = option == "--record" ? Fixtures::Mode::Record : Fixtures::Mode::Replay;
             fixturesDir = value;
         }
+        else if (option == "--sources")
+            sourcesDir = QDir(value).absolutePath();
         else
             return usage();
     }
@@ -117,6 +121,7 @@ int main(int argc, char **argv)
     CONF.cacheDir = QDir(cacheDir).absolutePath() + "/";
     CONF.mangaListDir = CONF.cacheDir + "mangalists/";
     CONF.screensaverDir = tempDir.path() + "/screensavers/";
+    CONF.sourcesDir = sourcesDir;
     QDir().mkpath(CONF.mangaListDir);
 
     if (!Fixtures::install(mode, fixturesDir))
@@ -134,7 +139,7 @@ int main(int argc, char **argv)
     {
         failures = listFlowTests(arg(0));
     }
-    else if (command == "jobs" || command == "storage")
+    else if (command == "jobs" || command == "storage" || command == "scripts")
     {
         if (args.isEmpty())
             return usage();
@@ -142,6 +147,10 @@ int main(int argc, char **argv)
         if (command == "storage")
         {
             failures = storageTests(server);
+        }
+        else if (command == "scripts")
+        {
+            failures = scriptTests(server);
         }
         else
         {
@@ -156,7 +165,11 @@ int main(int argc, char **argv)
         NetworkManager nm;
         Settings settings;
         nm.setDownloadSettings(QSize(1404, 1872), &settings);
-        SourceRegistry sources(&settings, SourceRegistry::builtInSources(&nm));
+        QStringList errors;
+        SourceRegistry sources(&settings, SourceRegistry::withScriptSources(SourceRegistry::builtInSources(&nm), &nm,
+                                                                            sourcesDir, &errors));
+        if (!errors.isEmpty())
+            return 2;
         MangaRepository repository(&nm, &sources);
         auto source = sources.source(arg(0)).get();
         if (!source)

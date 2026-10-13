@@ -1,4 +1,5 @@
-# The test harness of the core (desktop only), see tests/README.md.
+# The test harness of the core, see tests/README.md. With CONFIG+=kobo it runs on the device (e.g. to time the
+# replays), with the offscreen platform plugin.
 
 TEMPLATE = app
 TARGET = harness
@@ -15,11 +16,16 @@ SOURCES += \
     flowtests.cpp \
     jobtests.cpp \
     main.cpp \
+    scripttests.cpp \
     storagetests.cpp \
 
 HEADERS += \
     fixtures.h \
     harness.h \
 
-CONFIG += link_pkgconfig
-PKGCONFIG += libturbojpeg libpng libwebp
+kobo {
+    LIBS += -lturbojpeg -lpng -lwebp -lrt
+} else {
+    CONFIG += link_pkgconfig
+    PKGCONFIG += libturbojpeg libpng libwebp
+}

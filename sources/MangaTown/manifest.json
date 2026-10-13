@@ -1,0 +1,8 @@
+{
+    "name": "MangaTown",
+    "baseUrl": "https://www.mangatown.com",
+    "headers": [
+        {"domain": "mangahere.org", "name": "Referer", "value": "https://www.mangatown.com/"},
+        {"domain": "mangahere.com", "name": "Referer", "value": "https://www.mangatown.com/"}
+    ]
+}

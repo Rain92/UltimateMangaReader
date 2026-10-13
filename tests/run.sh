@@ -2,7 +2,7 @@
 # Builds the test harness and runs the tests, see tests/README.md.
 #   tests/run.sh                  all tests
 #   tests/run.sh NAME...          some of them: a source (MangaDex), the update of its list (MangaHere-list),
-#                                 jobs, storage
+#                                 the script of a source in sources/ (MangaTown-lua), jobs, storage, scripts
 #   tests/run.sh record [NAME...] records the responses of the sites again and the golden output with them
 # QMAKE (default qmake6) and BUILD_DIR (default ../build-UltimateMangaReader-tests next to the repository)
 # can be set in the environment.
@@ -17,6 +17,8 @@ SOURCES="Comick MangaDex MangaHere Mangakakalot MangaPlus MangaTown"
 # the list updates of the other sources take too many requests (MangaDex ~700 pages, MangaTown ~800 pages,
 # Comick ~200 MB of sitemaps)
 LISTS="MangaHere-list Mangakakalot-list MangaPlus-list"
+# the scripts of sources in sources/, against the responses and the golden output of the built-in sources
+SCRIPTS="MangaTown-lua"
 
 record=0
 if [ "${1:-}" = record ]; then
@@ -26,7 +28,7 @@ fi
 names=("$@")
 if [ ${#names[@]} -eq 0 ]; then
     names=($SOURCES $LISTS)
-    [ $record = 0 ] && names+=(jobs storage)
+    [ $record = 0 ] && names+=($SCRIPTS jobs storage scripts)
 fi
 
 mkdir -p "$BUILD" && cd "$BUILD" || exit 2
@@ -60,9 +62,9 @@ report() {
 
 # a test of a source: replayed and compared with the golden output, or recorded
 source_test() {
-    local name=$1
+    local name=$1 base=${1%-lua}
     shift
-    local fixtures=$TESTS/fixtures/$name golden=$TESTS/golden/$name.txt
+    local fixtures=$TESTS/fixtures/$base golden=$TESTS/golden/$base.txt
     if [ $record = 1 ]; then
         ./harness --record "$fixtures" "$@" > "$golden" 2> "output/$name.log"
         local status=$?
@@ -89,7 +91,7 @@ source_test() {
 
 for name in "${names[@]}"; do
     case $name in
-        jobs | storage)
+        jobs | storage | scripts)
             [ $record = 1 ] && continue
             start_server
             ./harness "$name" "$PORT" > "output/$name.txt" 2> "output/$name.log"
@@ -98,6 +100,11 @@ for name in "${names[@]}"; do
             ;;
         *-list)
             source_test "$name" list "${name%-list}"
+            ;;
+        *-lua)
+            [ $record = 1 ] && continue
+            source_test "$name" --sources "$(dirname "$TESTS")/sources" capture "${name%-lua}" \
+                "$TESTS/picks/${name%-lua}.txt"
             ;;
         *)
             source_test "$name" capture "$name" "$TESTS/picks/$name.txt"

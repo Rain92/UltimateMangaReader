@@ -1,7 +1,9 @@
 # The core of the app: everything but the widgets, main.cpp and the device of the platform (device_*.cpp).
 # Shared by the app and the test harness (tests/harness).
 
-INCLUDEPATH += $$PWD $$PWD/mangasources $$PWD/..
+INCLUDEPATH += $$PWD $$PWD/mangasources $$PWD/scripting $$PWD/..
+
+include($$PWD/../thirdparty/lua/lua.pri)
 
 HEADERS += \
     $$PWD/aboutinfo.h \
@@ -35,6 +37,7 @@ HEADERS += \
     $$PWD/mangarepository.h \
     $$PWD/mangasources/comick.h \
     $$PWD/mangasources/json.h \
+    $$PWD/mangasources/luasource.h \
     $$PWD/mangasources/mangadex.h \
     $$PWD/mangasources/mangahere.h \
     $$PWD/mangasources/mangakakalot.h \
@@ -45,6 +48,8 @@ HEADERS += \
     $$PWD/networkmanager.h \
     $$PWD/perftimer.h \
     $$PWD/readingprogress.h \
+    $$PWD/scripting/luaengine.h \
+    $$PWD/scripting/lualibs.h \
     $$PWD/result.h \
     $$PWD/settings.h \
     $$PWD/sizes.h \
@@ -87,6 +92,7 @@ SOURCES += \
     $$PWD/mangalistupdater.cpp \
     $$PWD/mangarepository.cpp \
     $$PWD/mangasources/comick.cpp \
+    $$PWD/mangasources/luasource.cpp \
     $$PWD/mangasources/mangadex.cpp \
     $$PWD/mangasources/mangahere.cpp \
     $$PWD/mangasources/mangakakalot.cpp \
@@ -96,6 +102,8 @@ SOURCES += \
     $$PWD/mangasources/updateprogresstoken.cpp \
     $$PWD/networkmanager.cpp \
     $$PWD/readingprogress.cpp \
+    $$PWD/scripting/luaengine.cpp \
+    $$PWD/scripting/lualibs.cpp \
     $$PWD/settings.cpp \
     $$PWD/sourcelistmodel.cpp \
     $$PWD/sourceregistry.cpp \

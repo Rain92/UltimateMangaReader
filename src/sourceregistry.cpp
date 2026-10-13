@@ -1,6 +1,9 @@
 #include "sourceregistry.h"
 
+#include <QDir>
+
 #include "comick.h"
+#include "luasource.h"
 #include "mangadex.h"
 #include "mangahere.h"
 #include "mangakakalot.h"
@@ -21,6 +24,37 @@ QList<QSharedPointer<MangaSourceBase>> SourceRegistry::builtInSources(NetworkMan
             QSharedPointer<MangaSourceBase>(new MangaHere(networkManager)),
             QSharedPointer<MangaSourceBase>(new Comick(networkManager)),
             QSharedPointer<MangaSourceBase>(new MangaPlus(networkManager))};
+}
+
+QList<QSharedPointer<MangaSourceBase>> SourceRegistry::withScriptSources(QList<QSharedPointer<MangaSourceBase>> sources,
+                                                                         NetworkManager *networkManager,
+                                                                         const QString &directory, QStringList *errors)
+{
+    if (directory.isEmpty())
+        return sources;
+
+    for (const auto &entry : QDir(directory).entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name))
+    {
+        auto loaded = LuaSource::load(networkManager, entry.absoluteFilePath());
+        if (!loaded)
+        {
+            auto message = QString("Couldn't load the source in %1: %2")
+                               .arg(entry.absoluteFilePath(), loaded.error().message);
+            qWarning().noquote() << message;
+            if (errors)
+                errors->append(message);
+            continue;
+        }
+
+        auto script = *loaded;
+        auto same = std::find_if(sources.begin(), sources.end(),
+                                 [&script](const auto &source) { return source->name == script->name; });
+        if (same != sources.end())
+            *same = script;
+        else
+            sources.append(script);
+    }
+    return sources;
 }
 
 QStringList SourceRegistry::names() const

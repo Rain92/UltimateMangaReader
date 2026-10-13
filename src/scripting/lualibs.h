@@ -1,0 +1,29 @@
+#pragma once
+
+#include <QString>
+
+#include "lua.h"
+#include "result.h"
+
+// The libraries of the source scripts besides Lua's own:
+// - re: regular expressions (QRegularExpression, Perl syntax). Positions are byte positions in the UTF-8 text,
+//   like the ones of Lua's string functions.
+// - text: trim, simplify (whitespace like QString).
+// - html: text (the plain text of html), genres.
+// - json: decode (into tables; null is json.null).
+// - raise(code, message [, status]): fails with an error of the app (code: "failed", "network", "timeout",
+//   "cancelled", "http", "parse", "notfound", "storage").
+namespace lua
+{
+void openLibraries(lua_State *L);
+
+QString toQString(lua_State *L, int index);
+void push(lua_State *L, const QString &string);
+void pushError(lua_State *L, const Error &error);
+// Fails the running script with the error.
+[[noreturn]] void raise(lua_State *L, const Error &error);
+
+// A field of the table at index without metamethods, nil if it's missing (pushed).
+int rawField(lua_State *L, int index, const char *name);
+QString stringField(lua_State *L, int index, const char *name);
+}  // namespace lua
