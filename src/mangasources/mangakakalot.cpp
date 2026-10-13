@@ -4,11 +4,7 @@
 
 #include <algorithm>
 
-#define RAPIDJSON_ASSERT(x) \
-    if (!(x))               \
-        throw QException();
-
-#include "thirdparty/rapidjson.h"
+#include "json.h"
 
 using namespace rapidjson;
 
@@ -536,7 +532,7 @@ Result<MangaChapterCollection, QString> Mangakakalot::updateMangaInfoFinishedLoa
                     hasMore = pagination["has_more"].GetBool() && chapterArray.Size() > 0;
             }
         }
-        catch (QException &)
+        catch (const JsonError &)
         {
             return Err(QString("Couldn't parse the chapter list."));
         }

@@ -5,7 +5,7 @@
 #include "perftimer.h"
 
 MangaInfo::MangaInfo(AbstractMangaSource *mangasource)
-    : QObject(), updated(false), mangaSource(mangasource), updateMutex(new QMutex())
+    : QObject(), updated(false), mangaSource(mangasource)
 {
 }
 

@@ -1,10 +1,8 @@
 #include "virtualkeyboard.h"
 
 #include <QApplication>
-#include <QDebug>
 #include <QPaintEvent>
 #include <QPainter>
-#include <QTimer>
 
 const int VirtualKeyboard::gap = 3;
 const int VirtualKeyboard::width = VIRTUAL_KEYBOARD_WIDTH;
@@ -17,15 +15,12 @@ static QRect ir(const QRect& r, int size)
 
 VirtualKeyboard::VirtualKeyboard(QWidget* parent)
     : QWidget(parent),
-      pLastKey(NULL),
+      pLastKey(nullptr),
       shiftKeyIndex(0),
       isShift(false),
       isCapsLock(false),
       isEnableCapsLock(false),
-      isProcessCursorKeys(true),
-      isPersistent(false),
-      svgRenderer(QString(":/images/icons/keyboardicons.svg")),
-      layoutNo(0)
+      svgRenderer(QString(":/images/icons/keyboardicons.svg"))
 {
     setFocusPolicy(Qt::NoFocus);
 
@@ -99,57 +94,17 @@ VirtualKeyboard::VirtualKeyboard(QWidget* parent)
 
     pLastKey = &keys[keyCloseIndex];
 
-    readLayouts();
-    //    if ( g_pConfig )
-    //        setLayout(g_pConfig->readInt("kbd_layout", 0));
-
     repeatDelayTimer.setInterval(500);
     repeatDelayTimer.setSingleShot(true);
     repeatRateTimer.setInterval(150);
 
-    QObject::connect(&repeatDelayTimer, SIGNAL(timeout()), this, SLOT(onAutoRepeat()));
-    QObject::connect(&repeatRateTimer, SIGNAL(timeout()), this, SLOT(onAutoRepeat()));
-}
-
-VirtualKeyboard::~VirtualKeyboard()
-{
-    //    if ( g_pConfig )
-    //        g_pConfig->writeInt("kbd_layout", layoutNo);
+    QObject::connect(&repeatDelayTimer, &QTimer::timeout, this, [this]() { onAutoRepeat(true); });
+    QObject::connect(&repeatRateTimer, &QTimer::timeout, this, [this]() { onAutoRepeat(false); });
 }
 
 int VirtualKeyboard::heightForWidth(int w) const
 {
     return w * 5 / 11;
-}
-
-void VirtualKeyboard::setLayout(int l)
-{
-    if (l >= 0 && l < layouts.size())
-    {
-        map.clear();
-
-        layoutNo = l;
-
-        QStringList list(layouts[layoutNo].split(" "));
-
-        if (list.empty())
-            return;
-
-        layout = list[0];
-
-        for (int n = 1; n < list.size(); ++n)
-        {
-            if (2 == list[n].length())
-                map[QString(list[n][0])] = QString(list[n][1]);
-        }
-
-        update();
-    }
-}
-
-void VirtualKeyboard::changeLayout()
-{
-    setLayout((layoutNo + 1) % layouts.size());
 }
 
 void VirtualKeyboard::paintEvent(QPaintEvent* event)
@@ -178,9 +133,6 @@ void VirtualKeyboard::paintEvent(QPaintEvent* event)
             p.setPen(&*i == pLastKey ? pen1 : pen2);
 
             QString s(isShift ? i->ss : i->sn);
-            QMap<QString, QString>::ConstIterator it(map.find(s));
-            if (it != map.cend())
-                s = it.value();
 
             if (!fontSize)
             {
@@ -212,7 +164,6 @@ void VirtualKeyboard::paintEvent(QPaintEvent* event)
                 p.drawText(r, Qt::AlignVCenter | Qt::AlignHCenter, s);
             }
 
-            //            p.drawRoundRect(r, 40, 40);
             p.drawRect(r);
         }
     }
@@ -272,7 +223,7 @@ void VirtualKeyboard::activateKey(VirtualKey* pKey, QEvent::Type t)
                     isEnableCapsLock = true;
                     pKey->image = "shift1";
                     needFullUpdate = true;
-                    QTimer::singleShot(1000, this, SLOT(onCapsLock()));
+                    QTimer::singleShot(1000, this, &VirtualKeyboard::onCapsLock);
                 }
 
                 if (needFullUpdate)
@@ -293,10 +244,7 @@ void VirtualKeyboard::activateKey(VirtualKey* pKey, QEvent::Type t)
         }
         else if (Qt::Key_Mode_switch == pKey->key)
         {
-            if (QEvent::KeyPress == t)
-            {
-                changeLayout();
-            }
+            // there is only the english layout
         }
         else if (Qt::Key_Close == pKey->key)
         {
@@ -315,19 +263,10 @@ void VirtualKeyboard::activateKey(VirtualKey* pKey, QEvent::Type t)
         else
         {
             QString s(isShift ? pKey->ss : pKey->sn);
-            QMap<QString, QString>::ConstIterator i(map.find(s));
-            if (i != map.cend())
-                s = i.value();
             Qt::KeyboardModifiers mod = isShift ? Qt::ShiftModifier : Qt::NoModifier;
             QWidget* w = qApp->focusWidget();
-            if (w != NULL)
+            if (w != nullptr)
                 QCoreApplication::postEvent(w, new QKeyEvent(t, pKey->key, mod, s));
-
-            QRect r(getRectForKey(*pKey));
-            r.setX(r.x() - gap);
-            r.setY(r.y() - gap);
-            r.setWidth(r.width() + 2 * gap);
-            r.setHeight(r.height() + 2 * gap);
 
             if (pKey->key != Qt::Key_Up && pKey->key != Qt::Key_Down && pKey->key != Qt::Key_Left &&
                 pKey->key != Qt::Key_Right)
@@ -358,20 +297,10 @@ void VirtualKeyboard::activateKey(VirtualKey* pKey, QEvent::Type t)
     }
 }
 
-void VirtualKeyboard::translateKey(QKeyEvent* event)
-{
-    for (std::vector<VirtualKey>::iterator i = keys.begin(); i != keys.end(); ++i)
-    {
-        if (event->key() == i->key)
-        {
-            activateKey(&*i, event->type());
-        }
-    }
-}
-
 void VirtualKeyboard::mousePressEvent(QMouseEvent* event)
 {
-    VirtualKey* pKey = findKeyByMousePos(event->pos().x(), event->pos().y());
+    const QPoint pos = event->position().toPoint();
+    VirtualKey* pKey = findKeyByMousePos(pos.x(), pos.y());
     if (pKey)
     {
         activateKey(pKey, QEvent::KeyPress);
@@ -379,16 +308,13 @@ void VirtualKeyboard::mousePressEvent(QMouseEvent* event)
     }
 }
 
-void VirtualKeyboard::mouseReleaseEvent(QMouseEvent* event)
+void VirtualKeyboard::mouseReleaseEvent(QMouseEvent*)
 {
-    Q_UNUSED(event)
     if (pLastKey)
     {
         activateKey(pLastKey, QEvent::KeyRelease);
-        if (repeatDelayTimer.isActive())
-            repeatDelayTimer.stop();
-        if (repeatRateTimer.isActive())
-            repeatRateTimer.stop();
+        repeatDelayTimer.stop();
+        repeatRateTimer.stop();
     }
 }
 
@@ -409,50 +335,12 @@ QRect VirtualKeyboard::getRectForKey(const VirtualKeyboard::VirtualKey& key) con
 
 VirtualKeyboard::VirtualKey* VirtualKeyboard::findKeyByMousePos(int x, int y)
 {
-    for (std::vector<VirtualKey>::iterator i = keys.begin(); i != keys.end(); ++i)
+    for (auto &key : keys)
     {
-        QRect r(getRectForKey(*i));
-        if (r.contains(x, y))
-            return &*i;
+        if (getRectForKey(key).contains(x, y))
+            return &key;
     }
-    return NULL;
-}
-
-VirtualKeyboard::VirtualKey* VirtualKeyboard::findKeyByCursorPos(int x, int y)
-{
-    for (std::vector<VirtualKey>::iterator i = keys.begin(); i != keys.end(); ++i)
-    {
-        if (x >= i->pos.x() && x < i->pos.x() + i->size.width() && y >= i->pos.y() &&
-            y < i->pos.y() + i->size.height())
-            return &*i;
-    }
-    return NULL;
-}
-
-void VirtualKeyboard::readLayouts()
-{
-    //    Factory<LanguageDescriptor>& ldf =
-    //    Singleton<Factory<LanguageDescriptor> >::instance(); if (
-    //    !ldf.isEmpty() )
-    //    {
-    //        int lang = getLangIndex();
-    //        QFile file(ldf.at(lang).getKbdFileName());
-    //        if (file.open(QIODevice::ReadOnly))
-    //        {
-    //            QTextStream in(&file);
-    //            in.setCodec("UTF-8");
-    //            while (!in.atEnd())
-    //            {
-    //                QString str(in.readLine().trimmed());
-    //                if ( !str.isEmpty() )
-    //                    layouts.push_back(str);
-    //            }
-    //        }
-    //    }
-    //    if ( layouts.isEmpty() )
-    //    {
-    layouts.push_back("EN");
-    //    }
+    return nullptr;
 }
 
 void VirtualKeyboard::onCapsLock()
@@ -460,19 +348,17 @@ void VirtualKeyboard::onCapsLock()
     isEnableCapsLock = false;
 }
 
-void VirtualKeyboard::onAutoRepeat()
+void VirtualKeyboard::onAutoRepeat(bool first)
 {
     if (pLastKey)
     {
         activateKey(pLastKey, QEvent::KeyPress);
-        if (sender() == &repeatDelayTimer)
+        if (first)
             repeatRateTimer.start();
     }
     else
     {
-        if (repeatDelayTimer.isActive())
-            repeatDelayTimer.stop();
-        if (repeatRateTimer.isActive())
-            repeatRateTimer.stop();
+        repeatDelayTimer.stop();
+        repeatRateTimer.stop();
     }
 }

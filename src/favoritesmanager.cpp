@@ -68,7 +68,7 @@ void FavoritesManager::serialize()
 
 bool FavoritesManager::isFavorite(QSharedPointer<MangaInfo> info)
 {
-    for (const Favorite &f : qAsConst(favorites))
+    for (const Favorite &f : std::as_const(favorites))
         if (f.hostname == info->hostname && f.title == info->title)
             return true;
 
@@ -136,7 +136,7 @@ void FavoritesManager::loadInfos()
         return;
 
     favoriteinfos.clear();
-    for (const auto &fav : qAsConst(favorites))
+    for (const auto &fav : std::as_const(favorites))
         favoriteinfos.append(loadInfo(fav));
 
     infosLoaded = true;
@@ -197,7 +197,7 @@ void FavoritesManager::updateInfos()
     // tab switches would pile up downloads otherwise
     const qint64 minUpdateIntervalMs = 60 * 1000;
 
-    for (const auto &info : qAsConst(favoriteinfos))
+    for (const auto &info : std::as_const(favoriteinfos))
     {
         // the source might have been disabled since the infos were loaded
         auto source = info ? mangasources.value(info->hostname) : nullptr;

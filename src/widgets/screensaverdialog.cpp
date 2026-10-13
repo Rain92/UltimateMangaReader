@@ -1,5 +1,6 @@
 #include "screensaverdialog.h"
 
+#include "imageprocessingnative.h"
 #include "ui_screensaverdialog.h"
 
 ScreensaverDialog::ScreensaverDialog(QWidget* parent) : QDialog(parent), ui(new Ui::ScreensaverDialog)
@@ -39,14 +40,15 @@ void ScreensaverDialog::showRandomScreensaver()
         auto fp = CONF.screensaverDir + files[i];
 
         QFile file(fp);
-        file.open(QIODevice::ReadOnly);
-
-        QImage img =
-            processImageN(file.readAll(), "", this->size(), DoublePageNoRotation, false, false, true);
-
-        QPixmap pic = QPixmap::fromImage(img);
-        ui->labelImage->setPixmap(pic);
-        file.close();
+        if (file.open(QIODevice::ReadOnly))
+        {
+            QImage img = processImageN(file.readAll(), "", this->size(), DoublePageNoRotation, false, false);
+            ui->labelImage->setPixmap(QPixmap::fromImage(img));
+        }
+        else
+        {
+            qDebug() << "Can't open screensaver" << fp;
+        }
     }
 
     ui->labelImage->showFullScreen();

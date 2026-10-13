@@ -166,7 +166,7 @@ bool MangaHere::updateMangaList(UpdateProgressToken *token)
     for (int attempt = 1;; attempt++)
     {
         while (!job->isCompleted && job->errorString.isEmpty() && !token->canceled)
-            awaitSignal(job.get(), {SIGNAL(completed()), SIGNAL(downloadError())}, 500);
+            awaitSignal(job.get(), 500, &DownloadJobBase::completed, &DownloadJobBase::downloadError);
 
         if (token->canceled)
         {

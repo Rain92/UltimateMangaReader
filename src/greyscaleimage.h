@@ -1,18 +1,10 @@
 #ifndef GREYSCALEIMAGE_H
 #define GREYSCALEIMAGE_H
 
-#include <png.h>
-#include <turbojpeg.h>
-
-#include <QDebug>
-#include <QElapsedTimer>
-#include <QFile>
+#include <QByteArray>
 #include <QImage>
-#include <QScopeGuard>
-#include <cstring>
-
-#include "imagerotate.h"
-#include "thirdparty/simdimageresize.h"
+#include <QRect>
+#include <QSize>
 
 // Whether an image of that size may be decoded (memory, and the int sizes of the buffers).
 bool decodedSizeAllowed(qint64 width, qint64 height);

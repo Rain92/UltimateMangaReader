@@ -2,9 +2,11 @@
 
 #include <QResizeEvent>
 #include <QScrollBar>
+#include <QStringListModel>
 
-#include "qstringlistmodel.h"
+#include "imageprocessingnative.h"
 #include "ui_mangainfowidget.h"
+#include "widgetutils.h"
 
 MangaInfoWidget::MangaInfoWidget(QWidget *parent)
     : QWidget(parent), ui(new Ui::MangaInfoWidget), currentmanga()

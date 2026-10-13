@@ -3,6 +3,7 @@
 #include <QScrollBar>
 
 #include "ui_settingsdialog.h"
+#include "widgetutils.h"
 
 SettingsDialog::SettingsDialog(Settings *settings, QWidget *parent)
     : QDialog(parent), ui(new Ui::SettingsDialog), settings(settings), internalChange(false)
@@ -12,8 +13,7 @@ SettingsDialog::SettingsDialog(Settings *settings, QWidget *parent)
     setWindowFlags(Qt::Popup);
 
     for (auto item : this->findChildren<QComboBox *>())
-        QObject::connect(item, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
-                         [this](int) { this->updateSettings(); });
+        QObject::connect(item, &QComboBox::currentIndexChanged, this, &SettingsDialog::updateSettings);
 
     for (auto item : this->findChildren<QCheckBox *>())
         QObject::connect(item, &QCheckBox::clicked, this, &SettingsDialog::updateSettings);
@@ -54,7 +54,7 @@ void SettingsDialog::resetUI()
     ui->checkBoxTrim->setChecked(settings->trimPages);
     ui->checkBoxManhwaMode->setChecked(settings->manhwaMode);
 
-    ui->comboBoxDithering->setCurrentIndex(settings->ditheringMode / 2);
+    ui->comboBoxDithering->setCurrentIndex(settings->ditheringMode == NoDithering ? 0 : 1);
 
     ui->comboBoxTab->setCurrentIndex(settings->tabAdvance);
     ui->comboBoxSwipe->setCurrentIndex(settings->swipeAdvance);
@@ -91,7 +91,7 @@ void SettingsDialog::updateSettings()
 
     auto oldDitheringMode = settings->ditheringMode;
 
-    settings->ditheringMode = static_cast<DitheringMode>(ui->comboBoxDithering->currentIndex() * 2);
+    settings->ditheringMode = ui->comboBoxDithering->currentIndex() == 0 ? NoDithering : SWDithering;
 
     if (oldDitheringMode != settings->ditheringMode)
         emit ditheringMethodChanged();
@@ -111,7 +111,7 @@ void SettingsDialog::updateSettings()
 
 void SettingsDialog::setupSourcesList()
 {
-    auto layout = ui->frameMangaScources->layout();
+    auto layout = ui->frameMangaSources->layout();
 
     QLayoutItem *item;
     while ((item = layout->takeAt(0)) != nullptr)
@@ -124,7 +124,7 @@ void SettingsDialog::setupSourcesList()
     {
         bool enabled = settings->enabledMangaSources[ms];
 
-        QCheckBox *checkbox = new QCheckBox(ms, ui->frameMangaScources);
+        QCheckBox *checkbox = new QCheckBox(ms, ui->frameMangaSources);
         checkbox->setChecked(enabled);
         QObject::connect(checkbox, &QCheckBox::clicked, this,
                          [this, checkbox, ms]() { updateActiveMangasSettings(ms, checkbox->isChecked()); });

@@ -30,7 +30,6 @@ public:
 signals:
     void mangaSourceClicked(AbstractMangaSource *source);
     void mangaClicked(const QString &mangaurl, const QString &mangatitle);
-    void favoritesCleared();
 
 private slots:
     void on_listViewSources_clicked(const QModelIndex &index);

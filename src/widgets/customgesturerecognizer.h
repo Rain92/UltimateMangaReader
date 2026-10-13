@@ -6,35 +6,28 @@
 #include <QGestureRecognizer>
 #include <QPointF>
 
+// Swipes and taps from mouse events (the touch screens deliver synthesized mouse events).
 class SwipeGestureRecognizer : public QGestureRecognizer
 {
     enum State
     {
         NoGesture,
-        Started,
-        ThreePointsReached
+        Started
     };
 
     static const int MoveThreshold = 50;
     static const int directionChangeThreshold = MoveThreshold / 2;
 
-    qreal velocity() const { return velocityValue; }
-    void setVelocity(qreal value) { velocityValue = value; }
-
     QSwipeGesture::SwipeDirection horizontalDirection;
     QSwipeGesture::SwipeDirection verticalDirection;
-    qreal swipeAngle;
-
     QPoint startPosition;
     State state;
-    qreal velocityValue;
-    QElapsedTimer time;
 
 public:
     SwipeGestureRecognizer();
-    QGesture *create(QObject *);
-    Result recognize(QGesture *state, QObject *watched, QEvent *event);
-    void reset(QGesture *state);
+    QGesture *create(QObject *) override;
+    Result recognize(QGesture *state, QObject *watched, QEvent *event) override;
+    void reset(QGesture *state) override;
 };
 
 class TapGestureRecognizer : public QGestureRecognizer

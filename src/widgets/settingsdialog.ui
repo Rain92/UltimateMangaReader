@@ -113,7 +113,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QFrame" name="frameMangaScources">
+        <widget class="QFrame" name="frameMangaSources">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
            <horstretch>0</horstretch>

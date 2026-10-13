@@ -44,8 +44,8 @@ enum MangaOrderMethod
 
 enum DitheringMode
 {
+    // the values are stored in the settings
     NoDithering = 0,
-    HWDithering = 1,
     SWDithering = 2
 };
 

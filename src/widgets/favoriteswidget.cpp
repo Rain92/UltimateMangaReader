@@ -2,22 +2,14 @@
 
 #include <QSaveFile>
 
+#include "imageprocessingnative.h"
 #include "perftimer.h"
-
 #include "ui_favoriteswidget.h"
+#include "widgetutils.h"
 
 static QString favoriteKey(const Favorite &fav)
 {
     return fav.hostname + '/' + fav.title;
-}
-
-static QPixmap labelPixmap(const QLabel *label)
-{
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    return label->pixmap();
-#else
-    return label->pixmap(Qt::ReturnByValue);
-#endif
 }
 
 // Runs on a worker thread.
@@ -135,7 +127,7 @@ void FavoritesWidget::showFavoritesList()
                            for (int i = 0; i < ui->tableWidget->rowCount(); i++)
                            {
                                auto label = iconLabel(i);
-                               if (label && labelPixmap(label).isNull())
+                               if (label && label->pixmap().isNull())
                                    rows.append(i);
                            }
                            loadThumbnails(rows);
@@ -225,7 +217,7 @@ void FavoritesWidget::moveFavoriteToFront(int i)
         return;
 
     auto label = iconLabel(i);
-    QPixmap thumbnail = label ? labelPixmap(label) : QPixmap();
+    QPixmap thumbnail = label ? label->pixmap() : QPixmap();
 
     favoritesManager->moveFavoriteToFront(i);
 

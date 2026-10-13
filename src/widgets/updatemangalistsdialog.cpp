@@ -34,7 +34,7 @@ void UpdateMangaListsDialog::resetUI()
     ui->pushButtonOk->show();
     ui->pushButtonCancel->show();
     ui->pushButtonFinish->hide();
-    ui->frameMangaScources->show();
+    ui->frameMangaSources->show();
     ui->frameProgress->hide();
 
     ui->labelProgress->setText("Starting...");
@@ -44,7 +44,7 @@ void UpdateMangaListsDialog::resetUI()
     {
         QLayoutItem *item;
         int i = 0;
-        while ((item = ui->frameMangaScources->layout()->itemAt(i++)) != nullptr)
+        while ((item = ui->frameMangaSources->layout()->itemAt(i++)) != nullptr)
         {
             auto *checkbox = dynamic_cast<QCheckBox *>(item->widget());
             if (checkbox != nullptr && !updateCompleted)
@@ -75,7 +75,7 @@ void UpdateMangaListsDialog::resetUI()
 
 void UpdateMangaListsDialog::setupSourcesList()
 {
-    auto layout = ui->frameMangaScources->layout();
+    auto layout = ui->frameMangaSources->layout();
 
     QLayoutItem *item;
     while ((item = layout->takeAt(0)) != nullptr)
@@ -89,7 +89,7 @@ void UpdateMangaListsDialog::setupSourcesList()
         if (!settings->enabledMangaSources[ms])
             continue;
 
-        QCheckBox *checkbox = new QCheckBox(ms, ui->frameMangaScources);
+        QCheckBox *checkbox = new QCheckBox(ms, ui->frameMangaSources);
         checkbox->setChecked(true);
         layout->addWidget(checkbox);
     }
@@ -126,7 +126,7 @@ void UpdateMangaListsDialog::on_pushButtonOk_clicked()
 {
     QLayoutItem *item;
     int i = 0;
-    while ((item = ui->frameMangaScources->layout()->itemAt(i++)) != nullptr)
+    while ((item = ui->frameMangaSources->layout()->itemAt(i++)) != nullptr)
     {
         auto *checkbox = dynamic_cast<QCheckBox *>(item->widget());
         // a retry continues where the sources stopped (the token keeps what they got done)
@@ -138,7 +138,7 @@ void UpdateMangaListsDialog::on_pushButtonOk_clicked()
     if (progressToken->sourcesProgress.count() == 0)
         return;
 
-    ui->frameMangaScources->hide();
+    ui->frameMangaSources->hide();
     ui->pushButtonOk->hide();
     ui->frameProgress->show();
     emit updateClicked(progressToken);

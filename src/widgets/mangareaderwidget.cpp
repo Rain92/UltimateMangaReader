@@ -2,13 +2,9 @@
 
 #include <QtConcurrent>
 
-#include "ui_mangareaderwidget.h"
-
+#include "imageprocessingnative.h"
 #include "perftimer.h"
-
-#ifdef KOBO
-#include "koboplatformfunctions.h"
-#endif
+#include "ui_mangareaderwidget.h"
 
 MangaReaderWidget::MangaReaderWidget(QWidget *parent)
     : QWidget(parent),
@@ -235,7 +231,6 @@ void MangaReaderWidget::showImage(const QString &path)
 
         if (i != -1)
         {
-            qDebug() << "Cachehit:" << i;
             imgcache.move(i, 0);
             ui->mangaImageWidget->setImage(imgcache[0].first);
         }
@@ -261,20 +256,11 @@ void MangaReaderWidget::showImage(const QString &path)
 void MangaReaderWidget::checkMem()
 {
     while (imgcache.size() > 1 && !enoughFreeSystemMemory())
-    {
-        //        int free = getFreeSystemMemory() / 1024 / 1024;
-        //        qDebug() << "Free(MB):" << free;
         imgcache.removeLast();
-        //        free = getFreeSystemMemory() / 1024 / 1024;
-        //        qDebug() << "Freed memory!" << free;
-    }
 }
 
 bool MangaReaderWidget::addImageToCache(const QString &path, QSharedPointer<QImage> img)
 {
-    //    QElapsedTimer t;
-    //    t.start();
-
     int i = searchCache(path);
     if (i != -1)
     {
@@ -293,14 +279,12 @@ bool MangaReaderWidget::addImageToCache(const QString &path, QSharedPointer<QIma
 
     checkMem();
 
-    //    qDebug() << "Load image1:" << t.elapsed() << path.split('/').last();
-
     return true;
 }
 
 bool MangaReaderWidget::loadImageToCache(const QString &path)
 {
-    auto img = QSharedPointer<QImage>(new QImage(loadQImageFast(path, settings->ditheringMode >= SWDithering)));
+    auto img = QSharedPointer<QImage>(new QImage(loadQImageFast(path)));
 
     return addImageToCache(path, img);
 }
@@ -330,15 +314,14 @@ void MangaReaderWidget::startPrefetch()
     job->path = prefetchQueue.takeFirst();
     prefetch = job;
 
-    bool dither = settings->ditheringMode >= SWDithering;
     QThread *guiThread = QThread::currentThread();
     prefetchFuture = QtConcurrent::run(&prefetchPool,
-                                       [this, job, dither, guiThread]()
+                                       [this, job, guiThread]()
                                        {
                                            // waitForFinished() runs a task that didn't start yet itself
                                            if (QThread::currentThread() != guiThread)
                                                lowerThreadPriority();
-                                           job->image = loadQImageFast(job->path, dither);
+                                           job->image = loadQImageFast(job->path);
                                            QMetaObject::invokeMethod(
                                                this, [this, job]() { prefetchFinished(job); },
                                                Qt::QueuedConnection);

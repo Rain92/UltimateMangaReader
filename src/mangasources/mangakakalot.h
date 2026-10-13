@@ -1,5 +1,5 @@
-#ifndef MANGAKALOT_H
-#define MANGAKALOT_H
+#ifndef MANGAKAKALOT_H
+#define MANGAKAKALOT_H
 
 #include <QSet>
 
@@ -54,4 +54,4 @@ private:
     QSharedPointer<DownloadStringJob> downloadChapterList(const QString &slug, int offset);
 };
 
-#endif  // MANGAKALOT_H
+#endif  // MANGAKAKALOT_H

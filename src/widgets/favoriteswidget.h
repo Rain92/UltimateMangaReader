@@ -8,7 +8,6 @@
 #include <QWidget>
 
 #include "favoritesmanager.h"
-#include "imageprocessingnative.h"
 #include "readingprogress.h"
 #include "sizes.h"
 

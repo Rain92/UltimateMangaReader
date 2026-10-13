@@ -1,5 +1,5 @@
-#ifndef ULITIMATEMANGAREADERCORE_H
-#define ULITIMATEMANGAREADERCORE_H
+#ifndef ULTIMATEMANGAREADERCORE_H
+#define ULTIMATEMANGAREADERCORE_H
 
 #include <QObject>
 
@@ -29,8 +29,6 @@ public:
 
     AbstractMangaSource *currentMangaSource;
 
-    QSharedPointer<MangaInfo> currentManga;
-
     NetworkManager *networkManager;
     MangaController *mangaController;
     FavoritesManager *favoritesManager;
@@ -46,7 +44,7 @@ public:
     void setCurrentManga(const QString &mangaUrl, const QString &mangatitle);
 
     void clearDownloadCache(ClearDownloadCacheLevel level);
-    void updateActiveScources();
+    void updateActiveSources();
 
     void updateMangaLists(QSharedPointer<UpdateProgressToken> progressToken);
     void sortMangaLists();
@@ -57,8 +55,6 @@ public:
 
 signals:
     void currentMangaSourceChanged(AbstractMangaSource *source);
-    void currentMangaChanged();
-    void currentMangaIndexChanged();
 
     void activeMangaSourcesChanged(const QList<AbstractMangaSource *> &sources);
 
@@ -86,4 +82,4 @@ private:
     void setupDirectories();
 };
 
-#endif  // ULITIMATEMANGAREADERCORE_H
+#endif  // ULTIMATEMANGAREADERCORE_H

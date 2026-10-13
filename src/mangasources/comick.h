@@ -6,12 +6,6 @@
 #include "abstractmangasource.h"
 #include "mangainfo.h"
 
-#define RAPIDJSON_ASSERT(x) \
-    if (!(x))               \
-        throw QException();
-
-#include "thirdparty/rapidjson.h"
-
 // What an update of the manga list got done so far, see UpdateProgressToken::resumeState().
 struct ComickUpdateState
 {
@@ -25,11 +19,12 @@ struct ComickUpdateState
     bool knownTitlesLoaded = false;
 };
 
+// a request that gets an image into the cdn's cache, see comick.cpp
+struct ComickCacheWarmUp;
+
 class Comick : public AbstractMangaSource
 {
 public:
-    struct CacheWarmUp;
-
     explicit Comick(NetworkManager *dm);
     virtual ~Comick();
 
@@ -46,7 +41,7 @@ private:
     QString apiUrl;
     QVector<QString> statuses;
     QHash<QString, QString> nextPages;
-    QHash<QString, QSharedPointer<CacheWarmUp>> pageWarmUps;
+    QHash<QString, QSharedPointer<ComickCacheWarmUp>> pageWarmUps;
 
     QString normalizeUrl(const QString &url) const;
     bool fetchSearch(const QString &order, int pages, ComickUpdateState &state, UpdateProgressToken *token,

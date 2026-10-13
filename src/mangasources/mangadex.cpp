@@ -1,5 +1,7 @@
 #include "mangadex.h"
 
+#include "json.h"
+
 using namespace rapidjson;
 
 namespace
@@ -501,7 +503,7 @@ bool MangaDex::crawlMangaWindow(const QString &query, int maxResults, MangaDexUp
             if (expected > 0)
                 token->sendProgress(qBound(0, 100 * state.processed / expected, 99));
         }
-        catch (QException &)
+        catch (const JsonError &)
         {
             return false;
         }
@@ -725,7 +727,7 @@ Result<MangaChapterCollection, QString> MangaDex::updateMangaInfoFinishedLoading
         info->author = authors.join(", ");
         info->artist = artists.join(", ");
     }
-    catch (QException &)
+    catch (const JsonError &)
     {
         return Err(QString("Couldn't parse manga infos."));
     }
@@ -805,7 +807,7 @@ Result<MangaChapterCollection, QString> MangaDex::getChapters(const QString &man
             if (results.Size() == 0)
                 break;
         }
-        catch (QException &)
+        catch (const JsonError &)
         {
             return Err(QString("Couldn't parse chapter list."));
         }
@@ -887,7 +889,7 @@ Result<QStringList, QString> MangaDex::getPageList(const QString &chapterUrl)
                 imageUrls.append(QString("%1/%2/%3/%4")
                                      .arg(uploadsUrl, quality, hash, QString::fromUtf8(page.GetString())));
     }
-    catch (QException &)
+    catch (const JsonError &)
     {
         return Err(QString("Couldn't parse page list."));
     }

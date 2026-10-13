@@ -1,8 +1,6 @@
 #ifndef MANGAINFO_H
 #define MANGAINFO_H
 
-#include <QMutex>
-
 #include "abstractmangasource.h"
 #include "downloadimagedescriptor.h"
 #include "mangachaptercollection.h"
@@ -39,8 +37,6 @@ public:
     AbstractMangaSource *mangaSource;
 
     MangaChapterCollection chapters;
-
-    QScopedPointer<QMutex> updateMutex;
 
     void updateCompeted(bool updated, const QList<QPair<int, int>> &moveMap);
     QString coverThumbnailPath() const;

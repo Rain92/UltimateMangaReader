@@ -30,8 +30,7 @@ DownloadScaledImageJob::~DownloadScaledImageJob()
 
 void DownloadScaledImageJob::downloadFileReadyRead()
 {
-    // don't save to file because its gonna be rescaled anyway
-    //    file.write(reply->readAll());
+    // the data is read when the download finished, it is processed before it's saved
 }
 
 void DownloadScaledImageJob::downloadFileFinished()
@@ -129,7 +128,6 @@ void DownloadScaledImageJob::process(const QByteArray &appendData)
     request.doublePageMode = settings->doublePageMode;
     request.trim = settings->trimPages;
     request.manhwaMode = settings->manhwaMode;
-    request.swDither = settings->ditheringMode >= SWDithering;
     request.encryption = encryption;
 
     processingId = imageProcessor->process(request);

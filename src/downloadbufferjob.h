@@ -10,9 +10,7 @@ class DownloadBufferJob : public DownloadJobBase
 protected:
     QTimer timeoutTimer;
     int timeoutTime;
-    QByteArray postData;
 
-    void downloadReadyRead();
     virtual void downloadFinished();
     void onError(QNetworkReply::NetworkError);
     void timeout();
@@ -22,7 +20,6 @@ public:
     int httpStatus;
 
     DownloadBufferJob(QNetworkAccessManager *networkManager, const QString &url, int timeout = 6000,
-                      const QByteArray &postData = QByteArray(),
                       const QList<std::tuple<const char *, const char *>> &customHeaders = {});
     virtual ~DownloadBufferJob() = default;
 

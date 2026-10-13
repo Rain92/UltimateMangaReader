@@ -1,5 +1,14 @@
 #include "mangaimagewidget.h"
 
+#include <QMouseEvent>
+#include <QPainter>
+
+#include "perftimer.h"
+
+#ifdef KOBO
+#include "koboplatformfunctions.h"
+#endif
+
 MangaImageWidget::MangaImageWidget(QWidget *parent)
     : QFrame(parent),
       lastY(0),

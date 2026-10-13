@@ -1,19 +1,21 @@
 #include "batteryicon.h"
 
+#include <QPainter>
+
 #ifdef KOBO
 #include "koboplatformfunctions.h"
 #endif
 
-BatteryIcon::BatteryIcon(QWidget *parent) : QLabel(parent)
+BatteryIcon::BatteryIcon(QWidget *parent)
+    : QLabel(parent),
+      fullIcon(":/images/icons/batteryfull.png"),
+      chargingIcon(":/images/icons/batterycharging.png"),
+      emptyIcon(":/images/icons/batteryempty.png")
 {
-    batteryicons[0] = QPixmap(":/images/icons/batteryfull.png");
-    batteryicons[1] = QPixmap(":/images/icons/batterycharging.png");
-    batteryicons[2] = QPixmap(":/images/icons/batteryempty.png");
-
     setScaledContents(true);
     setFixedSize(SIZES.batteryIconHeight * 2, SIZES.batteryIconHeight + 1);
 
-    // workaround
+    // the level is shown in a label in the parent instead of a QToolTip, which is a window of its own
     tooltipLabel = new QLabel(parent);
     tooltipLabel->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
     tooltipLabel->setStyleSheet("QLabel { background-color : black; color : white; }");
@@ -26,9 +28,6 @@ void BatteryIcon::mousePressEvent(QMouseEvent *)
 #ifdef KOBO
     level = KoboPlatformFunctions::getBatteryLevel();
 #endif
-    // In Qt 5.15 this seems to crash so we need a workaround
-    //    QToolTip::showText(this->mapToGlobal(QPoint(0, 0)), QString::number(level) + "%");
-
     tooltipLabel->setText(QString::number(level) + "%");
     tooltipLabel->move(this->mapToParent(QPoint(-10, this->width() / 2 + 6)));
     tooltipLabel->adjustSize();
@@ -48,17 +47,17 @@ void BatteryIcon::updateIcon()
 
     if (bat >= 98)
     {
-        setPixmap(batteryicons[0]);
+        setPixmap(fullIcon);
     }
     else if (charging)
     {
-        setPixmap(batteryicons[1]);
+        setPixmap(chargingIcon);
     }
     else
     {
-        batteryicons[3] = QPixmap(":/images/icons/batteryempty.png");
+        QPixmap icon = emptyIcon;
 
-        QPainter painter(&batteryicons[3]);
+        QPainter painter(&icon);
         QBrush brush(Qt::black);
 
         if (bat > 90)
@@ -71,7 +70,7 @@ void BatteryIcon::updateIcon()
         painter.fillRect(12 + (45 - w), 6, w, 20, brush);
 
         painter.end();
-        setPixmap(batteryicons[3]);
+        setPixmap(icon);
     }
 }
 
@@ -80,7 +79,7 @@ QPair<int, bool> BatteryIcon::getBatteryState()
 #ifdef KOBO
     return QPair<int, bool>(KoboPlatformFunctions::getBatteryLevel(),
                             KoboPlatformFunctions::isBatteryCharging());
-#endif
-
+#else
     return QPair<int, bool>(100, false);
+#endif
 }

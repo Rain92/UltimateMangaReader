@@ -1,5 +1,16 @@
 #include "greyscaleimage.h"
 
+#include <png.h>
+#include <turbojpeg.h>
+
+#include <QDebug>
+#include <QFile>
+#include <QScopeGuard>
+#include <cstring>
+
+#include "imagerotate.h"
+#include "thirdparty/simdimageresize.h"
+
 #include <webp/decode.h>
 
 #include <QSaveFile>

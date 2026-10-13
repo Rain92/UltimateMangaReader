@@ -16,7 +16,8 @@ NumpadWidget::~NumpadWidget()
 
 void NumpadWidget::setupButtons()
 {
-    foreach (QAbstractButton *btn, ui->buttonGroupAllButtons->buttons())
+    const auto buttons = ui->buttonGroupAllButtons->buttons();
+    for (QAbstractButton *btn : buttons)
     {
         if (btn->text() == "<-")
         {
@@ -37,9 +38,8 @@ void NumpadWidget::setupButtons()
         btn->setFixedWidth(SIZES.buttonSize * 2);
     }
 
-    QObject::connect(ui->buttonGroupAllButtons,
-                     static_cast<void (QButtonGroup::*)(QAbstractButton *)>(&QButtonGroup::buttonPressed),
-                     this, &NumpadWidget::numButtonPressed);
+    QObject::connect(ui->buttonGroupAllButtons, &QButtonGroup::buttonPressed, this,
+                     &NumpadWidget::numButtonPressed);
 }
 
 void NumpadWidget::numButtonPressed(QAbstractButton *button)

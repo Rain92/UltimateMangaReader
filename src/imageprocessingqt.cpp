@@ -1,5 +1,9 @@
 #include "imageprocessingqt.h"
 
+#include <QDebug>
+
+#include "trimrect.h"
+
 #include "imageprocessingnative.h"
 
 int calcRotationInfo(QSize imgSize, QSize screenSize, DoublePageMode doublePageMode)
@@ -60,9 +64,8 @@ QSize calcRescaleSize(QSize imgSize, QSize screenSize, bool rot90, bool manhwaMo
 }
 
 QImage processImageQt(const QByteArray &array, const QString &filepath, QSize screenSize,
-                      DoublePageMode doublePageMode, bool trim, bool manhwaMode, bool useSWDither)
+                      DoublePageMode doublePageMode, bool trim, bool manhwaMode)
 {
-    Q_UNUSED(useSWDither)
 
     QImage img;
     if (!img.loadFromData(array))

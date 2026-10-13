@@ -2,6 +2,7 @@
 
 #include <cmath>
 
+#include "json.h"
 #include "utils.h"
 
 using namespace rapidjson;
@@ -22,7 +23,7 @@ static const int maxListPages = 5;
 // pages that are warmed up in the background ahead of the requested one
 static const int prefetchPages = 3;
 
-struct Comick::CacheWarmUp
+struct ComickCacheWarmUp
 {
     QNetworkAccessManager *networkAccessManager = nullptr;
     QNetworkRequest request;
@@ -34,7 +35,7 @@ struct Comick::CacheWarmUp
     std::function<void()> onCached;
 };
 
-using CacheWarmUp = Comick::CacheWarmUp;
+using CacheWarmUp = ComickCacheWarmUp;
 
 namespace
 {
@@ -529,7 +530,7 @@ static Result<int, QString> fetchUploads(NetworkManager *networkManager, const Q
             doc["pagination"].HasMember("last_page") && doc["pagination"]["last_page"].IsInt())
             return Ok(doc["pagination"]["last_page"].GetInt());
     }
-    catch (QException &)
+    catch (const JsonError &)
     {
         return Err(QString("Couldn't parse chapter list."));
     }
@@ -726,7 +727,7 @@ bool Comick::fetchSearch(const QString &order, int pages, ComickUpdateState &sta
 
             cursor = getStringSafe(doc, "next_cursor");
         }
-        catch (QException &)
+        catch (const JsonError &)
         {
             return false;
         }
@@ -884,7 +885,7 @@ Result<MangaChapterCollection, QString> Comick::updateMangaInfoFinishedLoading(
         if (!cover.isEmpty())
             info->coverUrl = cover;
     }
-    catch (QException &)
+    catch (const JsonError &)
     {
         return Err(QString("Couldn't parse manga infos."));
     }
@@ -971,7 +972,7 @@ Result<MangaChapterCollection, QString> Comick::fetchChapters(const QString &slu
             if (loaded)
                 parseUploads(doc["chapterList"], entries);
         }
-        catch (QException &)
+        catch (const JsonError &)
         {
             loaded = false;
         }
@@ -1136,7 +1137,7 @@ Result<QStringList, QString> Comick::getPageList(const QString &chapterUrl)
                     imageUrls.append(imageUrl);
             }
     }
-    catch (QException &)
+    catch (const JsonError &)
     {
         return Err(QString("Couldn't parse page list."));
     }

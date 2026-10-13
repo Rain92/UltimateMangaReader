@@ -4,6 +4,7 @@
 #include <QTime>
 #include <QtNetwork>
 
+#include <functional>
 #include <memory>
 
 class DownloadJobBase : public QObject
@@ -40,7 +41,6 @@ public:
     bool isCompleted;
     QString errorString;
 
-    QList<QNetworkCookie> getCookies();
     bool hasFailed() const;
 
     // Counts reply as active until it finished or got destroyed.
@@ -55,5 +55,8 @@ public:
     virtual void restart() = 0;
     virtual void onSslErrors(const QList<QSslError> &);
 };
+
+// Calls lambda (on the job's thread) when the job completes, the job is kept until then.
+void executeOnJobCompletion(QSharedPointer<DownloadJobBase> job, std::function<void()> lambda);
 
 #endif  // DOWNLOADJOBBASE_H

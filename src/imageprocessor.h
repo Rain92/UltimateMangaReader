@@ -33,7 +33,6 @@ struct ImageProcessingRequest
     DoublePageMode doublePageMode = DoublePageNoRotation;
     bool trim = false;
     bool manhwaMode = false;
-    bool swDither = false;
     EncryptionDescriptor encryption;
 };
 

@@ -47,14 +47,12 @@ QNetworkRequest DownloadJobBase::createRequest(const QString &url) const
                          "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
                          "Chrome/130.0.0.0 Safari/537.36");
 
-    for (const auto &[name, value] : qAsConst(customHeaders))
+    for (const auto &[name, value] : std::as_const(customHeaders))
         request.setRawHeader(name, value);
 
-#if QT_VERSION >= QT_VERSION_CHECK(6, 2, 0)
     // Qt 6 rejects responses that decompress to more than 10 MiB at a ratio above 40 as archive bombs, the
     // sitemaps of the manga lists exceed that (Comick: 300 KB -> 16 MB)
     request.setDecompressedSafetyCheckThreshold(64 * 1024 * 1024);
-#endif
 
     return request;
 }
@@ -105,17 +103,39 @@ std::shared_ptr<void> DownloadJobBase::holdActivity()
     return std::shared_ptr<void>(nullptr, [](void *) { activeReplyCount.deref(); });
 }
 
-QList<QNetworkCookie> DownloadJobBase::getCookies()
-{
-    return reply->header(QNetworkRequest::SetCookieHeader).value<QList<QNetworkCookie>>();
-}
-
 void DownloadJobBase::onSslErrors(const QList<QSslError> &errors)
 {
-    foreach (const QSslError &ssle, errors)
+    for (const QSslError &ssle : errors)
         qDebug() << "SSL Error" << ssle.errorString();
 
     auto *reply = qobject_cast<QNetworkReply *>(sender());
     if (reply)
         reply->ignoreSslErrors();
+}
+
+void executeOnJobCompletion(QSharedPointer<DownloadJobBase> job, std::function<void()> lambda)
+{
+    if (job->isCompleted)
+    {
+        lambda();
+        return;
+    }
+    // a job that failed already doesn't signal anymore
+    if (job->hasFailed())
+        return;
+
+    // the connections keep the job, until the context is deleted
+    auto context = new QObject();
+    auto release = [context, job]()
+    {
+        QObject::disconnect(job.get(), nullptr, context, nullptr);
+        context->deleteLater();
+    };
+    QObject::connect(job.get(), &DownloadJobBase::completed, context,
+                     [release, lambda]()
+                     {
+                         release();
+                         lambda();
+                     });
+    QObject::connect(job.get(), &DownloadJobBase::downloadError, context, release);
 }

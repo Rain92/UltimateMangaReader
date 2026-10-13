@@ -1,6 +1,7 @@
 #include "mainwidget.h"
 
 #include "ui_mainwidget.h"
+#include "widgetutils.h"
 
 MainWidget::MainWidget(QWidget *parent)
     : QWidget(parent),
@@ -37,11 +38,11 @@ MainWidget::MainWidget(QWidget *parent)
                             static_cast<QDialog *>(aboutDialog), ui->mangaReaderWidget->gotoDialog()})
         dialog->installEventFilter(this);
 
-    QObject::connect(menuDialog, &MenuDialog::finished,
+    QObject::connect(menuDialog, &MenuDialog::finished, this,
                      [this](int b) { menuDialogButtonPressed(static_cast<MenuButton>(b)); });
 
     // closing it (Cancel, a tap outside) finishes it with 0
-    QObject::connect(clearCacheDialog, &ClearCacheDialog::finished,
+    QObject::connect(clearCacheDialog, &ClearCacheDialog::finished, this,
                      [this](int l)
                      {
                          if (l >= ClearImages)
@@ -51,7 +52,7 @@ MainWidget::MainWidget(QWidget *parent)
     QObject::connect(updateMangaListsDialog, &UpdateMangaListsDialog::updateClicked, core,
                      &UltimateMangaReaderCore::updateMangaLists);
 
-    QObject::connect(downloadMangaChaptersDialog, &DownloadMangaChaptersDialog::downloadConfirmed,
+    QObject::connect(downloadMangaChaptersDialog, &DownloadMangaChaptersDialog::downloadConfirmed, this,
                      [this](auto m, auto f, auto t)
                      {
                          downloadStatusDialog->open();
@@ -110,7 +111,7 @@ MainWidget::MainWidget(QWidget *parent)
     QObject::connect(core, &UltimateMangaReaderCore::activeMangaSourcesChanged, ui->homeWidget,
                      &HomeWidget::updateSourcesList);
 
-    QObject::connect(core, &UltimateMangaReaderCore::downloadCacheCleared,
+    QObject::connect(core, &UltimateMangaReaderCore::downloadCacheCleared, this,
                      [this]()
                      {
                          ui->mangaReaderWidget->clearCache();
@@ -122,7 +123,7 @@ MainWidget::MainWidget(QWidget *parent)
                      });
 
     // MangaController
-    QObject::connect(core->mangaController, &MangaController::currentMangaChanged,
+    QObject::connect(core->mangaController, &MangaController::currentMangaChanged, this,
                      [this](auto info)
                      {
                          ui->mangaInfoWidget->setManga(info);
@@ -163,14 +164,14 @@ MainWidget::MainWidget(QWidget *parent)
                      &HomeWidget::currentMangaSourceChanged);
 
     // MangaInfoWidget
-    QObject::connect(ui->mangaInfoWidget, &MangaInfoWidget::toggleFavoriteClicked,
+    QObject::connect(ui->mangaInfoWidget, &MangaInfoWidget::toggleFavoriteClicked, this,
                      [this](auto info)
                      {
                          bool newstate = core->favoritesManager->toggleFavorite(info);
                          ui->mangaInfoWidget->setFavoriteButtonState(newstate);
                      });
 
-    QObject::connect(ui->mangaInfoWidget, &MangaInfoWidget::readMangaClicked,
+    QObject::connect(ui->mangaInfoWidget, &MangaInfoWidget::readMangaClicked, this,
                      [this](auto index)
                      {
                          setWidgetTab(MangaReaderTab);
@@ -178,10 +179,10 @@ MainWidget::MainWidget(QWidget *parent)
                          QTimer::singleShot(50, core->mangaController, &MangaController::preloadNeighbours);
                      });
 
-    QObject::connect(ui->mangaInfoWidget, &MangaInfoWidget::readMangaContinueClicked,
+    QObject::connect(ui->mangaInfoWidget, &MangaInfoWidget::readMangaContinueClicked, this,
                      [this]() { setWidgetTab(MangaReaderTab); });
 
-    QObject::connect(ui->mangaInfoWidget, &MangaInfoWidget::downloadMangaClicked,
+    QObject::connect(ui->mangaInfoWidget, &MangaInfoWidget::downloadMangaClicked, this,
                      [this]()
                      {
                          downloadMangaChaptersDialog->show(core->mangaController->currentManga,
@@ -191,7 +192,7 @@ MainWidget::MainWidget(QWidget *parent)
     // FavoritesWidget
     ui->favoritesWidget->favoritesManager = core->favoritesManager;
 
-    QObject::connect(ui->favoritesWidget, &FavoritesWidget::favoriteClicked,
+    QObject::connect(ui->favoritesWidget, &FavoritesWidget::favoriteClicked, this,
                      [this](auto mangainfo, auto jumptoreader)
                      {
                          // the info stays on the screen if the reader can't show it (no chapters)
@@ -232,7 +233,7 @@ MainWidget::MainWidget(QWidget *parent)
 
     // SettingsDialog
     QObject::connect(settingsDialog, &SettingsDialog::activeMangasChanged, core,
-                     &UltimateMangaReaderCore::updateActiveScources);
+                     &UltimateMangaReaderCore::updateActiveSources);
 
     QObject::connect(settingsDialog, &SettingsDialog::mangaOrderMethodChanged, core,
                      &UltimateMangaReaderCore::sortMangaLists);
@@ -276,7 +277,7 @@ void MainWidget::adjustUI()
 void MainWidget::showEvent(QShowEvent *event)
 {
     QWidget::showEvent(event);
-    core->updateActiveScources();
+    core->updateActiveSources();
     updateDitheringMode();
 
     QTimer::singleShot(500, this, &MainWidget::onResume);
@@ -310,11 +311,9 @@ void MainWidget::showEvent(QShowEvent *event)
 
 bool MainWidget::event(QEvent *event)
 {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
     // e.g. the fractional scale of a Wayland window, which only arrives after it is shown
     if (event->type() == QEvent::DevicePixelRatioChange)
         updatePageSize();
-#endif
 
     if (event->type() == QEvent::KeyPress)
         return buttonPressEvent(static_cast<QKeyEvent *>(event));
@@ -325,8 +324,6 @@ bool MainWidget::event(QEvent *event)
 
 bool MainWidget::buttonReleaseEvent(QKeyEvent *event)
 {
-    QTime::currentTime().msec();
-
     if (event->key() == POWERBUTTON)
     {
         qDebug() << "Powerkey release";

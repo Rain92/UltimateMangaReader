@@ -5,7 +5,6 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
       mangaSources(),
       activeMangaSources(),
       currentMangaSource(nullptr),
-      currentManga(),
       networkManager(new NetworkManager(this)),
       mangaController(new MangaController(networkManager, this)),
       favoritesManager(new FavoritesManager(activeMangaSources, networkManager, this)),
@@ -36,7 +35,7 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
     for (const auto& ms : std::as_const(mangaSources))
         ms->listOrder = settings.mangaOrder;
 
-    updateActiveScources();
+    updateActiveSources();
 
     timer.setInterval(CONF.globalTickIntervalSeconds * 1000);
     connect(&timer, &QTimer::timeout, this, &UltimateMangaReaderCore::timerTick);
@@ -54,12 +53,7 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
     connect(mangaController, &MangaController::activity, this, &UltimateMangaReaderCore::activity);
 
     autoSuspendTimer.setSingleShot(true);
-    connect(&autoSuspendTimer, &QTimer::timeout,
-            [this]()
-            {
-                //                qDebug() << "Auto Suspend!";
-                suspendManager->suspend();
-            });
+    connect(&autoSuspendTimer, &QTimer::timeout, this, [this]() { suspendManager->suspend(); });
 
     // standby
     standbyManager->setWakeDeadline([this]() { return msUntilAutoSuspend(); });
@@ -144,11 +138,11 @@ void UltimateMangaReaderCore::timerTick()
     emit timeTick();
 }
 
-void UltimateMangaReaderCore::updateActiveScources()
+void UltimateMangaReaderCore::updateActiveSources()
 {
     activeMangaSources.clear();
     QMap<QString, bool> enabledMangaSources;
-    for (const auto& ms : qAsConst(mangaSources))
+    for (const auto& ms : std::as_const(mangaSources))
     {
         if (!settings.enabledMangaSources.contains(ms->name))
             enabledMangaSources.insert(ms->name, true);
@@ -214,7 +208,7 @@ void UltimateMangaReaderCore::clearDownloadCache(ClearDownloadCacheLevel level)
     switch (level)
     {
         case ClearImages:
-            for (const auto& ms : qAsConst(mangaSources))
+            for (const auto& ms : std::as_const(mangaSources))
             {
                 for (auto& info :
                      QDir(CONF.cacheDir + ms->name)
@@ -224,13 +218,13 @@ void UltimateMangaReaderCore::clearDownloadCache(ClearDownloadCacheLevel level)
             break;
 
         case ClearInfos:
-            for (const auto& ms : qAsConst(mangaSources))
+            for (const auto& ms : std::as_const(mangaSources))
                 removeDir(CONF.cacheDir + ms->name, "progress.dat");
 
             break;
 
         case ClearAll:
-            for (const auto& ms : qAsConst(mangaSources))
+            for (const auto& ms : std::as_const(mangaSources))
                 removeDir(CONF.cacheDir + ms->name);
             QFile::remove(CONF.cacheDir + "favorites.dat");
             favoritesManager->clearFavorites();

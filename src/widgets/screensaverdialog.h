@@ -8,7 +8,6 @@
 #include <QLayout>
 
 #include "enums.h"
-#include "imageprocessingnative.h"
 #include "staticsettings.h"
 
 namespace Ui

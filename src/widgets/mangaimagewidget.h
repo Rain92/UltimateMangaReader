@@ -1,20 +1,9 @@
-#ifndef MANGAIMAGEWIDGETH_H
-#define MANGAIMAGEWIDGETH_H
+#ifndef MANGAIMAGEWIDGET_H
+#define MANGAIMAGEWIDGET_H
 
-#include <QApplication>
-#include <QDebug>
-#include <QElapsedTimer>
-#include <QFileInfo>
 #include <QFrame>
-#include <QMouseEvent>
-#include <QPainter>
-#include <QScreen>
-
-#include "perftimer.h"
-
-#ifdef KOBO
-#include "koboplatformfunctions.h"
-#endif
+#include <QImage>
+#include <QSharedPointer>
 
 class MangaImageWidget : public QFrame
 {
@@ -45,4 +34,4 @@ private:
     QSharedPointer<QImage> errorImage;
 };
 
-#endif  // MANGAIMAGEWIDGETH_H
+#endif  // MANGAIMAGEWIDGET_H

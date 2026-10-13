@@ -1,7 +1,6 @@
 #ifndef MANGADEX_H
 #define MANGADEX_H
 
-#include <QQueue>
 #include <QSet>
 #include <algorithm>
 #include <functional>
@@ -9,12 +8,6 @@
 
 #include "abstractmangasource.h"
 #include "mangainfo.h"
-
-#define RAPIDJSON_ASSERT(x) \
-    if (!(x))               \
-        throw QException();
-
-#include "thirdparty/rapidjson.h"
 
 // What an update of the manga list got done so far, see UpdateProgressToken::resumeState().
 struct MangaDexUpdateState

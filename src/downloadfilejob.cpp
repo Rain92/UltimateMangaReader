@@ -29,7 +29,6 @@ void DownloadFileJob::start()
             request.setTransferTimeout(20000);
 
             reply.reset(networkManager->get(request));
-            //            reply->setParent(nullptr);
             trackReply(reply.get());
 
             QObject::connect(reply.get(), &QNetworkReply::readyRead, this,
@@ -129,7 +128,7 @@ bool DownloadFileJob::await(int timeout)
     if (isCompleted)
         return true;
 
-    awaitSignal(this, {SIGNAL(completed()), SIGNAL(downloadError())}, timeout);
+    awaitSignal(this, timeout, &DownloadJobBase::completed, &DownloadJobBase::downloadError);
 
     if (isCompleted)
         return true;

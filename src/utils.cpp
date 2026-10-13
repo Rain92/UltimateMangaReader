@@ -1,7 +1,10 @@
 #include "utils.h"
 
-#include <QGuiApplication>
-#include <atomic>
+#include <unistd.h>
+
+#ifdef __ARM_NEON__
+#include <arm_neon.h>
+#endif
 
 #ifdef Q_OS_LINUX
 #include <sched.h>
@@ -10,20 +13,6 @@
 #endif
 
 #include "staticsettings.h"
-
-// read by the threads that generate cover thumbnails
-static std::atomic<double> currentWindowPixelRatio{0};
-
-qreal windowPixelRatio()
-{
-    double ratio = currentWindowPixelRatio.load(std::memory_order_relaxed);
-    return ratio > 0 ? ratio : qGuiApp->devicePixelRatio();
-}
-
-void setWindowPixelRatio(qreal ratio)
-{
-    currentWindowPixelRatio.store(ratio, std::memory_order_relaxed);
-}
 
 QList<QRegularExpressionMatch> getAllRxMatches(const QRegularExpression& rx, const QString& text, int spos,
                                                int epos)
@@ -72,17 +61,6 @@ QString makePathLegal(QString filename)
     if (ret.endsWith('.'))
         ret.append("_");
     return ret;
-}
-
-void executeOnJobCompletion(QSharedPointer<DownloadJobBase> job, std::function<void()> lambda)
-{
-    new BindingClass(job, lambda);
-}
-
-void executeOnJobCompletion(QSharedPointer<DownloadJobBase> job,
-                            std::function<void(QSharedPointer<DownloadJobBase>)> lambda)
-{
-    new BindingClass(job, lambda);
 }
 
 PageTurnDirection conditionalReverse(PageTurnDirection dir, bool condition)
@@ -142,30 +120,8 @@ bool removeDir(const QString& path, const QString& ignore)
                 return result;
             }
         }
-        // result = dir.rmdir(dirName);
     }
     return result;
-}
-
-void activateScroller(QAbstractScrollArea* pArea)
-{
-    if (pArea)
-    {
-        QScroller* scroller = QScroller::scroller(pArea);
-        // properties won't be set for some reason; has to be hardfixed in the qt source
-        QScrollerProperties prop;
-        prop.setScrollMetric(QScrollerProperties::QScrollerProperties::MousePressEventDelay, 0);
-        prop.setScrollMetric(QScrollerProperties::VerticalOvershootPolicy,
-                             QScrollerProperties::OvershootAlwaysOff);
-        prop.setScrollMetric(QScrollerProperties::HorizontalOvershootPolicy,
-                             QScrollerProperties::OvershootAlwaysOff);
-
-        prop.setScrollMetric(QScrollerProperties::OvershootDragResistanceFactor, 0);
-        prop.setScrollMetric(QScrollerProperties::OvershootDragDistanceFactor, 0);
-
-        scroller->setScrollerProperties(prop);
-        scroller->grabGesture(pArea->viewport(), QScroller::LeftMouseButtonGesture);
-    }
 }
 
 qint64 getCacheSize()
@@ -243,41 +199,10 @@ void setIdleThreadPriority(bool idle)
 #endif
 }
 
-void decryptXorInplace(QByteArray& data, const QByteArray& key)
-{
-    //    QElapsedTimer t;
-    //    t.start();
-
-    // loops inflated for better performance due to compiler optimizations
-    int r = data.length() / key.length();
-    int i, c, p;
-    for (i = 0, c = 0; c < r; c++)
-        for (p = 0; p < key.length(); i++, p++)
-        {
-            data[i] = data[i] ^ key[p];
-        }
-
-    for (p = 0; i < data.length(); i++, p++)
-    {
-        data[i] = data[i] ^ key[p];
-    }
-
-    //    for (int i = 0, p = 0; i < data.length(); i++, p++)
-    //    {
-    //        if (p >= key.length())
-    //            p = 0;
-    //        data[i] = data[i] ^ key[p];
-    //    }
-
-    //    qDebug() << "Xor:" << t.elapsed();
-}
-
 #ifdef __ARM_NEON__
-void decryptXorInplace_NEON(QByteArray& data, const QByteArray& key)
+static void decryptXorInplace_NEON(QByteArray& data, const QByteArray& key)
 {
     const int keyLength = key.length();
-    if (keyLength <= 0 || data.isEmpty())
-        return;
 
     // The key repeated until any 16 byte window starting inside the first period is valid,
     // so every iteration processes 16 bytes regardless of the key length.
@@ -315,6 +240,28 @@ void decryptXorInplace_NEON(QByteArray& data, const QByteArray& key)
     }
 }
 #endif
+
+void decryptXorInplace(QByteArray& data, const QByteArray& key)
+{
+    if (key.isEmpty() || data.isEmpty())
+        return;
+
+#ifdef __ARM_NEON__
+    decryptXorInplace_NEON(data, key);
+#else
+    char* datap = data.data();
+    const char* keyp = key.constData();
+    const qsizetype length = data.length();
+    const qsizetype keyLength = key.length();
+
+    for (qsizetype i = 0, p = 0; i < length; i++)
+    {
+        datap[i] ^= keyp[p];
+        if (++p == keyLength)
+            p = 0;
+    }
+#endif
+}
 
 QByteArray hexstr2array(const QString& str)
 {

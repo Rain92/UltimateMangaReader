@@ -1,13 +1,9 @@
-#ifndef BATTERYICONLABEL_H
-#define BATTERYICONLABEL_H
+#ifndef BATTERYICON_H
+#define BATTERYICON_H
 
-#include <QApplication>
-#include <QDebug>
 #include <QLabel>
-#include <QPainter>
 #include <QPair>
 #include <QPixmap>
-#include <QToolTip>
 
 #include "sizes.h"
 
@@ -21,15 +17,16 @@ public:
     void updateIcon();
 
 protected:
-    void mousePressEvent(QMouseEvent *);
-    void mouseReleaseEvent(QMouseEvent *);
+    void mousePressEvent(QMouseEvent *) override;
+    void mouseReleaseEvent(QMouseEvent *) override;
 
 private:
-    QPixmap batteryicons[4];
+    QPixmap fullIcon;
+    QPixmap chargingIcon;
+    QPixmap emptyIcon;
     QLabel *tooltipLabel;
 
-    void setBatteryIcon();
     QPair<int, bool> getBatteryState();
 };
 
-#endif  // BATTERYICONLABEL_H
+#endif  // BATTERYICON_H

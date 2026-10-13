@@ -1,11 +1,10 @@
-#ifndef VIRTUALKEYBOARD_H_
-#define VIRTUALKEYBOARD_H_
+#ifndef VIRTUALKEYBOARD_H
+#define VIRTUALKEYBOARD_H
 
 #include <QEvent>
-#include <QMap>
+#include <QSvgRenderer>
 #include <QTimer>
 #include <QWidget>
-#include <QtSvg/QSvgRenderer>
 #include <vector>
 
 #define VIRTUAL_KEYBOARD_WIDTH 11
@@ -35,56 +34,33 @@ class VirtualKeyboard : public QWidget
     std::vector<VirtualKey> keys;
 
     VirtualKey* pLastKey;
-    VirtualKey* pPressedKey;
     int shiftKeyIndex;
 
     bool isShift;
     bool isCapsLock;
     bool isEnableCapsLock;
-    bool isProcessCursorKeys;
-    bool isPersistent;
 
     QSvgRenderer svgRenderer;
     QTimer repeatDelayTimer;
     QTimer repeatRateTimer;
 
-    QString layout;
-    int layoutNo;
-    QVector<QString> layouts;
-    QMap<QString, QString> map;
-
 public:
-    VirtualKeyboard(QWidget* parent = 0);
-    ~VirtualKeyboard();
+    VirtualKeyboard(QWidget* parent = nullptr);
 
-    bool persistent() const { return isPersistent; }
-
-    void setPersistent(bool val) { isPersistent = val; }
-
-    void setProcessCursorKeys(bool value) { isProcessCursorKeys = value; }
-
-    bool getIsProcessCursorKeys() const { return isProcessCursorKeys; }
-
-    int heightForWidth(int w) const;
-
-    void setLayout(int l);
-    void changeLayout();
+    int heightForWidth(int w) const override;
 
 protected:
-    void paintEvent(QPaintEvent* event);
+    void paintEvent(QPaintEvent* event) override;
     void activateKey(VirtualKey* pKey, QEvent::Type t);
-    void translateKey(QKeyEvent* event);
-    void mousePressEvent(QMouseEvent* event);
-    void mouseReleaseEvent(QMouseEvent* event);
+    void mousePressEvent(QMouseEvent* event) override;
+    void mouseReleaseEvent(QMouseEvent* event) override;
 
     QRect getRectForKey(const VirtualKey& key) const;
     VirtualKey* findKeyByMousePos(int x, int y);
-    VirtualKey* findKeyByCursorPos(int x, int y);
-    void readLayouts();
 
-private slots:
+private:
     void onCapsLock();
-    void onAutoRepeat();
+    void onAutoRepeat(bool first);
 };
 
-#endif /* VIRTUALKEYBOARD_H_ */
+#endif  // VIRTUALKEYBOARD_H

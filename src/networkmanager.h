@@ -1,5 +1,5 @@
-#ifndef DOWNLOADMANAGER_H
-#define DOWNLOADMANAGER_H
+#ifndef NETWORKMANAGER_H
+#define NETWORKMANAGER_H
 
 #include <QFuture>
 #include <QNetworkReply>
@@ -47,10 +47,8 @@ public:
 
     QNetworkAccessManager *networkAccessManager();
 
-    QSharedPointer<DownloadStringJob> downloadAsString(const QString &url, int timeout = 6000,
-                                                       const QByteArray &postData = QByteArray());
-    QSharedPointer<DownloadBufferJob> downloadToBuffer(const QString &url, int timeout = 6000,
-                                                       const QByteArray &postData = QByteArray());
+    QSharedPointer<DownloadStringJob> downloadAsString(const QString &url, int timeout = 6000);
+    QSharedPointer<DownloadBufferJob> downloadToBuffer(const QString &url, int timeout = 6000);
     QSharedPointer<DownloadFileJob> downloadAsFile(const QString &url, const QString &localPath);
     QSharedPointer<DownloadFileJob> downloadAsScaledImage(const QString &url, const QString &localPath);
 
@@ -76,8 +74,6 @@ public:
     QString downloadUrl(const QString &url) const;
     // A download of the file is running (or waiting for a retry).
     bool isDownloading(const QString &url) const;
-
-    bool urlExists(const QString &url);
 
     // Reads the sizes of the images from the start of their files (in parallel, blocking with an event loop
     // for at most timeout ms). Images that couldn't be loaded or read have an invalid size.
@@ -129,4 +125,4 @@ private:
     void releaseFileDownload(const QString &url);
 };
 
-#endif  // DOWNLOADMANAGER_H
+#endif  // NETWORKMANAGER_H

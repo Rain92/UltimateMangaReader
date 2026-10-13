@@ -1,5 +1,6 @@
 #include "imageprocessor.h"
 
+#include "greyscaleimage.h"
 #include "imageprocessingnative.h"
 #include "imageprocessingqt.h"
 #include "perftimer.h"
@@ -14,15 +15,8 @@ QImage processDownloadedImage(const ImageProcessingRequest &request)
 
     if (request.encryption.type == XorEncryption)
     {
-#ifdef __ARM_NEON__
-        decryptXorInplace_NEON(array, request.encryption.key);
-        if (!appendArray.isEmpty())
-            decryptXorInplace_NEON(appendArray, request.encryption.key);
-#else
         decryptXorInplace(array, request.encryption.key);
-        if (!appendArray.isEmpty())
-            decryptXorInplace(appendArray, request.encryption.key);
-#endif
+        decryptXorInplace(appendArray, request.encryption.key);
         timer.lap("decrypt");
     }
 
@@ -39,7 +33,7 @@ QImage processDownloadedImage(const ImageProcessingRequest &request)
     bool decoded = false;
     if (pimg.isNull() && (isJpeg(array) || isPng(array) || isWebp(array)))
         pimg = processImageN(array, request.filepath, request.screenSize, request.doublePageMode,
-                             request.trim, request.manhwaMode, request.swDither, &decoded);
+                             request.trim, request.manhwaMode, &decoded);
 
     // Qt's decoders are for what the native ones can't decode, they wouldn't do better with the rest
     if (pimg.isNull() && !decoded)
@@ -47,7 +41,7 @@ QImage processDownloadedImage(const ImageProcessingRequest &request)
         qDebug() << "Fast decoding failed, using fallback!";
 
         pimg = processImageQt(array, request.filepath, request.screenSize, request.doublePageMode,
-                              request.trim, request.manhwaMode, request.swDither);
+                              request.trim, request.manhwaMode);
     }
 
     return pimg;

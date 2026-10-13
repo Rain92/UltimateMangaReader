@@ -6,6 +6,7 @@
 
 #include <QObject>
 
+#include "networkmanager.h"
 #include "staticsettings.h"
 
 class SuspendManager : public QObject

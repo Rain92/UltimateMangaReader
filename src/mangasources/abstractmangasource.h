@@ -80,7 +80,6 @@ public:
     Result<void, QString> updatePageList(QSharedPointer<MangaInfo> info, int chapter);
 
 protected:
-    QByteArray mangaInfoPostDataStr;
     int mangaInfoTimeout;
 
     NetworkManager *networkManager;

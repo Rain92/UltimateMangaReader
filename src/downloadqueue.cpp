@@ -161,7 +161,7 @@ void DownloadQueue::resetJobCount()
 
 bool DownloadQueue::awaitCompletion()
 {
-    awaitSignal(this, {SIGNAL(allCompleted())}, -1);
+    awaitSignal(this, -1, &DownloadQueue::allCompleted);
 
     return errors == 0;
 }

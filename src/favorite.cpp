@@ -8,11 +8,6 @@ Favorite::Favorite(const QString &hostname, const QString &title,
 {
 }
 
-QString Favorite::mangaInfoPath() const
-{
-    return CONF.mangainfodir(hostname, title) + "mangainfo.dat";
-}
-
 QDataStream &operator<<(QDataStream &str, const Favorite &m)
 {
     str << m.title << m.hostname << m.mangaUrl;

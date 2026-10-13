@@ -1,11 +1,8 @@
 #include "downloadstringjob.h"
 
-#include "utils.h"
-
 DownloadStringJob::DownloadStringJob(QNetworkAccessManager *networkManager, const QString &url, int timeout,
-                                     const QByteArray &postdata,
                                      const QList<std::tuple<const char *, const char *> > &customHeaders)
-    : DownloadBufferJob(networkManager, url, timeout, postdata, customHeaders), bufferStr("")
+    : DownloadBufferJob(networkManager, url, timeout, customHeaders), bufferStr("")
 {
 }
 
@@ -37,12 +34,8 @@ void DownloadStringJob::downloadFinished()
         return;
     }
 
-    if (errorString != "" || (reply->error() != QNetworkReply::NoError))
-    {
-        // already handled
-        // emit downloadError();
-    }
-    else
+    // errors are handled by onError()
+    if (errorString == "" && reply->error() == QNetworkReply::NoError)
     {
         buffer = reply->readAll();
         bufferStr = buffer;

@@ -31,7 +31,8 @@ NetworkManager::NetworkManager(QObject *parent)
     wifiThread.start();
 
 #ifdef KOBO
-    QString sslCertPath = "/mnt/onboard/.adds/qt-linux-5.15-kde-kobo/lib/ssl_certs";
+    // the certificates are deployed with Qt (the launcher sets QTPATH)
+    QString sslCertPath = QLibraryInfo::path(QLibraryInfo::PrefixPath) + "/lib/ssl_certs";
     if (qEnvironmentVariableIsSet("QTPATH"))
         sslCertPath = qEnvironmentVariable("QTPATH") + "/lib/ssl_certs";
 
@@ -108,22 +109,15 @@ bool NetworkManager::connectWifi()
         qDebug() << "Connecting to Wifi...";
         QElapsedTimer t;
         t.start();
-        try
+        wifiEnabled = true;
+        // The association can take longer than the DHCP client waits (30 s), e.g. after Nickel was quit while
+        // it switched the WiFi off. It goes on meanwhile, the second attempt then gets the address in seconds.
+        for (int attempt = 0; attempt < 2 && !connected && !disconnectRequested; attempt++)
         {
-            wifiEnabled = true;
-            // The association can take longer than the DHCP client waits (30 s), e.g. after Nickel was quit while
-            // it switched the WiFi off. It goes on meanwhile, the second attempt then gets the address in seconds.
-            for (int attempt = 0; attempt < 2 && !connected && !disconnectRequested; attempt++)
-            {
-                if (attempt > 0)
-                    qDebug() << "Connecting to Wifi again...";
-                KoboPlatformFunctions::enableWiFiConnection();
-                checkInternetConnection();
-            }
-        }
-        catch (const QException &e)
-        {
-            qDebug() << "Error while connection to internet:" << e.what();
+            if (attempt > 0)
+                qDebug() << "Connecting to Wifi again...";
+            KoboPlatformFunctions::enableWiFiConnection();
+            checkInternetConnection();
         }
         qDebug() << "Connected" << (connected ? "successfully" : "unsuccessfully") << "in" << t.elapsed()
                  << "ms.";
@@ -168,15 +162,8 @@ bool NetworkManager::checkInternetConnection()
 {
     bool oldstatus = connected;
 #ifdef KOBO
-    try
-    {
-        qDebug() << "Checking internet connection...";
-        connected = KoboPlatformFunctions::KoboPlatformFunctions::testInternetConnection(2);
-    }
-    catch (const QException &e)
-    {
-        qDebug() << "Error while checking internet connection:" << e.what();
-    }
+    qDebug() << "Checking internet connection...";
+    connected = KoboPlatformFunctions::testInternetConnection(2);
 #else
     connected = true;
 #endif
@@ -204,8 +191,9 @@ bool NetworkManager::isDownloading(const QString &url) const
 
 QString NetworkManager::fixUrl(const QString &url) const
 {
+    // protocol relative, all sources are https sites
     if (url.startsWith("//"))
-        return "http:" + url;
+        return "https:" + url;
 
     return url;
 }
@@ -222,22 +210,21 @@ QList<std::tuple<const char *, const char *>> NetworkManager::applicableCustomHe
 {
     QList<std::tuple<const char *, const char *>> headers;
 
-    for (const auto &[domain, name, value] : qAsConst(customHeaders))
+    for (const auto &[domain, name, value] : std::as_const(customHeaders))
         if (url.contains(domain))
             headers.append(std::tuple<const char *, const char *>(name, value));
 
     return headers;
 }
 
-QSharedPointer<DownloadStringJob> NetworkManager::downloadAsString(const QString &url, int timeout,
-                                                                   const QByteArray &postData)
+QSharedPointer<DownloadStringJob> NetworkManager::downloadAsString(const QString &url, int timeout)
 {
     auto urlf = fixUrl(url);
 
     qDebug() << "Downloading as string:" << urlf;
 
     auto job = QSharedPointer<DownloadStringJob>(
-        new DownloadStringJob(networkManager, urlf, timeout, postData, applicableCustomHeaders(urlf)),
+        new DownloadStringJob(networkManager, urlf, timeout, applicableCustomHeaders(urlf)),
         &QObject::deleteLater);
 
     job->start();
@@ -246,15 +233,14 @@ QSharedPointer<DownloadStringJob> NetworkManager::downloadAsString(const QString
     return job;
 }
 
-QSharedPointer<DownloadBufferJob> NetworkManager::downloadToBuffer(const QString &url, int timeout,
-                                                                   const QByteArray &postData)
+QSharedPointer<DownloadBufferJob> NetworkManager::downloadToBuffer(const QString &url, int timeout)
 {
     auto urlf = fixUrl(url);
 
     qDebug() << "Downloading to buffer:" << urlf;
 
     auto job = QSharedPointer<DownloadBufferJob>(
-        new DownloadBufferJob(networkManager, urlf, timeout, postData, applicableCustomHeaders(urlf)),
+        new DownloadBufferJob(networkManager, urlf, timeout, applicableCustomHeaders(urlf)),
         &QObject::deleteLater);
 
     job->start();
@@ -492,25 +478,4 @@ QList<QSize> NetworkManager::probeImageSizes(const QStringList &urls, int timeou
 
     emit activity();
     return sizes;
-}
-
-bool NetworkManager::urlExists(const QString &url)
-{
-    QNetworkRequest request(url);
-
-    auto reply = networkManager->head(request);
-    DownloadJobBase::trackReply(reply);
-
-    awaitSignal(reply, {SIGNAL(finished())}, 2000);
-
-    bool result = false;
-    int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-
-    if (status == 200)
-        result = true;
-
-    reply->deleteLater();
-
-    emit activity();
-    return result;
 }

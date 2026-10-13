@@ -1,12 +1,15 @@
 
 kobo {
     DEFINES  += KOBO
-    DEFINES  += __ARM_NEON__
-    DEFINES  -= DESKTOP
 
-    KOBO_PLATFORM_PLUGIN_PATH = $$PWD/../qt5-kobo-platform-plugin
+    # the platform plugin's source (koboplatformfunctions.h), by default next to the app's,
+    # e.g. qmake KOBO_PLATFORM_PLUGIN_PATH=/path/to/qt5-kobo-platform-plugin
+    isEmpty(KOBO_PLATFORM_PLUGIN_PATH): KOBO_PLATFORM_PLUGIN_PATH = $$PWD/../qt5-kobo-platform-plugin
 
     INCLUDEPATH += $$KOBO_PLATFORM_PLUGIN_PATH/src
+
+    # the libraries are in the toolchain's sysroot
+    LIBS += -lturbojpeg -lpng -lwebp
 
     # clock_gettime lives in librt in the Kobo toolchain's glibc 2.15
     LIBS += -lrt
@@ -16,13 +19,19 @@ kobo {
 }
 else { # default is desktop
     DEFINES  += DESKTOP
+
+    # the native image pipeline uses the tj3 api of libjpeg-turbo 3.0+
+    CONFIG += link_pkgconfig
+    PKGCONFIG += libturbojpeg libpng libwebp
 }
 
 QT    += core gui widgets network svg concurrent
 CONFIG += c++17
+# backtraces with function names (stacktrace.cpp)
 QMAKE_LFLAGS += -rdynamic
 
-LIBS +=  -lturbojpeg -lpng -lwebp
+# keep the code free of APIs that are deprecated in the Qt version it is built with
+DEFINES += QT_DISABLE_DEPRECATED_UP_TO=0x060C00 QT_NO_FOREACH
 
 TARGET = UltimateMangaReader
 
@@ -78,6 +87,7 @@ HEADERS += \
     src/mangalist.h \
     src/mangasources/abstractmangasource.h \
     src/mangasources/comick.h \
+    src/mangasources/json.h \
     src/mangasources/mangadex.h \
     src/mangasources/mangahere.h \
     src/mangasources/mangakakalot.h \
@@ -117,6 +127,7 @@ HEADERS += \
     src/widgets/settingsdialog.h \
     src/widgets/updatemangalistsdialog.h \
     src/widgets/virtualkeyboard.h \
+    src/widgets/widgetutils.h \
     src/widgets/wifidialog.h \
     thirdparty/rapidjson.h \
     thirdparty/result.h \
@@ -157,6 +168,7 @@ SOURCES += \
     src/networkmanager.cpp \
     src/readingprogress.cpp \
     src/settings.cpp \
+    src/stacktrace.cpp \
     src/standbymanager.cpp \
     src/suspendmanager.cpp \
     src/trimrect.cpp \
@@ -183,6 +195,7 @@ SOURCES += \
     src/widgets/settingsdialog.cpp \
     src/widgets/updatemangalistsdialog.cpp \
     src/widgets/virtualkeyboard.cpp \
+    src/widgets/widgetutils.cpp \
     src/widgets/wifidialog.cpp \
     thirdparty/simdimageresize.cpp \
 

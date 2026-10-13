@@ -55,7 +55,7 @@ This operation will take several minutes.</string>
     </widget>
    </item>
    <item>
-    <widget class="QFrame" name="frameMangaScources">
+    <widget class="QFrame" name="frameMangaSources">
      <property name="frameShape">
       <enum>QFrame::NoFrame</enum>
      </property>

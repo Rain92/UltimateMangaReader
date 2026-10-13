@@ -8,7 +8,7 @@
 #include "perftimer.h"
 
 AbstractMangaSource::AbstractMangaSource(NetworkManager *networkManager)
-    : mangaInfoPostDataStr(), mangaInfoTimeout(2000), networkManager(networkManager), htmlConverter()
+    : mangaInfoTimeout(2000), networkManager(networkManager), htmlConverter()
 {
 }
 
@@ -111,16 +111,7 @@ void AbstractMangaSource::makeTitlesUnique()
                 info = liveInfo(mangaList.titles[i]);
         QString path = CONF.mangasourcedir(name) + it.key() + "/mangainfo.dat";
         if (!info && QFile::exists(path))
-        {
-            try
-            {
-                info = MangaInfo::deserialize(this, path);
-            }
-            catch (QException &)
-            {
-                info.clear();
-            }
-        }
+            info = MangaInfo::deserialize(this, path);
 
         int owner = -1;
         if (info)
@@ -194,16 +185,7 @@ Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::loadMangaInfo(co
     {
         QString path(CONF.mangainfodir(name, mangaTitle) + "mangainfo.dat");
         if (QFile::exists(path))
-        {
-            try
-            {
-                info = MangaInfo::deserialize(this, path);
-            }
-            catch (QException &)
-            {
-                info.clear();
-            }
-        }
+            info = MangaInfo::deserialize(this, path);
     }
 
     if (usable(info))
@@ -271,7 +253,7 @@ QSharedPointer<MangaInfo> AbstractMangaSource::loadCachedMangaInfo(const QString
 Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::getMangaInfo(const QString &mangaUrl,
                                                                              const QString &mangaTitle)
 {
-    auto job = networkManager->downloadAsString(mangaUrl, mangaInfoTimeout, mangaInfoPostDataStr);
+    auto job = networkManager->downloadAsString(mangaUrl, mangaInfoTimeout);
 
     auto info = QSharedPointer<MangaInfo>(new MangaInfo(this));
 
@@ -331,7 +313,7 @@ void AbstractMangaSource::updateMangaInfoAsync(QSharedPointer<MangaInfo> info, b
 {
     int oldnumchapters = info->chapters.count();
 
-    auto job = networkManager->downloadAsString(info->url, mangaInfoTimeout, mangaInfoPostDataStr);
+    auto job = networkManager->downloadAsString(info->url, mangaInfoTimeout);
 
     auto lambda = [oldnumchapters, info, job, updateCover, this]
     {
@@ -340,7 +322,7 @@ void AbstractMangaSource::updateMangaInfoAsync(QSharedPointer<MangaInfo> info, b
         {
             QStringList list{info->author, info->artist, info->releaseYear, info->genres,
                              info->status, info->summary, info->coverUrl};
-            for (const auto &ch : qAsConst(info->chapters))
+            for (const auto &ch : std::as_const(info->chapters))
                 list << ch.chapterTitle << ch.chapterUrl;
             return list;
         };
@@ -380,8 +362,6 @@ Result<void, QString> AbstractMangaSource::updatePageList(QSharedPointer<MangaIn
         return Err(newpagelistR.unwrapErr());
 
     auto newpagelist = newpagelistR.unwrap();
-
-    QMutexLocker locker(info->updateMutex.get());
 
     // the download runs an event loop, an update of the chapters can move them meanwhile
     if (chapter >= info->chapters.count() || info->chapters[chapter].chapterUrl != chapterUrl)

@@ -8,9 +8,6 @@ int main(int argc, char *argv[])
 {
     registerBacktraceHandlers();
 
-    QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-    QGuiApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
-
     QApplication app(argc, argv);
 
     PerfTimer startup("startup");
@@ -21,9 +18,10 @@ int main(int argc, char *argv[])
     // after the widgets are created: applying it first makes creating them more than twice as slow
     QApplication::setStyle("windows");
     QFile stylesheetFile(":/eink.qss");
-    stylesheetFile.open(QFile::ReadOnly);
-    mainwidget.setStyleSheet(stylesheetFile.readAll());
-    stylesheetFile.close();
+    if (stylesheetFile.open(QFile::ReadOnly))
+        mainwidget.setStyleSheet(QString::fromUtf8(stylesheetFile.readAll()));
+    else
+        qDebug() << "Can't load the stylesheet";
     startup.lap("style");
 
     mainwidget.show();

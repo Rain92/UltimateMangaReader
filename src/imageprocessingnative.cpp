@@ -1,10 +1,14 @@
 #include "imageprocessingnative.h"
 
+#include <QFile>
 #include <cmath>
 
+#include "greyscaleimage.h"
+#include "imageprocessingqt.h"
 #include "perftimer.h"
+#include "trimrect.h"
 
-QImage loadQImageFast(const QString &path, bool)
+QImage loadQImageFast(const QString &path)
 {
     PerfTimer timer("loadQImageFast");
 
@@ -44,9 +48,8 @@ static QImage finishPage(GreyscaleImage &img, int rot90, const QString &filepath
                          bool trim, bool manhwaMode, PerfTimer &timer);
 
 QImage processImageN(const QByteArray &buffer, const QString &filepath, QSize screenSize,
-                     DoublePageMode doublePageMode, bool trim, bool manhwaMode, bool useSWDither, bool *decoded)
+                     DoublePageMode doublePageMode, bool trim, bool manhwaMode, bool *decoded)
 {
-    Q_UNUSED(useSWDither)
     PerfTimer timer("processImageN");
 
     if (decoded)

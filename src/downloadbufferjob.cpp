@@ -3,11 +3,9 @@
 #include "utils.h"
 
 DownloadBufferJob::DownloadBufferJob(QNetworkAccessManager *networkManager, const QString &url, int timeout,
-                                     const QByteArray &postdata,
                                      const QList<std::tuple<const char *, const char *> > &customHeaders)
     : DownloadJobBase(networkManager, url, customHeaders),
       timeoutTime(timeout),
-      postData(postdata),
       buffer(),
       httpStatus(0)
 {
@@ -15,18 +13,7 @@ DownloadBufferJob::DownloadBufferJob(QNetworkAccessManager *networkManager, cons
 
 void DownloadBufferJob::start()
 {
-    QNetworkRequest request = createRequest();
-
-    if (postData.isEmpty())
-    {
-        reply.reset(networkManager->get(request));
-    }
-    else
-    {
-        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-        reply.reset(networkManager->post(request, postData));
-    }
-    //    reply->setParent(nullptr);
+    reply.reset(networkManager->get(createRequest()));
     trackReply(reply.get());
 
     QObject::connect(reply.get(), &QNetworkReply::finished, this, &DownloadBufferJob::downloadFinished);
@@ -51,12 +38,6 @@ void DownloadBufferJob::restart()
     start();
 }
 
-void DownloadBufferJob::downloadReadyRead()
-{
-    // read it all at once when finished
-    // buffer.append(reply->readAll());
-}
-
 void DownloadBufferJob::downloadFinished()
 {
     timeoutTimer.stop();
@@ -64,12 +45,8 @@ void DownloadBufferJob::downloadFinished()
     if (followRedirect())
         return;
 
-    if (errorString != "" || (reply->error() != QNetworkReply::NoError))
-    {
-        // already handled
-        // emit downloadError();
-    }
-    else
+    // errors are handled by onError()
+    if (errorString == "" && reply->error() == QNetworkReply::NoError)
     {
         buffer = reply->readAll();
 
@@ -113,7 +90,7 @@ bool DownloadBufferJob::await(int timeout, bool retry, int maxRetries)
     QElapsedTimer time;
     time.start();
 
-    awaitSignal(this, {SIGNAL(completed()), SIGNAL(downloadError())}, timeout);
+    awaitSignal(this, timeout, &DownloadJobBase::completed, &DownloadJobBase::downloadError);
 
     int rem = timeout - time.elapsed();
     if (errorString != "")
