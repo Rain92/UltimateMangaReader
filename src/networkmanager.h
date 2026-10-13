@@ -37,6 +37,23 @@ private:
     std::function<void()> beforeRequest;
 };
 
+// The headers that the requests to some hosts need, e.g. the Referer of an image host.
+class HeaderRules
+{
+public:
+    // For the requests to domain and its subdomains. Later rules for the same header replace earlier ones.
+    void add(const QString &domain, const QByteArray &name, const QByteArray &value);
+    HttpHeaders forUrl(const QString &url) const;
+
+private:
+    struct Rule
+    {
+        QString domain;
+        HttpHeader header;
+    };
+    QList<Rule> rules;
+};
+
 class NetworkManager : public QObject
 {
     Q_OBJECT
@@ -47,15 +64,22 @@ public:
 
     QNetworkAccessManager *networkAccessManager();
 
-    QSharedPointer<DownloadStringJob> downloadAsString(const QString &url, int timeout = 6000);
-    QSharedPointer<DownloadBufferJob> downloadToBuffer(const QString &url, int timeout = 6000);
-    QSharedPointer<DownloadFileJob> downloadAsFile(const QString &url, const QString &localPath);
-    QSharedPointer<DownloadFileJob> downloadAsScaledImage(const QString &url, const QString &localPath);
+    // The requests get the headers (besides a browser's User-Agent).
+    QSharedPointer<DownloadStringJob> downloadAsString(const QString &url, int timeout = 6000,
+                                                       const HttpHeaders &headers = {});
+    QSharedPointer<DownloadBufferJob> downloadToBuffer(const QString &url, int timeout = 6000,
+                                                       const HttpHeaders &headers = {});
+    // A download into a file that is running already is reused.
+    QSharedPointer<DownloadFileJob> downloadAsFile(const QString &url, const QString &localPath,
+                                                   const HttpHeaders &headers = {});
+    // Downloads a page and saves it processed for the screen. url: url|xor:<hex key>|append:<url of the rest
+    // of the page>. A download into the same file that is running already is reused.
+    QSharedPointer<DownloadFileJob> downloadAsScaledImage(const QString &url, const QString &localPath,
+                                                          const HttpHeaders &headers = {});
 
     void setDownloadSettings(const QSize &size, Settings *settings);
 
-    void addCookie(const QString &domain, const char *key, const char *value);
-    void addSetCustomRequestHeader(const QString &domain, const char *key, const char *value);
+    void addCookie(const QString &domain, const QByteArray &name, const QByteArray &value);
 
     // Blocks for up to 2 s when there is no connection.
     bool checkInternetConnection();
@@ -70,15 +94,14 @@ public:
     // Waits for a connect that is still running, which would bring the WiFi up again.
     bool disconnectWifi();
 
-    // The url a download of url is known by (without a decryption key, with a scheme).
-    QString downloadUrl(const QString &url) const;
-    // A download of the file is running (or waiting for a retry).
-    bool isDownloading(const QString &url) const;
+    // A download into the file is running (or waiting for a retry).
+    bool isDownloading(const QString &localPath) const;
 
     // Reads the sizes of the images from the start of their files (in parallel, blocking with an event loop
     // for at most timeout ms). Images that couldn't be loaded or read have an invalid size.
     // timedOut gets the indices of the urls that didn't answer in time (the other failures are the servers')
-    QList<QSize> probeImageSizes(const QStringList &urls, int timeout = 10000, QList<int> *timedOut = nullptr);
+    QList<QSize> probeImageSizes(const QStringList &urls, int timeout = 10000, QList<int> *timedOut = nullptr,
+                                 const std::function<HttpHeaders(const QString &)> &headersFor = nullptr);
 
     // written on the WiFi thread
     std::atomic<bool> connected;
@@ -104,9 +127,10 @@ private:
     QSize imageRescaleSize;
     Settings *settings;
 
-    QList<std::tuple<QString, const char *, const char *>> customHeaders;
-
+    // the running file downloads by their file
     QMap<QString, QWeakPointer<DownloadFileJob>> fileDownloads;
+    QSharedPointer<DownloadFileJob> runningFileDownload(const QString &localPath);
+    QSharedPointer<DownloadFileJob> startFileDownload(DownloadFileJob *job);
 
     // The WiFi scripts always run on the same thread, the platform plugin runs them with a QProcess that
     // belongs to the thread that used it first.
@@ -121,8 +145,7 @@ private:
 
     bool connectWifi();
     QString fixUrl(const QString &url) const;
-    QList<std::tuple<const char *, const char *>> applicableCustomHeaders(const QString &url) const;
-    void releaseFileDownload(const QString &url);
+    void releaseFileDownload(const QString &localPath);
 };
 
 #endif  // NETWORKMANAGER_H

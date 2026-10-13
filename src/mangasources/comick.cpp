@@ -72,7 +72,7 @@ enum class Numbering
 static void cacheWarmUpAttempt(QSharedPointer<CacheWarmUp> warmUp)
 {
     auto reply = warmUp->networkAccessManager->head(warmUp->request);
-    DownloadJobBase::trackReply(reply);
+    DownloadJobBase::prepareReply(reply);
 
     int remaining = warmUp->timeout - int(warmUp->timer.elapsed());
     QTimer::singleShot(qBound(100, remaining, 2000), reply, &QNetworkReply::abort);
@@ -582,7 +582,7 @@ Comick::Comick(NetworkManager *networkManager) : AbstractMangaSource(networkMana
     mangaInfoTimeout = 6000;
 
     // the image cdn blocks requests without referer
-    networkManager->addSetCustomRequestHeader("comicknew.pictures", "Referer", "https://comick.art/");
+    headerRules.add("comicknew.pictures", "Referer", "https://comick.art/");
 
     statuses = {"Ongoing", "Completed", "Cancelled", "Hiatus"};
 }
@@ -685,7 +685,7 @@ bool Comick::fetchSearch(const QString &order, int pages, ComickUpdateState &sta
         if (!cursor.isEmpty())
             searchUrl += "&cursor=" + QString::fromLatin1(QUrl::toPercentEncoding(cursor));
 
-        auto job = networkManager->downloadAsString(searchUrl, 10000);
+        auto job = downloadAsString(searchUrl, 10000);
 
         if (!job->await(10000))
         {
@@ -738,7 +738,7 @@ bool Comick::fetchSitemaps(ComickUpdateState &state, UpdateProgressToken *token)
 {
     QRegularExpression sitemaprx(R"lit(<loc>\s*([^<\s]*/sitemap-comic-(\d+)\.xml)\s*</loc>)lit");
 
-    auto indexJob = networkManager->downloadToBuffer(baseUrl + "/sitemap.xml", 10000);
+    auto indexJob = downloadToBuffer(baseUrl + "/sitemap.xml", 10000);
 
     if (!indexJob->await(10000))
     {
@@ -761,7 +761,7 @@ bool Comick::fetchSitemaps(ComickUpdateState &state, UpdateProgressToken *token)
         if (state.sitemapsDone.contains(it.key()))
             continue;
 
-        auto job = networkManager->downloadToBuffer(it.value(), 30000);
+        auto job = downloadToBuffer(it.value(), 30000);
 
         if (!job->await(30000))
         {
@@ -951,7 +951,7 @@ Result<MangaChapterCollection, QString> Comick::fetchChapters(const QString &slu
     // number, preferring the scanlation group of the requested chapter
     QList<Upload> entries;
     auto anchor = anchorUpload(uploads, currentHids);
-    auto job = networkManager->downloadAsString(apiUrl + "/comics/" + chapterPath(slug, anchor), 8000);
+    auto job = downloadAsString(apiUrl + "/comics/" + chapterPath(slug, anchor), 8000);
     bool loaded = job->await(8000);
 
     if (loaded)
@@ -1105,7 +1105,7 @@ Result<MangaChapterCollection, QString> Comick::fetchChapters(const QString &slu
 
 Result<QStringList, QString> Comick::getPageList(const QString &chapterUrl)
 {
-    auto job = networkManager->downloadAsString(apiUrl + "/comics/" + chapterUrl, 8000);
+    auto job = downloadAsString(apiUrl + "/comics/" + chapterUrl, 8000);
 
     if (!job->await(8000))
         return Err(job->errorString);

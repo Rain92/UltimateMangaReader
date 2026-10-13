@@ -32,8 +32,8 @@ MangaTown::MangaTown(NetworkManager *networkManager) : AbstractMangaSource(netwo
     mangaInfoTimeout = 6000;
 
     // image hosts: zjcdn.mangahere.org (pages), fmcdn.mangahere.com (covers)
-    networkManager->addSetCustomRequestHeader("mangahere.org", "Referer", R"(https://www.mangatown.com/)");
-    networkManager->addSetCustomRequestHeader("mangahere.com", "Referer", R"(https://www.mangatown.com/)");
+    headerRules.add("mangahere.org", "Referer", R"(https://www.mangatown.com/)");
+    headerRules.add("mangahere.com", "Referer", R"(https://www.mangatown.com/)");
 }
 
 QString MangaTown::licensedMessage(const QString &buffer)
@@ -72,7 +72,7 @@ bool MangaTown::updateMangaList(UpdateProgressToken *token)
     auto requestPage = [&](const QString &url)
     {
         state.queuedPages.append(url);
-        jobs.append(networkManager->downloadAsString(url, 30000));
+        jobs.append(downloadAsString(url, 30000));
     };
     auto requestNextPage = [&]()
     {
@@ -97,7 +97,7 @@ bool MangaTown::updateMangaList(UpdateProgressToken *token)
     {
         auto job = jobs.first();
 
-        if (!job->isCompleted && job->errorString != "")
+        if (job->hasFailed())
             job->restart();
 
         // the page stays queued for a retry
@@ -284,7 +284,7 @@ Result<QStringList, QString> MangaTown::getPageList(const QString &chapterUrl)
         R"lit(>(\d+)</option>\s*?(?:<option\s*?value="/manga/[^"]*?"\s*?>Featured</option>)?\s*?</select>)lit");
     QRegularExpression stripimagerx(R"lit(<img src="([^"]*)" class="image")lit");
 
-    auto job = networkManager->downloadAsString(chapterUrl);
+    auto job = downloadAsString(chapterUrl);
 
     if (!job->await(7000))
         return Err(job->errorString);
@@ -342,7 +342,7 @@ Result<QString, QString> MangaTown::getImageUrl(const QString &pageUrl)
     QRegularExpression imgUrlRx(R"lit(<img src="([^"]*)"[^>]*id="image")lit");
     QRegularExpression anyImgUrlRx(R"lit(<img[^>]*src="([^"]*)")lit");
 
-    auto job = networkManager->downloadAsString(pageUrl);
+    auto job = downloadAsString(pageUrl);
 
     if (!job->await(6000))
         return Err(job->errorString);

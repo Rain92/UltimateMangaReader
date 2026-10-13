@@ -3,138 +3,141 @@
 #include "utils.h"
 
 DownloadFileJob::DownloadFileJob(QNetworkAccessManager *networkManager, const QString &url,
-                                 const QString &localFilePath,
-                                 const QList<std::tuple<const char *, const char *>> &customHeaders)
-    : DownloadJobBase(networkManager, url, customHeaders), retries(0), filepath(localFilePath)
+                                 const QString &localFilePath, const HttpHeaders &headers)
+    : DownloadJobBase(networkManager, url, headers), filepath(localFilePath), partFile(), retries(0)
 {
 }
 
 void DownloadFileJob::start()
 {
-    QString dirname = QFileInfo(filepath).path();
-    QDir().mkpath(dirname);
-
-    file.setFileName(filepath + ".part");
-
     if (QFile::exists(filepath))
     {
-        isCompleted = true;
+        finishCompleted();
+        return;
     }
-    else
+
+    QString error = prepareTarget();
+    if (!error.isEmpty())
     {
-        if (file.open(QIODevice::WriteOnly | QIODevice::Truncate))
-        {
-            QNetworkRequest request = createRequest();
-            // abort stalled downloads, otherwise a DownloadQueue waits forever
-            request.setTransferTimeout(20000);
-
-            reply.reset(networkManager->get(request));
-            trackReply(reply.get());
-
-            QObject::connect(reply.get(), &QNetworkReply::readyRead, this,
-                             &DownloadFileJob::downloadFileReadyRead);
-            QObject::connect(reply.get(), &QNetworkReply::finished, this,
-                             &DownloadFileJob::downloadFileFinished);
-            QObject::connect(reply.get(), &QNetworkReply::sslErrors, this, &DownloadJobBase::onSslErrors);
-        }
-        else
-        {
-            errorString = "Can't create file.";
-            emit downloadError();
-        }
+        finishFailed(error);
+        return;
     }
+
+    // abort stalled downloads, otherwise a DownloadQueue waits forever
+    QNetworkRequest request = createRequest(originalUrl, headers);
+    request.setTransferTimeout(20000);
+
+    reply.reset(networkManager->get(request));
+    prepareReply(reply.get());
+
+    QObject::connect(reply.get(), &QNetworkReply::readyRead, this, &DownloadFileJob::readyRead);
+    QObject::connect(reply.get(), &QNetworkReply::finished, this, &DownloadFileJob::replyFinished);
 }
 
 void DownloadFileJob::restart()
 {
-    isCompleted = false;
-    errorString = "";
-    retryHold.reset();
+    resetState();
+    retries = 0;
     reply.reset();
     start();
-
-    // the file can exist by now (another job for the same path), whoever waits for the job needs the signal
-    if (isCompleted)
-        QTimer::singleShot(0, this, [this]() { emit completed(); });
 }
 
-void DownloadFileJob::downloadFileReadyRead()
+QString DownloadFileJob::prepareTarget()
 {
-    file.write(reply->readAll());
+    QDir().mkpath(QFileInfo(filepath).path());
+
+    partFile.setFileName(filepath + ".part");
+    if (!partFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
+        return "Can't create file: " + partFile.errorString();
+
+    return {};
 }
 
-void DownloadFileJob::downloadFileFinished()
+void DownloadFileJob::readyRead()
 {
-    if (file.isOpen())
+    auto data = reply->readAll();
+    if (partFile.write(data) != data.size())
     {
-        file.flush();
-        file.close();
+        QString error = "Can't write file: " + partFile.errorString();
+        partFile.close();
+        partFile.remove();
+        abortWith(error);
     }
+}
 
-    if (followRedirect())
+void DownloadFileJob::replyFinished()
+{
+    url = reply->url().toString();
+    httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+
+    if (reply->error() == QNetworkReply::NoError)
+    {
+        replySucceeded();
         return;
-
-    if (reply->error() != QNetworkReply::NoError)
-    {
-        file.remove();
-        onError(QNetworkReply::NetworkError());
-    }
-    else
-    {
-        isCompleted = true;
-
-        file.rename(filepath);
-
-        emit completed();
-    }
-}
-
-void DownloadFileJob::onError(QNetworkReply::NetworkError)
-{
-    if (file.isOpen())
-    {
-        file.flush();
-        file.close();
     }
 
-    file.remove();
+    if (partFile.isOpen())
+    {
+        partFile.close();
+        partFile.remove();
+    }
 
     // overloaded servers, rate limits and connection problems often go away after a moment. Only the last
     // attempt counts as failed, until then the job is handed out to whoever asks for the same file.
     const int maxRetries = 2;
-    int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-    bool transient = status == 0 || status == 408 || status == 429 || status >= 500;
-    if (transient && retries < maxRetries && errorString == "")
+    if (isTransientError(reply.get()) && retries < maxRetries)
     {
         int delayMs = 1000 << retries++;
-        qDebug() << "Retrying in" << delayMs << "ms:" << url << reply->errorString();
+        qDebug() << "Retrying in" << delayMs << "ms:" << originalUrl << reply->errorString();
         retryHold = holdActivity();
-        // not right away: this runs in a signal of the reply that restart() deletes
-        QTimer::singleShot(delayMs, this, &DownloadFileJob::restart);
+        // not right away: this runs in a signal of the reply that start() replaces
+        QTimer::singleShot(delayMs, this,
+                           [this]()
+                           {
+                               if (!isFinished())
+                                   start();
+                           });
         return;
     }
 
-    if (errorString == "")
-        errorString = "Download error " +
-                      reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toString() + ": " +
-                      reply->errorString();
+    finishFailed(replyErrorString(reply.get()));
+}
 
-    qDebug() << "Error string:" << errorString;
-    emit downloadError();
+void DownloadFileJob::replySucceeded()
+{
+    // the last data, if there was no readyRead for it
+    readyRead();
+    if (isFinished())
+        return;
+
+    bool flushed = partFile.flush();
+    partFile.close();
+    if (!flushed || partFile.error() != QFileDevice::NoError)
+    {
+        QString error = "Can't write file: " + partFile.errorString();
+        partFile.remove();
+        finishFailed(error);
+        return;
+    }
+
+    // another job may have saved it meanwhile (rename doesn't overwrite)
+    if (QFile::exists(filepath))
+        partFile.remove();
+    else if (!partFile.rename(filepath))
+    {
+        QString error = "Can't save file: " + partFile.errorString();
+        partFile.remove();
+        finishFailed(error);
+        return;
+    }
+
+    finishCompleted();
 }
 
 bool DownloadFileJob::await(int timeout)
 {
-    if (isCompleted)
-        return true;
+    if (!isFinished())
+        awaitSignal(this, qMax(1, timeout), &DownloadJobBase::completed, &DownloadJobBase::downloadError);
 
-    awaitSignal(this, timeout, &DownloadJobBase::completed, &DownloadJobBase::downloadError);
-
-    if (isCompleted)
-        return true;
-
-    if (errorString == "")
-        errorString = "Download timeout.";
-
-    return false;
+    return isCompleted;
 }

@@ -116,7 +116,7 @@ void Mangakakalot::addImageHost(const QString &host)
         return;
 
     imageHosts.insert(host);
-    networkManager->addSetCustomRequestHeader(host, "Referer", "https://www.mangakakalove.com/");
+    headerRules.add(host, "Referer", "https://www.mangakakalove.com/");
 }
 
 QString Mangakakalot::normalizeUrl(const QString &url) const
@@ -139,7 +139,7 @@ bool Mangakakalot::isMirrorUrl(const QString &url) const
 
 QSharedPointer<DownloadStringJob> Mangakakalot::downloadChapterList(const QString &slug, int offset)
 {
-    return networkManager->downloadAsString(chaptersApiUrl.arg(slug).arg(-1).arg(offset), 8000);
+    return downloadAsString(chaptersApiUrl.arg(slug).arg(-1).arg(offset), 8000);
 }
 
 Result<QString, QString> Mangakakalot::resolveMangaUrl(const QString &mangaUrl, const QString &mangaTitle)
@@ -162,7 +162,7 @@ Result<QString, QString> Mangakakalot::resolveMangaUrl(const QString &mangaUrl, 
         QString url;
         for (const auto &slug : std::as_const(slugs))
         {
-            auto job = networkManager->downloadAsString(chaptersApiUrl.arg(slug).arg(1).arg(0), 3000);
+            auto job = downloadAsString(chaptersApiUrl.arg(slug).arg(1).arg(0), 3000);
 
             if (job->await(3000, false) && job->bufferStr.contains(R"("success":true)"))
             {
@@ -199,7 +199,7 @@ bool Mangakakalot::updateMangaList(UpdateProgressToken *token)
     // a retry only loads the sitemaps the failed attempt didn't get
     auto &state = token->resumeState<MangakakalotUpdateState>();
 
-    auto job = networkManager->downloadAsString(sitemapUrl);
+    auto job = downloadAsString(sitemapUrl);
 
     if (!job->await(7000))
     {
@@ -256,7 +256,7 @@ bool Mangakakalot::updateMangaList(UpdateProgressToken *token)
         state.popular.clear();
     for (int page = 1; page <= 2 && !state.popularDone && !token->canceled; page++)
     {
-        auto popularJob = networkManager->downloadAsString(popularUrl.arg(page));
+        auto popularJob = downloadAsString(popularUrl.arg(page));
         if (!popularJob->await(5000, false))
         {
             qDebug() << "Mangakakalot: popular page failed:" << popularJob->errorString;
@@ -296,7 +296,7 @@ bool Mangakakalot::updateMangaList(UpdateProgressToken *token)
         qDebug() << "sitemap" << job->originalUrl << "matches:" << slugs.size();
     };
 
-    DownloadQueue queue(networkManager, missingSitemaps, 2, lambda, true, 60000);
+    DownloadQueue queue(networkManager, missingSitemaps, 2, lambda, true, 60000, requestHeadersFunction());
     queue.setCancellationToken(&token->canceled);
     queue.start();
     if (!missingSitemaps.isEmpty() && !queue.awaitCompletion())
@@ -615,7 +615,7 @@ Result<QStringList, QString> Mangakakalot::getPageList(const QString &chapterUrl
     if (!isMirrorUrl(url))
         return Err(QString("Outdated chapter link, please reload the manga."));
 
-    auto job = networkManager->downloadAsString(url);
+    auto job = downloadAsString(url);
 
     if (!job->await(7000))
         return Err(job->errorString);
@@ -668,14 +668,14 @@ Result<QStringList, QString> Mangakakalot::joinSplitPages(const QStringList &ima
     // The sizes that didn't come in time are asked for once more: the list is stored with the chapter, pages
     // that weren't joined because of a slow connection would stay that way.
     QList<int> timedOut;
-    auto sizes = networkManager->probeImageSizes(imageUrls, 8000, &timedOut);
+    auto sizes = probeImageSizes(imageUrls, 8000, &timedOut);
     if (!timedOut.isEmpty())
     {
         QStringList again;
         for (int i : std::as_const(timedOut))
             again.append(imageUrls[i]);
         QList<int> stillTimedOut;
-        auto moreSizes = networkManager->probeImageSizes(again, 8000, &stillTimedOut);
+        auto moreSizes = probeImageSizes(again, 8000, &stillTimedOut);
         for (int k = 0; k < timedOut.size(); k++)
             sizes[timedOut[k]] = moreSizes[k];
         if (stillTimedOut.size() * 4 > imageUrls.size())

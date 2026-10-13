@@ -20,7 +20,7 @@ MangaController::MangaController(NetworkManager *networkManager, QObject *parent
     QObject::connect(&preloadQueue, &DownloadQueue::singleDownloadCompleted, this,
                      &MangaController::completedImagePreload);
     QObject::connect(&preloadQueue, &DownloadQueue::singleDownloadFailed, this,
-                     [this](const QString &url) { failedDownloads.insert(url, clock.elapsed()); });
+                     [this](const QString &, const QString &path) { failedDownloads.insert(path, clock.elapsed()); });
 }
 
 bool MangaController::setCurrentManga(QSharedPointer<MangaInfo> mangaInfo)
@@ -227,7 +227,7 @@ void MangaController::updateCurrentImage()
     QObject::connect(pageJob, &DownloadJobBase::downloadError, this,
                      [this, pageJob, isCurrent]()
                      {
-                         failedDownloads.insert(pageJob->originalUrl, clock.elapsed());
+                         failedDownloads.insert(pageJob->filepath, clock.elapsed());
                          if (isCurrent())
                          {
                              emit currentImageChanged("error");
@@ -305,15 +305,16 @@ void MangaController::preloadImage(QSharedPointer<MangaInfo> manga, const MangaI
         return;
 
     // it shows up when the running download is done, a queued one would start over if it failed
-    if (networkManager->isDownloading(imageUrl.unwrap()))
+    if (networkManager->isDownloading(path))
         return;
 
     const qint64 skipFailedMs = 2 * 60 * 1000;
-    auto failed = failedDownloads.constFind(networkManager->downloadUrl(imageUrl.unwrap()));
+    auto failed = failedDownloads.constFind(path);
     if (failed != failedDownloads.constEnd() && clock.elapsed() - failed.value() < skipFailedMs)
         return;
 
-    preloadQueue.appendDownload(FileDownloadDescriptor(imageUrl.unwrap(), path));
+    preloadQueue.appendDownload(
+        FileDownloadDescriptor(imageUrl.unwrap(), path, manga->mangaSource->requestHeaders(imageUrl.unwrap())));
 }
 
 void MangaController::preloadPopular()
@@ -350,7 +351,7 @@ void MangaController::preloadNeighboursOnce()
     int backward = CONF.backwardPreloads;
 
     // the pages queued at the previous page turns (which might be behind by now), a running one goes on
-    preloadQueue.clearQuene();
+    preloadQueue.clearQueue();
 
     auto manga = currentManga;
     MangaIndexTraverser forwardindex(currentIndex);
@@ -378,7 +379,7 @@ void MangaController::preloadNeighboursOnce()
 
 void MangaController::cancelAllPreloads()
 {
-    preloadQueue.clearQuene();
+    preloadQueue.clearQueue();
 }
 
 void MangaController::completedImagePreload(const QString &, const QString &path)

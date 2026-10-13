@@ -7,6 +7,7 @@
 #include "imageprocessor.h"
 #include "settings.h"
 
+// Downloads a page and saves it processed for the screen (see processDownloadedImage()).
 class DownloadScaledImageJob : public DownloadFileJob
 {
     Q_OBJECT
@@ -14,15 +15,19 @@ class DownloadScaledImageJob : public DownloadFileJob
 public:
     DownloadScaledImageJob(QNetworkAccessManager *networkManager, ImageProcessor *imageProcessor,
                            const QString &url, const QString &path, QSize screenSize, Settings *settings,
-                           const QList<std::tuple<const char *, const char *>> &customHeaders = {},
-                           const EncryptionDescriptor &encryption = {}, const QString &appendUrl = {});
+                           const HttpHeaders &headers = {}, const EncryptionDescriptor &encryption = {},
+                           const QString &appendUrl = {});
     virtual ~DownloadScaledImageJob();
 
-    void downloadFileReadyRead() override;
-    void downloadFileFinished() override;
     void restart() override;
 
+    // the processed page, when it was downloaded (not when the file was there already)
     QSharedPointer<QImage> resultImage;
+
+protected:
+    QString prepareTarget() override;
+    void readyRead() override;
+    void replySucceeded() override;
 
 private:
     ImageProcessor *imageProcessor;

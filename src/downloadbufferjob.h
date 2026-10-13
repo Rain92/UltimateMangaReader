@@ -3,30 +3,32 @@
 
 #include "downloadjobbase.h"
 
+// Downloads into memory.
 class DownloadBufferJob : public DownloadJobBase
 {
     Q_OBJECT
+
+public:
+    QByteArray buffer;
+
+    // timeout: for the download (it fails then), unless an await() sets another one
+    DownloadBufferJob(QNetworkAccessManager *networkManager, const QString &url, int timeout = 6000,
+                      const HttpHeaders &headers = {});
+    virtual ~DownloadBufferJob() = default;
+
+    // Waits until the download is done, at most timeout ms (the download is stopped then). With retry it starts
+    // over (up to maxRetries times, within the timeout) after errors that aren't the request's fault.
+    bool await(int timeout = 7000, bool retry = true, int maxRetries = 10);
+
+    void start() override;
+    void restart() override;
 
 protected:
     QTimer timeoutTimer;
     int timeoutTime;
 
     virtual void downloadFinished();
-    void onError(QNetworkReply::NetworkError);
     void timeout();
-
-public:
-    QByteArray buffer;
-    int httpStatus;
-
-    DownloadBufferJob(QNetworkAccessManager *networkManager, const QString &url, int timeout = 6000,
-                      const QList<std::tuple<const char *, const char *>> &customHeaders = {});
-    virtual ~DownloadBufferJob() = default;
-
-    bool await(int timeout = 7000, bool retry = true, int maxRetries = 10);
-
-    void start() override;
-    void restart() override;
 };
 
 #endif  // DOWNLOADBUFFERJOB_H

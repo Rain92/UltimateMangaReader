@@ -15,7 +15,7 @@ MangaChapterDownloadManager::MangaChapterDownloadManager(NetworkManager *network
     connect(&downloadQueue, &DownloadQueue::progress, this,
             [this](int c, int t, int e) { emit downloadImagesProgress(c, t, e); });
     connect(&downloadQueue, &DownloadQueue::singleDownloadFailed, this,
-            [this](const QString &, const QString &errorstr)
+            [this](const QString &, const QString &, const QString &errorstr)
             { emit error("Couldn't download image: " + errorstr); });
     connect(&downloadQueue, &DownloadQueue::allCompleted, this,
             &MangaChapterDownloadManager::downloadQueueJobsCompleted);
@@ -27,7 +27,7 @@ void MangaChapterDownloadManager::cancelDownloads()
     // set until then, or until the image downloads that already run are done.
     generation++;
     downloadJobs.clear();
-    downloadQueue.clearQuene();
+    downloadQueue.clearQueue();
     failedChapters.clear();
 }
 
@@ -189,7 +189,8 @@ void MangaChapterDownloadManager::processNextJob()
                 DownloadImageDescriptor imageinfo(imageUrl, mangaInfo->title, c, p);
                 auto path = mangaInfo->mangaSource->getImagePath(imageinfo);
 
-                imageDescriptors.append(FileDownloadDescriptor(imageUrl, path));
+                imageDescriptors.append(
+                    FileDownloadDescriptor(imageUrl, path, mangaInfo->mangaSource->requestHeaders(imageUrl)));
                 currentImagePaths.append({url, path});
             }
         }

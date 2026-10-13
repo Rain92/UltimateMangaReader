@@ -62,6 +62,9 @@ public:
 
     QSharedPointer<DownloadFileJob> downloadImage(const DownloadImageDescriptor &descriptor);
 
+    // The headers of the source's requests to url (by default the header rules for its host).
+    virtual HttpHeaders requestHeaders(const QString &url) const;
+
     QString htmlToPlainText(const QString &str);
 
     virtual void updateMangaInfoAsync(QSharedPointer<MangaInfo> mangainfo, bool updateCover = true);
@@ -84,6 +87,17 @@ protected:
 
     NetworkManager *networkManager;
     QTextDocument htmlConverter;
+
+    // e.g. the Referer the image hosts want
+    HeaderRules headerRules;
+
+    // The downloads of the source, with its headers.
+    QSharedPointer<DownloadStringJob> downloadAsString(const QString &url, int timeout = 6000);
+    QSharedPointer<DownloadBufferJob> downloadToBuffer(const QString &url, int timeout = 6000);
+    QSharedPointer<DownloadFileJob> downloadAsFile(const QString &url, const QString &localPath);
+    QList<QSize> probeImageSizes(const QStringList &urls, int timeout = 10000, QList<int> *timedOut = nullptr);
+    // for a DownloadQueue
+    std::function<HttpHeaders(const QString &)> requestHeadersFunction() const;
 
     // Merges the chapters an update loaded into the info (moves or removes the downloaded pages accordingly).
     Result<void, QString> mergeChapters(QSharedPointer<MangaInfo> info, MangaChapterCollection newChapters,

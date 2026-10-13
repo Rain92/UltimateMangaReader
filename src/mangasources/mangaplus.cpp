@@ -4,7 +4,6 @@
 
 #include <algorithm>
 #include <limits>
-#include <set>
 #include <utility>
 
 namespace
@@ -238,12 +237,6 @@ QString findImageUrl(const QStringList &imageUrls, const QString &fileName)
     return QString();
 }
 
-// the network manager keeps custom header values as raw pointers, so they must outlive all requests
-const char *headerValue(const QString &value)
-{
-    static std::set<QByteArray> values;
-    return values.insert(value.toLatin1()).first->constData();
-}
 }  // namespace
 
 MangaPlus::MangaPlus(NetworkManager *dm) : AbstractMangaSource(dm)
@@ -259,15 +252,26 @@ MangaPlus::MangaPlus(NetworkManager *dm) : AbstractMangaSource(dm)
     mangaInfoTimeout = 6000;
 
     // like the web client: without a session token the api answers with an "Account Banned" error
-    networkManager->addSetCustomRequestHeader(
-        "jumpg-webapi.tokyo-cdn.com", "SESSION-TOKEN",
-        headerValue(QUuid::createUuid().toString(QUuid::WithoutBraces)));
-    networkManager->addSetCustomRequestHeader("tokyo-cdn.com", "Origin", "https://mangaplus.shueisha.co.jp");
-    networkManager->addSetCustomRequestHeader("tokyo-cdn.com", "Referer",
-                                              "https://mangaplus.shueisha.co.jp/");
+    headerRules.add("jumpg-webapi.tokyo-cdn.com", "SESSION-TOKEN",
+                    QUuid::createUuid().toString(QUuid::WithoutBraces).toLatin1());
+    headerRules.add("tokyo-cdn.com", "Origin", "https://mangaplus.shueisha.co.jp");
+    headerRules.add("tokyo-cdn.com", "Referer", "https://mangaplus.shueisha.co.jp/");
 
     QObject::connect(networkManager->networkAccessManager(), &QNetworkAccessManager::finished, &replyContext,
                      [this](QNetworkReply *reply) { forgetFailedImageUrl(reply); });
+}
+
+HttpHeaders MangaPlus::requestHeaders(const QString &url) const
+{
+    auto headers = AbstractMangaSource::requestHeaders(url);
+
+    // the image host only accepts the view token of the fetch the image urls came from, it is kept in the
+    // fragment of their urls (which isn't sent to the server)
+    auto viewToken = urlViewToken(url);
+    if (!viewToken.isEmpty())
+        headers.append({"Plus-Vw-Token", viewToken.toLatin1()});
+
+    return headers;
 }
 
 QString MangaPlus::normalizeMangaUrl(const QString &url) const
@@ -365,7 +369,7 @@ void MangaPlus::forgetFailedImageUrl(QNetworkReply *reply)
 
 bool MangaPlus::updateMangaList(UpdateProgressToken *token)
 {
-    auto job = networkManager->downloadToBuffer(baseUrl + mangalistUrl, 20000);
+    auto job = downloadToBuffer(baseUrl + mangalistUrl, 20000);
 
     if (!job->await(20000))
     {
@@ -427,7 +431,7 @@ bool MangaPlus::updateMangaList(UpdateProgressToken *token)
 
     for (const auto &type : QStringList{"hottest", "completed"})
     {
-        auto rankingJob = networkManager->downloadToBuffer(baseUrl + rankingUrl.arg(type), 10000);
+        auto rankingJob = downloadToBuffer(baseUrl + rankingUrl.arg(type), 10000);
 
         bool ok = rankingJob->await(10000);
 
@@ -617,7 +621,7 @@ Result<QStringList, QString> MangaPlus::getPageList(const QString &chapterUrl)
     if (!url.startsWith("http"))
         url.prepend(baseUrl);
 
-    auto job = networkManager->downloadToBuffer(url, 7000);
+    auto job = downloadToBuffer(url, 7000);
 
     if (!job->await(7000))
         return Err(job->errorString);
@@ -640,18 +644,14 @@ Result<QStringList, QString> MangaPlus::getPageList(const QString &chapterUrl)
     //    }
     auto viewer = successR.unwrap().getMessage(10);
 
-    // the image host only accepts the view token of the fetch the image urls came from.
-    // it is passed in the url fragment (not sent to the server) which selects the header
+    // the image host only accepts the view token of the fetch the image urls came from, it is kept in the url
+    // fragment (not sent to the server), see requestHeaders()
     auto viewToken = viewer.getString(19);
     QString fragment;
     if (!viewToken.isEmpty())
     {
         fragment = "#vwt=" + viewToken;
-        if (!viewTokens.contains(viewToken))
-        {
-            viewTokens.insert(viewToken);
-            networkManager->addSetCustomRequestHeader(fragment, "Plus-Vw-Token", headerValue(viewToken));
-        }
+        viewTokens.insert(viewToken);
     }
 
     QStringList imageUrls;

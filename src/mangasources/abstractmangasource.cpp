@@ -171,7 +171,37 @@ QSharedPointer<DownloadFileJob> AbstractMangaSource::downloadImage(const Downloa
 {
     QString path = getImagePath(descriptor);
 
-    return networkManager->downloadAsScaledImage(descriptor.imageUrl, path);
+    return networkManager->downloadAsScaledImage(descriptor.imageUrl, path, requestHeaders(descriptor.imageUrl));
+}
+
+HttpHeaders AbstractMangaSource::requestHeaders(const QString &url) const
+{
+    return headerRules.forUrl(url);
+}
+
+QSharedPointer<DownloadStringJob> AbstractMangaSource::downloadAsString(const QString &url, int timeout)
+{
+    return networkManager->downloadAsString(url, timeout, requestHeaders(url));
+}
+
+QSharedPointer<DownloadBufferJob> AbstractMangaSource::downloadToBuffer(const QString &url, int timeout)
+{
+    return networkManager->downloadToBuffer(url, timeout, requestHeaders(url));
+}
+
+QSharedPointer<DownloadFileJob> AbstractMangaSource::downloadAsFile(const QString &url, const QString &localPath)
+{
+    return networkManager->downloadAsFile(url, localPath, requestHeaders(url));
+}
+
+QList<QSize> AbstractMangaSource::probeImageSizes(const QStringList &urls, int timeout, QList<int> *timedOut)
+{
+    return networkManager->probeImageSizes(urls, timeout, timedOut, requestHeadersFunction());
+}
+
+std::function<HttpHeaders(const QString &)> AbstractMangaSource::requestHeadersFunction() const
+{
+    return [this](const QString &url) { return requestHeaders(url); };
 }
 
 Result<QString, QString> AbstractMangaSource::getImageUrl(const QString &pageurl)
@@ -259,7 +289,7 @@ QSharedPointer<MangaInfo> AbstractMangaSource::loadCachedMangaInfo(const QString
 Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::getMangaInfo(const QString &mangaUrl,
                                                                              const QString &mangaTitle)
 {
-    auto job = networkManager->downloadAsString(mangaUrl, mangaInfoTimeout);
+    auto job = downloadAsString(mangaUrl, mangaInfoTimeout);
 
     auto info = QSharedPointer<MangaInfo>(new MangaInfo(this));
 
@@ -319,7 +349,7 @@ void AbstractMangaSource::updateMangaInfoAsync(QSharedPointer<MangaInfo> info, b
 {
     int oldnumchapters = info->chapters.count();
 
-    auto job = networkManager->downloadAsString(info->url, mangaInfoTimeout);
+    auto job = downloadAsString(info->url, mangaInfoTimeout);
 
     auto lambda = [oldnumchapters, info, job, updateCover, this]
     {
@@ -493,7 +523,7 @@ void AbstractMangaSource::downloadCoverAsync(QSharedPointer<MangaInfo> mangainfo
         QFile::remove(mangainfo->coverThumbnailPath());
         mangainfo->sendCoverLoaded();
     };
-    auto coverjob = networkManager->downloadAsFile(mangainfo->coverUrl, mangainfo->coverPath);
+    auto coverjob = downloadAsFile(mangainfo->coverUrl, mangainfo->coverPath);
     executeOnJobCompletion(coverjob, coverLoadedLambda);
 
     QString fallbackUrl = coverFallbackUrl(mangainfo->coverUrl);
@@ -503,7 +533,7 @@ void AbstractMangaSource::downloadCoverAsync(QSharedPointer<MangaInfo> mangainfo
     auto retry = [this, mangainfo, fallbackUrl, coverLoadedLambda]()
     {
         qDebug() << "Cover not loaded, trying" << fallbackUrl;
-        auto job = networkManager->downloadAsFile(fallbackUrl, mangainfo->coverPath);
+        auto job = downloadAsFile(fallbackUrl, mangainfo->coverPath);
         executeOnJobCompletion(job, coverLoadedLambda);
     };
 

@@ -17,7 +17,6 @@ NetworkManager::NetworkManager(QObject *parent)
       certificates(),
       certificatesApplied(false),
       settings(nullptr),
-      customHeaders(),
       fileDownloads(),
       wifiThread(),
       wifiWorker(new QObject()),
@@ -178,15 +177,10 @@ bool NetworkManager::isBusy() const
     return DownloadJobBase::activeReplies() > 0 || imageProcessor->isBusy();
 }
 
-QString NetworkManager::downloadUrl(const QString &url) const
+bool NetworkManager::isDownloading(const QString &localPath) const
 {
-    return fixUrl(url.section('|', 0, 0));
-}
-
-bool NetworkManager::isDownloading(const QString &url) const
-{
-    auto job = fileDownloads.value(downloadUrl(url)).toStrongRef();
-    return job && !job->isCompleted && !job->hasFailed();
+    auto job = fileDownloads.value(localPath).toStrongRef();
+    return job && !job->isFinished();
 }
 
 QString NetworkManager::fixUrl(const QString &url) const
@@ -198,34 +192,23 @@ QString NetworkManager::fixUrl(const QString &url) const
     return url;
 }
 
-void NetworkManager::releaseFileDownload(const QString &url)
+void NetworkManager::releaseFileDownload(const QString &localPath)
 {
-    // only remove the entry if it wasn't replaced by a newer job for the same url
-    auto it = fileDownloads.find(url);
+    // only remove the entry if it wasn't replaced by a newer job for the same file
+    auto it = fileDownloads.find(localPath);
     if (it != fileDownloads.end() && it.value().isNull())
         fileDownloads.erase(it);
 }
 
-QList<std::tuple<const char *, const char *>> NetworkManager::applicableCustomHeaders(const QString &url) const
-{
-    QList<std::tuple<const char *, const char *>> headers;
-
-    for (const auto &[domain, name, value] : std::as_const(customHeaders))
-        if (url.contains(domain))
-            headers.append(std::tuple<const char *, const char *>(name, value));
-
-    return headers;
-}
-
-QSharedPointer<DownloadStringJob> NetworkManager::downloadAsString(const QString &url, int timeout)
+QSharedPointer<DownloadStringJob> NetworkManager::downloadAsString(const QString &url, int timeout,
+                                                                   const HttpHeaders &headers)
 {
     auto urlf = fixUrl(url);
 
     qDebug() << "Downloading as string:" << urlf;
 
-    auto job = QSharedPointer<DownloadStringJob>(
-        new DownloadStringJob(networkManager, urlf, timeout, applicableCustomHeaders(urlf)),
-        &QObject::deleteLater);
+    auto job = QSharedPointer<DownloadStringJob>(new DownloadStringJob(networkManager, urlf, timeout, headers),
+                                                 &QObject::deleteLater);
 
     job->start();
 
@@ -233,15 +216,15 @@ QSharedPointer<DownloadStringJob> NetworkManager::downloadAsString(const QString
     return job;
 }
 
-QSharedPointer<DownloadBufferJob> NetworkManager::downloadToBuffer(const QString &url, int timeout)
+QSharedPointer<DownloadBufferJob> NetworkManager::downloadToBuffer(const QString &url, int timeout,
+                                                                   const HttpHeaders &headers)
 {
     auto urlf = fixUrl(url);
 
     qDebug() << "Downloading to buffer:" << urlf;
 
-    auto job = QSharedPointer<DownloadBufferJob>(
-        new DownloadBufferJob(networkManager, urlf, timeout, applicableCustomHeaders(urlf)),
-        &QObject::deleteLater);
+    auto job = QSharedPointer<DownloadBufferJob>(new DownloadBufferJob(networkManager, urlf, timeout, headers),
+                                                 &QObject::deleteLater);
 
     job->start();
 
@@ -249,43 +232,54 @@ QSharedPointer<DownloadBufferJob> NetworkManager::downloadToBuffer(const QString
     return job;
 }
 
-QSharedPointer<DownloadFileJob> NetworkManager::downloadAsFile(const QString &url, const QString &localPath)
+QSharedPointer<DownloadFileJob> NetworkManager::runningFileDownload(const QString &localPath)
 {
-    auto urlf = fixUrl(url);
+    auto job = fileDownloads.value(localPath).toStrongRef();
+    // a failed job isn't handed out, the download starts over
+    if (job && !job->hasFailed())
+        return job;
 
-    if (fileDownloads.contains(urlf))
-    {
-        auto job = fileDownloads.value(urlf).toStrongRef();
-        // don't hand out failed jobs, start a new download instead
-        if (job && !job->hasFailed())
-            return job;
-        else
-            fileDownloads.remove(urlf);
-    }
+    fileDownloads.remove(localPath);
+    return {};
+}
 
-    qDebug() << "Downloading as file:" << urlf;
-
+QSharedPointer<DownloadFileJob> NetworkManager::startFileDownload(DownloadFileJob *newJob)
+{
     QPointer<NetworkManager> self(this);
-    auto job = QSharedPointer<DownloadFileJob>(
-        new DownloadFileJob(networkManager, urlf, localPath, applicableCustomHeaders(urlf)),
-        [self](DownloadFileJob *j)
-        {
-            if (self)
-                self->releaseFileDownload(j->originalUrl);
-            j->deleteLater();
-        });
+    auto job = QSharedPointer<DownloadFileJob>(newJob,
+                                               [self](DownloadFileJob *j)
+                                               {
+                                                   if (self)
+                                                       self->releaseFileDownload(j->filepath);
+                                                   j->deleteLater();
+                                               });
 
+    fileDownloads.insert(job->filepath, job.toWeakRef());
     job->start();
-
-    fileDownloads.insert(urlf, job.toWeakRef());
 
     emit activity();
     return job;
+}
+
+QSharedPointer<DownloadFileJob> NetworkManager::downloadAsFile(const QString &url, const QString &localPath,
+                                                               const HttpHeaders &headers)
+{
+    if (auto job = runningFileDownload(localPath))
+        return job;
+
+    auto urlf = fixUrl(url);
+    qDebug() << "Downloading as file:" << urlf;
+
+    return startFileDownload(new DownloadFileJob(networkManager, urlf, localPath, headers));
 }
 
 QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const QString &url,
-                                                                      const QString &localPath)
+                                                                      const QString &localPath,
+                                                                      const HttpHeaders &headers)
 {
+    if (auto job = runningFileDownload(localPath))
+        return job;
+
     // url|xor:<hex key>|append:<url of the rest of the page>
     auto parts = url.split('|');
     QString urlf = fixUrl(parts.takeFirst());
@@ -308,50 +302,23 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const QStr
         }
     }
 
-    if (fileDownloads.contains(urlf))
-    {
-        auto job = qSharedPointerCast<DownloadScaledImageJob>(fileDownloads.value(urlf).toStrongRef());
-        // don't hand out failed jobs, start a new download instead
-        if (job && !job->hasFailed())
-            return job;
-        else
-            fileDownloads.remove(urlf);
-    }
-
     qDebug() << "Downloading as image:" << urlf;
 
-    QPointer<NetworkManager> self(this);
-    auto job = QSharedPointer<DownloadFileJob>(
-        new DownloadScaledImageJob(networkManager, imageProcessor, urlf, localPath, imageRescaleSize,
-                                   settings, applicableCustomHeaders(urlf), ed, appendUrl),
-        [self](DownloadScaledImageJob *j)
-        {
-            if (self)
-                self->releaseFileDownload(j->originalUrl);
-            j->deleteLater();
-        });
+    auto sjob = new DownloadScaledImageJob(networkManager, imageProcessor, urlf, localPath, imageRescaleSize,
+                                           settings, headers, ed, appendUrl);
+    auto job = startFileDownload(sjob);
 
-    job->start();
-
-    fileDownloads.insert(urlf, job.toWeakRef());
-
-    emit activity();
-
-    if (job->isCompleted || job->errorString != "")
-        return job;
-
-    // keep the job alive until it finished, even if the caller drops it
-    auto sjob = qSharedPointerCast<DownloadScaledImageJob>(job);
-    auto keepAlive = QSharedPointer<QSharedPointer<DownloadScaledImageJob>>::create(sjob);
-    connect(sjob.get(), &DownloadScaledImageJob::completed, this,
-            [keepAlive, this]()
+    // the processed page goes to the reader's cache, the job is kept until it finished (even if the caller
+    // drops it)
+    auto keepAlive = QSharedPointer<QSharedPointer<DownloadFileJob>>::create(job);
+    connect(sjob, &DownloadJobBase::completed, this,
+            [keepAlive, sjob, this]()
             {
-                auto j = *keepAlive;
                 keepAlive->clear();
-                if (j && j->resultImage)
-                    emit downloadedImage(j->filepath, {j->resultImage});
+                if (sjob->resultImage)
+                    emit downloadedImage(sjob->filepath, sjob->resultImage);
             });
-    connect(sjob.get(), &DownloadJobBase::downloadError, this, [keepAlive]() { keepAlive->clear(); });
+    connect(sjob, &DownloadJobBase::downloadError, this, [keepAlive]() { keepAlive->clear(); });
 
     return job;
 }
@@ -362,18 +329,40 @@ void NetworkManager::setDownloadSettings(const QSize &size, Settings *settings)
     this->settings = settings;
 }
 
-void NetworkManager::addCookie(const QString &domain, const char *key, const char *value)
+void NetworkManager::addCookie(const QString &domain, const QByteArray &name, const QByteArray &value)
 {
-    QNetworkCookie c = QNetworkCookie(QByteArray(key), QByteArray(value));
+    QNetworkCookie c(name, value);
     c.setDomain(domain);
     c.setExpirationDate(QDateTime::currentDateTime().addYears(10));
 
     networkManager->cookieJar()->insertCookie(c);
 }
 
-void NetworkManager::addSetCustomRequestHeader(const QString &domain, const char *key, const char *value)
+void HeaderRules::add(const QString &domain, const QByteArray &name, const QByteArray &value)
 {
-    customHeaders.append({domain, key, value});
+    rules.append({domain.toLower(), {name, value}});
+}
+
+HttpHeaders HeaderRules::forUrl(const QString &url) const
+{
+    HttpHeaders headers;
+    QString host = QUrl(url).host().toLower();
+    for (const auto &rule : rules)
+    {
+        if (host != rule.domain && !host.endsWith('.' + rule.domain))
+            continue;
+
+        bool replaced = false;
+        for (auto &header : headers)
+            if (header.name.compare(rule.header.name, Qt::CaseInsensitive) == 0)
+            {
+                header.value = rule.header.value;
+                replaced = true;
+            }
+        if (!replaced)
+            headers.append(rule.header);
+    }
+    return headers;
 }
 
 QList<QSslCertificate> NetworkManager::loadCertificates(const QString &certsPath)
@@ -404,7 +393,8 @@ void NetworkManager::ensureCertificates()
 #endif
 }
 
-QList<QSize> NetworkManager::probeImageSizes(const QStringList &urls, int timeout, QList<int> *timedOut)
+QList<QSize> NetworkManager::probeImageSizes(const QStringList &urls, int timeout, QList<int> *timedOut,
+                                             const std::function<HttpHeaders(const QString &)> &headersFor)
 {
     // a few KB hold the size of any WebP, PNG and of JPEGs without large metadata
     const int headerBytes = 4096;
@@ -419,16 +409,12 @@ QList<QSize> NetworkManager::probeImageSizes(const QStringList &urls, int timeou
     for (int i = 0; i < urls.size(); i++)
     {
         auto urlf = fixUrl(urls[i]);
-        QNetworkRequest request(urlf);
-        request.setRawHeader("User-Agent",
-                             "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
-                             "Chrome/130.0.0.0 Safari/537.36");
-        for (const auto &[name, value] : applicableCustomHeaders(urlf))
-            request.setRawHeader(name, value);
+        QNetworkRequest request =
+            DownloadJobBase::createRequest(urlf, headersFor ? headersFor(urlf) : HttpHeaders());
         request.setRawHeader("Range", "bytes=0-" + QByteArray::number(headerBytes - 1));
 
         auto reply = networkManager->get(request);
-        DownloadJobBase::trackReply(reply);
+        DownloadJobBase::prepareReply(reply);
         replies.append(reply);
         running++;
 

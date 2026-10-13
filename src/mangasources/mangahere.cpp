@@ -107,11 +107,11 @@ MangaHere::MangaHere(NetworkManager *networkManager) : AbstractMangaSource(netwo
     networkManager->addCookie(".fanfox.net", "isAdult", "1");
 
     // images and covers are hotlink protected, chapterfun.ashx answers empty without referer
-    networkManager->addSetCustomRequestHeader("mangahere.cc", "Referer", R"(https://www.mangahere.cc/)");
-    networkManager->addSetCustomRequestHeader("mangahere.org", "Referer", R"(https://www.mangahere.cc/)");
-    networkManager->addSetCustomRequestHeader("mangahere.com", "Referer", R"(https://www.mangahere.cc/)");
-    networkManager->addSetCustomRequestHeader("fanfox.net", "Referer", R"(https://fanfox.net/)");
-    networkManager->addSetCustomRequestHeader("mangafox.me", "Referer", R"(https://fanfox.net/)");
+    headerRules.add("mangahere.cc", "Referer", R"(https://www.mangahere.cc/)");
+    headerRules.add("mangahere.org", "Referer", R"(https://www.mangahere.cc/)");
+    headerRules.add("mangahere.com", "Referer", R"(https://www.mangahere.cc/)");
+    headerRules.add("fanfox.net", "Referer", R"(https://fanfox.net/)");
+    headerRules.add("mangafox.me", "Referer", R"(https://fanfox.net/)");
 }
 
 bool MangaHere::updateMangaList(UpdateProgressToken *token)
@@ -133,7 +133,7 @@ bool MangaHere::updateMangaList(UpdateProgressToken *token)
 
     token->sendProgress(state.popularDone ? 10 : 0);
 
-    auto job = networkManager->downloadAsString(mangaListUrl, 180000);
+    auto job = downloadAsString(mangaListUrl, 180000);
 
     if (!state.popularDone)
     {
@@ -153,7 +153,8 @@ bool MangaHere::updateMangaList(UpdateProgressToken *token)
         };
 
         // failed pages only degrade the popularity order
-        DownloadQueue queue(networkManager, urls, CONF.parallelDownloadsLow, lambda, false);
+        DownloadQueue queue(networkManager, urls, CONF.parallelDownloadsLow, lambda, false, 30000,
+                            requestHeadersFunction());
         queue.setCancellationToken(&token->canceled);
         queue.start();
         queue.awaitCompletion();
@@ -185,7 +186,7 @@ bool MangaHere::updateMangaList(UpdateProgressToken *token)
         }
 
         qDebug() << "MangaHere: manga list incomplete, retrying" << job->errorString;
-        job = networkManager->downloadAsString(mangaListUrl, 180000);
+        job = downloadAsString(mangaListUrl, 180000);
     }
 
     token->sendProgress(80);
@@ -333,7 +334,7 @@ Result<QStringList, QString> MangaHere::getPageList(const QString &chapterUrl)
     auto pathmatch = chapterpathrx.match(chapterUrl);
     if (pathmatch.hasMatch())
     {
-        auto job = networkManager->downloadAsString(mobileUrl + "/roll_manga/" + pathmatch.captured(1));
+        auto job = downloadAsString(mobileUrl + "/roll_manga/" + pathmatch.captured(1));
 
         if (job->await(4000, false))
         {
@@ -363,7 +364,7 @@ Result<QStringList, QString> MangaHere::getPageListDesktop(const QString &chapte
     QRegularExpression quotedrx(R"lit('([^']*)')lit");
     QRegularExpression imageinfosrx(R"lit(newImginfos=\[([^\]]*)\])lit");
 
-    auto job = networkManager->downloadAsString(chapterUrl);
+    auto job = downloadAsString(chapterUrl);
 
     if (!job->await(timeout))
         return Err(job->errorString);
@@ -447,7 +448,7 @@ Result<QString, QString> MangaHere::getImageUrl(const QString &pageUrl)
     auto url = pageUrl;
     for (int attempt = 0; attempt < 3 && timer.elapsed() < 5000; attempt++)
     {
-        auto job = networkManager->downloadAsString(url);
+        auto job = downloadAsString(url);
 
         if (!job->await(6000 - int(timer.elapsed())))
             return Err(job->errorString);

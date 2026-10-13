@@ -2,12 +2,13 @@
 
 #include "utils.h"
 
-// Download as strings
 DownloadQueue::DownloadQueue(NetworkManager* networkManager, const QList<QString>& urls,
                              int parallelDownloads,
                              std::function<void(QSharedPointer<DownloadStringJob>)> lambda,
-                             bool cancelOnError, int individualTimeout)
+                             bool cancelOnError, int individualTimeout,
+                             std::function<HttpHeaders(const QString&)> headersFor)
     : QObject(),
+      totalJobs(urls.count()),
       completed(0),
       errors(0),
       lastErrorMessage(""),
@@ -19,32 +20,33 @@ DownloadQueue::DownloadQueue(NetworkManager* networkManager, const QList<QString
       jobDescriptorQueue(),
       lambda(lambda),
       individualTimeout(individualTimeout),
-      cancellationToken(nullptr)
+      headersFor(headersFor),
+      cancellationToken(nullptr),
+      cancelled(false)
 {
-    totalJobs = urls.count();
-
-    std::transform(urls.begin(), urls.end(), std::back_inserter(jobDescriptorQueue),
-                   [](const QString& s) { return FileDownloadDescriptor(s, ""); });
+    for (const auto& url : urls)
+        jobDescriptorQueue.append(FileDownloadDescriptor(url, ""));
 }
 
-// Download as images
 DownloadQueue::DownloadQueue(NetworkManager* networkManager, const QList<FileDownloadDescriptor>& urlAndPaths,
                              int parallelDownloads, bool cancelOnError)
     : QObject(),
+      totalJobs(urlAndPaths.count()),
       completed(0),
       errors(0),
       lastErrorMessage(""),
       cancelOnError(cancelOnError),
       networkManager(networkManager),
+      runningJobs(0),
       type(DownloadTypeScaledImage),
       parallelDownloads(parallelDownloads),
       jobDescriptorQueue(),
       lambda(nullptr),
       individualTimeout(-1),
-      cancellationToken(nullptr)
+      headersFor(nullptr),
+      cancellationToken(nullptr),
+      cancelled(false)
 {
-    totalJobs = urlAndPaths.count();
-
     this->jobDescriptorQueue.append(urlAndPaths);
 }
 
@@ -66,26 +68,32 @@ void DownloadQueue::startSingle()
     QSharedPointer<DownloadJobBase> job;
 
     if (type == DownloadTypeString)
-        job = networkManager->downloadAsString(descriptor.url, individualTimeout);
+        job = networkManager->downloadAsString(descriptor.url, individualTimeout,
+                                               headersFor ? headersFor(descriptor.url) : HttpHeaders());
     else  // if (type == DownloadTypeScaledImage)
-        job = networkManager->downloadAsScaledImage(descriptor.url, descriptor.path);
+        job = networkManager->downloadAsScaledImage(descriptor.url, descriptor.path, descriptor.headers);
 
-    // a job can be done or have failed already (e.g. its file couldn't be created), it doesn't signal then
-    if (job->isCompleted || job->hasFailed())
+    // a job that is done already (e.g. the same file was downloaded before) still signals, that may have
+    // happened before the connections
+    if (job->isFinished())
     {
-        downloadFinished(job, job->isCompleted);
+        QMetaObject::invokeMethod(
+            this, [this, job]() { downloadFinished(job, job->isCompleted); }, Qt::QueuedConnection);
+        return;
     }
-    else
-    {
-        QObject::connect(job.get(), &DownloadJobBase::completed, this,
-                         [this, job]() { downloadFinished(job, true); });
-        QObject::connect(job.get(), &DownloadJobBase::downloadError, this,
-                         [this, job]() { downloadFinished(job, false); });
-    }
+
+    QObject::connect(job.get(), &DownloadJobBase::completed, this, [this, job]() { downloadFinished(job, true); });
+    QObject::connect(job.get(), &DownloadJobBase::downloadError, this,
+                     [this, job]() { downloadFinished(job, false); });
 }
 
 void DownloadQueue::downloadFinished(QSharedPointer<DownloadJobBase> job, bool success)
 {
+    job->disconnect(this);
+
+    auto fileJob = job.dynamicCast<DownloadFileJob>();
+    QString path = fileJob ? fileJob->filepath : QString();
+
     if (success)
     {
         if (lambda != nullptr)
@@ -93,40 +101,35 @@ void DownloadQueue::downloadFinished(QSharedPointer<DownloadJobBase> job, bool s
             auto jobS = job.dynamicCast<DownloadStringJob>();
             if (jobS != nullptr)
                 lambda(jobS);
-            else
-                qDebug() << "Job lambda cast failed";
         }
-        auto jobF = job.dynamicCast<DownloadFileJob>();
-        emit singleDownloadCompleted(job->originalUrl, jobF ? jobF->filepath : "");
+        emit singleDownloadCompleted(job->originalUrl, path);
     }
     else
     {
         errors++;
         lastErrorMessage = job->errorString;
         if (cancelOnError)
-            clearQuene();
-        emit singleDownloadFailed(job->originalUrl, job->errorString);
+            clearQueue();
+        emit singleDownloadFailed(job->originalUrl, path, job->errorString);
     }
 
-    if (cancellationToken != nullptr && *cancellationToken)
+    // counts as one error
+    if (!cancelled && cancellationToken != nullptr && *cancellationToken)
     {
+        cancelled = true;
         errors++;
         lastErrorMessage = "Download cancelled";
-        clearQuene();
+        clearQueue();
     }
-
-    job->disconnect(this);
 
     completed++;
     runningJobs--;
     emit progress(completed, totalJobs, errors);
 
-    if (completed == totalJobs)
-    {
+    if (runningJobs == 0 && jobDescriptorQueue.isEmpty())
         emit allCompleted();
-    }
     else
-        startSingle();
+        start();
 }
 
 void DownloadQueue::appendDownload(const FileDownloadDescriptor& urlAndPaths)
@@ -145,7 +148,7 @@ void DownloadQueue::appendDownloads(const QList<FileDownloadDescriptor>& urlAndP
     start();
 }
 
-void DownloadQueue::clearQuene()
+void DownloadQueue::clearQueue()
 {
     int c = jobDescriptorQueue.count();
     jobDescriptorQueue.clear();
@@ -157,11 +160,14 @@ void DownloadQueue::resetJobCount()
     errors = 0;
     totalJobs = 0;
     completed = 0;
+    cancelled = false;
 }
 
 bool DownloadQueue::awaitCompletion()
 {
-    awaitSignal(this, -1, &DownloadQueue::allCompleted);
+    // allCompleted was emitted already, or never will be
+    if (runningJobs > 0 || !jobDescriptorQueue.isEmpty())
+        awaitSignal(this, -1, &DownloadQueue::allCompleted);
 
     return errors == 0;
 }
