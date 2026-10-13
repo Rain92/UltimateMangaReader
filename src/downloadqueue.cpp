@@ -166,6 +166,7 @@ void DownloadQueue::resetJobCount()
 bool DownloadQueue::awaitCompletion()
 {
     // allCompleted was emitted already, or never will be
+    auto hold = DownloadJobBase::holdActivity();
     if (runningJobs > 0 || !jobDescriptorQueue.isEmpty())
         awaitSignal(this, -1, &DownloadQueue::allCompleted);
 

@@ -124,6 +124,7 @@ static void awaitCacheWarmUp(const QSharedPointer<CacheWarmUp> &warmUp, int maxW
     if (warmUp->finished || remaining <= 0)
         return;
 
+    auto hold = DownloadJobBase::holdActivity();
     QEventLoop loop;
     warmUp->loop = &loop;
     QTimer::singleShot(remaining, &loop, &QEventLoop::quit);

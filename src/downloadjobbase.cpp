@@ -187,6 +187,17 @@ std::shared_ptr<void> DownloadJobBase::holdActivity()
     return std::shared_ptr<void>(nullptr, [](void *) { activeReplyCount.deref(); });
 }
 
+void DownloadJobBase::waitMs(qint64 ms)
+{
+    if (ms <= 0)
+        return;
+
+    auto hold = holdActivity();
+    QEventLoop loop;
+    QTimer::singleShot(static_cast<int>(ms), &loop, &QEventLoop::quit);
+    loop.exec();
+}
+
 void executeOnJobCompletion(QSharedPointer<DownloadJobBase> job, std::function<void()> lambda)
 {
     if (job->isCompleted)

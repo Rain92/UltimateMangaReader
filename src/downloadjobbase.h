@@ -40,8 +40,10 @@ public:
     // Number of prepared network replies that are still running.
     static int activeReplies();
     // Counts as one more active reply until the returned handle is released (e.g. while waiting to retry: the
-    // device mustn't go to standby then, it would stop the timer).
+    // device mustn't go to standby then, it would stop the timer). The blocking waits for downloads hold it.
     static std::shared_ptr<void> holdActivity();
+    // Waits ms in an event loop (e.g. between throttled requests), holding the activity.
+    static void waitMs(qint64 ms);
 
     // The User-Agent that requests get by default (some hosts reject Qt's).
     static const QByteArray defaultUserAgent;

@@ -391,6 +391,7 @@ QList<QSize> NetworkManager::probeImageSizes(const QStringList &urls, int timeou
     QList<QNetworkReply *> replies;
     int running = 0;
 
+    auto hold = DownloadJobBase::holdActivity();
     QEventLoop loop;
     for (int i = 0; i < urls.size(); i++)
     {

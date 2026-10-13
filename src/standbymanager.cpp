@@ -11,7 +11,6 @@
 #include <QDebug>
 #include <QEvent>
 #include <QFile>
-#include <QThread>
 
 #include "mangachapterdownloadmanager.h"
 #include "networkmanager.h"
@@ -138,10 +137,10 @@ void StandbyManager::idleTimeout()
     if (!settings->standbyWhenIdle || suspendManager->sleeping)
         return;
 
-    // standby would stall downloads and preloads (or the WiFi scripts), check again later. A nested event loop
-    // waits for something too (a blocking download, a pause between requests).
+    // standby would stall downloads and preloads (or the WiFi scripts), check again later. The blocking waits
+    // for downloads and the pauses between requests count as network activity.
     if (inhibited || networkManager->isBusy() || networkManager->isConnectingWifi() ||
-        chapterDownloadManager->isRunning() || QThread::currentThread()->loopLevel() > 1)
+        chapterDownloadManager->isRunning())
     {
         idleTimer.start(delayMs());
         return;

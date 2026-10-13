@@ -145,16 +145,6 @@ static QString markdownToHtml(QString text)
     return text.trimmed().replace('\n', "<br>");
 }
 
-static void waitMs(qint64 ms)
-{
-    if (ms <= 0)
-        return;
-
-    QEventLoop loop;
-    QTimer::singleShot(static_cast<int>(ms), &loop, &QEventLoop::quit);
-    loop.exec();
-}
-
 // "014.5" -> 14 and "5", "3.0" -> 3; ranges and text are unnumbered
 static bool parseChapterNumber(DexChapter &ch)
 {
@@ -413,7 +403,8 @@ bool MangaDex::downloadThrottled(const QStringList &urls, UpdateProgressToken *t
             apiRequestIntervalMs = qBound(minRequestIntervalMs, apiRequestIntervalMs, maxRequestIntervalMs);
             if (apiRequestTimer.isValid() && apiRequestTimer.elapsed() < apiRequestIntervalMs)
             {
-                waitMs(qMin<qint64>(apiRequestIntervalMs - apiRequestTimer.elapsed(), stepMs));
+                DownloadJobBase::waitMs(
+                    qMin<qint64>(apiRequestIntervalMs - apiRequestTimer.elapsed(), stepMs));
                 continue;
             }
 
@@ -432,12 +423,13 @@ bool MangaDex::downloadThrottled(const QStringList &urls, UpdateProgressToken *t
             qint64 nextRetry = retryAt[pending.first()];
             for (int i : std::as_const(pending))
                 nextRetry = qMin(nextRetry, retryAt[i]);
-            waitMs(qMin<qint64>(nextRetry - clock.elapsed(), stepMs));
+            DownloadJobBase::waitMs(qMin<qint64>(nextRetry - clock.elapsed(), stepMs));
             continue;
         }
 
         // until any of the running ones finished. Not job->await: it would stop the timeout of the job
         // and block until it finished
+        auto hold = DownloadJobBase::holdActivity();
         QEventLoop loop;
         for (const auto &r : std::as_const(running))
         {
@@ -745,7 +737,7 @@ Result<MangaChapterCollection, QString> MangaDex::getChapters(const QString &man
         auto job = downloadAsString(feedUrl.arg(offset), 8000);
         for (int attempt = 0; !job->await(8000) && job->httpStatus == 400 && attempt < 2; attempt++)
         {
-            waitMs(1000);
+            DownloadJobBase::waitMs(1000);
             job = downloadAsString(feedUrl.arg(offset), 8000);
         }
 
@@ -813,11 +805,11 @@ Result<QList<ImageLink>, QString> MangaDex::getPageList(const QString &chapterUr
     for (int attempt = 0; attempt < 2; attempt++)
     {
         if (attempt > 0)
-            waitMs(1000);
+            DownloadJobBase::waitMs(1000);
 
         auto now = atHomeClock.elapsed();
         atHomeSchedule = qMax(atHomeSchedule, now) + atHomeIntervalMs;
-        waitMs(atHomeSchedule - atHomeBurst * atHomeIntervalMs - now);
+        DownloadJobBase::waitMs(atHomeSchedule - atHomeBurst * atHomeIntervalMs - now);
 
         job = downloadAsString(apiUrl + "/at-home/server/" + chapterId, 8000);
 

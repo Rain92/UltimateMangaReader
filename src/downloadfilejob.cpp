@@ -136,6 +136,7 @@ void DownloadFileJob::replySucceeded()
 
 bool DownloadFileJob::await(int timeout)
 {
+    auto hold = holdActivity();
     if (!isFinished())
         awaitSignal(this, qMax(1, timeout), &DownloadJobBase::completed, &DownloadJobBase::downloadError);
 

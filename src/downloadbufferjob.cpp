@@ -56,6 +56,7 @@ bool DownloadBufferJob::await(int timeout, bool retry, int maxRetries)
 {
     // the await's timeout applies instead
     timeoutTimer.stop();
+    auto hold = holdActivity();
 
     QDeadlineTimer deadline(qMax(0, timeout));
 
