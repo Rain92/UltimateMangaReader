@@ -7,7 +7,8 @@ HomeWidget::HomeWidget(QWidget *parent)
     : QWidget(parent),
       ui(new Ui::HomeWidget),
       mangaLists(nullptr),
-      currentMangaSource(nullptr),
+      sources(nullptr),
+      currentSource(),
       filteredMangaTitles(),
       filteredMangaUrls(),
       filteractive(false)
@@ -52,65 +53,80 @@ void HomeWidget::adjustUI()
     ui->listViewMangas->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
 }
 
-void HomeWidget::updateSourcesList(const QList<MangaSourceBase *> &sources)
+void HomeWidget::setSources(SourceRegistry *registry)
+{
+    sources = registry;
+    connect(sources, &SourceRegistry::sourcesChanged, this, &HomeWidget::updateSourcesList);
+    connect(sources, &SourceRegistry::currentChanged, this, &HomeWidget::currentSourceChanged);
+    updateSourcesList();
+    currentSourceChanged(sources->current());
+}
+
+void HomeWidget::updateSourcesList()
 {
     auto model = dynamic_cast<QStandardItemModel *>(ui->listViewSources->model());
     model->clear();
 
-    for (auto ms : sources)
-        model->appendRow(listViewItemfromMangaSource(ms));
+    for (const auto &name : sources->enabledNames())
+    {
+        auto item = new QStandardItem(sourceLogo(name, SIZES.mangasourceIconSize), name);
+        item->setData(name);
+        item->setSizeHint(QSize(SIZES.mangasourceItemWidth, SIZES.mangasourceItemHeight));
+        model->appendRow(item);
+    }
 
-    refreshMangaListView();
+    updateMangaSourceSelection();
+    adjustSourcesHeight();
 }
 
-void HomeWidget::updateMangaSourceSelection(int row)
+void HomeWidget::updateMangaSourceSelection()
 {
     auto model = dynamic_cast<QStandardItemModel *>(ui->listViewSources->model());
     for (int i = 0; i < model->rowCount(); i++)
     {
         QStandardItem *item = model->item(i);
         auto f = item->font();
-        f.setUnderline(i == row);
+        f.setUnderline(item->data().toString() == currentSource);
         item->setFont(f);
     }
 }
 
-QList<QStandardItem *> HomeWidget::listViewItemfromMangaSource(MangaSourceBase *source)
+void HomeWidget::resizeEvent(QResizeEvent *event)
 {
-    QList<QStandardItem *> items;
-    QStandardItem *item = new QStandardItem(source->name);
-    item->setData(QVariant::fromValue(static_cast<void *>(source)));
-    item->setIcon(QIcon(QPixmap(":/images/mangahostlogos/" + source->name.toLower() + ".png")));
-    item->setSizeHint(QSize(SIZES.mangasourceItemWidth, SIZES.mangasourceItemHeight));
-    item->setText(source->name);
-    items.append(item);
+    QWidget::resizeEvent(event);
+    adjustSourcesHeight();
+}
 
-    return items;
+// One row of sources, two when they don't fit into one (more are scrolled to).
+void HomeWidget::adjustSourcesHeight()
+{
+    auto view = ui->listViewSources;
+    int itemWidth = SIZES.mangasourceItemWidth + view->spacing();
+    int perRow = qMax(1, (view->width() - 2 * view->frameWidth()) / itemWidth);
+    int rows = view->model()->rowCount() > perRow ? 2 : 1;
+    view->setFixedHeight(SIZES.listSourcesHeight + (rows - 1) * (SIZES.mangasourceItemHeight + view->spacing()));
 }
 
 void HomeWidget::on_listViewSources_clicked(const QModelIndex &index)
 {
-    updateMangaSourceSelection(index.row());
-
-    auto clickedsource = static_cast<MangaSourceBase *>(index.data(Qt::UserRole + 1).value<void *>());
-    emit mangaSourceClicked(clickedsource);
+    emit mangaSourceClicked(index.data(Qt::UserRole + 1).toString());
 }
 
-void HomeWidget::currentMangaSourceChanged(MangaSourceBase *source)
+void HomeWidget::currentSourceChanged(const QString &source)
 {
-    currentMangaSource = source;
-
+    currentSource = source;
+    updateMangaSourceSelection();
     showMangaList();
 }
 
 MangaList &HomeWidget::currentList()
 {
-    return mangaLists->list(currentMangaSource->name);
+    return mangaLists->list(currentSource);
 }
 
-void HomeWidget::mangaListChanged(MangaSourceBase *source)
+void HomeWidget::mangaListChanged(const QString &source)
 {
-    if (source == currentMangaSource)
+    if (source == currentSource)
         showMangaList();
 }
 
@@ -128,7 +144,7 @@ void HomeWidget::showMangaList()
 
 void HomeWidget::on_pushButtonFilter_clicked()
 {
-    if (currentMangaSource == nullptr)
+    if (currentSource.isEmpty())
         return;
 
     QString ss = ui->lineEditFilter->text();
@@ -170,7 +186,7 @@ void HomeWidget::refreshMangaListView()
 {
     auto model = dynamic_cast<QStringListModel *>(ui->listViewMangas->model());
 
-    if (currentMangaSource == nullptr)
+    if (currentSource.isEmpty())
     {
         model->setStringList({});
         return;
@@ -187,14 +203,15 @@ void HomeWidget::refreshMangaListView()
 void HomeWidget::on_listViewMangas_clicked(const QModelIndex &index)
 {
     int idx = index.row();
-    if (!currentMangaSource || idx < 0 ||
-        idx >= (filteractive ? filteredMangaUrls.size() : currentList().urls.size()))
+    auto source = sources->source(currentSource);
+    if (!source || idx < 0 || idx >= (filteractive ? filteredMangaUrls.size() : currentList().urls.size()))
         return;
 
     QString mangaUrl = filteractive ? filteredMangaUrls[idx] : currentList().urls[idx];
 
+    // the lists keep the urls without the base (they have megabytes)
     if (!currentList().absoluteUrls)
-        mangaUrl.prepend(currentMangaSource->baseUrl);
+        mangaUrl.prepend(source->baseUrl);
 
     QString mangatitle = filteractive ? filteredMangaTitles[idx] : currentList().titles[idx];
 

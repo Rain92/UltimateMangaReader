@@ -4,24 +4,22 @@
 #include "readingprogress.h"
 #include "staticsettings.h"
 
-class MangaSourceBase;
-
 class MangaInfo : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit MangaInfo(MangaSourceBase *mangaSource);
+    MangaInfo();
     ~MangaInfo();
 
     // Null if the file is missing or can't be read. The images the pages were resolved to are dropped: they
     // can expire, or only work in the session that resolved them (the page files don't need them).
-    static QSharedPointer<MangaInfo> deserialize(MangaSourceBase *mangaSource, const QString &path);
+    static QSharedPointer<MangaInfo> deserialize(const QString &path);
 
     void serialize();
     // for display
     QString title;
-    // the identity of the manga (with hostname, the source): the url of its entry in the manga list
+    // the identity of the manga (with sourceName): the url of its entry in the manga list of the source
     QString url;
 
     QString author;
@@ -33,11 +31,9 @@ public:
     QString coverPath;
     QString coverUrl;
 
-    QString hostname;
+    QString sourceName;
 
     bool updated;
-
-    MangaSourceBase *mangaSource;
 
     MangaChapterCollection chapters;
 

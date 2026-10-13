@@ -36,6 +36,7 @@ public:
     DitheringMode ditheringMode;
     bool standbyWhenIdle;
 
+    // by the name of the source, the ones that aren't in it are enabled (see SourceRegistry)
     QMap<QString, bool> enabledMangaSources;
 
 private:

@@ -1,11 +1,12 @@
 #include "updatemangalistsdialog.h"
 
+#include "sourcechecklist.h"
 #include "ui_updatemangalistsdialog.h"
 
-UpdateMangaListsDialog::UpdateMangaListsDialog(Settings *settings, QWidget *parent)
+UpdateMangaListsDialog::UpdateMangaListsDialog(SourceRegistry *sources, QWidget *parent)
     : QDialog(parent),
       ui(new Ui::UpdateMangaListsDialog),
-      settings(settings),
+      sources(new SourceListModel(sources, SourceListModel::SelectSources, this)),
       progressToken(nullptr),
       updateCompleted(false)
 {
@@ -14,6 +15,10 @@ UpdateMangaListsDialog::UpdateMangaListsDialog(Settings *settings, QWidget *pare
     ui->pushButtonCancel->setFixedHeight(SIZES.buttonSize);
     ui->pushButtonOk->setFixedHeight(SIZES.buttonSize);
     ui->labelTitle->setStyleSheet("font-size: 15pt");
+
+    auto sourceList = new SourceCheckList(this->sources, ui->frameMangaSources);
+    sourceList->layout()->setSpacing(ui->frameMangaSources->layout()->spacing());
+    ui->frameMangaSources->layout()->addWidget(sourceList);
 }
 
 UpdateMangaListsDialog::~UpdateMangaListsDialog()
@@ -29,7 +34,8 @@ void UpdateMangaListsDialog::open()
 
 void UpdateMangaListsDialog::resetUI()
 {
-    setupSourcesList();
+    // all of them, but the ones an unfinished update completed (below)
+    sources->selectAll();
     ui->pushButtonOk->setText(" Ok ");
     ui->pushButtonOk->show();
     ui->pushButtonCancel->show();
@@ -42,18 +48,10 @@ void UpdateMangaListsDialog::resetUI()
 
     if (progressToken)
     {
-        QLayoutItem *item;
-        int i = 0;
-        while ((item = ui->frameMangaSources->layout()->itemAt(i++)) != nullptr)
-        {
-            auto *checkbox = dynamic_cast<QCheckBox *>(item->widget());
-            if (checkbox != nullptr && !updateCompleted)
-            {
-                if ((progressToken->sourcesProgress.contains(checkbox->text()) &&
-                     progressToken->sourcesProgress[checkbox->text()] == 100))
-                    checkbox->setChecked(false);
-            }
-        }
+        if (!updateCompleted)
+            for (auto [name, progress] : progressToken->sourcesProgress.asKeyValueRange())
+                if (progress == 100)
+                    sources->setChecked(name, false);
 
         disconnect(progressToken.get(), &UpdateProgressToken::updateError, this,
                    &UpdateMangaListsDialog::updateError);
@@ -71,28 +69,6 @@ void UpdateMangaListsDialog::resetUI()
             &UpdateMangaListsDialog::updateFinished);
     connect(progressToken.get(), &UpdateProgressToken::updateProgress, this,
             &UpdateMangaListsDialog::updateProgress);
-}
-
-void UpdateMangaListsDialog::setupSourcesList()
-{
-    auto layout = ui->frameMangaSources->layout();
-
-    QLayoutItem *item;
-    while ((item = layout->takeAt(0)) != nullptr)
-    {
-        delete item->widget();
-        delete item;
-    }
-
-    for (const auto &ms : settings->enabledMangaSources.keys())
-    {
-        if (!settings->enabledMangaSources[ms])
-            continue;
-
-        QCheckBox *checkbox = new QCheckBox(ms, ui->frameMangaSources);
-        checkbox->setChecked(true);
-        layout->addWidget(checkbox);
-    }
 }
 
 void UpdateMangaListsDialog::updateProgress()
@@ -126,16 +102,10 @@ void UpdateMangaListsDialog::updateError(const QString &message)
 
 void UpdateMangaListsDialog::on_pushButtonOk_clicked()
 {
-    QLayoutItem *item;
-    int i = 0;
-    while ((item = ui->frameMangaSources->layout()->itemAt(i++)) != nullptr)
-    {
-        auto *checkbox = dynamic_cast<QCheckBox *>(item->widget());
-        // a retry continues where the sources stopped (the token keeps what they got done)
-        if (checkbox != nullptr && checkbox->isChecked() &&
-            !progressToken->sourcesProgress.contains(checkbox->text()))
-            progressToken->sourcesProgress.insert(checkbox->text(), 0);
-    }
+    // a retry continues where the sources stopped (the token keeps what they got done)
+    for (const auto &name : sources->checkedNames())
+        if (!progressToken->sourcesProgress.contains(name))
+            progressToken->sourcesProgress.insert(name, 0);
 
     if (progressToken->sourcesProgress.count() == 0)
         return;

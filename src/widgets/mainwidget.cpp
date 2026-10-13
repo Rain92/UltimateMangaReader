@@ -23,8 +23,8 @@ MainWidget::MainWidget(QWidget *parent)
 
     // Dialogs
     menuDialog = new MenuDialog(this);
-    settingsDialog = new SettingsDialog(&core->settings, this);
-    updateMangaListsDialog = new UpdateMangaListsDialog(&core->settings, this);
+    settingsDialog = new SettingsDialog(&core->settings, core->sources, this);
+    updateMangaListsDialog = new UpdateMangaListsDialog(core->sources, this);
     clearCacheDialog = new ClearCacheDialog(this);
     wifiDialog = new WifiDialog(this, core->networkManager);
     screensaverDialog = new ScreensaverDialog(this);
@@ -110,9 +110,6 @@ MainWidget::MainWidget(QWidget *parent)
 
     QObject::connect(core, &UltimateMangaReaderCore::timeTick, this, &MainWidget::timerTick);
 
-    QObject::connect(core->sources, &SourceRegistry::activeSourcesChanged, ui->homeWidget,
-                     &HomeWidget::updateSourcesList);
-
     QObject::connect(core, &UltimateMangaReaderCore::downloadCacheCleared, this,
                      [this]()
                      {
@@ -154,9 +151,9 @@ MainWidget::MainWidget(QWidget *parent)
 
     // HomeWidget
     ui->homeWidget->setMangaLists(&core->mangaLists);
+    ui->homeWidget->setSources(core->sources);
     QObject::connect(ui->homeWidget, &HomeWidget::mangaSourceClicked, core,
-
-                     [this](MangaSourceBase *source)
+                     [this](const QString &source)
                      {
                          core->sources->setCurrent(source);
                          core->activity();
@@ -164,9 +161,6 @@ MainWidget::MainWidget(QWidget *parent)
 
     QObject::connect(ui->homeWidget, &HomeWidget::mangaClicked, core,
                      &UltimateMangaReaderCore::setCurrentManga);
-
-    QObject::connect(core->sources, &SourceRegistry::currentSourceChanged, ui->homeWidget,
-                     &HomeWidget::currentMangaSourceChanged);
 
     QObject::connect(core->mangaListUpdater, &MangaListUpdater::mangaListChanged, ui->homeWidget,
                      &HomeWidget::mangaListChanged);
@@ -235,14 +229,11 @@ MainWidget::MainWidget(QWidget *parent)
                      [this](const QString &path, QSharedPointer<QImage> img)
                      {
                          auto manga = core->mangaController->currentManga;
-                         if (manga && path.startsWith(CONF.mangaimagesdir(manga->hostname, manga->url)))
+                         if (manga && path.startsWith(CONF.mangaimagesdir(manga->sourceName, manga->url)))
                              ui->mangaReaderWidget->addImageToCache(path, img);
                      });
 
     // SettingsDialog
-    QObject::connect(settingsDialog, &SettingsDialog::activeMangasChanged, core,
-                     &UltimateMangaReaderCore::updateActiveSources);
-
     QObject::connect(settingsDialog, &SettingsDialog::mangaOrderMethodChanged, core->mangaListUpdater,
                      &MangaListUpdater::sortMangaLists);
 
@@ -284,7 +275,6 @@ void MainWidget::adjustUI()
 void MainWidget::showEvent(QShowEvent *event)
 {
     QWidget::showEvent(event);
-    core->updateActiveSources();
     updateDitheringMode();
 
     QTimer::singleShot(500, this, &MainWidget::onResume);

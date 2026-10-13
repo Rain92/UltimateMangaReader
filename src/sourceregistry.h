@@ -5,33 +5,40 @@
 #include "mangasourcebase.h"
 #include "settings.h"
 
-// The manga sources: all of them, the enabled ones and the one whose manga list is shown.
+// The manga sources by name: which ones there are, which ones are enabled (in the settings) and the one whose
+// manga list is shown. The rest of the app keeps the names. The sources themselves are shared: one that is
+// replaced or removed (e.g. a script that was updated) stays alive for the work that still uses it.
 class SourceRegistry : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit SourceRegistry(NetworkManager *networkManager, QObject *parent = nullptr);
+    SourceRegistry(Settings *settings, QList<QSharedPointer<MangaSourceBase>> sources,
+                   QObject *parent = nullptr);
+    // The sources that are built into the app.
+    static QList<QSharedPointer<MangaSourceBase>> builtInSources(NetworkManager *networkManager);
 
-    const QList<QSharedPointer<MangaSourceBase>> &all() const { return sources; }
+    // All of them, in the order they are shown.
+    QStringList names() const;
     // Null if there is none with the name.
-    MangaSourceBase *source(const QString &name) const;
+    QSharedPointer<MangaSourceBase> source(const QString &name) const;
 
-    // By name. The map stays the same object (e.g. the favorites keep a reference to it).
-    const QMap<QString, MangaSourceBase *> &active() const { return activeSources; }
-    // Null if none is chosen.
-    MangaSourceBase *current() const { return currentSource; }
+    // A source that isn't in the settings yet is enabled, one that isn't there (anymore) isn't.
+    bool isEnabled(const QString &name) const;
+    QStringList enabledNames() const;
+    void setEnabled(const QString &name, bool enabled);
 
-    // Enables the sources the settings enable, a source that isn't in the settings yet is enabled (and added).
-    void updateActive(Settings &settings);
-    void setCurrent(MangaSourceBase *source);
+    // Empty if none is chosen.
+    QString current() const { return currentName; }
+    void setCurrent(const QString &name);
 
 signals:
-    void activeSourcesChanged(const QList<MangaSourceBase *> &sources);
-    void currentSourceChanged(MangaSourceBase *source);
+    // Sources were added, removed or replaced, or enabled or disabled.
+    void sourcesChanged();
+    void currentChanged(const QString &name);
 
 private:
+    Settings *settings;
     QList<QSharedPointer<MangaSourceBase>> sources;
-    QMap<QString, MangaSourceBase *> activeSources;
-    MangaSourceBase *currentSource;
+    QString currentName;
 };

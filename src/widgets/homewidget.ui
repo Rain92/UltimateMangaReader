@@ -106,7 +106,7 @@
         <enum>QAbstractItemView::ScrollPerPixel</enum>
        </property>
        <property name="isWrapping" stdset="0">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
        <property name="viewMode">
         <enum>QListView::IconMode</enum>

@@ -11,6 +11,7 @@
 #include "mangarepository.h"
 #include "readingprogress.h"
 #include "sizes.h"
+#include "sourcelistmodel.h"
 #include "ultimatemangareadercore.h"
 #include "utils.h"
 
@@ -24,6 +25,8 @@ public:
     Error nextError;
     QString infoPath = "/final";
     QHash<QString, QList<ImageLink>> pageLists;
+    MangaListUpdate nextListUpdate = MangaListUpdate::complete({});
+    int listDelay = 0;
     int infoCalls = 0;
     int pageListCalls = 0;
     int resolveCalls = 0;
@@ -34,9 +37,12 @@ public:
         baseUrl = server;
         headerRules.add("127.0.0.1", "Referer", "https://fake.example/");
     }
-    Task<MangaListUpdate> fetchMangaList(UpdateProgressToken *, MangaList) override
+    Task<MangaListUpdate> fetchMangaList(UpdateProgressToken *token, MangaList) override
     {
-        co_return MangaListUpdate::complete({});
+        co_await delay(listDelay);
+        if (token->canceled)
+            co_return MangaListUpdate::failed({Error::Cancelled, "Download cancelled", 0});
+        co_return nextListUpdate;
     }
     Task<Result<MangaDetails>> fetchMangaInfo(QString, MangaChapterCollection) override
     {
@@ -133,9 +139,8 @@ int storageTests(const QString &server)
               "old favorites kept aside as favorites.dat.old");
         check(core.settings.mangaOrder == OrderByPopularity && !core.settings.standbyWhenIdle,
               "old settings: defaults");
-        auto ms = findSource(core.sources->all(), "MangaTown");
         auto &list = core.mangaLists.list("MangaTown");
-        check(ms->name == "MangaTown" && core.mangaLists.isLoaded("MangaTown") && list.size == 0,
+        check(core.sources->source("MangaTown") && core.mangaLists.isLoaded("MangaTown") && list.size == 0,
               "old manga list not read");
         list.append("Title", "/manga/title");
         core.mangaLists.save("MangaTown");
@@ -146,26 +151,52 @@ int storageTests(const QString &server)
         core.settings.serialize();
 
         // sources
-        QList<MangaSourceBase *> activeSignalled;
-        MangaSourceBase *currentSignalled = ms;
-        QObject::connect(core.sources, &SourceRegistry::activeSourcesChanged, [&](const QList<MangaSourceBase *> &l) { activeSignalled = l; });
-        QObject::connect(core.sources, &SourceRegistry::currentSourceChanged, [&](MangaSourceBase *c) { currentSignalled = c; });
-        check(core.sources->active().size() == 6 && core.settings.enabledMangaSources.size() == 6, "all sources enabled by default");
-        core.sources->setCurrent(ms);
-        check(core.sources->current() == ms && currentSignalled == ms, "current source");
-        core.settings.enabledMangaSources["MangaTown"] = false;
-        core.updateActiveSources();
-        check(core.sources->active().size() == 5 && !core.sources->active().contains("MangaTown") && activeSignalled.size() == 5,
-              "disabled source not active");
-        check(core.sources->current() == nullptr && currentSignalled == nullptr, "disabled current source is unset");
-        core.settings.enabledMangaSources["MangaTown"] = true;
-        core.updateActiveSources();
+        int changes = 0;
+        QStringList currentSignalled;
+        QObject::connect(core.sources, &SourceRegistry::sourcesChanged, [&]() { changes++; });
+        QObject::connect(core.sources, &SourceRegistry::currentChanged, [&](const QString &c) { currentSignalled << c; });
+        check(core.sources->names().size() == 6 && core.sources->enabledNames() == core.sources->names(),
+              "all sources enabled by default");
+        core.sources->setCurrent("MangaTown");
+        check(core.sources->current() == "MangaTown" && currentSignalled == QStringList{"MangaTown"}, "current source");
+        core.sources->setEnabled("MangaTown", false);
+        check(!core.sources->isEnabled("MangaTown") && core.sources->enabledNames().size() == 5 && changes == 1 &&
+                  !core.settings.enabledMangaSources.value("MangaTown", true),
+              "disabled source, in the settings");
+        check(core.sources->current().isEmpty() && currentSignalled.last().isEmpty(),
+              "disabled current source is unset");
+        core.sources->setEnabled("MangaTown", false);
+        check(changes == 1, "no change, no signal");
+        check(!core.sources->isEnabled("Unknown") && !core.sources->source("Unknown"), "unknown source isn't enabled");
+
+        // the dialogs: all sources to enable, the enabled ones to select
+        SourceListModel all(core.sources, SourceListModel::EnableSources);
+        SourceListModel selection(core.sources, SourceListModel::SelectSources);
+        int resets = 0;
+        QObject::connect(&selection, &QAbstractItemModel::modelReset, [&]() { resets++; });
+        check(all.rowCount() == 6 && !all.isChecked("MangaTown") && all.checkedNames().size() == 5 &&
+                  all.index(2).data(Qt::CheckStateRole).toInt() == Qt::Unchecked &&
+                  all.index(2).data().toString() == "MangaTown",
+              "all sources, checked are the enabled ones");
+        check(selection.rowCount() == 5 && selection.checkedNames() == core.sources->enabledNames(),
+              "the enabled sources, all selected");
+        all.setData(all.index(2), Qt::Checked, Qt::CheckStateRole);
+        check(core.sources->isEnabled("MangaTown") && changes == 2 && resets == 1 && selection.rowCount() == 6 &&
+                  selection.isChecked("MangaTown"),
+              "a check enables the source, the other list follows");
+        selection.setChecked("MangaDex", false);
+        check(!selection.checkedNames().contains("MangaDex") && selection.checkedNames().size() == 5 &&
+                  core.sources->isEnabled("MangaDex"),
+              "a selection doesn't change the sources");
+        selection.selectAll();
+        check(selection.checkedNames().size() == 6, "select all");
 
         // lists: only the loaded ones are sorted and signalled
-        QList<MangaSourceBase *> changed;
-        QObject::connect(core.mangaListUpdater, &MangaListUpdater::mangaListChanged, [&](MangaSourceBase *m) { changed << m; });
+        QStringList changed;
+        QObject::connect(core.mangaListUpdater, &MangaListUpdater::mangaListChanged,
+                         [&](const QString &m) { changed << m; });
         core.mangaListUpdater->sortMangaLists();
-        check(changed == QList<MangaSourceBase *>{ms}, "sorting signals the loaded lists");
+        check(changed == QStringList{"MangaTown"}, "sorting signals the loaded lists");
     }
     touch(cache + "MangaTown/0123456789abcdef/keep");
     {
@@ -180,13 +211,13 @@ int storageTests(const QString &server)
     Settings settings;
     nm.setDownloadSettings(QSize(1404, 1872), &settings);
     auto fake = QSharedPointer<FakeSource>::create(&nm, server);
-    QMap<QString, MangaSourceBase *> sources{{"Fake", fake.get()}};
-    MangaRepository repository(&nm);
+    SourceRegistry sources(&settings, {fake});
+    MangaRepository repository(&nm, &sources);
     const QString url = "https://fake.example/manga/test";
     const QString url2 = "https://fake.example/manga/test-2";
 
     fake->nextChapters = chapterList({"A", "B", "C"});
-    auto infoR = repository.loadInfo(fake.get(), url, "Same Title").wait();
+    auto infoR = repository.loadInfo("Fake", url, "Same Title").wait();
     check(infoR.has_value(), "load info");
     auto info = infoR.value();
     check(info->url == url && info->title == "Same Title" && info->chapters.size() == 3 && info->author == "Author",
@@ -196,11 +227,11 @@ int storageTests(const QString &server)
           "info saved in the directory of its url (also without a cover)");
 
     fake->nextChapters = chapterList({"D"});
-    auto info2 = repository.loadInfo(fake.get(), url2, "Same Title").wait().value();
+    auto info2 = repository.loadInfo("Fake", url2, "Same Title").wait().value();
     check(info2 != info && info2->chapters.size() == 1 && info->chapters.size() == 3 &&
               info2->directory() != info->directory(),
           "same title, other url: another manga");
-    check(repository.loadInfo(fake.get(), url, "Renamed", false).wait().value() == info, "same url: the live info");
+    check(repository.loadInfo("Fake", url, "Renamed", false).wait().value() == info, "same url: the live info");
 
     // --- page lists
     auto B = info->chapters[1].chapterUrl;
@@ -214,7 +245,7 @@ int storageTests(const QString &server)
     {
         QWeakPointer<MangaInfo> weak = info;
         auto path = info->directory() + "mangainfo.dat";
-        auto copy = MangaInfo::deserialize(fake.get(), path);
+        auto copy = MangaInfo::deserialize(path);
         check(copy && copy->url == url && copy->chapters.size() == 3 && copy->chapters[1].pages.size() == 2 &&
                   copy->chapters[1].pages[0].link.url == server + "/image/100x150",
               "info round trip");
@@ -296,13 +327,13 @@ int storageTests(const QString &server)
         check(repository.pageImage(info, 0, 0).wait() && fake->resolveCalls == 2, "expired page image resolved again");
 
         info->serialize();
-        auto copy = MangaInfo::deserialize(fake.get(), info->directory() + "mangainfo.dat");
+        auto copy = MangaInfo::deserialize(info->directory() + "mangainfo.dat");
         check(copy && copy->chapters[0].pages[0].image.isEmpty() && !copy->chapters[0].pages[0].link.isEmpty(),
               "page images aren't read from the file, the page lists are");
 
         auto broken = ImageLink::fromUrl(server + "/status/404");
         info->chapters[0].pages[0].image = broken;
-        auto job = repository.downloadImage(fake.get(), broken, info->directory() + "test/broken.jpg");
+        auto job = repository.downloadImage("Fake", broken, info->directory() + "test/broken.jpg");
         job->await(5000);
         check(job->hasFailed() && info->chapters[0].pages[0].image.isEmpty(),
               "a page image that couldn't be downloaded is forgotten");
@@ -335,6 +366,9 @@ int storageTests(const QString &server)
         check(!shrunk && shrunk.error().code == Error::Parse && signalled.size() == 2 && info->chapters.size() == 3,
               "a chapter list that shrank a lot isn't taken");
         QObject::disconnect(c);
+
+        auto gone = repository.loadInfo("Gone", url, "Title").wait();
+        check(!gone && gone.error().code == Error::NotFound, "the manga of a source that isn't there: an error");
     }
 
     // --- the reader follows its chapter
@@ -353,7 +387,7 @@ int storageTests(const QString &server)
 
     // --- favorites by url
     {
-        FavoritesManager favorites(sources, &repository, &nm);
+        FavoritesManager favorites(&sources, &repository, &nm);
         QStringList events;
         QObject::connect(&favorites, &FavoritesManager::favoriteInserted, [&](int i) { events << QString("ins %1").arg(i); });
         QObject::connect(&favorites, &FavoritesManager::favoriteRemoved, [&](int i) { events << QString("rem %1").arg(i); });
@@ -366,7 +400,7 @@ int storageTests(const QString &server)
               "a new favorite has its reading progress");
     }
     {
-        FavoritesManager favorites(sources, &repository, &nm);
+        FavoritesManager favorites(&sources, &repository, &nm);
         check(favorites.count() == 2 && favorites.favorite(1).mangaUrl == url &&
                   favorites.favorite(0).mangaUrl == url2 && !favorites.info(0),
               "favorites round trip, infos not loaded yet");
@@ -392,6 +426,17 @@ int storageTests(const QString &server)
         check(events == QStringList({"mov 1 0", "chg 0"}) && favorites.info(0) == info &&
                   favorites.progress(0).index.chapter == 1 && favorites.progress(0).index.page == 7,
               "favorite with new chapters moved to the front, progress located again");
+
+        // the favorites of a disabled source have no infos, they come back when it's enabled again
+        events.clear();
+        sources.setEnabled("Fake", false);
+        check(events == QStringList({"chg 0", "chg 1"}) && !favorites.info(0) && !favorites.info(1) &&
+                  favorites.count() == 2,
+              "a disabled source: its favorites stay, without infos");
+        events.clear();
+        sources.setEnabled("Fake", true);
+        check(events == QStringList({"chg 0", "chg 1"}) && favorites.info(0) == info && favorites.info(1) == info2,
+              "enabled again: the live infos");
 
         events.clear();
         favorites.toggleFavorite(info2);
@@ -432,7 +477,7 @@ int storageTests(const QString &server)
     auto download = [&](const ImageLink &image, const QString &name)
     {
         auto path = info->directory() + "test/" + name + ".jpg";
-        auto job = repository.downloadImage(fake.get(), image, path);
+        auto job = repository.downloadImage("Fake", image, path);
 
         job->await(10000);
         return QImage(path).size();
@@ -463,5 +508,73 @@ int storageTests(const QString &server)
           "image request has the link headers and the source headers");
 
     out << (failures == 0 ? "all ok" : QString::number(failures) + " FAILED") << "\n";
+    // --- manga list updates
+    {
+        MangaListStore lists;
+        MangaListUpdater updater(&sources, &lists, &settings, nullptr);
+        QStringList changed;
+        QObject::connect(&updater, &MangaListUpdater::mangaListChanged, [&](const QString &s) { changed << s; });
+
+        // like the dialog: an update ends with finished or an error, a cancelled one with nothing
+        auto run = [&](bool cancel)
+        {
+            QSharedPointer<UpdateProgressToken> token(new UpdateProgressToken());
+            token->sourcesProgress["Fake"] = 0;
+            QString outcome;
+            QObject::connect(token.get(), &UpdateProgressToken::updateFinished,
+                             [&](const QString &m) { outcome = "finished:" + m; });
+            QObject::connect(token.get(), &UpdateProgressToken::updateError,
+                             [&](const QString &e) { outcome = "error:" + e; });
+            updater.updateMangaLists(token);
+            token->canceled = cancel;
+            QElapsedTimer t;
+            t.start();
+            while (outcome.isEmpty() && t.elapsed() < (cancel ? 500 : 3000))
+                QCoreApplication::processEvents(QEventLoop::WaitForMoreEvents, 20);
+            return outcome;
+        };
+        auto titles = [](int count)
+        {
+            MangaList list;
+            for (int i = 0; i < count; i++)
+                list.append(QString("Title %1").arg(i), QString("/manga/%1").arg(i));
+            return list;
+        };
+
+        fake->nextListUpdate = MangaListUpdate::complete(titles(10));
+        auto outcome = run(false);
+        lists.reload("Fake");
+        check(outcome == "finished:" && lists.list("Fake").size == 10 && changed == QStringList{"Fake"},
+              "list updated, saved and signalled");
+
+        fake->nextListUpdate = MangaListUpdate::partial(titles(9), {Error::Http, "No ranking.", 404});
+        outcome = run(false);
+        check(outcome == "finished:Fake: No ranking." && lists.list("Fake").size == 9,
+              "a partial update is taken, with a message");
+
+        fake->nextListUpdate = MangaListUpdate::failed({Error::Network, "Site down.", 0});
+        outcome = run(false);
+        check(outcome == "error:Site down." && lists.list("Fake").size == 9, "a failed update keeps the list");
+
+        fake->nextListUpdate = MangaListUpdate::complete(titles(3));
+        outcome = run(false);
+        check(outcome.startsWith("error:Fake: the update found only 3 of 9 titles") && lists.list("Fake").size == 9,
+              "a list that shrank a lot isn't taken");
+
+        changed.clear();
+        fake->listDelay = 200;
+        fake->nextListUpdate = MangaListUpdate::complete(titles(10));
+        outcome = run(true);
+        check(outcome.isEmpty() && changed.isEmpty() && lists.list("Fake").size == 9,
+              "a cancelled update ends quietly, the list stays");
+        fake->listDelay = 0;
+        check(run(false) == "finished:" && lists.list("Fake").size == 10, "the next update after a cancel");
+
+        changed.clear();
+        sources.setEnabled("Fake", false);
+        check(run(false) == "finished:" && changed.isEmpty(), "a disabled source isn't updated");
+        sources.setEnabled("Fake", true);
+    }
+
     return failures == 0 ? 0 : 1;
 }

@@ -7,47 +7,68 @@
 #include "mangaplus.h"
 #include "mangatown.h"
 
-SourceRegistry::SourceRegistry(NetworkManager *networkManager, QObject *parent)
-    : QObject(parent), sources(), activeSources(), currentSource(nullptr)
+SourceRegistry::SourceRegistry(Settings *settings, QList<QSharedPointer<MangaSourceBase>> sources,
+                               QObject *parent)
+    : QObject(parent), settings(settings), sources(std::move(sources)), currentName()
 {
-    sources.append(QSharedPointer<MangaSourceBase>(new MangaDex(networkManager)));
-    sources.append(QSharedPointer<MangaSourceBase>(new Mangakakalot(networkManager)));
-    sources.append(QSharedPointer<MangaSourceBase>(new MangaTown(networkManager)));
-    sources.append(QSharedPointer<MangaSourceBase>(new MangaHere(networkManager)));
-    sources.append(QSharedPointer<MangaSourceBase>(new Comick(networkManager)));
-    sources.append(QSharedPointer<MangaSourceBase>(new MangaPlus(networkManager)));
 }
 
-MangaSourceBase *SourceRegistry::source(const QString &name) const
+QList<QSharedPointer<MangaSourceBase>> SourceRegistry::builtInSources(NetworkManager *networkManager)
+{
+    return {QSharedPointer<MangaSourceBase>(new MangaDex(networkManager)),
+            QSharedPointer<MangaSourceBase>(new Mangakakalot(networkManager)),
+            QSharedPointer<MangaSourceBase>(new MangaTown(networkManager)),
+            QSharedPointer<MangaSourceBase>(new MangaHere(networkManager)),
+            QSharedPointer<MangaSourceBase>(new Comick(networkManager)),
+            QSharedPointer<MangaSourceBase>(new MangaPlus(networkManager))};
+}
+
+QStringList SourceRegistry::names() const
+{
+    QStringList names;
+    for (const auto &source : sources)
+        names.append(source->name);
+    return names;
+}
+
+QSharedPointer<MangaSourceBase> SourceRegistry::source(const QString &name) const
 {
     for (const auto &source : sources)
         if (source->name == name)
-            return source.get();
-    return nullptr;
+            return source;
+    return {};
 }
 
-void SourceRegistry::updateActive(Settings &settings)
+bool SourceRegistry::isEnabled(const QString &name) const
 {
-    activeSources.clear();
-    QMap<QString, bool> enabledMangaSources;
-    for (const auto &ms : std::as_const(sources))
-    {
-        bool enabled = settings.enabledMangaSources.value(ms->name, true);
-        enabledMangaSources.insert(ms->name, enabled);
-        if (enabled)
-            activeSources.insert(ms->name, ms.get());
-    }
-    settings.enabledMangaSources = enabledMangaSources;
+    return settings->enabledMangaSources.value(name, true) && source(name);
+}
 
-    emit activeSourcesChanged(activeSources.values());
+QStringList SourceRegistry::enabledNames() const
+{
+    QStringList names;
+    for (const auto &source : sources)
+        if (settings->enabledMangaSources.value(source->name, true))
+            names.append(source->name);
+    return names;
+}
+
+void SourceRegistry::setEnabled(const QString &name, bool enabled)
+{
+    if (isEnabled(name) == enabled)
+        return;
+
+    settings->enabledMangaSources[name] = enabled;
+    settings->scheduleSerialize();
+    emit sourcesChanged();
 
     // the list of a source that was disabled isn't shown anymore
-    if (currentSource && !activeSources.values().contains(currentSource))
-        setCurrent(nullptr);
+    if (!enabled && currentName == name)
+        setCurrent({});
 }
 
-void SourceRegistry::setCurrent(MangaSourceBase *source)
+void SourceRegistry::setCurrent(const QString &name)
 {
-    currentSource = source;
-    emit currentSourceChanged(source);
+    currentName = name;
+    emit currentChanged(name);
 }

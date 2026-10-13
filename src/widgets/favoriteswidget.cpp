@@ -158,7 +158,7 @@ void FavoritesWidget::insertRow(int row)
 
     ui->tableWidget->insertRow(row);
 
-    QTableWidgetItem *hostwidget = new QTableWidgetItem(fav.hostname);
+    QTableWidgetItem *hostwidget = new QTableWidgetItem(fav.sourceName);
     hostwidget->setTextAlignment(Qt::AlignCenter);
 
     QTableWidgetItem *chapters = new QTableWidgetItem(statusText(favoritesManager->info(row)));

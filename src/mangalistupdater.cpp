@@ -26,7 +26,8 @@ void MangaListUpdater::updateMangaLists(QSharedPointer<UpdateProgressToken> prog
 Task<> MangaListUpdater::update(QSharedPointer<UpdateProgressToken> progressToken)
 {
     updating = true;
-    standbyManager->setInhibited(true);
+    if (standbyManager)
+        standbyManager->setInhibited(true);
 
     bool ok = true;
     QStringList warnings;
@@ -36,9 +37,9 @@ Task<> MangaListUpdater::update(QSharedPointer<UpdateProgressToken> progressToke
             continue;
 
         // it might have been disabled meanwhile
-        auto ms = sources->active().value(name);
-        if (!ms)
+        if (!sources->isEnabled(name))
             continue;
+        auto ms = sources->source(name);
 
         progressToken->currentSourceName = name;
         // the updates compare with the list and keep its titles
@@ -74,7 +75,7 @@ Task<> MangaListUpdater::update(QSharedPointer<UpdateProgressToken> progressToke
         update.list.sortBy(settings->mangaOrder);
         list = update.list;
         // the list on the home screen indexes into it
-        emit mangaListChanged(ms);
+        emit mangaListChanged(name);
         // only the updated lists, writing all of them takes a while on the device
         if (!lists->save(name))
         {
@@ -88,7 +89,8 @@ Task<> MangaListUpdater::update(QSharedPointer<UpdateProgressToken> progressToke
     }
 
     updating = false;
-    standbyManager->setInhibited(false);
+    if (standbyManager)
+        standbyManager->setInhibited(false);
 
     if (ok)
         progressToken->sendFinished(warnings.join('\n'));
@@ -97,6 +99,5 @@ Task<> MangaListUpdater::update(QSharedPointer<UpdateProgressToken> progressToke
 void MangaListUpdater::sortMangaLists()
 {
     for (const auto& name : lists->setOrder(settings->mangaOrder))
-        if (auto ms = sources->source(name))
-            emit mangaListChanged(ms);
+        emit mangaListChanged(name);
 }

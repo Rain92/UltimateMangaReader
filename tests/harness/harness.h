@@ -11,8 +11,6 @@ struct MangaList;
 // the output that is compared (the log of the app goes to stderr)
 extern QTextStream out;
 
-MangaSourceBase *findSource(const QList<QSharedPointer<MangaSourceBase>> &sources, const QString &name);
-
 // What the source makes of the mangas in the picks file (title<TAB>url per line): the info, the chapters, the
 // page lists, image links and the first image. Returns the number of failures.
 int captureMangas(MangaRepository &repository, MangaSourceBase *source, const QString &picksFile);

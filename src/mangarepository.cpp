@@ -2,10 +2,23 @@
 
 #include "perftimer.h"
 
-MangaRepository::MangaRepository(NetworkManager *networkManager, QObject *parent)
-    : QObject(parent), networkManager(networkManager), liveInfos(), runningUpdates()
+MangaRepository::MangaRepository(NetworkManager *networkManager, SourceRegistry *sources, QObject *parent)
+    : QObject(parent), networkManager(networkManager), sources(sources), liveInfos(), runningUpdates()
 {
     connect(networkManager, &NetworkManager::imageDownloadFailed, this, &MangaRepository::forgetImage);
+}
+
+Result<QSharedPointer<MangaSourceBase>> MangaRepository::source(const QString &name) const
+{
+    if (auto source = sources->source(name))
+        return source;
+    return Err(Error::NotFound, QString("The source %1 isn't available.").arg(name));
+}
+
+HttpHeaders MangaRepository::requestHeaders(const QString &sourceName, const QString &url) const
+{
+    auto source = sources->source(sourceName);
+    return source ? source->requestHeaders(url) : HttpHeaders();
 }
 
 static QString infoKey(const QString &source, const QString &mangaUrl)
@@ -13,23 +26,23 @@ static QString infoKey(const QString &source, const QString &mangaUrl)
     return source + '\n' + mangaUrl;
 }
 
-QSharedPointer<MangaInfo> MangaRepository::cachedInfo(MangaSourceBase *source, const QString &mangaUrl,
+QSharedPointer<MangaInfo> MangaRepository::cachedInfo(const QString &sourceName, const QString &mangaUrl,
                                                       const QString &title)
 {
-    auto key = infoKey(source->name, mangaUrl);
+    auto key = infoKey(sourceName, mangaUrl);
     if (auto info = liveInfos.value(key).toStrongRef())
         return info;
 
     QSharedPointer<MangaInfo> info;
-    QString path(CONF.mangainfodir(source->name, mangaUrl) + "mangainfo.dat");
+    QString path(CONF.mangainfodir(sourceName, mangaUrl) + "mangainfo.dat");
     if (QFile::exists(path))
-        info = MangaInfo::deserialize(source, path);
+        info = MangaInfo::deserialize(path);
 
     // missing, unreadable or of another manga
-    if (!info || info->url != mangaUrl || info->hostname != source->name)
+    if (!info || info->url != mangaUrl || info->sourceName != sourceName)
     {
-        info.reset(new MangaInfo(source));
-        info->hostname = source->name;
+        info.reset(new MangaInfo());
+        info->sourceName = sourceName;
         info->title = title;
         info->url = mangaUrl;
     }
@@ -56,11 +69,11 @@ static void setDetails(MangaInfo &info, const MangaDetails &details)
         info.coverUrl = details.coverUrl;
 }
 
-Task<Result<QSharedPointer<MangaInfo>>> MangaRepository::loadInfo(MangaSourceBase *source, QString mangaUrl,
+Task<Result<QSharedPointer<MangaInfo>>> MangaRepository::loadInfo(QString sourceName, QString mangaUrl,
                                                                   QString title, bool update)
 {
     // the object other parts of the app may hold already (e.g. the favorites), it is filled in place
-    auto info = cachedInfo(source, mangaUrl, title);
+    auto info = cachedInfo(sourceName, mangaUrl, title);
 
     // an info without a cover is fine, some sources have none for some mangas
     if (!info->chapters.isEmpty())
@@ -72,7 +85,10 @@ Task<Result<QSharedPointer<MangaInfo>>> MangaRepository::loadInfo(MangaSourceBas
     }
 
     // not cached (or nothing to read when it was saved)
-    auto details = co_await source->fetchMangaInfo(mangaUrl, {});
+    auto source = this->source(sourceName);
+    if (!source)
+        co_return Err(source.error());
+    auto details = co_await (*source)->fetchMangaInfo(mangaUrl, {});
     if (!details)
         co_return Err(details.error());
 
@@ -106,7 +122,12 @@ Task<Result<>> MangaRepository::updateInfo(QSharedPointer<MangaInfo> info, bool 
 
 Task<Result<>> MangaRepository::runUpdate(QSharedPointer<MangaInfo> info, bool updateCover)
 {
-    auto details = co_await info->mangaSource->fetchMangaInfo(info->url, info->chapters);
+    auto source = this->source(info->sourceName);
+    Result<MangaDetails> details;
+    if (source)
+        details = co_await (*source)->fetchMangaInfo(info->url, info->chapters);
+    else
+        details = Err(source.error());
 
     // the infos of the favorites are updated whenever they are shown, only write the ones that changed
     auto contents = [&info]()
@@ -171,7 +192,10 @@ Task<Result<>> MangaRepository::loadPageList(QSharedPointer<MangaInfo> info, int
 
     PerfTimer perf("updatePageList");
     const QString chapterUrl = info->chapters[chapter].chapterUrl;
-    auto pages = co_await info->mangaSource->fetchPageList(chapterUrl);
+    auto source = this->source(info->sourceName);
+    if (!source)
+        co_return Err(source.error());
+    auto pages = co_await (*source)->fetchPageList(chapterUrl);
 
     if (!pages)
         co_return Err(pages.error());
@@ -233,7 +257,10 @@ Task<Result<ImageLink>> MangaRepository::pageImage(QSharedPointer<MangaInfo> inf
     if (image.isEmpty())
     {
         const ImageLink link = findPage()->link;
-        auto resolved = co_await info->mangaSource->resolveImage(link);
+        auto source = this->source(info->sourceName);
+        if (!source)
+            co_return Err(source.error());
+        auto resolved = co_await (*source)->resolveImage(link);
         if (!resolved)
             co_return Err(resolved.error());
         image = *resolved;
@@ -245,18 +272,18 @@ Task<Result<ImageLink>> MangaRepository::pageImage(QSharedPointer<MangaInfo> inf
     co_return image;
 }
 
-FileDownloadDescriptor MangaRepository::imageDownload(MangaSourceBase *source, const ImageLink &image,
+FileDownloadDescriptor MangaRepository::imageDownload(const QString &sourceName, const ImageLink &image,
                                                       const QString &path) const
 {
     ImageLink request = image;
-    request.headers = source->requestHeaders(image.url) + image.headers;
+    request.headers = requestHeaders(sourceName, image.url) + image.headers;
     return FileDownloadDescriptor(request, path);
 }
 
-QSharedPointer<DownloadFileJob> MangaRepository::downloadImage(MangaSourceBase *source, const ImageLink &image,
+QSharedPointer<DownloadFileJob> MangaRepository::downloadImage(const QString &sourceName, const ImageLink &image,
                                                                const QString &path)
 {
-    auto download = imageDownload(source, image, path);
+    auto download = imageDownload(sourceName, image, path);
     return networkManager->downloadAsScaledImage(download.image, download.path);
 }
 
@@ -311,7 +338,7 @@ Task<> MangaRepository::downloadCover(QSharedPointer<MangaInfo> info, QStringLis
         if (i > 0)
             qDebug() << "Cover not loaded, trying" << urls[i];
 
-        auto request = DownloadFileJob::defaultRequest(urls[i], info->mangaSource->requestHeaders(urls[i]));
+        auto request = DownloadFileJob::defaultRequest(urls[i], requestHeaders(info->sourceName, urls[i]));
         // the cdns of some sources answer with 429 for a few seconds while they fetch an image (Comick)
         request.maxRetries = 4;
         request.maxRetryDelay = 2000;
@@ -333,7 +360,7 @@ static QString chapterFilePrefix(const QString &chapterUrl)
 
 static void removePageFiles(QSharedPointer<MangaInfo> info, const std::function<bool(const QString &)> &ofChapter)
 {
-    QDir dir(CONF.mangaimagesdir(info->hostname, info->url));
+    QDir dir(CONF.mangaimagesdir(info->sourceName, info->url));
     for (const auto &file : dir.entryInfoList(QDir::NoDotAndDotDot | QDir::Files))
         if (ofChapter(file.fileName().section('_', 0, 0)))
             QFile::remove(file.absoluteFilePath());

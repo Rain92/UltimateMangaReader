@@ -6,12 +6,12 @@
 #include <QString>
 #include <QTimer>
 
-#include "mangarepository.h"
-#include "mangasourcebase.h"
-#include "task.h"
 #include "favorite.h"
+#include "mangarepository.h"
 #include "networkmanager.h"
 #include "readingprogress.h"
+#include "sourceregistry.h"
+#include "task.h"
 
 // A cover thumbnail to load, or to make from the cover if there is none yet.
 struct ThumbnailRequest
@@ -28,8 +28,8 @@ class FavoritesManager : public QObject
 {
     Q_OBJECT
 public:
-    FavoritesManager(const QMap<QString, MangaSourceBase *> &mangasources, MangaRepository *repository,
-                     NetworkManager *networkManager, QObject *parent = nullptr);
+    FavoritesManager(SourceRegistry *sources, MangaRepository *repository, NetworkManager *networkManager,
+                     QObject *parent = nullptr);
     ~FavoritesManager();
 
     int count() const { return entries.count(); }
@@ -83,7 +83,7 @@ private:
         ReadingProgress progress;
     };
 
-    const QMap<QString, MangaSourceBase *> &mangasources;
+    SourceRegistry *sources;
     MangaRepository *repository;
     NetworkManager *networkManager;
     QList<Entry> entries;
@@ -104,6 +104,7 @@ private:
     void serialize();
     void deserialize();
 
+    void sourcesChanged();
     void loadEntry(Entry &entry);
     void connectInfo(const QSharedPointer<MangaInfo> &info);
     void removeAt(int i);

@@ -186,7 +186,7 @@ Task<> MangaChapterDownloadManager::runJob(MangaChapterRange job)
             if (image->url != linkUrl)
                 emit downloadPagesProgress(i + 1, chapterUrls.count(), pagesErrors);
 
-            imageDescriptors.append(repository->imageDownload(mangaInfo->mangaSource, *image, path));
+            imageDescriptors.append(repository->imageDownload(mangaInfo->sourceName, *image, path));
             currentImagePaths.append({url, path});
         }
     }

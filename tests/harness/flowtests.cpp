@@ -43,13 +43,12 @@ int flowTests(const QString& sourceName, const QString& title, const QString& ur
     QObject::connect(core.favoritesManager, &FavoritesManager::error, logError);
     QObject::connect(core.mangaChapterDownloadManager, &MangaChapterDownloadManager::error, logError);
 
-    auto source = core.sources->source(sourceName);
-    if (!source)
+    if (!core.sources->source(sourceName))
     {
         out << "unknown source " << sourceName << "\n";
         return 1;
     }
-    core.sources->setCurrent(source);
+    core.sources->setCurrent(sourceName);
 
     QString shown;
     QObject::connect(core.mangaController, &MangaController::currentImageChanged,
@@ -160,7 +159,7 @@ int listFlowTests(const QString& sourceName)
 
     int changed = 0;
     QObject::connect(core.mangaListUpdater, &MangaListUpdater::mangaListChanged,
-                     [&](MangaSourceBase* source) { changed += source->name == sourceName; });
+                     [&](const QString& source) { changed += source == sourceName; });
 
     // like the dialog: a token with the sources, the update ends with finished or an error
     struct Outcome

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QAbstractScrollArea>
+#include <QIcon>
 
 // Kinetic scrolling by dragging with the finger (or mouse).
 void activateScroller(QAbstractScrollArea* pArea);
@@ -10,3 +11,6 @@ void activateScroller(QAbstractScrollArea* pArea);
 // Thread safe.
 qreal windowPixelRatio();
 void setWindowPixelRatio(qreal ratio);
+
+// The logo of the source from the resources, else one with its initials (e.g. a source that was added).
+QIcon sourceLogo(const QString &name, int size);

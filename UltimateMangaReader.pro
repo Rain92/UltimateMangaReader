@@ -78,6 +78,7 @@ HEADERS += \
     src/widgets/numpadwidget.h \
     src/widgets/screensaverdialog.h \
     src/widgets/settingsdialog.h \
+    src/widgets/sourcechecklist.h \
     src/widgets/updatemangalistsdialog.h \
     src/widgets/virtualkeyboard.h \
     src/widgets/widgetutils.h \
@@ -105,6 +106,7 @@ SOURCES += \
     src/widgets/numpadwidget.cpp \
     src/widgets/screensaverdialog.cpp \
     src/widgets/settingsdialog.cpp \
+    src/widgets/sourcechecklist.cpp \
     src/widgets/updatemangalistsdialog.cpp \
     src/widgets/virtualkeyboard.cpp \
     src/widgets/widgetutils.cpp \

@@ -48,6 +48,7 @@ HEADERS += \
     $$PWD/result.h \
     $$PWD/settings.h \
     $$PWD/sizes.h \
+    $$PWD/sourcelistmodel.h \
     $$PWD/sourceregistry.h \
     $$PWD/stacktrace.h \
     $$PWD/standbymanager.h \
@@ -96,6 +97,7 @@ SOURCES += \
     $$PWD/networkmanager.cpp \
     $$PWD/readingprogress.cpp \
     $$PWD/settings.cpp \
+    $$PWD/sourcelistmodel.cpp \
     $$PWD/sourceregistry.cpp \
     $$PWD/stacktrace.cpp \
     $$PWD/standbymanager.cpp \

@@ -1,6 +1,8 @@
 #include "widgetutils.h"
 
+#include <QFile>
 #include <QGuiApplication>
+#include <QPainter>
 #include <QScroller>
 #include <atomic>
 
@@ -37,4 +39,26 @@ void activateScroller(QAbstractScrollArea* pArea)
         scroller->setScrollerProperties(prop);
         scroller->grabGesture(pArea->viewport(), QScroller::LeftMouseButtonGesture);
     }
+}
+
+QIcon sourceLogo(const QString &name, int size)
+{
+    QString path = ":/images/mangahostlogos/" + name.toLower() + ".png";
+    if (QFile::exists(path))
+        return QIcon(QPixmap(path));
+
+    QPixmap pixmap(size, size);
+    pixmap.fill(Qt::white);
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    int border = qMax(2, size / 24);
+    painter.setPen(QPen(Qt::black, border));
+    painter.drawRoundedRect(QRectF(pixmap.rect()).adjusted(border, border, -border, -border), size / 8.0,
+                            size / 8.0);
+    QFont font = painter.font();
+    font.setBold(true);
+    font.setPixelSize(size * 2 / 5);
+    painter.setFont(font);
+    painter.drawText(pixmap.rect(), Qt::AlignCenter, name.left(2));
+    return QIcon(pixmap);
 }

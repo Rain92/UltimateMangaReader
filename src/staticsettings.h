@@ -48,14 +48,14 @@ public:
         return path.isEmpty() || QDir::isAbsolutePath(path) ? path : cacheDir + path;
     }
 
-    inline QString mangasourcedir(const QString &hostname) { return cacheDir + hostname + "/"; }
-    inline QString mangainfodir(const QString &hostname, const QString &mangaUrl)
+    inline QString mangasourcedir(const QString &sourceName) { return cacheDir + sourceName + "/"; }
+    inline QString mangainfodir(const QString &sourceName, const QString &mangaUrl)
     {
-        return mangasourcedir(hostname) + urlHash(mangaUrl, 16) + "/";
+        return mangasourcedir(sourceName) + urlHash(mangaUrl, 16) + "/";
     }
-    inline QString mangaimagesdir(const QString &hostname, const QString &mangaUrl)
+    inline QString mangaimagesdir(const QString &sourceName, const QString &mangaUrl)
     {
-        return mangainfodir(hostname, mangaUrl) + "images/";
+        return mangainfodir(sourceName, mangaUrl) + "images/";
     }
     // the file of a page in the images directory
     inline QString pagefilename(const QString &chapterUrl, int page)

@@ -9,10 +9,10 @@
 #include "perftimer.h"
 #include "sizes.h"
 
-FavoritesManager::FavoritesManager(const QMap<QString, MangaSourceBase *> &mangasources,
-                                   MangaRepository *repository, NetworkManager *networkManager, QObject *parent)
+FavoritesManager::FavoritesManager(SourceRegistry *sources, MangaRepository *repository,
+                                   NetworkManager *networkManager, QObject *parent)
     : QObject(parent),
-      mangasources(mangasources),
+      sources(sources),
       repository(repository),
       networkManager(networkManager),
       entries(),
@@ -27,6 +27,8 @@ FavoritesManager::FavoritesManager(const QMap<QString, MangaSourceBase *> &manga
       thumbnailPixelRatio(0)
 {
     deserialize();
+
+    connect(sources, &SourceRegistry::sourcesChanged, this, &FavoritesManager::sourcesChanged);
 
     // the checks that failed without a connection are worth repeating right away
     connect(networkManager, &NetworkManager::wifiConnectFinished, this,
@@ -107,7 +109,7 @@ void FavoritesManager::serialize()
 int FavoritesManager::indexOf(const Favorite &fav) const
 {
     for (int i = 0; i < entries.size(); i++)
-        if (entries[i].favorite.hostname == fav.hostname && entries[i].favorite.mangaUrl == fav.mangaUrl)
+        if (entries[i].favorite.sourceName == fav.sourceName && entries[i].favorite.mangaUrl == fav.mangaUrl)
             return i;
 
     return -1;
@@ -115,7 +117,7 @@ int FavoritesManager::indexOf(const Favorite &fav) const
 
 int FavoritesManager::indexOf(const MangaInfo *info) const
 {
-    return info ? indexOf(Favorite(info->hostname, info->title, info->url)) : -1;
+    return info ? indexOf(Favorite(info->sourceName, info->title, info->url)) : -1;
 }
 
 bool FavoritesManager::isFavorite(QSharedPointer<MangaInfo> info) const
@@ -134,7 +136,7 @@ bool FavoritesManager::toggleFavorite(QSharedPointer<MangaInfo> info)
     }
 
     Entry entry{Favorite::fromMangaInfo(info.get()), info, {}};
-    entry.progress.deserialize(info->hostname, info->url);
+    entry.progress.deserialize(info->sourceName, info->url);
     connectInfo(info);
     entries.prepend(entry);
     serialize();
@@ -161,10 +163,38 @@ void FavoritesManager::moveFavoriteToFront(int i)
 
 void FavoritesManager::loadEntry(Entry &entry)
 {
-    auto source = mangasources.value(entry.favorite.hostname);
-    entry.info = source ? repository->cachedInfo(source, entry.favorite.mangaUrl, entry.favorite.title) : nullptr;
-    entry.progress = ReadingProgress(entry.favorite.hostname, entry.favorite.mangaUrl);
+    const auto &fav = entry.favorite;
+    entry.info = nullptr;
+    if (sources->isEnabled(fav.sourceName))
+        entry.info = repository->cachedInfo(fav.sourceName, fav.mangaUrl, fav.title);
+    entry.progress = ReadingProgress(entry.favorite.sourceName, entry.favorite.mangaUrl);
     connectInfo(entry.info);
+}
+
+// The favorites of a source that was enabled get their infos, the ones of a disabled source lose them.
+void FavoritesManager::sourcesChanged()
+{
+    if (!infosLoaded)
+        return;
+
+    for (int i = 0; i < entries.count(); i++)
+    {
+        auto &entry = entries[i];
+        bool enabled = sources->isEnabled(entry.favorite.sourceName);
+        if (enabled == !entry.info.isNull())
+            continue;
+
+        if (enabled)
+        {
+            loadEntry(entry);
+        }
+        else
+        {
+            entry.info->disconnect(this);
+            entry.info.reset();
+        }
+        emit favoriteChanged(i);
+    }
 }
 
 void FavoritesManager::loadInfos()
@@ -197,7 +227,7 @@ void FavoritesManager::chaptersMoved()
         return;
 
     // the info located the chapter of the progress again (updatedSignal follows)
-    entries[i].progress = ReadingProgress(entries[i].favorite.hostname, entries[i].favorite.mangaUrl);
+    entries[i].progress = ReadingProgress(entries[i].favorite.sourceName, entries[i].favorite.mangaUrl);
 }
 
 void FavoritesManager::infoUpdated(bool newChapters)
@@ -237,11 +267,10 @@ QSharedPointer<MangaInfo> FavoritesManager::requireInfo(int i)
 
     // a copy: the download runs an event loop, the favorites can be reordered or removed meanwhile
     const Favorite fav = entries[i].favorite;
-    auto source = mangasources.value(fav.hostname);
-    if (!source)
+    if (!sources->isEnabled(fav.sourceName))
         return {};
 
-    auto res = repository->loadInfo(source, fav.mangaUrl, fav.title).wait();
+    auto res = repository->loadInfo(fav.sourceName, fav.mangaUrl, fav.title).wait();
     if (!res.has_value())
     {
         emit error(res.error().message);
@@ -280,11 +309,11 @@ void FavoritesManager::updateInfos()
     {
         // the source might have been disabled since the infos were loaded
         const auto &info = entry.info;
-        if (!info || !mangasources.value(info->hostname))
+        if (!info || !sources->isEnabled(info->sourceName))
             continue;
 
         // also the ones without chapters (e.g. all of them removed at the source)
-        auto &lastUpdate = lastUpdates[info->hostname + '/' + info->url];
+        auto &lastUpdate = lastUpdates[info->sourceName + '/' + info->url];
         if (lastUpdate.isValid() && lastUpdate.elapsed() < minUpdateIntervalMs)
             continue;
         lastUpdate.start();
@@ -360,7 +389,7 @@ void FavoritesManager::clearInvalidFavorites()
     {
         int i = indexOf(fav);
         // the ones of disabled sources have no info, they come back when the source is enabled again
-        if (i < 0 || !mangasources.value(fav.hostname))
+        if (i < 0 || !sources->isEnabled(fav.sourceName))
             continue;
 
         // the infos that aren't cached are downloaded first, only the ones that fail or have nothing to read
@@ -369,7 +398,7 @@ void FavoritesManager::clearInvalidFavorites()
         bool valid = info && !info->chapters.isEmpty();
         if (!valid && info)
         {
-            auto res = repository->loadInfo(info->mangaSource, fav.mangaUrl, fav.title).wait();
+            auto res = repository->loadInfo(fav.sourceName, fav.mangaUrl, fav.title).wait();
 
             i = indexOf(fav);
             if (i < 0)
@@ -384,7 +413,7 @@ void FavoritesManager::clearInvalidFavorites()
 
         if (!valid)
         {
-            qDebug() << "Removing invalid favorite:" << fav.hostname << fav.title << fav.mangaUrl;
+            qDebug() << "Removing invalid favorite:" << fav.sourceName << fav.title << fav.mangaUrl;
             removeAt(i);
         }
     }

@@ -16,14 +16,6 @@
 
 QTextStream out(stdout);
 
-MangaSourceBase *findSource(const QList<QSharedPointer<MangaSourceBase>> &sources, const QString &name)
-{
-    for (const auto &source : sources)
-        if (source->name == name)
-            return source.get();
-    return nullptr;
-}
-
 static int usage()
 {
     out << "usage: harness [--cache <dir>] [--record <dir> | --replay <dir>] <command>\n"
@@ -60,7 +52,7 @@ static int pick(MangaSourceBase *source)
 static int download(NetworkManager &nm, MangaRepository &repository, MangaSourceBase *source, const QString &title,
                     const QString &url, int count)
 {
-    auto res = repository.loadInfo(source, url, title, false).wait();
+    auto res = repository.loadInfo(source->name, url, title, false).wait();
     if (!res.has_value())
     {
         out << "info: ERROR " << res.error().message << "\n";
@@ -164,9 +156,9 @@ int main(int argc, char **argv)
         NetworkManager nm;
         Settings settings;
         nm.setDownloadSettings(QSize(1404, 1872), &settings);
-        SourceRegistry sources(&nm);
-        MangaRepository repository(&nm);
-        auto source = findSource(sources.all(), arg(0));
+        SourceRegistry sources(&settings, SourceRegistry::builtInSources(&nm));
+        MangaRepository repository(&nm, &sources);
+        auto source = sources.source(arg(0)).get();
         if (!source)
         {
             out << "unknown source " << arg(0) << "\n";

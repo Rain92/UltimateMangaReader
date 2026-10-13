@@ -2,24 +2,24 @@
 
 #include "mangainfo.h"
 
-// A favorite is identified by its source (hostname) and url, the title is shown.
+// A favorite is identified by the name of its source and its url, the title is shown.
 struct Favorite
 {
-    QString hostname;
+    QString sourceName;
     QString title;
     QString mangaUrl;
 
     Favorite();
 
-    Favorite(const QString &hostname, const QString &title, const QString &mangaUrl);
+    Favorite(const QString &sourceName, const QString &title, const QString &mangaUrl);
 
     static Favorite fromMangaInfo(MangaInfo *info)
     {
-        return Favorite(info->hostname, info->title, info->url);
+        return Favorite(info->sourceName, info->title, info->url);
     }
 
     // unique among the favorites
-    QString key() const { return hostname + '/' + mangaUrl; }
+    QString key() const { return sourceName + '/' + mangaUrl; }
 };
 
 QDataStream &operator<<(QDataStream &str, const Favorite &m);

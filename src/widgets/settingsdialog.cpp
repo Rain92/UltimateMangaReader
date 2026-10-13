@@ -2,10 +2,11 @@
 
 #include <QScrollBar>
 
+#include "sourcechecklist.h"
 #include "ui_settingsdialog.h"
 #include "widgetutils.h"
 
-SettingsDialog::SettingsDialog(Settings *settings, QWidget *parent)
+SettingsDialog::SettingsDialog(Settings *settings, SourceRegistry *sources, QWidget *parent)
     : QDialog(parent), ui(new Ui::SettingsDialog), settings(settings), internalChange(false)
 {
     ui->setupUi(this);
@@ -17,6 +18,12 @@ SettingsDialog::SettingsDialog(Settings *settings, QWidget *parent)
 
     for (auto item : this->findChildren<QCheckBox *>())
         QObject::connect(item, &QCheckBox::clicked, this, &SettingsDialog::updateSettings);
+
+    // a source is enabled or disabled right away
+    auto sourceList = new SourceCheckList(new SourceListModel(sources, SourceListModel::EnableSources, this),
+                                          ui->frameMangaSources);
+    sourceList->layout()->setSpacing(ui->frameMangaSources->layout()->spacing());
+    ui->frameMangaSources->layout()->addWidget(sourceList);
 }
 
 SettingsDialog::~SettingsDialog()
@@ -62,19 +69,7 @@ void SettingsDialog::resetUI()
 
     ui->comboBoxMangaOrder->setCurrentIndex(settings->mangaOrder);
 
-    setupSourcesList();
     internalChange = false;
-}
-
-void SettingsDialog::updateActiveMangasSettings(const QString &name, bool enabled)
-{
-    if (internalChange)
-        return;
-
-    settings->enabledMangaSources[name] = enabled;
-    settings->scheduleSerialize();
-
-    emit activeMangasChanged();
 }
 
 void SettingsDialog::updateSettings()
@@ -107,30 +102,6 @@ void SettingsDialog::updateSettings()
         emit mangaOrderMethodChanged();
 
     settings->scheduleSerialize();
-}
-
-void SettingsDialog::setupSourcesList()
-{
-    auto layout = ui->frameMangaSources->layout();
-
-    QLayoutItem *item;
-    while ((item = layout->takeAt(0)) != nullptr)
-    {
-        delete item->widget();
-        delete item;
-    }
-
-    for (const auto &ms : settings->enabledMangaSources.keys())
-    {
-        bool enabled = settings->enabledMangaSources[ms];
-
-        QCheckBox *checkbox = new QCheckBox(ms, ui->frameMangaSources);
-        checkbox->setChecked(enabled);
-        QObject::connect(checkbox, &QCheckBox::clicked, this,
-                         [this, checkbox, ms]() { updateActiveMangasSettings(ms, checkbox->isChecked()); });
-
-        layout->addWidget(checkbox);
-    }
 }
 
 void SettingsDialog::on_pushButtonOk_clicked()

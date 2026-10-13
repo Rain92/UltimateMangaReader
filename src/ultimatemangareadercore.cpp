@@ -5,11 +5,11 @@
 UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
     : QObject(parent),
       networkManager(new NetworkManager(this)),
-      sources(new SourceRegistry(networkManager, this)),
-      repository(new MangaRepository(networkManager, this)),
+      sources(new SourceRegistry(&settings, SourceRegistry::builtInSources(networkManager), this)),
+      repository(new MangaRepository(networkManager, sources, this)),
       mangaLists(),
       mangaController(new MangaController(networkManager, repository, this)),
-      favoritesManager(new FavoritesManager(sources->active(), repository, networkManager, this)),
+      favoritesManager(new FavoritesManager(sources, repository, networkManager, this)),
       mangaChapterDownloadManager(new MangaChapterDownloadManager(networkManager, repository, this)),
       suspendManager(new SuspendManager(networkManager, this)),
       settings(),
@@ -28,8 +28,6 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
 
     // the manga lists are loaded when they are needed
     mangaLists.setOrder(settings.mangaOrder);
-
-    updateActiveSources();
 
     timer.setInterval(CONF.globalTickIntervalSeconds * 1000);
     connect(&timer, &QTimer::timeout, this, &UltimateMangaReaderCore::timerTick);
@@ -146,22 +144,17 @@ void UltimateMangaReaderCore::timerTick()
     emit timeTick();
 }
 
-void UltimateMangaReaderCore::updateActiveSources()
-{
-    sources->updateActive(settings);
-}
-
 void UltimateMangaReaderCore::setCurrentManga(const QString& mangaUrl, const QString& mangatitle)
 {
-    auto currentMangaSource = sources->current();
-    if (!currentMangaSource)
+    auto sourceName = sources->current();
+    if (sourceName.isEmpty())
         return;
 
     // the latest choice wins, also over a favorite that was opened meanwhile
     int request = ++mangaRequests;
     auto shownManga = mangaController->currentManga;
 
-    auto res = repository->loadInfo(currentMangaSource, mangaUrl, mangatitle).wait();
+    auto res = repository->loadInfo(sourceName, mangaUrl, mangatitle).wait();
 
     if (request != mangaRequests || mangaController->currentManga != shownManga)
         return;
@@ -208,24 +201,24 @@ void UltimateMangaReaderCore::clearDownloadCache(ClearDownloadCacheLevel level)
     switch (level)
     {
         case ClearImages:
-            for (const auto& ms : sources->all())
+            for (const auto& name : sources->names())
             {
                 for (auto& info :
-                     QDir(CONF.cacheDir + ms->name)
+                     QDir(CONF.mangasourcedir(name))
                          .entryInfoList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden | QDir::AllDirs))
                     removeDir(info.absoluteFilePath() + "/images");
             }
             break;
 
         case ClearInfos:
-            for (const auto& ms : sources->all())
-                removeDir(CONF.cacheDir + ms->name, "progress.dat");
+            for (const auto& name : sources->names())
+                removeDir(CONF.mangasourcedir(name), "progress.dat");
 
             break;
 
         case ClearAll:
-            for (const auto& ms : sources->all())
-                removeDir(CONF.cacheDir + ms->name);
+            for (const auto& name : sources->names())
+                removeDir(CONF.mangasourcedir(name));
             QFile::remove(CONF.cacheDir + "favorites.dat");
             favoritesManager->clearFavorites();
             break;

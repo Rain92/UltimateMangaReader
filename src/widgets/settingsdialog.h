@@ -5,6 +5,7 @@
 #include "enums.h"
 #include "settings.h"
 #include "sizes.h"
+#include "sourceregistry.h"
 #include "utils.h"
 
 namespace Ui
@@ -19,13 +20,12 @@ class SettingsDialog : public QDialog
     Q_ENUM(AdvancePageHWButton)
 
 public:
-    explicit SettingsDialog(Settings *settings, QWidget *parent = nullptr);
+    SettingsDialog(Settings *settings, SourceRegistry *sources, QWidget *parent = nullptr);
     ~SettingsDialog();
 
     void open() override;
 
 signals:
-    void activeMangasChanged();
     void mangaOrderMethodChanged();
     void ditheringMethodChanged();
 
@@ -41,7 +41,4 @@ private:
     void adjustUI();
 
     void updateSettings();
-    void updateActiveMangasSettings(const QString &name, bool enabled);
-
-    void setupSourcesList();
 };

@@ -40,7 +40,7 @@ static QString pixelHash(const QImage &image)
 static int captureImage(MangaRepository &repository, MangaSourceBase *source, const QString &path,
                         const ImageLink &image)
 {
-    auto job = repository.downloadImage(source, image, path);
+    auto job = repository.downloadImage(source->name, image, path);
     if (!job)
     {
         out << "      image: no job\n";
@@ -86,7 +86,7 @@ static int capturePages(MangaRepository &repository, MangaSourceBase *source, co
 
         // the tokens are made up per session
         QStringList headers;
-        for (const auto &h : repository.imageDownload(source, img.value(), "").image.headers)
+        for (const auto &h : repository.imageDownload(source->name, img.value(), "").image.headers)
             headers << QString::fromLatin1(h.name + ": " +
                                            (h.name == "Plus-Vw-Token" || h.name == "SESSION-TOKEN"
                                                 ? QByteArray("<token>")

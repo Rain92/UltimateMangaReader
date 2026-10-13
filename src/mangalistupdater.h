@@ -15,6 +15,7 @@ class MangaListUpdater : public QObject
     Q_OBJECT
 
 public:
+    // No standby while an update runs (if there is a standbyManager).
     MangaListUpdater(SourceRegistry *sources, MangaListStore *lists, Settings *settings,
                      StandbyManager *standbyManager, QObject *parent = nullptr);
 
@@ -26,7 +27,7 @@ public:
 
 signals:
     // it was updated or sorted
-    void mangaListChanged(MangaSourceBase *source);
+    void mangaListChanged(const QString &source);
 
 private:
     SourceRegistry *sources;

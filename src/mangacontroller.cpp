@@ -148,7 +148,7 @@ void MangaController::updateCurrentImage()
     }
 
     // a running preload of the page is reused
-    auto job = repository->downloadImage(manga->mangaSource, image.value(), path);
+    auto job = repository->downloadImage(manga->sourceName, image.value(), path);
 
     if (job->isCompleted)
     {
@@ -259,7 +259,7 @@ void MangaController::preloadImage(QSharedPointer<MangaInfo> manga, const MangaI
     if (failed != failedDownloads.constEnd() && clock.elapsed() - failed.value() < skipFailedMs)
         return;
 
-    preloadQueue.appendDownload(repository->imageDownload(manga->mangaSource, image.value(), path));
+    preloadQueue.appendDownload(repository->imageDownload(manga->sourceName, image.value(), path));
 
 }
 
@@ -338,12 +338,12 @@ void MangaController::serializeProgress()
     const auto &chapter = currentIndex.currentChapter();
     ReadingProgress progress(currentIndex, chapter.chapterUrl, currentManga->chapters.count(),
                              chapter.pages.count());
-    progress.serialize(currentManga->hostname, currentManga->url);
+    progress.serialize(currentManga->sourceName, currentManga->url);
 }
 
 void MangaController::deserializeProgress()
 {
-    ReadingProgress progress(currentManga->hostname, currentManga->url);
+    ReadingProgress progress(currentManga->sourceName, currentManga->url);
     progress.locate(currentManga->chapters);
     currentIndex.chapter = progress.index.chapter;
     currentIndex.page = progress.index.page;

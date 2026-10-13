@@ -40,7 +40,6 @@ public:
     void setCurrentManga(const QString &mangaUrl, const QString &mangatitle);
 
     void clearDownloadCache(ClearDownloadCacheLevel level);
-    void updateActiveSources();
 
     void enableTimers(bool enabled);
 

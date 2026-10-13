@@ -15,11 +15,11 @@ public:
     ReadingProgress();
     ReadingProgress(const MangaIndex& index, const QString& chapterUrl, int numChapters, int numPages);
     // The progress of the manga, the start if there is none.
-    ReadingProgress(const QString& hostname, const QString& mangaUrl);
+    ReadingProgress(const QString& sourceName, const QString& mangaUrl);
 
-    void serialize(const QString& hostname, const QString& mangaUrl);
+    void serialize(const QString& sourceName, const QString& mangaUrl);
 
-    bool deserialize(const QString& hostname, const QString& mangaUrl);
+    bool deserialize(const QString& sourceName, const QString& mangaUrl);
 
     // Finds the chapter by its url after the chapters changed. When it's gone (or there was no progress yet)
     // the start of the chapter at its index is taken. Returns whether the index changed.

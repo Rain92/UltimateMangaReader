@@ -12,15 +12,15 @@ ReadingProgress::ReadingProgress(const MangaIndex &index, const QString &chapter
 {
 }
 
-ReadingProgress::ReadingProgress(const QString &hostname, const QString &mangaUrl) : ReadingProgress()
+ReadingProgress::ReadingProgress(const QString &sourceName, const QString &mangaUrl) : ReadingProgress()
 {
-    deserialize(hostname, mangaUrl);
+    deserialize(sourceName, mangaUrl);
 }
 
-void ReadingProgress::serialize(const QString &hostname, const QString &mangaUrl)
+void ReadingProgress::serialize(const QString &sourceName, const QString &mangaUrl)
 {
-    QDir().mkpath(CONF.mangainfodir(hostname, mangaUrl));
-    QSaveFile file(CONF.mangainfodir(hostname, mangaUrl) + "progress.dat");
+    QDir().mkpath(CONF.mangainfodir(sourceName, mangaUrl));
+    QSaveFile file(CONF.mangainfodir(sourceName, mangaUrl) + "progress.dat");
     if (!file.open(QIODevice::WriteOnly))
         return;
 
@@ -31,9 +31,9 @@ void ReadingProgress::serialize(const QString &hostname, const QString &mangaUrl
         qDebug() << "Couldn't save the reading progress of" << mangaUrl;
 }
 
-bool ReadingProgress::deserialize(const QString &hostname, const QString &mangaUrl)
+bool ReadingProgress::deserialize(const QString &sourceName, const QString &mangaUrl)
 {
-    QFile file(CONF.mangainfodir(hostname, mangaUrl) + "progress.dat");
+    QFile file(CONF.mangainfodir(sourceName, mangaUrl) + "progress.dat");
 
     if (!file.open(QIODevice::ReadOnly))
         return false;
