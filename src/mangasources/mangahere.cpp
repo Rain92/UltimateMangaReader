@@ -133,7 +133,7 @@ bool MangaHere::updateMangaList(UpdateProgressToken *token)
 
     token->sendProgress(state.popularDone ? 10 : 0);
 
-    auto job = downloadAsString(mangaListUrl, 180000);
+    auto job = download(mangaListUrl, 180000);
 
     if (!state.popularDone)
     {
@@ -142,13 +142,13 @@ bool MangaHere::updateMangaList(UpdateProgressToken *token)
             urls.append(dictionaryUrl + QString::number(i) + ".htm");
 
         state.popular.fill({}, popularPages);
-        auto lambda = [&](QSharedPointer<DownloadStringJob> pjob)
+        auto lambda = [&](QSharedPointer<DownloadBufferJob> pjob)
         {
-            int i = urls.indexOf(pjob->originalUrl);
+            int i = urls.indexOf(pjob->request.url);
             if (i < 0)
                 return;
 
-            for (auto &match : getAllRxMatches(popularrx, pjob->bufferStr))
+            for (auto &match : getAllRxMatches(popularrx, pjob->text()))
                 state.popular[i].append({match.captured(2), match.captured(1)});
         };
 
@@ -176,7 +176,7 @@ bool MangaHere::updateMangaList(UpdateProgressToken *token)
         }
 
         // the list is occasionally cut off
-        if (job->isCompleted && job->bufferStr.contains(R"(<div class="footer-bar">)"))
+        if (job->isCompleted && job->buffer.contains(R"(<div class="footer-bar">)"))
             break;
 
         if (attempt >= 2)
@@ -186,7 +186,7 @@ bool MangaHere::updateMangaList(UpdateProgressToken *token)
         }
 
         qDebug() << "MangaHere: manga list incomplete, retrying" << job->errorString;
-        job = downloadAsString(mangaListUrl, 180000);
+        job = download(mangaListUrl, 180000);
     }
 
     token->sendProgress(80);
@@ -211,7 +211,8 @@ bool MangaHere::updateMangaList(UpdateProgressToken *token)
     int popularCount = mangas.size;
 
     int matches = 0;
-    auto it = mangarx.globalMatch(job->bufferStr);
+    const auto html = job->text();
+    auto it = mangarx.globalMatch(html);
     while (it.hasNext())
     {
         auto match = it.next();
@@ -237,7 +238,7 @@ bool MangaHere::updateMangaList(UpdateProgressToken *token)
 }
 
 Result<MangaChapterCollection, QString> MangaHere::updateMangaInfoFinishedLoading(
-    QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info)
+    QSharedPointer<DownloadBufferJob> job, QSharedPointer<MangaInfo> info)
 {
     QRegularExpression authorrx(R"lit(<p class="detail-info-right-say">\s*Author:(.*?)</p>)lit");
     QRegularExpression authornamerx(R"lit(<a[^>]*>([^<]*)</a>)lit");
@@ -256,7 +257,7 @@ Result<MangaChapterCollection, QString> MangaHere::updateMangaInfoFinishedLoadin
     QRegularExpression chapterrx(
         R"lit(<a href="(/manga/[^"]*)"[^>]*>\s*<div class="detail-main-list-main">\s*<p class="title3">([^<]*)</p>)lit");
 
-    const QString &buffer = job->bufferStr;
+    const QString buffer = job->text();
 
     if (!buffer.contains(R"(class="detail-info")"))
         return Err(QString("Couldn't process manga info."));
@@ -334,15 +335,16 @@ Result<QList<ImageLink>, QString> MangaHere::getPageList(const QString &chapterU
     auto pathmatch = chapterpathrx.match(chapterUrl);
     if (pathmatch.hasMatch())
     {
-        auto job = downloadAsString(mobileUrl + "/roll_manga/" + pathmatch.captured(1));
+        auto job = download(mobileUrl + "/roll_manga/" + pathmatch.captured(1), 4000, 0);
 
-        if (job->await(4000, false))
+        if (job->await())
         {
+            const auto html = job->text();
             QStringList imageUrls;
-            for (auto &match : getAllRxMatches(imagerx, job->bufferStr))
+            for (auto &match : getAllRxMatches(imagerx, html))
                 imageUrls.append(normalizeUrl(match.captured(1)));
 
-            auto numpagesmatch = numpagesrx.match(job->bufferStr);
+            auto numpagesmatch = numpagesrx.match(html);
             if (!imageUrls.isEmpty() && numpagesmatch.hasMatch() &&
                 numpagesmatch.captured(1).toInt() == imageUrls.count())
                 return Ok(ImageLink::fromUrls(imageUrls));
@@ -367,13 +369,14 @@ Result<QStringList, QString> MangaHere::getPageListDesktop(const QString &chapte
     QRegularExpression quotedrx(R"lit('([^']*)')lit");
     QRegularExpression imageinfosrx(R"lit(newImginfos=\[([^\]]*)\])lit");
 
-    auto job = downloadAsString(chapterUrl);
+    auto job = download(chapterUrl, timeout);
 
-    if (!job->await(timeout))
+    if (!job->await())
         return Err(job->errorString);
+    const auto html = job->text();
 
     // removed or blocked chapters, the sister site fanfox.net often still has the blocked ones
-    auto blockedmatch = blockedrx.match(job->bufferStr);
+    auto blockedmatch = blockedrx.match(html);
     if (blockedmatch.hasMatch())
     {
         if (chapterUrl.startsWith(baseUrl))
@@ -386,7 +389,7 @@ Result<QStringList, QString> MangaHere::getPageListDesktop(const QString &chapte
     }
 
     QString key;
-    for (auto &match : getAllRxMatches(packedrx, job->bufferStr))
+    for (auto &match : getAllRxMatches(packedrx, html))
     {
         auto script = unpackJs(match.captured(0));
 
@@ -416,8 +419,8 @@ Result<QStringList, QString> MangaHere::getPageListDesktop(const QString &chapte
         }
     }
 
-    auto chapteridmatch = chapteridrx.match(job->bufferStr);
-    auto imagecountmatch = imagecountrx.match(job->bufferStr);
+    auto chapteridmatch = chapteridrx.match(html);
+    auto imagecountmatch = imagecountrx.match(html);
 
     if (!chapteridmatch.hasMatch() || !imagecountmatch.hasMatch())
         return Err(QString("Couldn't process pagelist."));
@@ -452,19 +455,20 @@ Result<ImageLink, QString> MangaHere::getImageLink(const ImageLink &page)
     auto url = pageUrl;
     for (int attempt = 0; attempt < 3 && timer.elapsed() < 5000; attempt++)
     {
-        auto job = downloadAsString(url);
+        auto job = download(url, 6000 - int(timer.elapsed()));
 
-        if (!job->await(6000 - int(timer.elapsed())))
+        if (!job->await())
             return Err(job->errorString);
 
         // the answer is sometimes empty, retry without key
-        if (job->bufferStr.isEmpty())
+        if (job->buffer.isEmpty())
         {
             url = url.left(url.indexOf("&key=")) + "&key=";
             continue;
         }
 
-        auto script = unpackJs(job->bufferStr);
+        auto script = unpackJs(job->text());
+
         auto pixmatch = pixrx.match(script);
         auto pvaluematch = pvaluerx.match(script);
 

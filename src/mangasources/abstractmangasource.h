@@ -32,7 +32,7 @@ public:
     virtual bool updateMangaList(UpdateProgressToken *token) = 0;
 
     virtual Result<MangaChapterCollection, QString> updateMangaInfoFinishedLoading(
-        QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> mangainfo) = 0;
+        QSharedPointer<DownloadBufferJob> job, QSharedPointer<MangaInfo> mangainfo) = 0;
 
     virtual Result<QSharedPointer<MangaInfo>, QString> getMangaInfo(const QString &mangaUrl,
                                                                     const QString &mangaTitle);
@@ -87,9 +87,11 @@ protected:
     // e.g. the Referer the image hosts want
     HeaderRules headerRules;
 
-    // The downloads of the source, with its headers.
-    QSharedPointer<DownloadStringJob> downloadAsString(const QString &url, int timeout = 6000);
-    QSharedPointer<DownloadBufferJob> downloadToBuffer(const QString &url, int timeout = 6000);
+    // The downloads of the source, with its headers (before the request's own ones).
+    QSharedPointer<DownloadBufferJob> download(DownloadRequest request);
+    QSharedPointer<DownloadBufferJob> download(const QString &url, int timeout = 6000,
+                                               int maxRetries = DownloadRequest().maxRetries);
+
     QSharedPointer<DownloadFileJob> downloadAsFile(const QString &url, const QString &localPath);
     QList<QSize> probeImageSizes(const QStringList &urls, int timeout = 10000, QList<int> *timedOut = nullptr);
     // for a DownloadQueue

@@ -55,10 +55,7 @@ NetworkManager::~NetworkManager()
     wifiThread.wait();
 }
 
-QNetworkAccessManager *NetworkManager::networkAccessManager()
-{
-    return this->networkManager;
-}
+
 
 void NetworkManager::connectWifiAsync()
 {
@@ -187,30 +184,13 @@ void NetworkManager::releaseFileDownload(const QString &localPath)
         fileDownloads.erase(it);
 }
 
-QSharedPointer<DownloadStringJob> NetworkManager::downloadAsString(const QString &url, int timeout,
-                                                                   const HttpHeaders &headers)
+QSharedPointer<DownloadBufferJob> NetworkManager::download(DownloadRequest request)
 {
-    auto urlf = fixUrl(url);
+    request.url = fixUrl(request.url);
 
-    qDebug() << "Downloading as string:" << urlf;
+    qDebug() << (request.headOnly ? "Requesting headers:" : "Downloading:") << request.url;
 
-    auto job = QSharedPointer<DownloadStringJob>(new DownloadStringJob(networkManager, urlf, timeout, headers),
-                                                 &QObject::deleteLater);
-
-    job->start();
-
-    emit activity();
-    return job;
-}
-
-QSharedPointer<DownloadBufferJob> NetworkManager::downloadToBuffer(const QString &url, int timeout,
-                                                                   const HttpHeaders &headers)
-{
-    auto urlf = fixUrl(url);
-
-    qDebug() << "Downloading to buffer:" << urlf;
-
-    auto job = QSharedPointer<DownloadBufferJob>(new DownloadBufferJob(networkManager, urlf, timeout, headers),
+    auto job = QSharedPointer<DownloadBufferJob>(new DownloadBufferJob(networkManager, request),
                                                  &QObject::deleteLater);
 
     job->start();
@@ -257,7 +237,8 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsFile(const QString &ur
     auto urlf = fixUrl(url);
     qDebug() << "Downloading as file:" << urlf;
 
-    return startFileDownload(new DownloadFileJob(networkManager, urlf, localPath, headers));
+    return startFileDownload(
+        new DownloadFileJob(networkManager, DownloadFileJob::defaultRequest(urlf, headers), localPath));
 }
 
 QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const ImageLink &image,
@@ -277,8 +258,9 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const Imag
 
     qDebug() << "Downloading as image:" << urlf;
 
-    auto sjob = new DownloadScaledImageJob(networkManager, imageProcessor, urlf, localPath, imageRescaleSize,
-                                           settings, image.headers, ed, appendUrl);
+    auto sjob = new DownloadScaledImageJob(networkManager, imageProcessor,
+                                           DownloadFileJob::defaultRequest(urlf, image.headers), localPath,
+                                           imageRescaleSize, settings, ed, appendUrl);
     auto job = startFileDownload(sjob);
 
     // the processed page goes to the reader's cache, the job is kept until it finished (even if the caller
@@ -291,7 +273,12 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const Imag
                 if (sjob->resultImage)
                     emit downloadedImage(sjob->filepath, sjob->resultImage);
             });
-    connect(sjob, &DownloadJobBase::downloadError, this, [keepAlive]() { keepAlive->clear(); });
+    connect(sjob, &DownloadJobBase::downloadError, this,
+            [keepAlive, urlf, this]()
+            {
+                keepAlive->clear();
+                emit imageDownloadFailed(urlf);
+            });
 
     return job;
 }

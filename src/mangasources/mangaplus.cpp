@@ -255,8 +255,8 @@ MangaPlus::MangaPlus(NetworkManager *dm) : AbstractMangaSource(dm)
     headerRules.add("tokyo-cdn.com", "Origin", "https://mangaplus.shueisha.co.jp");
     headerRules.add("tokyo-cdn.com", "Referer", "https://mangaplus.shueisha.co.jp/");
 
-    QObject::connect(networkManager->networkAccessManager(), &QNetworkAccessManager::finished, &replyContext,
-                     [this](QNetworkReply *reply) { forgetFailedImageUrl(reply); });
+    QObject::connect(networkManager, &NetworkManager::imageDownloadFailed, &replyContext,
+                     [this](const QString &url) { forgetFailedImageUrl(url); });
 }
 
 // image urls expire one to two hours after they were loaded (at the start of the hour after next) and their
@@ -289,13 +289,14 @@ void MangaPlus::cleanUpStoredUrls(QSharedPointer<MangaInfo> info)
 
 // the core keeps a resolved image url until its page is downloaded, even after the url expired. a url that
 // couldn't be downloaded is forgotten, so it is resolved (and refreshed if needed) again the next time
-void MangaPlus::forgetFailedImageUrl(QNetworkReply *reply)
+void MangaPlus::forgetFailedImageUrl(const QString &url)
 {
-    if (reply->error() == QNetworkReply::NoError || !reply->url().host().endsWith("tokyo-cdn.com") ||
-        !reply->url().path().contains("/manga_page/"))
+    QUrl imageUrl(url);
+    if (!imageUrl.host().endsWith("tokyo-cdn.com") || !imageUrl.path().contains("/manga_page/"))
         return;
 
-    auto failedUrl = reply->url().toString(QUrl::RemoveFragment);
+    auto failedUrl = imageUrl.toString(QUrl::RemoveFragment);
+
 
     for (const auto &weakInfo : std::as_const(liveInfos))
     {
@@ -312,9 +313,9 @@ void MangaPlus::forgetFailedImageUrl(QNetworkReply *reply)
 
 bool MangaPlus::updateMangaList(UpdateProgressToken *token)
 {
-    auto job = downloadToBuffer(baseUrl + mangalistUrl, 20000);
+    auto job = download(baseUrl + mangalistUrl, 20000);
 
-    if (!job->await(20000))
+    if (!job->await())
     {
         token->sendError(job->errorString);
         return false;
@@ -374,9 +375,9 @@ bool MangaPlus::updateMangaList(UpdateProgressToken *token)
 
     for (const auto &type : QStringList{"hottest", "completed"})
     {
-        auto rankingJob = downloadToBuffer(baseUrl + rankingUrl.arg(type), 10000);
+        auto rankingJob = download(baseUrl + rankingUrl.arg(type), 10000);
 
-        bool ok = rankingJob->await(10000);
+        bool ok = rankingJob->await();
 
         if (token->canceled)
             return false;
@@ -436,7 +437,7 @@ void MangaPlus::updateMangaInfoAsync(QSharedPointer<MangaInfo> info, bool update
 }
 
 Result<MangaChapterCollection, QString> MangaPlus::updateMangaInfoFinishedLoading(
-    QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info)
+    QSharedPointer<DownloadBufferJob> job, QSharedPointer<MangaInfo> info)
 {
     auto successR = parseResponse(job->buffer);
     if (successR.isErr())
@@ -550,9 +551,9 @@ Result<QList<ImageLink>, QString> MangaPlus::getPageList(const QString &chapterU
     // the chapter urls are relative to the api
     auto url = chapterUrl.startsWith("http") ? chapterUrl : baseUrl + chapterUrl;
 
-    auto job = downloadToBuffer(url, 7000);
+    auto job = download(url, 7000);
 
-    if (!job->await(7000))
+    if (!job->await())
         return Err(job->errorString);
 
     auto successR = parseResponse(job->buffer);

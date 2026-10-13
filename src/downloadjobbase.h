@@ -7,32 +7,62 @@
 
 #include "httpheader.h"
 
-// A download. Every run (start() or restart()) finishes once, with completed() or downloadError(). Both are
-// emitted from the event loop, never from within a call to the job, and only when the job's network requests
-// are done. The state (isCompleted, hasFailed(), errorString) is set when it finishes, before the signal.
+// What to download and how hard to try.
+struct DownloadRequest
+{
+    QString url;
+    HttpHeaders headers;
+    // HEAD: only the status and the headers of the response
+    bool headOnly = false;
+    // the download with all its attempts fails after this (ms), 0: no limit
+    int timeout = 6000;
+    // an attempt that transfers nothing for this long fails (ms), 0: no limit
+    int transferTimeout = 0;
+    // Attempts after errors that may go away (no answer, 408, 429, 5xx and the retryStatuses). The pause before
+    // one doubles from retryDelay up to maxRetryDelay, unless the server asks for another one (Retry-After).
+    int maxRetries = 3;
+    int retryDelay = 500;
+    int maxRetryDelay = 4000;
+    QList<int> retryStatuses;
+};
+
+// A download. Every run (start() or restart()) finishes once, after its retries, with completed() or
+// downloadError(). Both are emitted from the event loop, never from within a call to the job, and only when the
+// job's network requests are done. The response (url, httpStatus, responseHeaders, errorString and the data of
+// the subclass) is set when it finishes, before the signal.
 class DownloadJobBase : public QObject
 {
     Q_OBJECT
 
 public:
-    DownloadJobBase(QNetworkAccessManager *networkManager, const QString &url, const HttpHeaders &headers = {});
+    DownloadJobBase(QNetworkAccessManager *networkManager, const DownloadRequest &request);
     virtual ~DownloadJobBase();
+
+    const DownloadRequest request;
 
     // the url that answered (after redirects)
     QString url;
-    // the requested url
-    const QString originalUrl;
     bool isCompleted;
     QString errorString;
     // of the last response, also of failed ones (0 without a response, e.g. no connection)
     int httpStatus;
+    HttpHeaders responseHeaders;
+    // The first header of the response with that name (case insensitive), empty if there is none.
+    QByteArray responseHeader(const QByteArray &name) const;
+    QByteArray contentType() const { return responseHeader("Content-Type"); }
 
     bool hasFailed() const;
     bool isFinished() const;
 
-    virtual void start() = 0;
-    // Starts over (e.g. after a failure).
-    virtual void restart() = 0;
+    void start();
+    // Starts over (e.g. after it failed).
+    void restart();
+    // Stops the download, it fails.
+    void cancel();
+
+    // Waits until the download finished, at most maxWait ms (no limit if <= 0, the download's timeout ends it).
+    // The download goes on after maxWait (others may wait for it too). Returns whether it completed.
+    bool await(int maxWait = 0);
 
     // Counts reply as active until it finished or got destroyed, and ignores its TLS errors (the sources'
     // hosts often have broken certificate chains, the device's clock can be wrong).
@@ -49,9 +79,6 @@ public:
     static const QByteArray defaultUserAgent;
     static QNetworkRequest createRequest(const QString &url, const HttpHeaders &headers);
 
-    // Errors that may go away by trying again: no answer, a timeout, rate limits and server errors.
-    static bool isTransientError(QNetworkReply *reply);
-
 signals:
     void completed();
     void downloadError();
@@ -60,15 +87,20 @@ protected:
     QNetworkAccessManager *networkManager;
     std::unique_ptr<QNetworkReply> reply;
     QPointer<QNetworkAccessManager> managerGuard;
-    HttpHeaders headers;
-    // held while the job waits to try again, see holdActivity()
-    std::shared_ptr<void> retryHold;
 
-    // Sends a GET request with the job's headers.
-    QNetworkReply *get(const QString &url);
+    // Sends the request of an attempt (the first one and the retries).
+    virtual void startAttempt() = 0;
+    // Clears the response for another run.
+    virtual void resetState();
 
-    // Resets the state for another run.
-    void resetState();
+    // A prepared request of the job to url (GET, or HEAD for a headOnly request).
+    QNetworkReply *send(const QString &url);
+    // Takes the url, status and headers of the response.
+    void takeResponse(QNetworkReply *reply);
+    // After an attempt failed: starts another one later, if the error may go away and the retries and the time
+    // allow it. Returns whether it will.
+    bool retryLater(QNetworkReply *reply);
+
     // Finish the run. The signal is emitted from the event loop (not for a run that was restarted meanwhile).
     void finishCompleted();
     void finishFailed(const QString &error);
@@ -82,6 +114,17 @@ private:
     bool failed;
     // counts the runs, a signal is only emitted for the current one
     int run;
+    int retries;
+    QTimer deadlineTimer;
+    QTimer retryTimer;
+    // held while the job waits to try again, see holdActivity()
+    std::shared_ptr<void> retryHold;
+
+    // Errors that may go away by trying again: no answer, a timeout, rate limits, server errors and the
+    // request's retryStatuses.
+    bool isTransientError(QNetworkReply *reply) const;
+    // The pause the server asks for (Retry-After), -1 if it doesn't.
+    static qint64 retryAfter(QNetworkReply *reply);
 };
 
 // Calls lambda (on the job's thread) when the job completes, the job is kept until it finished.

@@ -23,20 +23,6 @@ static const int maxListPages = 5;
 // pages that are warmed up in the background ahead of the requested one
 static const int prefetchPages = 3;
 
-struct ComickCacheWarmUp
-{
-    QNetworkAccessManager *networkAccessManager = nullptr;
-    QNetworkRequest request;
-    QElapsedTimer timer;
-    int timeout = 0;
-    bool finished = false;
-    bool cached = false;
-    QEventLoop *loop = nullptr;
-    std::function<void()> onCached;
-};
-
-using CacheWarmUp = ComickCacheWarmUp;
-
 namespace
 {
 // one chapter upload of the chapter list or the chapter endpoint
@@ -60,76 +46,21 @@ struct Upload
 };
 }  // namespace
 
-static void cacheWarmUpAttempt(QSharedPointer<CacheWarmUp> warmUp)
-{
-    auto reply = warmUp->networkAccessManager->head(warmUp->request);
-    DownloadJobBase::prepareReply(reply);
-
-    int remaining = warmUp->timeout - int(warmUp->timer.elapsed());
-    QTimer::singleShot(qBound(100, remaining, 2000), reply, &QNetworkReply::abort);
-
-    QObject::connect(reply, &QNetworkReply::finished, reply,
-                     [warmUp, reply]()
-                     {
-                         reply->deleteLater();
-
-                         int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-                         bool throttled = status == 429 || status >= 500;
-
-                         if (throttled && warmUp->timer.elapsed() + 400 < warmUp->timeout)
-                         {
-                             // no standby in between, it would stop the timer
-                             auto hold = DownloadJobBase::holdActivity();
-                             QTimer::singleShot(400, warmUp->networkAccessManager,
-                                                [warmUp, hold]() { cacheWarmUpAttempt(warmUp); });
-                             return;
-                         }
-
-                         if (throttled)
-                             qDebug() << "Comick: image still throttled:" << warmUp->request.url();
-
-                         warmUp->finished = true;
-                         warmUp->cached = status >= 200 && status < 400;
-
-                         if (warmUp->loop)
-                             warmUp->loop->quit();
-                         if (warmUp->cached && warmUp->onCached)
-                             warmUp->onCached();
-                     });
-}
-
 // images that are not in the cloudflare cache yet are often answered with 429 for a few seconds
 // (the origin is throttled for all users). HEAD requests (retried while throttled) pull the image
 // into the cache without transferring it, so the actual download afterwards is served from there.
-static QSharedPointer<CacheWarmUp> startCacheWarmUp(QNetworkAccessManager *networkAccessManager,
-                                                    const QString &imageUrl, int timeout)
+QSharedPointer<DownloadBufferJob> Comick::startCacheWarmUp(const QString &imageUrl, int timeout)
 {
-    auto warmUp = QSharedPointer<CacheWarmUp>::create();
-    warmUp->networkAccessManager = networkAccessManager;
-    warmUp->request = QNetworkRequest(QUrl(imageUrl));
-    warmUp->request.setRawHeader("User-Agent", userAgent);
-    warmUp->request.setRawHeader("Referer", "https://comick.art/");
-    warmUp->timeout = timeout;
-    warmUp->timer.start();
-
-    cacheWarmUpAttempt(warmUp);
-
-    return warmUp;
-}
-
-// waits until the warm-up is done, at most 'maxWait' ms
-static void awaitCacheWarmUp(const QSharedPointer<CacheWarmUp> &warmUp, int maxWait)
-{
-    int remaining = qMin(maxWait, warmUp->timeout - int(warmUp->timer.elapsed()));
-    if (warmUp->finished || remaining <= 0)
-        return;
-
-    auto hold = DownloadJobBase::holdActivity();
-    QEventLoop loop;
-    warmUp->loop = &loop;
-    QTimer::singleShot(remaining, &loop, &QEventLoop::quit);
-    loop.exec();
-    warmUp->loop = nullptr;
+    DownloadRequest request;
+    request.url = imageUrl;
+    request.headers = {{"User-Agent", userAgent}, {"Referer", "https://comick.art/"}};
+    request.headOnly = true;
+    request.timeout = timeout;
+    request.transferTimeout = 2000;
+    request.retryDelay = 400;
+    request.maxRetryDelay = 400;
+    request.maxRetries = timeout / request.retryDelay;
+    return download(request);
 }
 
 static QString getStringSafe(const GenericValue<UTF8<>> &jsonobject, const char *member)
@@ -489,9 +420,11 @@ static void keepLoadedUploads(MangaChapterCollection &chapters, const MangaChapt
 static Result<int, QString> fetchUploads(NetworkManager *networkManager, const QString &url,
                                          QList<Upload> &uploads)
 {
-    auto job = networkManager->downloadAsString(url, 6000);
+    DownloadRequest request;
+    request.url = url;
+    auto job = networkManager->download(request);
 
-    if (!job->await(6000))
+    if (!job->await())
         return Err(job->errorString);
 
     try
@@ -636,9 +569,9 @@ bool Comick::fetchSearch(const QString &order, int pages, ComickUpdateState &sta
         if (!cursor.isEmpty())
             searchUrl += "&cursor=" + QString::fromLatin1(QUrl::toPercentEncoding(cursor));
 
-        auto job = downloadAsString(searchUrl, 10000);
+        auto job = download(searchUrl, 10000);
 
-        if (!job->await(10000))
+        if (!job->await())
         {
             qDebug() << "Comick: search failed:" << order << job->errorString;
             return false;
@@ -689,9 +622,9 @@ bool Comick::fetchSitemaps(ComickUpdateState &state, UpdateProgressToken *token)
 {
     QRegularExpression sitemaprx(R"lit(<loc>\s*([^<\s]*/sitemap-comic-(\d+)\.xml)\s*</loc>)lit");
 
-    auto indexJob = downloadToBuffer(baseUrl + "/sitemap.xml", 10000);
+    auto indexJob = download(baseUrl + "/sitemap.xml", 10000);
 
-    if (!indexJob->await(10000))
+    if (!indexJob->await())
     {
         token->sendError(indexJob->errorString);
         return false;
@@ -712,9 +645,9 @@ bool Comick::fetchSitemaps(ComickUpdateState &state, UpdateProgressToken *token)
         if (state.sitemapsDone.contains(it.key()))
             continue;
 
-        auto job = downloadToBuffer(it.value(), 30000);
+        auto job = download(it.value(), 30000);
 
-        if (!job->await(30000))
+        if (!job->await())
         {
             token->sendError(job->errorString);
             return false;
@@ -759,7 +692,7 @@ bool Comick::fetchSitemaps(ComickUpdateState &state, UpdateProgressToken *token)
 }
 
 Result<MangaChapterCollection, QString> Comick::updateMangaInfoFinishedLoading(
-    QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info)
+    QSharedPointer<DownloadBufferJob> job, QSharedPointer<MangaInfo> info)
 {
     // all infos are embedded as json in the comic page
     const auto &buffer = job->buffer;
@@ -842,13 +775,13 @@ Result<MangaChapterCollection, QString> Comick::updateMangaInfoFinishedLoading(
     auto coverPath = info->coverPath.isEmpty() ? defaultCoverPath(info) : info->coverPath;
     if (!info->coverUrl.isEmpty() && !QFile::exists(coverPath))
     {
-        auto coverWarmUp = startCacheWarmUp(networkManager->networkAccessManager(), info->coverUrl, 8000);
         QWeakPointer<MangaInfo> weakInfo = info;
-        coverWarmUp->onCached = [this, weakInfo]()
-        {
-            if (auto info = weakInfo.toStrongRef())
-                downloadCoverAsync(info, false);
-        };
+        executeOnJobCompletion(startCacheWarmUp(info->coverUrl, 8000),
+                               [this, weakInfo]()
+                               {
+                                   if (auto info = weakInfo.toStrongRef())
+                                       downloadCoverAsync(info, false);
+                               });
     }
 
     auto chapters = fetchChapters(slug, info->chapters);
@@ -902,8 +835,8 @@ Result<MangaChapterCollection, QString> Comick::fetchChapters(const QString &slu
     // number, preferring the scanlation group of the requested chapter
     QList<Upload> entries;
     auto anchor = anchorUpload(uploads, currentHids);
-    auto job = downloadAsString(apiUrl + "/comics/" + chapterPath(slug, anchor), 8000);
-    bool loaded = job->await(8000);
+    auto job = download(apiUrl + "/comics/" + chapterPath(slug, anchor), 8000);
+    bool loaded = job->await();
 
     if (loaded)
     {
@@ -1056,9 +989,9 @@ Result<MangaChapterCollection, QString> Comick::fetchChapters(const QString &slu
 
 Result<QList<ImageLink>, QString> Comick::getPageList(const QString &chapterUrl)
 {
-    auto job = downloadAsString(apiUrl + "/comics/" + chapterUrl, 8000);
+    auto job = download(apiUrl + "/comics/" + chapterUrl, 8000);
 
-    if (!job->await(8000))
+    if (!job->await())
         return Err(job->errorString);
 
     QStringList imageUrls;
@@ -1098,7 +1031,6 @@ Result<QList<ImageLink>, QString> Comick::getPageList(const QString &chapterUrl)
 Result<ImageLink, QString> Comick::getImageLink(const ImageLink &page)
 {
     const QString &pageUrl = page.url;
-    auto networkAccessManager = networkManager->networkAccessManager();
 
     // the following pages are usually requested next
     auto next = pageUrl;
@@ -1106,21 +1038,21 @@ Result<ImageLink, QString> Comick::getImageLink(const ImageLink &page)
     {
         next = nextPages.value(next);
         if (!pageWarmUps.contains(next))
-            pageWarmUps.insert(next, startCacheWarmUp(networkAccessManager, next, 8000));
+            pageWarmUps.insert(next, startCacheWarmUp(next, 8000));
     }
 
     auto warmUp = pageWarmUps.take(pageUrl);
-    if (!warmUp || (warmUp->finished && !warmUp->cached))
-        warmUp = startCacheWarmUp(networkAccessManager, pageUrl, 5000);
+    if (!warmUp || warmUp->hasFailed())
+        warmUp = startCacheWarmUp(pageUrl, 5000);
 
-    awaitCacheWarmUp(warmUp, 5000);
+    warmUp->await(5000);
 
     // warm-ups of skipped pages
     if (pageWarmUps.size() > 32)
     {
         for (auto it = pageWarmUps.begin(); it != pageWarmUps.end();)
         {
-            if (it.value()->finished)
+            if (it.value()->isFinished())
                 it = pageWarmUps.erase(it);
             else
                 ++it;

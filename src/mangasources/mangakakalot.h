@@ -27,7 +27,7 @@ public:
                                                             const QString &mangaTitle) override;
     void updateMangaInfoAsync(QSharedPointer<MangaInfo> info, bool updateCover = true) override;
     Result<MangaChapterCollection, QString> updateMangaInfoFinishedLoading(
-        QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info) override;
+        QSharedPointer<DownloadBufferJob> job, QSharedPointer<MangaInfo> info) override;
     Result<QList<ImageLink>, QString> getPageList(const QString &chapterUrl) override;
     QString coverFallbackUrl(const QString &coverUrl) override;
 
@@ -44,16 +44,16 @@ private:
     // unless the manga page couldn't be loaded. Only used while it is fresh.
     struct PrefetchedChapters
     {
-        QSharedPointer<DownloadStringJob> job;
+        QSharedPointer<DownloadBufferJob> job;
         QElapsedTimer age;
     };
     QHash<QString, PrefetchedChapters> prefetchedChapters;
-    void prefetchChapters(const QString &slug, QSharedPointer<DownloadStringJob> job);
-    QSharedPointer<DownloadStringJob> takePrefetchedChapters(const QString &slug);
+    void prefetchChapters(const QString &slug, QSharedPointer<DownloadBufferJob> job);
+    QSharedPointer<DownloadBufferJob> takePrefetchedChapters(const QString &slug);
     QSet<QString> imageHosts;
 
     void addImageHost(const QString &host);
     Result<QList<ImageLink>, QString> joinSplitPages(const QStringList &imageUrls);
     QString normalizeUrl(const QString &url) const;
-    QSharedPointer<DownloadStringJob> downloadChapterList(const QString &slug, int offset);
+    QSharedPointer<DownloadBufferJob> downloadChapterList(const QString &slug, int offset);
 };

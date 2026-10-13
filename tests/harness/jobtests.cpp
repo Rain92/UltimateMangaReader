@@ -17,37 +17,105 @@ int jobTests(NetworkManager &nm, const QString &base)
         out << (ok ? "PASS " : "FAIL ") << what << "\n";
         failures += !ok;
     };
+    auto request = [&](const QString &path, int timeout = 3000)
+    {
+        DownloadRequest request;
+        request.url = base + path;
+        request.timeout = timeout;
+        return request;
+    };
 
     {
-        auto job = nm.downloadAsString(base + "/delay/3");
+        auto job = nm.download(request("/delay/3", 500));
         QElapsedTimer t;
         t.start();
-        bool ok = job->await(500);
-        check("await timeout returns false in time", !ok && t.elapsed() < 1500);
+        bool ok = job->await();
+        check("the timeout ends the download", !ok && t.elapsed() < 1500);
         check("timeout error", job->errorString == "Download timeout.");
         check("timed out job is finished and aborted", job->hasFailed() && DownloadJobBase::activeReplies() == 0);
     }
     {
-        auto job = nm.downloadAsString(base + "/status/404");
-        bool ok = job->await(3000);
+        auto job = nm.download(request("/delay/1", 3000));
+        bool ok = job->await(200);
+        check("await with a limit doesn't stop the download", !ok && !job->isFinished());
+        check("the download goes on", job->await() && job->text() == "late");
+    }
+    {
+        auto job = nm.download(request("/status/404"));
+        bool ok = job->await();
         check("404 fails without retry", !ok && job->httpStatus == 404 && job->errorString.contains("404"));
+        check("the body of an error response is kept", job->text() == "status");
     }
     {
-        auto job = nm.downloadAsString(base + "/flaky/1");
-        bool ok = job->await(3000);
-        check("503 is retried", ok && job->bufferStr == "ok after retry");
+        auto job = nm.download(request("/flaky/1"));
+        bool ok = job->await();
+        check("503 is retried", ok && job->text() == "ok after retry");
     }
     {
-        auto job = nm.downloadAsString(base + "/redirect");
-        bool ok = job->await(3000);
-        check("redirect followed, final url", ok && job->bufferStr == "final" && job->url.endsWith("/final") &&
-                                                  job->originalUrl.endsWith("/redirect"));
+        auto plain = nm.download(request("/flaky400/1"));
+        auto r = request("/flaky400/2");
+        r.retryStatuses = {400};
+        auto retried = nm.download(r);
+        check("400 isn't retried by default", !plain->await() && plain->httpStatus == 400);
+        check("statuses of the request are retried", retried->await() && retried->text() == "ok after 400");
     }
     {
-        auto job = nm.downloadAsString(base + "/headers", 3000, {{"Referer", "https://example.org/"}});
-        bool ok = job->await(3000);
-        check("request headers sent", ok && job->bufferStr.contains("Referer: https://example.org/") &&
-                                          job->bufferStr.contains("Chrome/"));
+        auto job = nm.download(request("/retryafter/1/a", 4000));
+        QElapsedTimer t;
+        t.start();
+        bool ok = job->await();
+        check("Retry-After is waited for", ok && t.elapsed() >= 950 && job->text() == "ok after retry-after");
+
+        auto late = nm.download(request("/retryafter/2/b", 1000));
+        t.restart();
+        check("a Retry-After past the timeout fails right away",
+              !late->await() && late->httpStatus == 429 && t.elapsed() < 500);
+    }
+    {
+        auto r = request("/status/503", 1200);
+        auto job = nm.download(r);
+        QElapsedTimer t;
+        t.start();
+        bool ok = job->await();
+        check("retries end in time", !ok && job->httpStatus == 503 && t.elapsed() >= 450 && t.elapsed() < 1300);
+        check("no activity left after the retries", DownloadJobBase::activeReplies() == 0);
+    }
+    {
+        auto job = nm.download(request("/redirect"));
+        bool ok = job->await();
+        check("redirect followed, final url", ok && job->text() == "final" && job->url.endsWith("/final") &&
+                                                  job->request.url.endsWith("/redirect"));
+    }
+    {
+        auto r = request("/headers");
+        r.headers = {{"Referer", "https://example.org/"}};
+        auto job = nm.download(r);
+        bool ok = job->await();
+        check("request headers sent", ok && job->text().contains("Referer: https://example.org/") &&
+                                          job->text().contains("Chrome/"));
+    }
+    {
+        auto job = nm.download(request("/image/10x10"));
+        bool ok = job->await();
+        check("response headers, content type", ok && job->contentType() == "image/png" &&
+                                                    job->responseHeader("content-type") == "image/png" &&
+                                                    !job->responseHeaders.isEmpty());
+
+        auto r = request("/file/head");
+        r.headOnly = true;
+        auto head = nm.download(r);
+        check("HEAD: the headers only", head->await() && head->httpStatus == 200 && head->buffer.isEmpty() &&
+                                            head->responseHeader("Content-Length") == "10000");
+    }
+    {
+        auto job = nm.download(request("/delay/2"));
+        QTimer::singleShot(100, job.get(), [job]() { job->cancel(); });
+        QElapsedTimer t;
+        t.start();
+        bool ok = job->await();
+        check("cancel ends the download", !ok && t.elapsed() < 1000 && job->errorString == "Download cancelled");
+        QCoreApplication::processEvents();
+        check("a cancelled download leaves no activity", DownloadJobBase::activeReplies() == 0);
     }
     {
         // the signals come from the event loop, also for a job that fails right away
@@ -59,7 +127,8 @@ int jobTests(NetworkManager &nm, const QString &base)
         t.start();
         while (!signalled && t.elapsed() < 2000)
             QCoreApplication::processEvents();
-        check("unwritable file fails from the event loop", signalled && !synchronous && job->errorString.startsWith("Can't create file"));
+        check("unwritable file fails from the event loop",
+              signalled && !synchronous && job->errorString.startsWith("Can't create file"));
     }
     {
         QString dir = CONF.cacheDir + "jobtest/";
@@ -73,7 +142,10 @@ int jobTests(NetworkManager &nm, const QString &base)
                                                       !QFile::exists(dir + "a.bin.part"));
         auto c = nm.downloadAsFile(base + "/file/same", dir + "a.bin");
         check("a finished job that is still held is handed out", c == a && c->isCompleted);
-        a.clear(); a2.clear(); c.clear(); b.clear();
+        a.clear();
+        a2.clear();
+        c.clear();
+        b.clear();
         QCoreApplication::processEvents();
 
         bool again = false;
@@ -92,8 +164,14 @@ int jobTests(NetworkManager &nm, const QString &base)
 
         bool cancel = false;
         int done = 0;
-        DownloadQueue queue2(&nm, {base + "/delay/0.2", base + "/delay/0.2", base + "/delay/0.2", base + "/delay/0.2"},
-                             1, [&](QSharedPointer<DownloadStringJob>) { if (++done == 1) cancel = true; }, false);
+        DownloadQueue queue2(
+            &nm, {base + "/delay/0.2", base + "/delay/0.2", base + "/delay/0.2", base + "/delay/0.2"}, 1,
+            [&](QSharedPointer<DownloadBufferJob>)
+            {
+                if (++done == 1)
+                    cancel = true;
+            },
+            false);
         queue2.setCancellationToken(&cancel);
         queue2.start();
         bool ok2 = queue2.awaitCompletion();
@@ -106,10 +184,10 @@ int jobTests(NetworkManager &nm, const QString &base)
         DownloadJobBase::waitMs(200);
         check("a pause counts as activity until it ends", during == 1 && DownloadJobBase::activeReplies() == 0);
 
-        auto job = nm.downloadAsString(base + "/delay/1");
+        auto job = nm.download(request("/delay/1"));
         int whileWaiting = -1;
         QTimer::singleShot(300, [&whileWaiting]() { whileWaiting = DownloadJobBase::activeReplies(); });
-        job->await(3000);
+        job->await();
         check("await holds activity besides its reply", whileWaiting == 2 && DownloadJobBase::activeReplies() == 0);
     }
     check("no active replies at the end", DownloadJobBase::activeReplies() == 0);

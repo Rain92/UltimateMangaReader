@@ -13,17 +13,16 @@ class DownloadScaledImageJob : public DownloadFileJob
 
 public:
     DownloadScaledImageJob(QNetworkAccessManager *networkManager, ImageProcessor *imageProcessor,
-                           const QString &url, const QString &path, QSize screenSize, Settings *settings,
-                           const HttpHeaders &headers = {}, const EncryptionDescriptor &encryption = {},
+                           const DownloadRequest &request, const QString &path, QSize screenSize,
+                           Settings *settings, const EncryptionDescriptor &encryption = {},
                            const QString &appendUrl = {});
     virtual ~DownloadScaledImageJob();
-
-    void restart() override;
 
     // the processed page, when it was downloaded (not when the file was there already)
     QSharedPointer<QImage> resultImage;
 
 protected:
+    void resetState() override;
     QString prepareTarget() override;
     void readyRead() override;
     void replySucceeded() override;

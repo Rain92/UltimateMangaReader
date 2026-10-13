@@ -4,7 +4,7 @@
 
 DownloadQueue::DownloadQueue(NetworkManager* networkManager, const QList<QString>& urls,
                              int parallelDownloads,
-                             std::function<void(QSharedPointer<DownloadStringJob>)> lambda,
+                             std::function<void(QSharedPointer<DownloadBufferJob>)> lambda,
                              bool cancelOnError, int individualTimeout,
                              std::function<HttpHeaders(const QString&)> headersFor)
     : QObject(),
@@ -68,8 +68,13 @@ void DownloadQueue::startSingle()
     QSharedPointer<DownloadJobBase> job;
 
     if (type == DownloadTypeString)
-        job = networkManager->downloadAsString(descriptor.image.url, individualTimeout,
-                                               headersFor ? headersFor(descriptor.image.url) : HttpHeaders());
+    {
+        DownloadRequest request;
+        request.url = descriptor.image.url;
+        request.headers = headersFor ? headersFor(descriptor.image.url) : HttpHeaders();
+        request.timeout = individualTimeout;
+        job = networkManager->download(request);
+    }
     else  // if (type == DownloadTypeScaledImage)
         job = networkManager->downloadAsScaledImage(descriptor.image, descriptor.path);
 
@@ -98,11 +103,11 @@ void DownloadQueue::downloadFinished(QSharedPointer<DownloadJobBase> job, bool s
     {
         if (lambda != nullptr)
         {
-            auto jobS = job.dynamicCast<DownloadStringJob>();
+            auto jobS = job.dynamicCast<DownloadBufferJob>();
             if (jobS != nullptr)
                 lambda(jobS);
         }
-        emit singleDownloadCompleted(job->originalUrl, path);
+        emit singleDownloadCompleted(job->request.url, path);
     }
     else
     {
@@ -110,7 +115,7 @@ void DownloadQueue::downloadFinished(QSharedPointer<DownloadJobBase> job, bool s
         lastErrorMessage = job->errorString;
         if (cancelOnError)
             clearQueue();
-        emit singleDownloadFailed(job->originalUrl, path, job->errorString);
+        emit singleDownloadFailed(job->request.url, path, job->errorString);
     }
 
     // counts as one error

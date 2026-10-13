@@ -1,11 +1,10 @@
 #include "downloadimageandrescalejob.h"
 
 DownloadScaledImageJob::DownloadScaledImageJob(QNetworkAccessManager *networkManager,
-                                               ImageProcessor *imageProcessor, const QString &url,
+                                               ImageProcessor *imageProcessor, const DownloadRequest &request,
                                                const QString &path, QSize screenSize, Settings *settings,
-                                               const HttpHeaders &headers, const EncryptionDescriptor &encryption,
-                                               const QString &appendUrl)
-    : DownloadFileJob(networkManager, url, path, headers),
+                                               const EncryptionDescriptor &encryption, const QString &appendUrl)
+    : DownloadFileJob(networkManager, request, path),
       resultImage(nullptr),
       imageProcessor(imageProcessor),
       screenSize(screenSize),
@@ -53,24 +52,18 @@ void DownloadScaledImageJob::replySucceeded()
     process({});
 }
 
-void DownloadScaledImageJob::restart()
+void DownloadScaledImageJob::resetState()
 {
+    DownloadFileJob::resetState();
     appendReply.reset();
     appendRetries = 0;
     pageData.clear();
     processingId = 0;
-    DownloadFileJob::restart();
 }
 
 void DownloadScaledImageJob::downloadAppendix()
 {
-    retryHold.reset();
-
-    QNetworkRequest request = createRequest(appendUrl, headers);
-    request.setTransferTimeout(20000);
-
-    appendReply.reset(networkManager->get(request));
-    prepareReply(appendReply.get());
+    appendReply.reset(send(appendUrl));
 
     QObject::connect(appendReply.get(), &QNetworkReply::finished, this,
                      &DownloadScaledImageJob::appendixFinished);
@@ -84,17 +77,23 @@ void DownloadScaledImageJob::appendixFinished()
         return;
     }
 
-    if (isTransientError(appendReply.get()) && appendRetries++ < 1)
+    int status = appendReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    if ((status == 0 || status == 408 || status == 429 || status >= 500) && appendRetries++ < 1)
     {
-        retryHold = holdActivity();
+        // no standby until then, it would stop the timer
+        auto hold = holdActivity();
         // not right away: this runs in a signal of the reply that downloadAppendix() deletes
-        QTimer::singleShot(1000, this, &DownloadScaledImageJob::downloadAppendix);
+        QTimer::singleShot(1000, this,
+                           [this, hold]()
+                           {
+                               if (!isFinished())
+                                   downloadAppendix();
+                           });
         return;
     }
 
     // Without an answer (no connection, a timeout) the whole page fails: saved without it, a later download
     // wouldn't try again.
-    int status = appendReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     if (status == 0)
     {
         finishFailed("Couldn't download the rest of the page: " + appendReply->errorString());
@@ -108,8 +107,6 @@ void DownloadScaledImageJob::appendixFinished()
 
 void DownloadScaledImageJob::process(const QByteArray &appendData)
 {
-    retryHold.reset();
-
     // the image is processed on the image processor's thread, see processingFinished()
     ImageProcessingRequest request;
     request.data = pageData;

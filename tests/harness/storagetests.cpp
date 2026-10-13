@@ -28,7 +28,7 @@ public:
         headerRules.add("127.0.0.1", "Referer", "https://fake.example/");
     }
     bool updateMangaList(UpdateProgressToken *) override { return true; }
-    Result<MangaChapterCollection, QString> updateMangaInfoFinishedLoading(QSharedPointer<DownloadStringJob>,
+    Result<MangaChapterCollection, QString> updateMangaInfoFinishedLoading(QSharedPointer<DownloadBufferJob>,
                                                                           QSharedPointer<MangaInfo>) override
     {
         return Ok(nextChapters);
@@ -373,9 +373,11 @@ int storageTests(const QString &server)
     ImageLink withHeaders = ImageLink::fromUrl(server + "/image/100x152");
     withHeaders.headers.append(HttpHeader{"X-Test", "abc"});
     download(withHeaders, "headers");
-    auto headersJob = nm.downloadAsString(server + "/lastheaders");
-    headersJob->await(5000);
-    check(headersJob->bufferStr.contains("X-Test: abc") && headersJob->bufferStr.contains("Referer: https://fake.example/"),
+    DownloadRequest lastHeaders;
+    lastHeaders.url = server + "/lastheaders";
+    auto headersJob = nm.download(lastHeaders);
+    headersJob->await();
+    check(headersJob->text().contains("X-Test: abc") && headersJob->text().contains("Referer: https://fake.example/"),
           "image request has the link headers and the source headers");
 
     out << (failures == 0 ? "all ok" : QString::number(failures) + " FAILED") << "\n";

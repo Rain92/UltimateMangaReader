@@ -68,11 +68,11 @@ bool MangaTown::updateMangaList(UpdateProgressToken *token)
     token->sendProgress(token->sourcesProgress.value(name));
 
     // parallel to state.queuedPages
-    QList<QSharedPointer<DownloadStringJob>> jobs;
+    QList<QSharedPointer<DownloadBufferJob>> jobs;
     auto requestPage = [&](const QString &url)
     {
         state.queuedPages.append(url);
-        jobs.append(downloadAsString(url, 30000));
+        jobs.append(download(url, 30000));
     };
     auto requestNextPage = [&]()
     {
@@ -101,7 +101,7 @@ bool MangaTown::updateMangaList(UpdateProgressToken *token)
             job->restart();
 
         // the page stays queued for a retry
-        if (!job->await(30000))
+        if (!job->await())
         {
             token->sendError(job->errorString);
             return false;
@@ -117,7 +117,8 @@ bool MangaTown::updateMangaList(UpdateProgressToken *token)
         auto pageUrl = state.queuedPages.takeFirst();
 
         int oldSize = state.mangas.size;
-        auto matches = getAllRxMatches(mangarx, job->bufferStr);
+        const auto html = job->text();
+        auto matches = getAllRxMatches(mangarx, html);
         for (int i = 0; i < matches.size(); i++)
         {
             auto url = matches[i].captured(1);
@@ -125,8 +126,8 @@ bool MangaTown::updateMangaList(UpdateProgressToken *token)
                 continue;
             state.urls.insert(url);
 
-            int epos = i + 1 < matches.size() ? matches[i + 1].capturedStart() : job->bufferStr.length();
-            auto viewsmatch = viewsrx.match(job->bufferStr, matches[i].capturedEnd());
+            int epos = i + 1 < matches.size() ? matches[i + 1].capturedStart() : html.length();
+            auto viewsmatch = viewsrx.match(html, matches[i].capturedEnd());
             bool hasViews = viewsmatch.hasMatch() && viewsmatch.capturedStart() < epos;
 
             // the html converter is slow and only a few titles have entities. It collapses whitespace like
@@ -189,7 +190,7 @@ bool MangaTown::updateMangaList(UpdateProgressToken *token)
 }
 
 Result<MangaChapterCollection, QString> MangaTown::updateMangaInfoFinishedLoading(
-    QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info)
+    QSharedPointer<DownloadBufferJob> job, QSharedPointer<MangaInfo> info)
 {
     QRegularExpression authorrx(R"lit(<b>Author\(s\):</b>(.*?)</?li)lit",
                                 QRegularExpression::DotMatchesEverythingOption);
@@ -211,38 +212,39 @@ Result<MangaChapterCollection, QString> MangaTown::updateMangaInfoFinishedLoadin
     QRegularExpression chapterspanrx(R"lit(<span>([^<]*)</span>)lit");
     QRegularExpression volumerx(R"lit(^Vol\s+\S+$)lit");
 
-    if (!job->bufferStr.contains(R"(class="detail_info)"))
+    const auto html = job->text();
+    if (!html.contains(R"(class="detail_info)"))
         return Err(QString("Couldn't parse manga infos."));
 
-    fillMangaInfo(info, job->bufferStr, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx, coverrx);
+    fillMangaInfo(info, html, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx, coverrx);
 
-    auto authorrxmatch = authorrx.match(job->bufferStr);
+    auto authorrxmatch = authorrx.match(html);
     if (authorrxmatch.hasMatch())
         info->author = htmlToPlainText(joinLinkTexts(authorrxmatch.captured(1))).trimmed();
-    auto artistrxmatch = artistrx.match(job->bufferStr);
+    auto artistrxmatch = artistrx.match(html);
     if (artistrxmatch.hasMatch())
         info->artist = htmlToPlainText(joinLinkTexts(artistrxmatch.captured(1))).trimmed();
     info->status = info->status.trimmed();
     info->summary = info->summary.trimmed();
     info->coverUrl = absoluteImageUrl(info->coverUrl);
 
-    int spos = job->bufferStr.indexOf(R"(<ul class="chapter_list">)");
+    int spos = html.indexOf(R"(<ul class="chapter_list">)");
     if (spos == -1)
     {
-        auto message = licensedMessage(job->bufferStr);
+        auto message = licensedMessage(html);
         if (message != "")
             return Err(message);
 
         return Ok(MangaChapterCollection());
     }
-    int epos = job->bufferStr.indexOf(R"(</ul>)", spos);
+    int epos = html.indexOf(R"(</ul>)", spos);
     // a page that was cut off would give some of the chapters only
     if (epos == -1)
         return Err(QString("Couldn't parse the chapter list."));
 
     MangaChapterCollection newchapters;
     QSet<QString> chapterUrls;
-    for (auto &chapterrxmatch : getAllRxMatches(chapterrx, job->bufferStr, spos, epos))
+    for (auto &chapterrxmatch : getAllRxMatches(chapterrx, html, spos, epos))
     {
         auto li = chapterrxmatch.captured(1);
         auto linkmatch = chapterlinkrx.match(li);
@@ -284,15 +286,16 @@ Result<QList<ImageLink>, QString> MangaTown::getPageList(const QString &chapterU
         R"lit(>(\d+)</option>\s*?(?:<option\s*?value="/manga/[^"]*?"\s*?>Featured</option>)?\s*?</select>)lit");
     QRegularExpression stripimagerx(R"lit(<img src="([^"]*)" class="image")lit");
 
-    auto job = downloadAsString(chapterUrl);
+    auto job = download(chapterUrl, 7000);
 
-    if (!job->await(7000))
+    if (!job->await())
         return Err(job->errorString);
+    const auto html = job->text();
 
-    int vpos = job->bufferStr.indexOf(R"(<div id="viewer")");
+    int vpos = html.indexOf(R"(<div id="viewer")");
     if (vpos == -1)
     {
-        auto message = licensedMessage(job->bufferStr);
+        auto message = licensedMessage(html);
         if (message != "")
             return Err(message);
 
@@ -302,21 +305,21 @@ Result<QList<ImageLink>, QString> MangaTown::getPageList(const QString &chapterU
     QStringList imageUrls;
 
     // long strip chapters show all images on one page
-    int epos = job->bufferStr.indexOf(R"(<div class="manga_read)", vpos);
-    for (auto &match : getAllRxMatches(stripimagerx, job->bufferStr, vpos, epos))
+    int epos = html.indexOf(R"(<div class="manga_read)", vpos);
+    for (auto &match : getAllRxMatches(stripimagerx, html, vpos, epos))
         imageUrls.append(absoluteImageUrl(match.captured(1)));
 
     if (!imageUrls.isEmpty())
         return Ok(ImageLink::fromUrls(imageUrls));
 
     int numPages = 0;
-    auto totalpagesmatch = totalpagesrx.match(job->bufferStr);
+    auto totalpagesmatch = totalpagesrx.match(html);
     if (totalpagesmatch.hasMatch())
         numPages = totalpagesmatch.captured(1).toInt();
 
     if (numPages <= 0)
     {
-        auto numPagesRxMatch = numPagesRx.match(job->bufferStr);
+        auto numPagesRxMatch = numPagesRx.match(html);
         if (numPagesRxMatch.hasMatch())
             numPages = numPagesRxMatch.captured(1).toInt();
     }
@@ -343,16 +346,18 @@ Result<ImageLink, QString> MangaTown::getImageLink(const ImageLink &page)
     QRegularExpression imgUrlRx(R"lit(<img src="([^"]*)"[^>]*id="image")lit");
     QRegularExpression anyImgUrlRx(R"lit(<img[^>]*src="([^"]*)")lit");
 
-    auto job = downloadAsString(pageUrl);
+    auto job = download(pageUrl, 6000);
 
-    if (!job->await(6000))
+    if (!job->await())
         return Err(job->errorString);
+    const auto html = job->text();
 
-    int vpos = qMax(0, job->bufferStr.indexOf(R"(<div id="viewer")"));
 
-    auto match = imgUrlRx.match(job->bufferStr, vpos);
+    int vpos = qMax(0, html.indexOf(R"(<div id="viewer")"));
+
+    auto match = imgUrlRx.match(html, vpos);
     if (!match.hasMatch())
-        match = anyImgUrlRx.match(job->bufferStr, vpos);
+        match = anyImgUrlRx.match(html, vpos);
 
     if (!match.hasMatch())
         return Err(QString("Couldn't process pages/images."));

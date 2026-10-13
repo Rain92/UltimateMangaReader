@@ -26,7 +26,7 @@ public:
 
     bool updateMangaList(UpdateProgressToken *token) override;
     Result<MangaChapterCollection, QString> updateMangaInfoFinishedLoading(
-        QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info) override;
+        QSharedPointer<DownloadBufferJob> job, QSharedPointer<MangaInfo> info) override;
     Result<QList<ImageLink>, QString> getPageList(const QString &chapterUrl) override;
     Result<ImageLink, QString> getImageLink(const ImageLink &page) override;
 

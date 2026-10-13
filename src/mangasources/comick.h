@@ -18,9 +18,6 @@ struct ComickUpdateState
     bool knownTitlesLoaded = false;
 };
 
-// a request that gets an image into the cdn's cache, see comick.cpp
-struct ComickCacheWarmUp;
-
 class Comick : public AbstractMangaSource
 {
 public:
@@ -29,7 +26,7 @@ public:
 
     bool updateMangaList(UpdateProgressToken *token) override;
     Result<MangaChapterCollection, QString> updateMangaInfoFinishedLoading(
-        QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info) override;
+        QSharedPointer<DownloadBufferJob> job, QSharedPointer<MangaInfo> info) override;
     Result<QList<ImageLink>, QString> getPageList(const QString &chapterUrl) override;
     Result<ImageLink, QString> getImageLink(const ImageLink &page) override;
 
@@ -37,7 +34,10 @@ private:
     QString apiUrl;
     QVector<QString> statuses;
     QHash<QString, QString> nextPages;
-    QHash<QString, QSharedPointer<ComickCacheWarmUp>> pageWarmUps;
+    // requests that get the next pages into the cdn's cache
+    QHash<QString, QSharedPointer<DownloadBufferJob>> pageWarmUps;
+
+    QSharedPointer<DownloadBufferJob> startCacheWarmUp(const QString &imageUrl, int timeout);
 
     bool fetchSearch(const QString &order, int pages, ComickUpdateState &state, UpdateProgressToken *token,
                      int progressFrom, int progressTo);

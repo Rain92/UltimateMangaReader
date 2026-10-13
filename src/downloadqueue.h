@@ -23,7 +23,7 @@ class DownloadQueue : public QObject
 public:
     // Downloads texts, lambda gets the ones that completed. headersFor: the headers of the requests.
     explicit DownloadQueue(NetworkManager *networkManager, const QList<QString> &urls, int parallelDownloads,
-                           std::function<void(QSharedPointer<DownloadStringJob>)> lambda, bool cancelOnError,
+                           std::function<void(QSharedPointer<DownloadBufferJob>)> lambda, bool cancelOnError,
                            int individualTimeout = 30000,
                            std::function<HttpHeaders(const QString &)> headersFor = nullptr);
 
@@ -64,7 +64,7 @@ private:
     DownloadType type;
     int parallelDownloads;
     QQueue<FileDownloadDescriptor> jobDescriptorQueue;
-    std::function<void(QSharedPointer<DownloadStringJob>)> lambda;
+    std::function<void(QSharedPointer<DownloadBufferJob>)> lambda;
     int individualTimeout;
     std::function<HttpHeaders(const QString &)> headersFor;
     bool *cancellationToken;

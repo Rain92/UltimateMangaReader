@@ -328,7 +328,7 @@ MangaDex::MangaDex(NetworkManager *dm)
 }
 
 bool MangaDex::downloadThrottled(const QStringList &urls, UpdateProgressToken *token,
-                                 const std::function<bool(int, QSharedPointer<DownloadStringJob>)> &handler)
+                                 const std::function<bool(int, QSharedPointer<DownloadBufferJob>)> &handler)
 {
     // the api allows about 5 requests per second. Its edge servers reject a random part of the
     // list requests at once with "400 Bad Request", retrying right away almost always works.
@@ -353,9 +353,9 @@ bool MangaDex::downloadThrottled(const QStringList &urls, UpdateProgressToken *t
 
     QVector<int> retries(urls.size(), 0);
     QVector<qint64> retryAt(urls.size(), 0);
-    QList<QPair<int, QSharedPointer<DownloadStringJob>>> running;
+    QList<QPair<int, QSharedPointer<DownloadBufferJob>>> running;
 
-    auto isDone = [](const QSharedPointer<DownloadStringJob> &job)
+    auto isDone = [](const QSharedPointer<DownloadBufferJob> &job)
     { return job->isFinished(); };
 
     while (!pending.isEmpty() || !running.isEmpty())
@@ -413,7 +413,8 @@ bool MangaDex::downloadThrottled(const QStringList &urls, UpdateProgressToken *t
             apiRequestTimer.start();
             apiRequestCount++;
 
-            running.append({i, downloadAsString(urls[i], timeoutMs)});
+            // the retries are scheduled here
+            running.append({i, download(urls[i], timeoutMs, 0)});
             continue;
         }
 
@@ -427,8 +428,7 @@ bool MangaDex::downloadThrottled(const QStringList &urls, UpdateProgressToken *t
             continue;
         }
 
-        // until any of the running ones finished. Not job->await: it would stop the timeout of the job
-        // and block until it finished
+        // until any of the running ones finished. Not job->await: it blocks until that one finished
         auto hold = DownloadJobBase::holdActivity();
         QEventLoop loop;
         for (const auto &r : std::as_const(running))
@@ -452,7 +452,7 @@ bool MangaDex::crawlMangaWindow(const QString &query, int maxResults, MangaDexUp
 
     QList<int> requestedPages;
 
-    auto handler = [&](int i, QSharedPointer<DownloadStringJob> job) -> bool
+    auto handler = [&](int i, QSharedPointer<DownloadBufferJob> job) -> bool
     {
         int page = requestedPages[i];
         try
@@ -611,7 +611,7 @@ QString MangaDex::mangaInfoRequestUrl(const QString &mangaUrl) const
 }
 
 Result<MangaChapterCollection, QString> MangaDex::updateMangaInfoFinishedLoading(
-    QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info)
+    QSharedPointer<DownloadBufferJob> job, QSharedPointer<MangaInfo> info)
 {
     QString mangaId;
     bool resetOnNewVolume = false;
@@ -734,12 +734,13 @@ Result<MangaChapterCollection, QString> MangaDex::getChapters(const QString &man
     for (int offset = 0; offset < total && offset + limit <= maxResults; offset += limit)
     {
         // the edge rejects requests with 400 while it throttles (e.g. during a list update), a retry usually works
-        auto job = downloadAsString(feedUrl.arg(offset), 8000);
-        for (int attempt = 0; !job->await(8000) && job->httpStatus == 400 && attempt < 2; attempt++)
-        {
-            DownloadJobBase::waitMs(1000);
-            job = downloadAsString(feedUrl.arg(offset), 8000);
-        }
+        DownloadRequest request;
+        request.url = feedUrl.arg(offset);
+        request.timeout = 24000;
+        request.retryDelay = 1000;
+        request.retryStatuses = {400};
+        auto job = download(request);
+        job->await();
 
         // never return a partial list, merging it would delete the pages of the missing chapters
         if (!job->isCompleted)
@@ -801,7 +802,7 @@ Result<QList<ImageLink>, QString> MangaDex::getPageList(const QString &chapterUr
     auto match = uuidrx.match(chapterUrl);
     auto chapterId = match.hasMatch() ? match.captured() : chapterUrl;
 
-    QSharedPointer<DownloadStringJob> job;
+    QSharedPointer<DownloadBufferJob> job;
     for (int attempt = 0; attempt < 2; attempt++)
     {
         if (attempt > 0)
@@ -811,10 +812,11 @@ Result<QList<ImageLink>, QString> MangaDex::getPageList(const QString &chapterUr
         atHomeSchedule = qMax(atHomeSchedule, now) + atHomeIntervalMs;
         DownloadJobBase::waitMs(atHomeSchedule - atHomeBurst * atHomeIntervalMs - now);
 
-        job = downloadAsString(apiUrl + "/at-home/server/" + chapterId, 8000);
+        job = download(apiUrl + "/at-home/server/" + chapterId, 8000, 0);
 
         // only retry quick rejections (edge servers, gateways), not timeouts or missing chapters
-        if (job->await(8000, false) || (job->httpStatus != 400 && job->httpStatus < 500))
+        if (job->await() || (job->httpStatus != 400 && job->httpStatus < 500))
+
             break;
     }
 

@@ -12,7 +12,6 @@
 #include "downloadbufferjob.h"
 #include "downloadfilejob.h"
 #include "downloadimageandrescalejob.h"
-#include "downloadstringjob.h"
 #include "imagelink.h"
 #include "imageprocessor.h"
 #include "settings.h"
@@ -70,13 +69,10 @@ public:
     explicit NetworkManager(QObject *parent = nullptr);
     ~NetworkManager();
 
-    QNetworkAccessManager *networkAccessManager();
 
-    // The requests get the headers (besides a browser's User-Agent).
-    QSharedPointer<DownloadStringJob> downloadAsString(const QString &url, int timeout = 6000,
-                                                       const HttpHeaders &headers = {});
-    QSharedPointer<DownloadBufferJob> downloadToBuffer(const QString &url, int timeout = 6000,
-                                                       const HttpHeaders &headers = {});
+
+    // A download into memory. The requests get the headers (besides a browser's User-Agent).
+    QSharedPointer<DownloadBufferJob> download(DownloadRequest request);
     // A download into a file that is running already is reused.
     QSharedPointer<DownloadFileJob> downloadAsFile(const QString &url, const QString &localPath,
                                                    const HttpHeaders &headers = {});
@@ -119,6 +115,8 @@ signals:
     void wifiConnectFinished(bool connected);
     void activity();
     void downloadedImage(const QString &path, QSharedPointer<QImage> img);
+    // a page couldn't be downloaded (after its retries)
+    void imageDownloadFailed(const QString &url);
 
 private:
     QNetworkAccessManager *networkManager;

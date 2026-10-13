@@ -1,6 +1,8 @@
-# Local HTTP server for the job and storage tests (tests/harness): /delay/<s>, /status/<code>, /flaky/<id> (503 once, then 200),
+# Local HTTP server for the job and storage tests (tests/harness): /delay/<s>, /status/<code>, /flaky/<id> (503 once,
+# then 200), /flaky400/<id> (400 once, then 200), /retryafter/<s>/<id> (429 with Retry-After: <s> once, then 200),
 # /redirect -> /final, /file/<name> (some bytes), /image/<w>x<h> (a png), /xorimage/<w>x<h>/<hexkey> (the png
-# xor-encrypted), /lastheaders (the headers of the last image request).
+# xor-encrypted), /lastheaders (the headers of the last image request), /headers (the headers of this request).
+# HEAD requests get the headers of the GET answer.
 import http.server, struct, sys, time, zlib
 flaky = set()
 lastheaders = ['']
@@ -17,7 +19,12 @@ class H(http.server.BaseHTTPRequestHandler):
         for k, v in headers: self.send_header(k, v)
         self.send_header('Content-Length', str(len(body)))
         self.end_headers()
-        self.wfile.write(body)
+        if self.command != 'HEAD':
+            try:
+                self.wfile.write(body)
+            except (BrokenPipeError, ConnectionResetError):
+                pass  # the client stopped waiting (timeout and cancel tests)
+
     def do_GET(self):
         p = self.path
         if p.startswith('/delay/'):
@@ -27,6 +34,12 @@ class H(http.server.BaseHTTPRequestHandler):
         elif p.startswith('/flaky/'):
             if p in flaky: self.send(200, b'ok after retry')
             else: flaky.add(p); self.send(503, b'busy')
+        elif p.startswith('/flaky400/'):
+            if p in flaky: self.send(200, b'ok after 400')
+            else: flaky.add(p); self.send(400, b'bad request')
+        elif p.startswith('/retryafter/'):
+            if p in flaky: self.send(200, b'ok after retry-after')
+            else: flaky.add(p); self.send(429, b'slow down', [('Retry-After', p.split('/')[2])])
         elif p == '/redirect':
             self.send(302, headers=[('Location', '/final')])
         elif p == '/final':
@@ -48,4 +61,5 @@ class H(http.server.BaseHTTPRequestHandler):
             self.send(200, '\n'.join(f'{k}: {v}' for k, v in self.headers.items()).encode())
         else:
             self.send(404)
+    do_HEAD = do_GET
 http.server.ThreadingHTTPServer(('127.0.0.1', int(sys.argv[1])), H).serve_forever()

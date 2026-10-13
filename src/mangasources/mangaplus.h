@@ -14,7 +14,7 @@ public:
     void updateMangaInfoAsync(QSharedPointer<MangaInfo> info, bool updateCover = true) override;
 
     Result<MangaChapterCollection, QString> updateMangaInfoFinishedLoading(
-        QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info) override;
+        QSharedPointer<DownloadBufferJob> job, QSharedPointer<MangaInfo> info) override;
     Result<QList<ImageLink>, QString> getPageList(const QString &chapterUrl) override;
     Result<ImageLink, QString> getImageLink(const ImageLink &page) override;
 
@@ -39,5 +39,5 @@ private:
 
     bool isUsableImage(const ImageLink &image) const;
     void cleanUpStoredUrls(QSharedPointer<MangaInfo> info);
-    void forgetFailedImageUrl(QNetworkReply *reply);
+    void forgetFailedImageUrl(const QString &url);
 };

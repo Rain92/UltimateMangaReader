@@ -36,7 +36,7 @@ public:
     // the manga list has the urls of the mangas, the info also needs its authors and the cover
     QString mangaInfoRequestUrl(const QString &mangaUrl) const override;
     Result<MangaChapterCollection, QString> updateMangaInfoFinishedLoading(
-        QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info) override;
+        QSharedPointer<DownloadBufferJob> job, QSharedPointer<MangaInfo> info) override;
     Result<QList<ImageLink>, QString> getPageList(const QString &chapterUrl) override;
 
 private:
@@ -55,5 +55,5 @@ private:
     bool crawlMangaWindow(const QString &query, int maxResults, MangaDexUpdateState &state,
                           UpdateProgressToken *token);
     bool downloadThrottled(const QStringList &urls, UpdateProgressToken *token,
-                           const std::function<bool(int, QSharedPointer<DownloadStringJob>)> &handler);
+                           const std::function<bool(int, QSharedPointer<DownloadBufferJob>)> &handler);
 };

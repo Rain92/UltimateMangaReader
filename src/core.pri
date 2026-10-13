@@ -12,7 +12,6 @@ HEADERS += \
     $$PWD/downloadimageandrescalejob.h \
     $$PWD/downloadjobbase.h \
     $$PWD/downloadqueue.h \
-    $$PWD/downloadstringjob.h \
     $$PWD/enums.h \
     $$PWD/favorite.h \
     $$PWD/favoritesmanager.h \
@@ -65,7 +64,6 @@ SOURCES += \
     $$PWD/downloadimageandrescalejob.cpp \
     $$PWD/downloadjobbase.cpp \
     $$PWD/downloadqueue.cpp \
-    $$PWD/downloadstringjob.cpp \
     $$PWD/favorite.cpp \
     $$PWD/favoritesmanager.cpp \
     $$PWD/greyscaleimage.cpp \

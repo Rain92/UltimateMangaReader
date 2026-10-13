@@ -81,15 +81,21 @@ HttpHeaders AbstractMangaSource::requestHeaders(const QString &url) const
     return headerRules.forUrl(url);
 }
 
-QSharedPointer<DownloadStringJob> AbstractMangaSource::downloadAsString(const QString &url, int timeout)
+QSharedPointer<DownloadBufferJob> AbstractMangaSource::download(DownloadRequest request)
 {
-    return networkManager->downloadAsString(url, timeout, requestHeaders(url));
+    request.headers = requestHeaders(request.url) + request.headers;
+    return networkManager->download(request);
 }
 
-QSharedPointer<DownloadBufferJob> AbstractMangaSource::downloadToBuffer(const QString &url, int timeout)
+QSharedPointer<DownloadBufferJob> AbstractMangaSource::download(const QString &url, int timeout, int maxRetries)
 {
-    return networkManager->downloadToBuffer(url, timeout, requestHeaders(url));
+    DownloadRequest request;
+    request.url = url;
+    request.timeout = timeout;
+    request.maxRetries = maxRetries;
+    return download(request);
 }
+
 
 QSharedPointer<DownloadFileJob> AbstractMangaSource::downloadAsFile(const QString &url, const QString &localPath)
 {
@@ -195,7 +201,7 @@ QSharedPointer<MangaInfo> AbstractMangaSource::loadCachedMangaInfo(const QString
 Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::getMangaInfo(const QString &mangaUrl,
                                                                              const QString &mangaTitle)
 {
-    auto job = downloadAsString(mangaInfoRequestUrl(mangaUrl), mangaInfoTimeout);
+    auto job = download(mangaInfoRequestUrl(mangaUrl), mangaInfoTimeout);
 
     auto info = QSharedPointer<MangaInfo>(new MangaInfo(this));
 
@@ -204,7 +210,7 @@ Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::getMangaInfo(con
     info->url = mangaUrl;
     info->title = mangaTitle;
 
-    if (!job->await(mangaInfoTimeout))
+    if (!job->await())
         return Err(job->errorString);
 
     auto res = updateMangaInfoFinishedLoading(job, info);
@@ -244,7 +250,7 @@ Result<void, QString> AbstractMangaSource::mergeChapters(QSharedPointer<MangaInf
 
 void AbstractMangaSource::updateMangaInfoAsync(QSharedPointer<MangaInfo> info, bool updateCover)
 {
-    auto job = downloadAsString(mangaInfoRequestUrl(info->url), mangaInfoTimeout);
+    auto job = download(mangaInfoRequestUrl(info->url), mangaInfoTimeout);
 
     auto lambda = [info, job, updateCover, this]
     {
