@@ -30,6 +30,8 @@ public:
 
 signals:
     void mangaSourceClicked(AbstractMangaSource *source);
+    // the filter wants the on-screen keyboard, or not anymore
+    void virtualKeyboardRequested(bool show);
     void mangaClicked(const QString &mangaurl, const QString &mangatitle);
 
 private slots:

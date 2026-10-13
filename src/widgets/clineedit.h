@@ -1,8 +1,8 @@
 #pragma once
 
-#include <QEvent>
 #include <QLineEdit>
 
+// A line edit that asks for the on-screen keyboard while it has the focus.
 class CLineEdit : public QLineEdit
 {
     Q_OBJECT
@@ -10,8 +10,12 @@ class CLineEdit : public QLineEdit
 public:
     CLineEdit(QWidget *parent = nullptr);
 
+signals:
+    void keyboardRequested();
+    void keyboardDismissed();
+
 protected:
-    virtual void focusInEvent(QFocusEvent *e);
-    virtual void focusOutEvent(QFocusEvent *e);
-    virtual void mousePressEvent(QMouseEvent *e);
+    void focusInEvent(QFocusEvent *e) override;
+    void focusOutEvent(QFocusEvent *e) override;
+    void mousePressEvent(QMouseEvent *e) override;
 };

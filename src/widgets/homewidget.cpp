@@ -14,6 +14,12 @@ HomeWidget::HomeWidget(QWidget *parent)
     ui->setupUi(this);
     adjustUI();
 
+    // after the focus change is done
+    connect(ui->lineEditFilter, &CLineEdit::keyboardRequested, this,
+            [this]() { emit virtualKeyboardRequested(true); }, Qt::QueuedConnection);
+    connect(ui->lineEditFilter, &CLineEdit::keyboardDismissed, this,
+            [this]() { emit virtualKeyboardRequested(false); }, Qt::QueuedConnection);
+
     ui->listViewSources->setModel(new QStandardItemModel(this));
     ui->listViewMangas->setModel(new QStringListModel(this));
 

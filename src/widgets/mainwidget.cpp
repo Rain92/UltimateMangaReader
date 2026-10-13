@@ -409,6 +409,8 @@ void MainWidget::setupVirtualKeyboard()
     virtualKeyboard->hide();
     ui->verticalLayoutKeyboardContainer->insertWidget(0, virtualKeyboard);
 
+    connect(ui->homeWidget, &HomeWidget::virtualKeyboardRequested, this, &MainWidget::enableVirtualKeyboard);
+    // the hardware buttons
     ui->homeWidget->installEventFilter(this);
 }
 
@@ -551,17 +553,6 @@ void MainWidget::readerGoBack()
 
 bool MainWidget::eventFilter(QObject *, QEvent *event)
 {
-    if (event->type() == QEvent::RequestSoftwareInputPanel + 1000)
-    {
-        enableVirtualKeyboard(true);
-        return true;
-    }
-    else if (event->type() == QEvent::CloseSoftwareInputPanel + 1000)
-    {
-        enableVirtualKeyboard(false);
-        return true;
-    }
-
     if (event->type() == QEvent::KeyPress)
         return buttonPressEvent(static_cast<QKeyEvent *>(event));
     else if (event->type() == QEvent::KeyRelease)
