@@ -1,71 +1,61 @@
 #include "favoriteswidget.h"
 
-#include <QSaveFile>
-
-#include "imageprocessingnative.h"
 #include "perftimer.h"
 #include "ui_favoriteswidget.h"
 #include "widgetutils.h"
 
-static QString favoriteKey(const Favorite &fav)
-{
-    return fav.hostname + '/' + fav.mangaUrl;
-}
-
-// Runs on a worker thread.
-static QImage loadThumbnail(const ThumbnailRequest &request)
-{
-    if (QFile::exists(request.thumbnailPath))
-    {
-        QImage image = loadQImageFast(request.thumbnailPath);
-        if (!image.isNull())
-            return image;
-    }
-
-    // the cover is still being downloaded, its coverLoaded() signal comes later
-    if (request.coverPath.isEmpty() || !QFile::exists(request.coverPath))
-        return QImage();
-
-    QImage image = loadQImageFast(request.coverPath);
-    if (image.isNull())
-        return image;
-
-    int size = qRound(SIZES.favoriteCoverSize * request.pixelRatio);
-    image = image.scaled(size, size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-
-    // the list might load it again while it is written
-    QSaveFile file(request.thumbnailPath);
-    const char *format = request.thumbnailPath.endsWith(".png") ? "PNG" : "JPG";
-    if (!file.open(QIODevice::WriteOnly) || !image.save(&file, format) || !file.commit())
-        qDebug() << "Failed to save thumbnail:" << request.thumbnailPath;
-
-    return image;
-}
-
 FavoritesWidget::FavoritesWidget(QWidget *parent)
-    : QWidget(parent),
-      favoritesManager(nullptr),
-      ui(new Ui::FavoritesWidget),
-      thumbnailWatcher(),
-      thumbnailBatch(),
-      queuedThumbnails(),
-      thumbnailBatchTimer(),
-      thumbnailBatchRunning(false),
-      opening(false)
+    : QWidget(parent), favoritesManager(nullptr), ui(new Ui::FavoritesWidget), built(false), opening(false)
 {
     ui->setupUi(this);
 
     adjustUI();
-
-    connect(&thumbnailWatcher, &QFutureWatcher<QImage>::resultReadyAt, this, &FavoritesWidget::thumbnailReady);
-    connect(&thumbnailWatcher, &QFutureWatcher<QImage>::finished, this, &FavoritesWidget::thumbnailBatchFinished);
 }
 
 FavoritesWidget::~FavoritesWidget()
 {
-    // the batch keeps running until it is done, without reporting back
-    thumbnailWatcher.disconnect(this);
     delete ui;
+}
+
+void FavoritesWidget::setFavoritesManager(FavoritesManager *manager)
+{
+    favoritesManager = manager;
+
+    // the table follows the favorites once it was built
+    connect(manager, &FavoritesManager::favoritesReset, this,
+            [this]()
+            {
+                if (built)
+                    rebuildTable();
+            });
+    connect(manager, &FavoritesManager::favoriteInserted, this,
+            [this](int i)
+            {
+                if (!built)
+                    return;
+                insertRow(i);
+                favoritesManager->loadThumbnails({i}, windowPixelRatio());
+            });
+    connect(manager, &FavoritesManager::favoriteRemoved, this,
+            [this](int i)
+            {
+                if (built)
+                    ui->tableWidget->removeRow(i);
+            });
+    connect(manager, &FavoritesManager::favoriteMoved, this, &FavoritesWidget::moveRow);
+    connect(manager, &FavoritesManager::favoriteChanged, this,
+            [this](int i)
+            {
+                if (built)
+                    updateStatus(i);
+            });
+    connect(manager, &FavoritesManager::thumbnailLoaded, this,
+            [this](const QString &key, const QImage &image)
+            {
+                int row = findRow(key);
+                if (row >= 0)
+                    setThumbnail(row, image);
+            });
 }
 
 void FavoritesWidget::adjustUI()
@@ -99,24 +89,10 @@ void FavoritesWidget::showFavoritesList()
     // only from the cache, no downloads
     favoritesManager->loadInfos();
 
-    const auto &favorites = favoritesManager->favorites;
-
-    bool rebuild = ui->tableWidget->rowCount() != favorites.count();
-    for (int i = 0; !rebuild && i < favorites.count(); i++)
-        rebuild = rowKey(i) != favoriteKey(favorites[i]);
-
-    if (rebuild)
+    if (!built)
     {
+        built = true;
         rebuildTable();
-    }
-    else
-    {
-        for (int i = 0; i < ui->tableWidget->rowCount(); i++)
-        {
-            updateStatus(i);
-            // a click might have replaced it
-            connectInfo(favoritesManager->favoriteinfos.value(i));
-        }
     }
 
     // after the list is on the screen
@@ -130,7 +106,7 @@ void FavoritesWidget::showFavoritesList()
                                if (label && label->pixmap().isNull())
                                    rows.append(i);
                            }
-                           loadThumbnails(rows);
+                           favoritesManager->loadThumbnails(rows, windowPixelRatio());
 
                            favoritesManager->updateInfos();
                        });
@@ -140,20 +116,8 @@ void FavoritesWidget::rebuildTable()
 {
     ui->tableWidget->setRowCount(0);
 
-    for (int i = 0; i < favoritesManager->favorites.count(); i++)
-    {
+    for (int i = 0; i < favoritesManager->count(); i++)
         insertRow(i);
-        connectInfo(favoritesManager->favoriteinfos.value(i));
-    }
-}
-
-void FavoritesWidget::connectInfo(const QSharedPointer<MangaInfo> &info)
-{
-    if (!info)
-        return;
-
-    connect(info.get(), &MangaInfo::updatedSignal, this, &FavoritesWidget::mangaUpdated, Qt::UniqueConnection);
-    connect(info.get(), &MangaInfo::coverLoaded, this, &FavoritesWidget::coverLoaded, Qt::UniqueConnection);
 }
 
 static QString statusText(const QSharedPointer<MangaInfo> &info)
@@ -169,10 +133,8 @@ static QString statusText(const QSharedPointer<MangaInfo> &info)
            "Chapters: " + QString::number(info->chapters.size());
 }
 
-static QString progressText(const Favorite &fav)
+static QString progressText(const ReadingProgress &progress)
 {
-    ReadingProgress progress(fav.hostname, fav.mangaUrl);
-
     return "Chapter: " + QString::number(progress.index.chapter + 1) +
            "\nPage: " + QString::number(progress.index.page + 1);
 }
@@ -184,25 +146,25 @@ void FavoritesWidget::updateStatus(int row)
     if (!status || !progress)
         return;
 
-    status->setText(statusText(favoritesManager->favoriteinfos.value(row)));
-    progress->setText(progressText(favoritesManager->favorites[row]));
+    status->setText(statusText(favoritesManager->info(row)));
+    progress->setText(progressText(favoritesManager->progress(row)));
 }
 
 void FavoritesWidget::insertRow(int row)
 {
-    const auto &fav = favoritesManager->favorites[row];
+    const auto &fav = favoritesManager->favorite(row);
 
-    QWidget *titlewidget = makeIconTextWidget(favoriteKey(fav), fav.title);
+    QWidget *titlewidget = makeIconTextWidget(fav.key(), fav.title);
 
     ui->tableWidget->insertRow(row);
 
     QTableWidgetItem *hostwidget = new QTableWidgetItem(fav.hostname);
     hostwidget->setTextAlignment(Qt::AlignCenter);
 
-    QTableWidgetItem *chapters = new QTableWidgetItem(statusText(favoritesManager->favoriteinfos.value(row)));
+    QTableWidgetItem *chapters = new QTableWidgetItem(statusText(favoritesManager->info(row)));
     chapters->setTextAlignment(Qt::AlignCenter);
 
-    QTableWidgetItem *progressitem = new QTableWidgetItem(progressText(fav));
+    QTableWidgetItem *progressitem = new QTableWidgetItem(progressText(favoritesManager->progress(row)));
     progressitem->setTextAlignment(Qt::AlignCenter);
 
     ui->tableWidget->setCellWidget(row, 0, titlewidget);
@@ -211,101 +173,21 @@ void FavoritesWidget::insertRow(int row)
     ui->tableWidget->setItem(row, 3, progressitem);
 }
 
-void FavoritesWidget::moveFavoriteToFront(int i)
+void FavoritesWidget::moveRow(int from, int to)
 {
-    if (i <= 0 || i >= ui->tableWidget->rowCount())
+    if (!built)
         return;
 
-    auto label = iconLabel(i);
+    auto label = iconLabel(from);
     QPixmap thumbnail = label ? label->pixmap() : QPixmap();
 
-    favoritesManager->moveFavoriteToFront(i);
-
-    ui->tableWidget->removeRow(i);
-    insertRow(0);
+    ui->tableWidget->removeRow(from);
+    insertRow(to);
     if (!thumbnail.isNull())
-        setThumbnail(0, thumbnail.toImage());
+        setThumbnail(to, thumbnail.toImage());
 
-    ui->tableWidget->scrollToTop();
-}
-
-void FavoritesWidget::mangaUpdated(bool updated)
-{
-    int i = favoritesManager->findFavorite(qobject_cast<MangaInfo *>(sender()));
-    if (!rowMatches(i))
-        return;
-
-    updateStatus(i);
-
-    if (updated)
-        moveFavoriteToFront(i);
-}
-
-void FavoritesWidget::coverLoaded()
-{
-    int i = favoritesManager->findFavorite(qobject_cast<MangaInfo *>(sender()));
-    if (!rowMatches(i))
-        return;
-
-    loadThumbnails({i});
-}
-
-void FavoritesWidget::loadThumbnails(const QList<int> &rows)
-{
-    for (int row : rows)
-    {
-        auto info = favoritesManager->favoriteinfos.value(row);
-        if (!info)
-            continue;
-
-        ThumbnailRequest request{rowKey(row), info->coverPath, info->coverThumbnailPath(), windowPixelRatio()};
-        if (request.thumbnailPath.isEmpty())
-            continue;
-
-        auto sameKey = [&request](const ThumbnailRequest &r) { return r.key == request.key; };
-        if (std::none_of(queuedThumbnails.begin(), queuedThumbnails.end(), sameKey))
-            queuedThumbnails.append(request);
-    }
-
-    startThumbnailBatch();
-}
-
-void FavoritesWidget::thumbnailBatchFinished()
-{
-    thumbnailBatchRunning = false;
-
-    if (perfLoggingEnabled())
-        qDebug().nospace() << "[perf] thumbnails: " << thumbnailBatch.size() << " in "
-                           << thumbnailBatchTimer.elapsed() << " ms";
-
-    startThumbnailBatch();
-}
-
-void FavoritesWidget::startThumbnailBatch()
-{
-    // not isRunning(): that is false before the last results of the batch were delivered, a new future would
-    // drop them
-    if (thumbnailBatchRunning || queuedThumbnails.isEmpty())
-        return;
-
-    thumbnailBatchRunning = true;
-    thumbnailBatchTimer.start();
-
-    thumbnailBatch = queuedThumbnails;
-    queuedThumbnails.clear();
-    thumbnailWatcher.setFuture(QtConcurrent::mapped(thumbnailBatch, loadThumbnail));
-}
-
-void FavoritesWidget::thumbnailReady(int index)
-{
-    if (index < 0 || index >= thumbnailBatch.size())
-        return;
-
-    QImage image = thumbnailWatcher.resultAt(index);
-    // the rows might have moved since the batch started
-    int row = findRow(thumbnailBatch[index].key);
-    if (row >= 0 && !image.isNull())
-        setThumbnail(row, image);
+    if (to == 0)
+        ui->tableWidget->scrollToTop();
 }
 
 void FavoritesWidget::setThumbnail(int row, const QImage &image)
@@ -330,14 +212,6 @@ QString FavoritesWidget::rowKey(int row) const
 {
     auto widget = ui->tableWidget->cellWidget(row, 0);
     return widget ? widget->property("favoriteKey").toString() : QString();
-}
-
-// The favorites can change while the list isn't shown (e.g. a favorite is added in the info widget), the
-// list is rebuilt when it is shown again.
-bool FavoritesWidget::rowMatches(int row) const
-{
-    return row >= 0 && row < ui->tableWidget->rowCount() && row < favoritesManager->favorites.count() &&
-           rowKey(row) == favoriteKey(favoritesManager->favorites[row]);
 }
 
 int FavoritesWidget::findRow(const QString &key) const
@@ -380,22 +254,16 @@ QWidget *FavoritesWidget::makeIconTextWidget(const QString &key, const QString &
 
 void FavoritesWidget::on_tableWidget_cellClicked(int row, int column)
 {
-    if (opening)
+    if (opening || row < 0 || row >= favoritesManager->count())
         return;
 
-    if (!rowMatches(row))
-    {
-        showFavoritesList();
-        return;
-    }
-
-    if (!favoritesManager->favoriteinfos.value(row))
+    if (!favoritesManager->info(row))
     {
         emit error("The source of this manga is not enabled.");
         return;
     }
 
-    qDebug() << "clicked fav" << row << favoritesManager->favorites[row].title;
+    qDebug() << "clicked fav" << row << favoritesManager->favorite(row).title;
 
     // downloads the info if it isn't cached yet, the list can change meanwhile
     opening = true;
@@ -405,12 +273,7 @@ void FavoritesWidget::on_tableWidget_cellClicked(int row, int column)
     if (!info)
         return;
 
-    connectInfo(info);
-    int i = favoritesManager->findFavorite(info.get());
-    if (rowMatches(i))
-        moveFavoriteToFront(i);
-    else
-        favoritesManager->moveFavoriteToFront(i);
+    favoritesManager->moveFavoriteToFront(favoritesManager->indexOf(info.get()));
 
     emit favoriteClicked(info, column >= 2);
 }

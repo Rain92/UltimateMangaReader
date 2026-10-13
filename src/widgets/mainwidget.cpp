@@ -187,7 +187,7 @@ MainWidget::MainWidget(QWidget *parent)
                      });
 
     // FavoritesWidget
-    ui->favoritesWidget->favoritesManager = core->favoritesManager;
+    ui->favoritesWidget->setFavoritesManager(core->favoritesManager);
 
     QObject::connect(ui->favoritesWidget, &FavoritesWidget::favoriteClicked, this,
                      [this](auto mangainfo, auto jumptoreader)
@@ -294,14 +294,13 @@ void MainWidget::showEvent(QShowEvent *event)
                                }
 
                                core->favoritesManager->loadInfos();
-                               auto &infos = core->favoritesManager->favoriteinfos;
-                               if (favoriteIndex < 0 || favoriteIndex >= infos.count() ||
-                                   !infos[favoriteIndex])
+                               auto info = core->favoritesManager->info(favoriteIndex);
+                               if (!info)
                                {
                                    qDebug() << "UMR_OPEN_FAVORITE: no favorite" << favoriteIndex;
                                    return;
                                }
-                               core->mangaController->setCurrentManga(infos[favoriteIndex]);
+                               core->mangaController->setCurrentManga(info);
                                setWidgetTab(MangaReaderTab);
                            });
 }

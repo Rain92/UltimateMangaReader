@@ -50,6 +50,11 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
                 timerTick();
             });
 
+    // the favorites list shows the reading progress
+    connect(mangaController, &MangaController::currentIndexChanged, favoritesManager,
+            [this](const ReadingProgress &progress)
+            { favoritesManager->setProgress(mangaController->currentManga.get(), progress); });
+
     // auto suspend
     connect(networkManager, &NetworkManager::activity, this, &UltimateMangaReaderCore::activity);
     connect(mangaController, &MangaController::activity, this, &UltimateMangaReaderCore::activity);

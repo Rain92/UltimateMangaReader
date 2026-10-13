@@ -17,6 +17,9 @@ struct Favorite
     {
         return Favorite(info->hostname, info->title, info->url);
     }
+
+    // unique among the favorites
+    QString key() const { return hostname + '/' + mangaUrl; }
 };
 
 QDataStream &operator<<(QDataStream &str, const Favorite &m);

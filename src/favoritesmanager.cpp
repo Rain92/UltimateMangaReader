@@ -1,20 +1,29 @@
 #include "favoritesmanager.h"
 
 #include <QSaveFile>
+#include <QtConcurrent/QtConcurrent>
 
 #include "cachefile.h"
+#include "imageprocessingnative.h"
 #include "mangainfo.h"
+#include "perftimer.h"
+#include "sizes.h"
 
 FavoritesManager::FavoritesManager(const QMap<QString, AbstractMangaSource *> &mangasources,
                                    NetworkManager *networkManager, QObject *parent)
     : QObject(parent),
-      favoriteinfos(),
-      favorites(),
       mangasources(mangasources),
       networkManager(networkManager),
+      entries(),
       infosLoaded(false),
       lastUpdates(),
-      updateAfterConnecting(false)
+      updateAfterConnecting(false),
+      thumbnailWatcher(),
+      thumbnailBatch(),
+      queuedThumbnails(),
+      thumbnailBatchTimer(),
+      thumbnailBatchRunning(false),
+      thumbnailPixelRatio(0)
 {
     deserialize();
 
@@ -30,6 +39,23 @@ FavoritesManager::FavoritesManager(const QMap<QString, AbstractMangaSource *> &m
                     updateInfos();
                 }
             });
+
+    connect(&thumbnailWatcher, &QFutureWatcher<QImage>::resultReadyAt, this, &FavoritesManager::thumbnailReady);
+    connect(&thumbnailWatcher, &QFutureWatcher<QImage>::finished, this,
+            [this]()
+            {
+                thumbnailBatchRunning = false;
+                if (perfLoggingEnabled())
+                    qDebug().nospace() << "[perf] thumbnails: " << thumbnailBatch.size() << " in "
+                                       << thumbnailBatchTimer.elapsed() << " ms";
+                startThumbnailBatch();
+            });
+}
+
+FavoritesManager::~FavoritesManager()
+{
+    // the batch keeps running until it is done, without reporting back
+    thumbnailWatcher.disconnect(this);
 }
 
 void FavoritesManager::deserialize()
@@ -38,6 +64,7 @@ void FavoritesManager::deserialize()
     if (!file.open(QIODevice::ReadOnly))
         return;
 
+    QList<Favorite> favorites;
     QDataStream in(&file);
     bool current = readCacheFileHeader(in, CacheFile::Favorites);
     if (current)
@@ -49,14 +76,21 @@ void FavoritesManager::deserialize()
     {
         auto kept = file.fileName() + (current ? ".damaged" : ".old");
         qDebug() << "Couldn't read the favorites, keeping the file as" << kept;
-        favorites.clear();
         QFile::remove(kept);
         QFile::rename(file.fileName(), kept);
+        return;
     }
+
+    for (const auto &fav : std::as_const(favorites))
+        entries.append({fav, {}, {}});
 }
 
 void FavoritesManager::serialize()
 {
+    QList<Favorite> favorites;
+    for (const auto &entry : std::as_const(entries))
+        favorites.append(entry.favorite);
+
     // the old file stays until the new one is complete
     QSaveFile file(QString(CONF.cacheDir) + "favorites.dat");
     if (!file.open(QIODevice::WriteOnly))
@@ -69,68 +103,67 @@ void FavoritesManager::serialize()
         qDebug() << "Couldn't save the favorites";
 }
 
-bool FavoritesManager::isFavorite(QSharedPointer<MangaInfo> info)
+int FavoritesManager::indexOf(const Favorite &fav) const
 {
-    for (const Favorite &f : std::as_const(favorites))
-        if (f.hostname == info->hostname && f.mangaUrl == info->url)
-            return true;
-
-    return false;
-}
-
-bool FavoritesManager::toggleFavorite(QSharedPointer<MangaInfo> info)
-{
-    for (int i = 0; i < favorites.length(); i++)
-    {
-        if (favorites[i].hostname == info->hostname && favorites[i].mangaUrl == info->url)
-        {
-            favorites.removeAt(i);
-            // the infos are only there once the favorites were shown
-            if (infosLoaded)
-                favoriteinfos.removeAt(i);
-
-            serialize();
-
-            return false;
-        }
-    }
-
-    // add
-    favorites.prepend(Favorite::fromMangaInfo(info.get()));
-    if (infosLoaded)
-        favoriteinfos.prepend(info);
-    serialize();
-    return true;
-}
-
-int FavoritesManager::findFavorite(const MangaInfo *info) const
-{
-    for (int i = 0; i < favoriteinfos.size(); i++)
-        if (favoriteinfos.at(i).get() == info)
+    for (int i = 0; i < entries.size(); i++)
+        if (entries[i].favorite.hostname == fav.hostname && entries[i].favorite.mangaUrl == fav.mangaUrl)
             return i;
 
     return -1;
 }
 
-void FavoritesManager::moveFavoriteToFront(int i)
+int FavoritesManager::indexOf(const MangaInfo *info) const
 {
-    if (i <= 0 || i >= favorites.length())
-        return;
-
-    favorites.move(i, 0);
-    if (infosLoaded)
-        favoriteinfos.move(i, 0);
-
-    serialize();
+    return info ? indexOf(Favorite(info->hostname, info->title, info->url)) : -1;
 }
 
-QSharedPointer<MangaInfo> FavoritesManager::loadInfo(const Favorite &fav)
+bool FavoritesManager::isFavorite(QSharedPointer<MangaInfo> info) const
 {
-    auto source = mangasources.value(fav.hostname);
-    if (!source)
-        return {};
+    return indexOf(info.get()) >= 0;
+}
 
-    return source->loadCachedMangaInfo(fav.mangaUrl, fav.title);
+bool FavoritesManager::toggleFavorite(QSharedPointer<MangaInfo> info)
+{
+    int i = indexOf(info.get());
+    if (i >= 0)
+    {
+        removeAt(i);
+        serialize();
+        return false;
+    }
+
+    Entry entry{Favorite::fromMangaInfo(info.get()), info, {}};
+    entry.progress.deserialize(info->hostname, info->url);
+    connectInfo(info);
+    entries.prepend(entry);
+    serialize();
+    emit favoriteInserted(0);
+
+    return true;
+}
+
+void FavoritesManager::removeAt(int i)
+{
+    entries.removeAt(i);
+    emit favoriteRemoved(i);
+}
+
+void FavoritesManager::moveFavoriteToFront(int i)
+{
+    if (i <= 0 || i >= entries.count())
+        return;
+
+    entries.move(i, 0);
+    serialize();
+    emit favoriteMoved(i, 0);
+}
+
+void FavoritesManager::loadEntry(Entry &entry)
+{
+    auto source = mangasources.value(entry.favorite.hostname);
+    entry.info = source ? source->loadCachedMangaInfo(entry.favorite.mangaUrl, entry.favorite.title) : nullptr;
+    entry.progress = ReadingProgress(entry.favorite.hostname, entry.favorite.mangaUrl);
+    connectInfo(entry.info);
 }
 
 void FavoritesManager::loadInfos()
@@ -138,26 +171,71 @@ void FavoritesManager::loadInfos()
     if (infosLoaded)
         return;
 
-    favoriteinfos.clear();
-    for (const auto &fav : std::as_const(favorites))
-        favoriteinfos.append(loadInfo(fav));
-
+    PerfTimer perf("load favorite infos");
+    for (auto &entry : entries)
+        loadEntry(entry);
     infosLoaded = true;
+
+    emit favoritesReset();
+}
+
+void FavoritesManager::connectInfo(const QSharedPointer<MangaInfo> &info)
+{
+    if (!info)
+        return;
+
+    connect(info.get(), &MangaInfo::updatedSignal, this, &FavoritesManager::infoUpdated, Qt::UniqueConnection);
+    connect(info.get(), &MangaInfo::chaptersMoved, this, &FavoritesManager::chaptersMoved, Qt::UniqueConnection);
+    connect(info.get(), &MangaInfo::coverLoaded, this, &FavoritesManager::coverLoaded, Qt::UniqueConnection);
+}
+
+void FavoritesManager::chaptersMoved()
+{
+    int i = indexOf(qobject_cast<MangaInfo *>(sender()));
+    if (i < 0)
+        return;
+
+    // the info located the chapter of the progress again (updatedSignal follows)
+    entries[i].progress = ReadingProgress(entries[i].favorite.hostname, entries[i].favorite.mangaUrl);
+}
+
+void FavoritesManager::infoUpdated(bool newChapters)
+{
+    int i = indexOf(qobject_cast<MangaInfo *>(sender()));
+    if (i < 0)
+        return;
+
+    if (newChapters && i > 0)
+    {
+        moveFavoriteToFront(i);
+        i = 0;
+    }
+    emit favoriteChanged(i);
+}
+
+void FavoritesManager::coverLoaded()
+{
+    int i = indexOf(qobject_cast<MangaInfo *>(sender()));
+    if (i < 0 || thumbnailPixelRatio <= 0)
+        return;
+
+    queueThumbnail(i);
+    startThumbnailBatch();
 }
 
 QSharedPointer<MangaInfo> FavoritesManager::requireInfo(int i)
 {
     loadInfos();
 
-    if (i < 0 || i >= favorites.length())
+    if (i < 0 || i >= entries.count())
         return {};
 
-    auto info = favoriteinfos[i];
+    auto info = entries[i].info;
     if (info && !info->chapters.isEmpty())
         return info;
 
     // a copy: the download runs an event loop, the favorites can be reordered or removed meanwhile
-    const Favorite fav = favorites[i];
+    const Favorite fav = entries[i].favorite;
     auto source = mangasources.value(fav.hostname);
     if (!source)
         return {};
@@ -171,18 +249,13 @@ QSharedPointer<MangaInfo> FavoritesManager::requireInfo(int i)
 
     info = res.unwrap();
     int now = indexOf(fav);
-    if (now >= 0 && now < favoriteinfos.size())
-        favoriteinfos[now] = info;
+    if (now >= 0)
+    {
+        entries[now].info = info;
+        connectInfo(info);
+        emit favoriteChanged(now);
+    }
     return info;
-}
-
-int FavoritesManager::indexOf(const Favorite &fav) const
-{
-    for (int i = 0; i < favorites.size(); i++)
-        if (favorites[i].hostname == fav.hostname && favorites[i].mangaUrl == fav.mangaUrl)
-            return i;
-
-    return -1;
 }
 
 void FavoritesManager::updateInfos()
@@ -200,7 +273,16 @@ void FavoritesManager::updateInfos()
     // tab switches would pile up downloads otherwise
     const qint64 minUpdateIntervalMs = 60 * 1000;
 
-    for (const auto &info : std::as_const(favoriteinfos))
+    // a copy: an update that is done right away (e.g. a failed request) can reorder the favorites
+    const auto infos = [this]()
+    {
+        QList<QSharedPointer<MangaInfo>> infos;
+        for (const auto &entry : std::as_const(entries))
+            infos.append(entry.info);
+        return infos;
+    }();
+
+    for (const auto &info : infos)
     {
         // the source might have been disabled since the infos were loaded
         auto source = info ? mangasources.value(info->hostname) : nullptr;
@@ -219,16 +301,32 @@ void FavoritesManager::updateInfos()
 
 void FavoritesManager::resetUpdatedStatus()
 {
-    for (auto &fav : favoriteinfos)
-        if (!fav.isNull())
-            fav->updated = false;
+    for (int i = 0; i < entries.count(); i++)
+    {
+        auto &info = entries[i].info;
+        if (info && info->updated)
+        {
+            info->updated = false;
+            emit favoriteChanged(i);
+        }
+    }
+}
+
+void FavoritesManager::setProgress(const MangaInfo *info, const ReadingProgress &progress)
+{
+    int i = indexOf(info);
+    if (i < 0 || !infosLoaded)
+        return;
+
+    entries[i].progress = progress;
+    emit favoriteChanged(i);
 }
 
 void FavoritesManager::clearFavorites()
 {
-    favorites.clear();
-    favoriteinfos.clear();
+    entries.clear();
     infosLoaded = true;
+    emit favoritesReset();
 }
 
 void FavoritesManager::clearInvalidFavorites()
@@ -236,8 +334,11 @@ void FavoritesManager::clearInvalidFavorites()
     loadInfos();
 
     // the downloads run event loops, the favorites can be reordered meanwhile: they are found again afterwards
-    const QList<Favorite> all = favorites;
-    for (const auto &fav : all)
+    QList<Favorite> all;
+    for (const auto &entry : std::as_const(entries))
+        all.append(entry.favorite);
+
+    for (const auto &fav : std::as_const(all))
     {
         int i = indexOf(fav);
         // the ones of disabled sources have no info, they come back when the source is enabled again
@@ -246,7 +347,7 @@ void FavoritesManager::clearInvalidFavorites()
 
         // the infos that aren't cached are downloaded first, only the ones that fail or have nothing to read
         // (e.g. MangaDex titles whose chapters are all external links) are invalid
-        auto info = favoriteinfos[i];
+        auto info = entries[i].info;
         bool valid = info && !info->chapters.isEmpty();
         if (!valid && info)
         {
@@ -256,17 +357,97 @@ void FavoritesManager::clearInvalidFavorites()
                 continue;
             if (res.isOk())
             {
-                favoriteinfos[i] = res.unwrap();
-                valid = !favoriteinfos[i]->chapters.isEmpty();
+                entries[i].info = res.unwrap();
+                connectInfo(entries[i].info);
+                valid = !entries[i].info->chapters.isEmpty();
             }
         }
 
         if (!valid)
         {
             qDebug() << "Removing invalid favorite:" << fav.hostname << fav.title << fav.mangaUrl;
-            favorites.removeAt(i);
-            favoriteinfos.removeAt(i);
+            removeAt(i);
         }
     }
     serialize();
+}
+
+// Runs on a worker thread.
+static QImage loadThumbnail(const ThumbnailRequest &request)
+{
+    if (QFile::exists(request.thumbnailPath))
+    {
+        QImage image = loadQImageFast(request.thumbnailPath);
+        if (!image.isNull())
+            return image;
+    }
+
+    // the cover is still being downloaded, its coverLoaded() signal comes later
+    if (request.coverPath.isEmpty() || !QFile::exists(request.coverPath))
+        return QImage();
+
+    QImage image = loadQImageFast(request.coverPath);
+    if (image.isNull())
+        return image;
+
+    int size = qRound(SIZES.favoriteCoverSize * request.pixelRatio);
+    image = image.scaled(size, size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+    // the list might load it again while it is written
+    QSaveFile file(request.thumbnailPath);
+    const char *format = request.thumbnailPath.endsWith(".png") ? "PNG" : "JPG";
+    if (!file.open(QIODevice::WriteOnly) || !image.save(&file, format) || !file.commit())
+        qDebug() << "Failed to save thumbnail:" << request.thumbnailPath;
+
+    return image;
+}
+
+void FavoritesManager::loadThumbnails(const QList<int> &indices, qreal pixelRatio)
+{
+    thumbnailPixelRatio = pixelRatio;
+    for (int i : indices)
+        queueThumbnail(i);
+
+    startThumbnailBatch();
+}
+
+void FavoritesManager::queueThumbnail(int i)
+{
+    auto info = entries.value(i).info;
+    if (!info)
+        return;
+
+    ThumbnailRequest request{entries[i].favorite.key(), info->coverPath, info->coverThumbnailPath(),
+                             thumbnailPixelRatio};
+    if (request.thumbnailPath.isEmpty())
+        return;
+
+    auto sameKey = [&request](const ThumbnailRequest &r) { return r.key == request.key; };
+    if (std::none_of(queuedThumbnails.begin(), queuedThumbnails.end(), sameKey))
+        queuedThumbnails.append(request);
+}
+
+void FavoritesManager::startThumbnailBatch()
+{
+    // not isRunning(): that is false before the last results of the batch were delivered, a new future would
+    // drop them
+    if (thumbnailBatchRunning || queuedThumbnails.isEmpty())
+        return;
+
+    thumbnailBatchRunning = true;
+    thumbnailBatchTimer.start();
+
+    thumbnailBatch = queuedThumbnails;
+    queuedThumbnails.clear();
+    thumbnailWatcher.setFuture(QtConcurrent::mapped(thumbnailBatch, loadThumbnail));
+}
+
+void FavoritesManager::thumbnailReady(int index)
+{
+    if (index < 0 || index >= thumbnailBatch.size())
+        return;
+
+    QImage image = thumbnailWatcher.resultAt(index);
+    if (!image.isNull())
+        emit thumbnailLoaded(thumbnailBatch[index].key, image);
 }

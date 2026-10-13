@@ -1,56 +1,112 @@
 #pragma once
 
 #include <QElapsedTimer>
+#include <QFutureWatcher>
+#include <QImage>
 #include <QString>
 #include <QTimer>
-#include <QtConcurrent/QtConcurrent>
 
 #include "abstractmangasource.h"
 #include "favorite.h"
 #include "networkmanager.h"
+#include "readingprogress.h"
 
+// A cover thumbnail to load, or to make from the cover if there is none yet.
+struct ThumbnailRequest
+{
+    QString key;
+    QString coverPath;
+    QString thumbnailPath;
+    qreal pixelRatio;
+};
+
+// The favorites, with their infos and reading progress (for the list). Every change is signalled with the
+// index of the favorite.
 class FavoritesManager : public QObject
 {
     Q_OBJECT
 public:
     explicit FavoritesManager(const QMap<QString, AbstractMangaSource *> &mangasources,
                               NetworkManager *networkManager, QObject *parent = nullptr);
+    ~FavoritesManager();
 
-    bool isFavorite(QSharedPointer<MangaInfo> info);
+    int count() const { return entries.count(); }
+    const Favorite &favorite(int i) const { return entries[i].favorite; }
+    // Null until loadInfos() was called, and when the source of the favorite isn't enabled.
+    QSharedPointer<MangaInfo> info(int i) const { return entries.value(i).info; }
+    // Loaded with the infos.
+    const ReadingProgress &progress(int i) const { return entries[i].progress; }
+    // -1 if the manga isn't a favorite.
+    int indexOf(const MangaInfo *info) const;
+
+    bool isFavorite(QSharedPointer<MangaInfo> info) const;
     bool toggleFavorite(QSharedPointer<MangaInfo> info);
 
     void moveFavoriteToFront(int i);
     // Updates the infos from the sites in the background (new chapters).
     void updateInfos();
-    // Loads the infos from the cache, without downloads, so it doesn't block. An info that isn't cached yet
-    // only has its title and url until updateInfos() loaded it.
+    // Loads the infos and the reading progress from the cache, without downloads, so it doesn't block. An info
+    // that isn't cached yet only has its title and url until updateInfos() loaded it.
     void loadInfos();
     // The loaded info of favorite i: from the cache, else downloaded (blocking), e.g. when it gets opened
     // before updateInfos() loaded it. Null if it isn't available.
     QSharedPointer<MangaInfo> requireInfo(int i);
-    void serialize();
     void clearFavorites();
     void clearInvalidFavorites();
     void resetUpdatedStatus();
+    // The reader moved on in a manga.
+    void setProgress(const MangaInfo *info, const ReadingProgress &progress);
 
-    int findFavorite(const MangaInfo *info) const;
-
-    // favoriteinfos[i] belongs to favorites[i] once loadInfos() was called. It is null when the source of the
-    // favorite isn't enabled.
-    QList<QSharedPointer<MangaInfo>> favoriteinfos;
-    QList<Favorite> favorites;
+    // Loads the thumbnails of the covers on worker threads (made from the covers if there are none yet), see
+    // thumbnailLoaded(). A cover that is downloaded later gets its thumbnail too.
+    void loadThumbnails(const QList<int> &indices, qreal pixelRatio);
 
 signals:
     void error(const QString &error);
+    // all of them changed (e.g. loaded or cleared)
+    void favoritesReset();
+    void favoriteInserted(int i);
+    void favoriteRemoved(int i);
+    void favoriteMoved(int from, int to);
+    // its info or its reading progress changed
+    void favoriteChanged(int i);
+    void thumbnailLoaded(const QString &favoriteKey, const QImage &image);
 
 private:
+    struct Entry
+    {
+        Favorite favorite;
+        QSharedPointer<MangaInfo> info;
+        ReadingProgress progress;
+    };
+
     const QMap<QString, AbstractMangaSource *> &mangasources;
     NetworkManager *networkManager;
+    QList<Entry> entries;
     bool infosLoaded;
     QHash<QString, QElapsedTimer> lastUpdates;
     bool updateAfterConnecting;
 
+    // the thumbnails are loaded in batches on worker threads
+    QFutureWatcher<QImage> thumbnailWatcher;
+    QList<ThumbnailRequest> thumbnailBatch;
+    QList<ThumbnailRequest> queuedThumbnails;
+    QElapsedTimer thumbnailBatchTimer;
+    bool thumbnailBatchRunning;
+    // of the last loadThumbnails(), 0 before
+    qreal thumbnailPixelRatio;
+
+    void serialize();
     void deserialize();
-    QSharedPointer<MangaInfo> loadInfo(const Favorite &fav);
+    void loadEntry(Entry &entry);
+    void connectInfo(const QSharedPointer<MangaInfo> &info);
+    void removeAt(int i);
     int indexOf(const Favorite &fav) const;
+    void infoUpdated(bool newChapters);
+    void chaptersMoved();
+    void coverLoaded();
+
+    void queueThumbnail(int i);
+    void startThumbnailBatch();
+    void thumbnailReady(int index);
 };
