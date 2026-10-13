@@ -13,18 +13,22 @@ MangaInfo::~MangaInfo() = default;
 
 QSharedPointer<MangaInfo> MangaInfo::deserialize(AbstractMangaSource *mangasource, const QString &path)
 {
-    auto mi = QSharedPointer<MangaInfo>(new MangaInfo(mangasource));
-
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly))
-        return mi;
+        return {};
+
+    auto mi = QSharedPointer<MangaInfo>(new MangaInfo(mangasource));
 
     QDataStream in(&file);
     in.setVersion(CONF.dataStreamVersion);
     in >> mi->hostname >> mi->title >> mi->url >> mi->author >> mi->artist >> mi->releaseYear >> mi->status >>
         mi->genres >> mi->summary >> mi->coverUrl >> mi->coverPath >> mi->chapters;
 
-    file.close();
+    if (in.status() != QDataStream::Ok)
+    {
+        qDebug() << "Couldn't read" << path;
+        return {};
+    }
 
     // older versions stored absolute paths, the cover always lives in the manga's own directory
     if (QDir::isAbsolutePath(mi->coverPath))
@@ -85,6 +89,20 @@ void MangaInfo::updateCompeted(bool updated, const QList<QPair<int, int> > &move
     }
 
     emit updatedSignal(updated || !moveMap.empty());
+}
+
+void MangaInfo::takeOverDetails(const MangaInfo &other)
+{
+    url = other.url;
+    author = other.author;
+    artist = other.artist;
+    releaseYear = other.releaseYear;
+    genres = other.genres;
+    status = other.status;
+    summary = other.summary;
+    coverPath = other.coverPath;
+    coverUrl = other.coverUrl;
+    chapters = other.chapters;
 }
 
 void MangaInfo::sendCoverLoaded()

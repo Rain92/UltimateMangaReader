@@ -1,6 +1,7 @@
 #ifndef MANGAKAKALOT_H
 #define MANGAKAKALOT_H
 
+#include <QElapsedTimer>
 #include <QSet>
 
 #include "abstractmangasource.h"
@@ -42,7 +43,16 @@ private:
     QString chaptersApiUrl;
 
     QHash<QString, QString> resolvedLegacyUrls;
-    QHash<QString, QSharedPointer<DownloadStringJob>> prefetchedChapters;
+    // The first page of a chapter list, loaded while the manga page is: taken by updateMangaInfoFinishedLoading,
+    // unless the manga page couldn't be loaded. Only used while it is fresh.
+    struct PrefetchedChapters
+    {
+        QSharedPointer<DownloadStringJob> job;
+        QElapsedTimer age;
+    };
+    QHash<QString, PrefetchedChapters> prefetchedChapters;
+    void prefetchChapters(const QString &slug, QSharedPointer<DownloadStringJob> job);
+    QSharedPointer<DownloadStringJob> takePrefetchedChapters(const QString &slug);
     QSet<QString> imageHosts;
     QSet<QString> pendingJoinedMarkers;
 

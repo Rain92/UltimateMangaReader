@@ -209,7 +209,7 @@ QString titleStatus(const ProtoMessage &detail, const QStringList &genres, int c
 
 qint64 urlExpiry(const QString &url)
 {
-    QRegularExpression expiresrx(R"lit([?&]expires=(\d+))lit");
+    static const QRegularExpression expiresrx(R"lit([?&]expires=(\d+))lit");
 
     auto match = expiresrx.match(url);
     return match.hasMatch() ? match.captured(1).toLongLong() : std::numeric_limits<qint64>::max();
@@ -217,7 +217,7 @@ qint64 urlExpiry(const QString &url)
 
 QString urlViewToken(const QString &url)
 {
-    QRegularExpression tokenrx(R"lit(#vwt=([^|]+))lit");
+    static const QRegularExpression tokenrx(R"lit(#vwt=([^|]+))lit");
 
     auto match = tokenrx.match(url);
     return match.hasMatch() ? match.captured(1) : QString();

@@ -4,22 +4,27 @@
 
 #include "staticsettings.h"
 
-Settings::Settings()
-    : lightValue(0),
-      comflightValue(0),
-      hideErrorMessages(false),
-      tabAdvance(Right),
-      swipeAdvance(Left),
-      buttonAdvance(Down),
-      mangaOrder(OrderByPopularity),
-      doublePageMode(DoublePage90CW),
-      trimPages(true),
-      manhwaMode(true),
-      ditheringMode(SWDithering),
-      standbyWhenIdle(false),
-      timer()
+Settings::Settings() : timer()
 {
-    QObject::connect(&timer, &QTimer::timeout, [this]() { this->serialize(); });
+    resetToDefaults();
+    QObject::connect(&timer, &QTimer::timeout, &timer, [this]() { this->serialize(); });
+}
+
+void Settings::resetToDefaults()
+{
+    lightValue = 0;
+    comflightValue = 0;
+    hideErrorMessages = false;
+    tabAdvance = Right;
+    swipeAdvance = Left;
+    buttonAdvance = Down;
+    mangaOrder = OrderByPopularity;
+    doublePageMode = DoublePage90CW;
+    trimPages = true;
+    manhwaMode = true;
+    ditheringMode = SWDithering;
+    standbyWhenIdle = false;
+    enabledMangaSources.clear();
 }
 
 Settings::~Settings()
@@ -37,7 +42,12 @@ void Settings::deserialize()
     QDataStream in(&file);
     in.setVersion(CONF.dataStreamVersion);
     in >> *this;
-    file.close();
+
+    if (in.status() != QDataStream::Ok)
+    {
+        qDebug() << "Couldn't read the settings, using the defaults";
+        resetToDefaults();
+    }
 }
 
 void Settings::scheduleSerialize()

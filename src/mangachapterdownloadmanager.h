@@ -9,15 +9,11 @@
 #include "networkmanager.h"
 #include "thirdparty/result.h"
 
+// The chapters to download, by url: an update of the chapters can move them until they are downloaded.
 struct MangaChapterRange
 {
-public:
-    MangaChapterRange() = default;
-    MangaChapterRange(QSharedPointer<MangaInfo> mangaInfo, const QList<int> &chapters)
-        : mangaInfo(mangaInfo), chapters(chapters){};
-
     QSharedPointer<MangaInfo> mangaInfo;
-    QList<int> chapters;
+    QStringList chapterUrls;
 };
 
 class MangaChapterDownloadManager : public QObject
@@ -48,13 +44,13 @@ private:
 
     QQueue<MangaChapterRange> downloadJobs;
 
-    // the running job: its generation, the chapters that failed and the images to check when its downloads are done
+    // the running job: its generation, the chapters that failed and the images to check when its downloads are
+    // done (all by chapter url)
     int currentGeneration;
     QSharedPointer<MangaInfo> currentManga;
-    QSet<int> currentFailed;
-    QList<QPair<int, QString>> currentImagePaths;
-    // by chapter url, the indexes can change until a retry
-    QList<QPair<QSharedPointer<MangaInfo>, QStringList>> failedChapters;
+    QSet<QString> currentFailed;
+    QList<QPair<QString, QString>> currentImagePaths;
+    QList<MangaChapterRange> failedChapters;
 
     NetworkManager *networkManager;
     DownloadQueue downloadQueue;

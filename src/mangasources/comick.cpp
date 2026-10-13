@@ -657,16 +657,9 @@ bool Comick::updateMangaList(UpdateProgressToken *token)
         state.searched = true;
     }
 
+    // a retry continues with the sitemaps that are missing, the list is only taken when it is complete
     if (!fetchSitemaps(state, token))
-    {
-        // keep the partial list if there is nothing better (first update), the error is shown anyway
-        if (state.mangas.size > this->mangaList.size)
-        {
-            qDebug() << "Comick: keeping partial manga list:" << state.mangas.size;
-            this->mangaList = state.mangas;
-        }
         return false;
-    }
 
     this->mangaList = state.mangas;
 

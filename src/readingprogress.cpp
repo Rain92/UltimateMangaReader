@@ -2,9 +2,10 @@
 
 #include <QSaveFile>
 
-ReadingProgress::ReadingProgress(const MangaIndex &index, int numChapters,
-                                 int numPages)
-    : index(index), numChapters(numChapters), numPages(numPages){};
+ReadingProgress::ReadingProgress(const MangaIndex &index, int numChapters, int numPages)
+    : index(index), numChapters(numChapters), numPages(numPages)
+{
+}
 
 ReadingProgress::ReadingProgress(const QString &hostname, const QString &title)
     : numChapters(0), numPages(0)
@@ -13,7 +14,6 @@ ReadingProgress::ReadingProgress(const QString &hostname, const QString &title)
 }
 
 void ReadingProgress::serialize(const QString &hostname, const QString &title)
-
 {
     QSaveFile file(CONF.mangainfodir(hostname, title) + "progress.dat");
     if (!file.open(QIODevice::WriteOnly))
@@ -33,11 +33,16 @@ bool ReadingProgress::deserialize(const QString &hostname, const QString &title)
     if (!file.open(QIODevice::ReadOnly))
         return false;
 
-    QDataStream in2(&file);
-    in2.setVersion(CONF.dataStreamVersion);
-    in2 >> *this;
+    QDataStream in(&file);
+    in.setVersion(CONF.dataStreamVersion);
+    in >> *this;
 
-    file.close();
+    if (in.status() != QDataStream::Ok)
+    {
+        qDebug() << "Couldn't read the reading progress of" << title;
+        *this = ReadingProgress(MangaIndex(0, 0), 0, 0);
+        return false;
+    }
     return true;
 }
 

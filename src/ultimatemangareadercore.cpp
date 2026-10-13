@@ -232,6 +232,7 @@ void UltimateMangaReaderCore::clearDownloadCache(ClearDownloadCacheLevel level)
 
         case ClearInvalidFavs:
             favoritesManager->clearInvalidFavorites();
+            break;
 
         default:
             break;

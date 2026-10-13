@@ -373,12 +373,30 @@ Result<QSharedPointer<MangaInfo>, QString> Mangakakalot::getMangaInfo(const QStr
     // the chapter list comes from the api: load it in parallel to the manga page
     auto slug = slugFromUrl(urlR.unwrap());
     if (!slug.isEmpty())
-        prefetchedChapters.insert(slug, downloadChapterList(slug, 0));
+        prefetchChapters(slug, downloadChapterList(slug, 0));
 
     auto res = AbstractMangaSource::getMangaInfo(urlR.unwrap(), mangaTitle);
     prefetchedChapters.remove(slug);
 
     return res;
+}
+
+void Mangakakalot::prefetchChapters(const QString &slug, QSharedPointer<DownloadStringJob> job)
+{
+    PrefetchedChapters prefetched{job, {}};
+    prefetched.age.start();
+    prefetchedChapters.insert(slug, prefetched);
+}
+
+QSharedPointer<DownloadStringJob> Mangakakalot::takePrefetchedChapters(const QString &slug)
+{
+    // left from an update whose manga page couldn't be loaded, the chapters may have changed since
+    const qint64 maxAgeMs = 60 * 1000;
+
+    auto prefetched = prefetchedChapters.take(slug);
+    if (!prefetched.job || prefetched.age.elapsed() > maxAgeMs)
+        return {};
+    return prefetched.job;
 }
 
 void Mangakakalot::updateMangaInfoAsync(QSharedPointer<MangaInfo> info, bool updateCover)
@@ -405,7 +423,7 @@ void Mangakakalot::updateMangaInfoAsync(QSharedPointer<MangaInfo> info, bool upd
     executeOnJobCompletion(job,
                            [this, info, updateCover, slug, job]()
                            {
-                               prefetchedChapters.insert(slug, job);
+                               prefetchChapters(slug, job);
                                AbstractMangaSource::updateMangaInfoAsync(info, updateCover);
                            });
     // without it the update loads the chapter list itself (e.g. after a rate limit)
@@ -471,7 +489,7 @@ Result<MangaChapterCollection, QString> Mangakakalot::updateMangaInfoFinishedLoa
     QList<MangaChapter> chapters;
     QSet<QString> chapterUrls;
     int offset = 0;
-    auto chaptersJob = prefetchedChapters.take(slug);
+    auto chaptersJob = takePrefetchedChapters(slug);
     for (int request = 0; request < 10; request++)
     {
         if (request > 0 || !chaptersJob || chaptersJob->hasFailed())

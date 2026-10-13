@@ -15,6 +15,7 @@ public:
     explicit MangaInfo(AbstractMangaSource *mangaSource);
     ~MangaInfo();
 
+    // Null if the file is missing or can't be read.
     static QSharedPointer<MangaInfo> deserialize(AbstractMangaSource *mangaSource, const QString &path);
 
     void serialize();
@@ -39,6 +40,8 @@ public:
     MangaChapterCollection chapters;
 
     void updateCompeted(bool updated, const QList<QPair<int, int>> &moveMap);
+    // Takes over everything an info download gets (not the identity: source and title).
+    void takeOverDetails(const MangaInfo &other);
     QString coverThumbnailPath() const;
 
     void sendCoverLoaded();

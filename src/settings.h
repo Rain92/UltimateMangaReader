@@ -18,6 +18,7 @@ public:
     void deserialize();
     void serialize();
     void scheduleSerialize();
+    void resetToDefaults();
 
     int lightValue;
     int comflightValue;

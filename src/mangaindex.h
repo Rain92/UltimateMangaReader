@@ -11,7 +11,6 @@ public:
 
     MangaIndex();
     MangaIndex(int chapter, int page);
-    MangaIndex(const MangaIndex &mangaIndex) = default;
 
     bool operator==(const MangaIndex &b) const;
     bool operator!=(const MangaIndex &b) const;

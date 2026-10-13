@@ -423,7 +423,7 @@ GreyscaleImage GreyscaleImage::rotate(int rotation) const
 
 GreyscaleImage GreyscaleImage::crop(QRect rect) const
 {
-    if (!rect.isValid() || rect.right() > this->width || rect.bottom() > this->height)
+    if (!rect.isValid() || !QRect(0, 0, width, height).contains(rect))
         return *this;
 
     QByteArray newBuffer;

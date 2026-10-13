@@ -49,7 +49,16 @@ bool AbstractMangaSource::deserializeMangaList()
     QDataStream in(&file);
     in.setVersion(CONF.dataStreamVersion);
     in >> mangaList;
-    file.close();
+
+    bool consistent = mangaList.urls.size() == mangaList.titles.size() &&
+                      mangaList.popularityRanks.size() == mangaList.titles.size() &&
+                      mangaList.size == mangaList.titles.size();
+    if (in.status() != QDataStream::Ok || !consistent)
+    {
+        qDebug() << "Couldn't read the manga list of" << name;
+        mangaList = MangaList();
+        return false;
+    }
 
     return true;
 }
@@ -176,36 +185,33 @@ Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::loadMangaInfo(co
                                                                               const QString &mangaTitle,
                                                                               bool update)
 {
-    // reload broken favs
-    auto usable = [](const QSharedPointer<MangaInfo> &info)
-    { return info && info->coverUrl != "" && info->chapters.count() > 0; };
+    // the object other parts of the app may hold already (e.g. the favorites), it is filled in place
+    auto info = loadCachedMangaInfo(mangaUrl, mangaTitle);
 
-    auto info = liveInfo(mangaTitle);
-    if (!usable(info))
+    // an info without a cover is fine, some sources have none for some mangas
+    if (!info->chapters.isEmpty())
     {
-        QString path(CONF.mangainfodir(name, mangaTitle) + "mangainfo.dat");
-        if (QFile::exists(path))
-            info = MangaInfo::deserialize(this, path);
-    }
-
-    if (usable(info))
-    {
-        registerInfo(info);
         if (update)
-            info->mangaSource->updateMangaInfoAsync(info);
+            updateMangaInfoAsync(info);
 
         return Ok(info);
     }
 
+    // not cached (or nothing to read when it was saved)
     auto infoR = getMangaInfo(mangaUrl, mangaTitle);
+    if (infoR.isErr())
+        return infoR;
 
-    if (infoR.isOk())
+    // the download ran an event loop: the info was possibly filled meanwhile by another request
+    if (info->chapters.isEmpty())
     {
-        infoR.unwrap()->serialize();
-        registerInfo(infoR.unwrap());
+        info->takeOverDetails(*infoR.unwrap());
+        info->serialize();
+        info->updateCompeted(false, {});
+        downloadCoverAsync(info);
     }
 
-    return infoR;
+    return Ok(info);
 }
 
 QSharedPointer<MangaInfo> AbstractMangaSource::liveInfo(const QString &title)
@@ -521,15 +527,19 @@ void AbstractMangaSource::fillMangaInfo(QSharedPointer<MangaInfo> info, const QS
                                         const QRegularExpression &summaryrx,
                                         const QRegularExpression &coverrx)
 {
-    auto authorrxmatch = authorrx.match(buffer);
-    auto artistrxmatch = artistrx.match(buffer);
-    auto statusrxmatch = statusrx.match(buffer);
-    auto yearrxmatch = yearrx.match(buffer);
-    auto genresrxmatch = genresrx.match(buffer);
-    auto summaryrxmatch = summaryrx.match(buffer);
-    auto coverrxmatch = coverrx.match(buffer);
+    // an empty pattern (a field the source doesn't have) would match anywhere and clear the field
+    auto match = [&buffer](const QRegularExpression &rx)
+    { return rx.pattern().isEmpty() ? QRegularExpressionMatch() : rx.match(buffer); };
 
-    QRegularExpression bbrx(R"(\[.*?\])");
+    auto authorrxmatch = match(authorrx);
+    auto artistrxmatch = match(artistrx);
+    auto statusrxmatch = match(statusrx);
+    auto yearrxmatch = match(yearrx);
+    auto genresrxmatch = match(genresrx);
+    auto summaryrxmatch = match(summaryrx);
+    auto coverrxmatch = match(coverrx);
+
+    static const QRegularExpression bbrx(R"(\[.*?\])");
 
     if (authorrxmatch.hasMatch())
         info->author = htmlToPlainText(authorrxmatch.captured(1)).remove('\n');
