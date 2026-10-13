@@ -30,19 +30,22 @@ HEADERS += \
     $$PWD/mangaindextraverser.h \
     $$PWD/mangainfo.h \
     $$PWD/mangalist.h \
+    $$PWD/mangaliststore.h \
     $$PWD/mangalistupdater.h \
-    $$PWD/mangasources/abstractmangasource.h \
+    $$PWD/mangarepository.h \
     $$PWD/mangasources/comick.h \
     $$PWD/mangasources/json.h \
     $$PWD/mangasources/mangadex.h \
     $$PWD/mangasources/mangahere.h \
     $$PWD/mangasources/mangakakalot.h \
     $$PWD/mangasources/mangaplus.h \
+    $$PWD/mangasources/mangasourcebase.h \
     $$PWD/mangasources/mangatown.h \
     $$PWD/mangasources/updateprogresstoken.h \
     $$PWD/networkmanager.h \
     $$PWD/perftimer.h \
     $$PWD/readingprogress.h \
+    $$PWD/result.h \
     $$PWD/settings.h \
     $$PWD/sizes.h \
     $$PWD/sourceregistry.h \
@@ -50,11 +53,11 @@ HEADERS += \
     $$PWD/standbymanager.h \
     $$PWD/staticsettings.h \
     $$PWD/suspendmanager.h \
+    $$PWD/task.h \
     $$PWD/trimrect.h \
     $$PWD/ultimatemangareadercore.h \
     $$PWD/utils.h \
     $$PWD/../thirdparty/rapidjson.h \
-    $$PWD/../thirdparty/result.h \
     $$PWD/../thirdparty/simdimageresize.h \
 
 SOURCES += \
@@ -79,13 +82,15 @@ SOURCES += \
     $$PWD/mangaindextraverser.cpp \
     $$PWD/mangainfo.cpp \
     $$PWD/mangalist.cpp \
+    $$PWD/mangaliststore.cpp \
     $$PWD/mangalistupdater.cpp \
-    $$PWD/mangasources/abstractmangasource.cpp \
+    $$PWD/mangarepository.cpp \
     $$PWD/mangasources/comick.cpp \
     $$PWD/mangasources/mangadex.cpp \
     $$PWD/mangasources/mangahere.cpp \
     $$PWD/mangasources/mangakakalot.cpp \
     $$PWD/mangasources/mangaplus.cpp \
+    $$PWD/mangasources/mangasourcebase.cpp \
     $$PWD/mangasources/mangatown.cpp \
     $$PWD/mangasources/updateprogresstoken.cpp \
     $$PWD/networkmanager.cpp \
@@ -101,7 +106,7 @@ SOURCES += \
     $$PWD/../thirdparty/simdimageresize.cpp \
 
 QT += core gui network concurrent
-CONFIG += c++17
+CONFIG += c++23
 
 # keep the code free of APIs that are deprecated in the Qt version it is built with
 DEFINES += QT_DISABLE_DEPRECATED_UP_TO=0x060C00 QT_NO_FOREACH

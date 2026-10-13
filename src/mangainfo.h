@@ -1,20 +1,22 @@
 #pragma once
 
-#include "abstractmangasource.h"
 #include "mangachaptercollection.h"
 #include "readingprogress.h"
 #include "staticsettings.h"
+
+class MangaSourceBase;
 
 class MangaInfo : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit MangaInfo(AbstractMangaSource *mangaSource);
+    explicit MangaInfo(MangaSourceBase *mangaSource);
     ~MangaInfo();
 
-    // Null if the file is missing or can't be read.
-    static QSharedPointer<MangaInfo> deserialize(AbstractMangaSource *mangaSource, const QString &path);
+    // Null if the file is missing or can't be read. The images the pages were resolved to are dropped: they
+    // can expire, or only work in the session that resolved them (the page files don't need them).
+    static QSharedPointer<MangaInfo> deserialize(MangaSourceBase *mangaSource, const QString &path);
 
     void serialize();
     // for display
@@ -35,14 +37,13 @@ public:
 
     bool updated;
 
-    AbstractMangaSource *mangaSource;
+    MangaSourceBase *mangaSource;
 
     MangaChapterCollection chapters;
 
     // After the chapters were merged.
     void updateCompleted(const MangaChapterCollection::MergeResult &merge);
-    // Takes over everything an info download gets (not the identity: source and url, and the title).
-    void takeOverDetails(const MangaInfo &other);
+
     QString coverThumbnailPath() const;
 
     // The directory of the manga in the cache.

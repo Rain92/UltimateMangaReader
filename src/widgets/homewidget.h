@@ -4,8 +4,9 @@
 #include <QScrollBar>
 #include <QStandardItemModel>
 
-#include "abstractmangasource.h"
 #include "clineedit.h"
+#include "mangaliststore.h"
+#include "mangasourcebase.h"
 #include "sizes.h"
 #include "staticsettings.h"
 #include "ultimatemangareadercore.h"
@@ -23,13 +24,15 @@ public:
     explicit HomeWidget(QWidget *parent = nullptr);
     ~HomeWidget();
 
-    void currentMangaSourceChanged(AbstractMangaSource *source);
+    // the lists of the sources, before a source is shown
+    void setMangaLists(MangaListStore *lists) { mangaLists = lists; }
+    void currentMangaSourceChanged(MangaSourceBase *source);
     // e.g. updated: the list is shown again if it is the one of the current source
-    void mangaListChanged(AbstractMangaSource *source);
-    void updateSourcesList(const QList<AbstractMangaSource *> &sources);
+    void mangaListChanged(MangaSourceBase *source);
+    void updateSourcesList(const QList<MangaSourceBase *> &sources);
 
 signals:
-    void mangaSourceClicked(AbstractMangaSource *source);
+    void mangaSourceClicked(MangaSourceBase *source);
     // the filter wants the on-screen keyboard, or not anymore
     void virtualKeyboardRequested(bool show);
     void mangaClicked(const QString &mangaurl, const QString &mangatitle);
@@ -43,16 +46,20 @@ private slots:
 private:
     Ui::HomeWidget *ui;
 
-    AbstractMangaSource *currentMangaSource;
+    MangaListStore *mangaLists;
+    MangaSourceBase *currentMangaSource;
 
     QStringList filteredMangaTitles;
     QStringList filteredMangaUrls;
     bool filteractive;
 
+    // the one of the current source (loaded when it is needed)
+    MangaList &currentList();
     void showMangaList();
+
     void refreshMangaListView();
     void adjustUI();
 
-    QList<QStandardItem *> listViewItemfromMangaSource(AbstractMangaSource *source);
+    QList<QStandardItem *> listViewItemfromMangaSource(MangaSourceBase *source);
     void updateMangaSourceSelection(int row);
 };

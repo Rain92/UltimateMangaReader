@@ -8,36 +8,59 @@
 #include "harness.h"
 #include "mangacontroller.h"
 #include "mangainfo.h"
+#include "mangarepository.h"
 #include "readingprogress.h"
+#include "sizes.h"
 #include "ultimatemangareadercore.h"
 #include "utils.h"
 
 // A source whose chapters and page lists are set by the test, its info "downloads" go to the test server.
-class FakeSource : public AbstractMangaSource
+class FakeSource : public MangaSourceBase
 {
 public:
     QString server;
     MangaChapterCollection nextChapters;
+    // the info fails with it, if it is set
+    Error nextError;
+    QString infoPath = "/final";
     QHash<QString, QList<ImageLink>> pageLists;
+    int infoCalls = 0;
     int pageListCalls = 0;
+    int resolveCalls = 0;
 
-    FakeSource(NetworkManager *nm, const QString &server) : AbstractMangaSource(nm), server(server)
+    FakeSource(NetworkManager *nm, const QString &server) : MangaSourceBase(nm), server(server)
     {
         name = "Fake";
         baseUrl = server;
         headerRules.add("127.0.0.1", "Referer", "https://fake.example/");
     }
-    bool updateMangaList(UpdateProgressToken *) override { return true; }
-    Result<MangaChapterCollection, QString> updateMangaInfoFinishedLoading(QSharedPointer<DownloadBufferJob>,
-                                                                          QSharedPointer<MangaInfo>) override
+    Task<MangaListUpdate> fetchMangaList(UpdateProgressToken *, MangaList) override
     {
-        return Ok(nextChapters);
+        co_return MangaListUpdate::complete({});
     }
-    QString mangaInfoRequestUrl(const QString &) const override { return server + "/final"; }
-    Result<QList<ImageLink>, QString> getPageList(const QString &chapterUrl) override
+    Task<Result<MangaDetails>> fetchMangaInfo(QString, MangaChapterCollection) override
+    {
+        infoCalls++;
+        auto job = download(server + infoPath);
+        if (!co_await job)
+            co_return Err(job->error);
+        if (!nextError.message.isEmpty())
+            co_return Err(nextError);
+
+        MangaDetails details;
+        details.author = "Author";
+        details.chapters = nextChapters;
+        co_return details;
+    }
+    Task<Result<QList<ImageLink>>> fetchPageList(QString chapterUrl) override
     {
         pageListCalls++;
-        return Ok(pageLists.value(chapterUrl));
+        co_return pageLists.value(chapterUrl);
+    }
+    Task<Result<ImageLink>> resolveImage(ImageLink page) override
+    {
+        resolveCalls++;
+        co_return page;
     }
 };
 
@@ -111,20 +134,22 @@ int storageTests(const QString &server)
         check(core.settings.mangaOrder == OrderByPopularity && !core.settings.standbyWhenIdle,
               "old settings: defaults");
         auto ms = findSource(core.sources->all(), "MangaTown");
-        check(ms->name == "MangaTown" && !ms->deserializeMangaList() && ms->mangaList.size == 0,
+        auto &list = core.mangaLists.list("MangaTown");
+        check(ms->name == "MangaTown" && core.mangaLists.isLoaded("MangaTown") && list.size == 0,
               "old manga list not read");
-        ms->mangaList.append("Title", "/manga/title");
-        ms->serializeMangaList();
-        ms->mangaList = MangaList();
-        check(ms->deserializeMangaList() && ms->mangaList.size == 1, "manga list round trip");
+        list.append("Title", "/manga/title");
+        core.mangaLists.save("MangaTown");
+        list = MangaList();
+        check(core.mangaLists.reload("MangaTown") && core.mangaLists.list("MangaTown").size == 1,
+              "manga list round trip");
         core.settings.standbyWhenIdle = true;
         core.settings.serialize();
 
         // sources
-        QList<AbstractMangaSource *> activeSignalled;
-        AbstractMangaSource *currentSignalled = ms;
-        QObject::connect(core.sources, &SourceRegistry::activeSourcesChanged, [&](const QList<AbstractMangaSource *> &l) { activeSignalled = l; });
-        QObject::connect(core.sources, &SourceRegistry::currentSourceChanged, [&](AbstractMangaSource *c) { currentSignalled = c; });
+        QList<MangaSourceBase *> activeSignalled;
+        MangaSourceBase *currentSignalled = ms;
+        QObject::connect(core.sources, &SourceRegistry::activeSourcesChanged, [&](const QList<MangaSourceBase *> &l) { activeSignalled = l; });
+        QObject::connect(core.sources, &SourceRegistry::currentSourceChanged, [&](MangaSourceBase *c) { currentSignalled = c; });
         check(core.sources->active().size() == 6 && core.settings.enabledMangaSources.size() == 6, "all sources enabled by default");
         core.sources->setCurrent(ms);
         check(core.sources->current() == ms && currentSignalled == ms, "current source");
@@ -137,10 +162,10 @@ int storageTests(const QString &server)
         core.updateActiveSources();
 
         // lists: only the loaded ones are sorted and signalled
-        QList<AbstractMangaSource *> changed;
-        QObject::connect(core.mangaListUpdater, &MangaListUpdater::mangaListChanged, [&](AbstractMangaSource *m) { changed << m; });
+        QList<MangaSourceBase *> changed;
+        QObject::connect(core.mangaListUpdater, &MangaListUpdater::mangaListChanged, [&](MangaSourceBase *m) { changed << m; });
         core.mangaListUpdater->sortMangaLists();
-        check(changed == QList<AbstractMangaSource *>{ms}, "sorting signals the loaded lists");
+        check(changed == QList<MangaSourceBase *>{ms}, "sorting signals the loaded lists");
     }
     touch(cache + "MangaTown/0123456789abcdef/keep");
     {
@@ -155,33 +180,36 @@ int storageTests(const QString &server)
     Settings settings;
     nm.setDownloadSettings(QSize(1404, 1872), &settings);
     auto fake = QSharedPointer<FakeSource>::create(&nm, server);
-    QMap<QString, AbstractMangaSource *> sources{{"Fake", fake.get()}};
+    QMap<QString, MangaSourceBase *> sources{{"Fake", fake.get()}};
+    MangaRepository repository(&nm);
     const QString url = "https://fake.example/manga/test";
     const QString url2 = "https://fake.example/manga/test-2";
 
     fake->nextChapters = chapterList({"A", "B", "C"});
-    auto infoR = fake->loadMangaInfo(url, "Same Title");
-    check(infoR.isOk(), "load info");
-    auto info = infoR.unwrap();
-    check(info->url == url && info->title == "Same Title" && info->chapters.size() == 3, "info has url and title");
+    auto infoR = repository.loadInfo(fake.get(), url, "Same Title").wait();
+    check(infoR.has_value(), "load info");
+    auto info = infoR.value();
+    check(info->url == url && info->title == "Same Title" && info->chapters.size() == 3 && info->author == "Author",
+          "info has url, title and the details of the source");
     check(info->directory() == CONF.mangasourcedir("Fake") + urlHash(url, 16) + "/" &&
               QFile::exists(info->directory() + "mangainfo.dat"),
           "info saved in the directory of its url (also without a cover)");
 
     fake->nextChapters = chapterList({"D"});
-    auto info2 = fake->loadMangaInfo(url2, "Same Title").unwrap();
+    auto info2 = repository.loadInfo(fake.get(), url2, "Same Title").wait().value();
     check(info2 != info && info2->chapters.size() == 1 && info->chapters.size() == 3 &&
               info2->directory() != info->directory(),
           "same title, other url: another manga");
-    check(fake->loadMangaInfo(url, "Renamed", false).unwrap() == info, "same url: the live info");
+    check(repository.loadInfo(fake.get(), url, "Renamed", false).wait().value() == info, "same url: the live info");
 
     // --- page lists
     auto B = info->chapters[1].chapterUrl;
     fake->pageLists[B] = {ImageLink::fromUrl(server + "/image/100x150"), ImageLink::fromUrl(server + "/image/100x151")};
-    check(fake->updatePageList(info, 1).isOk() && info->chapters[1].pages.size() == 2 &&
+    check(repository.loadPageList(info, 1).wait().has_value() && info->chapters[1].pages.size() == 2 &&
               info->chapters[1].pagesLoaded && fake->pageListCalls == 1,
           "page list loaded");
-    check(fake->updatePageList(info, 1).isOk() && fake->pageListCalls == 1, "loaded page list not loaded again");
+    check(repository.loadPageList(info, 1).wait().has_value() && fake->pageListCalls == 1,
+          "loaded page list not loaded again");
     info->serialize();
     {
         QWeakPointer<MangaInfo> weak = info;
@@ -209,7 +237,7 @@ int storageTests(const QString &server)
         fake->nextChapters = chapterList(names);
         bool done = false;
         auto c = QObject::connect(info.get(), &MangaInfo::updatedSignal, [&]() { done = true; });
-        fake->updateMangaInfoAsync(info, false);
+        repository.updateInfo(info, false);
         QElapsedTimer t;
         t.start();
         while (!done && t.elapsed() < 5000)
@@ -252,14 +280,67 @@ int storageTests(const QString &server)
     touch(info->pagePath(X, 0));
     touch(info->pagePath(X, 5));
     fake->pageLists[X] = {ImageLink::fromUrl(server + "/image/100x150")};
-    check(fake->updatePageList(info, 0).isOk() && !QFile::exists(info->pagePath(X, 0)) &&
+    check(repository.loadPageList(info, 0).wait().has_value() && !QFile::exists(info->pagePath(X, 0)) &&
               !QFile::exists(info->pagePath(X, 5)) && QFile::exists(info->pagePath(B, 0)),
           "old files of a chapter whose page list is loaded removed");
+
+    // --- the images of the pages
+    {
+        auto image = repository.pageImage(info, 0, 0).wait();
+        check(image && image->url == server + "/image/100x150" && fake->resolveCalls == 1 &&
+                  info->chapters[0].pages[0].image.url == image->url,
+              "page image resolved and kept");
+        check(repository.pageImage(info, 0, 0).wait() && fake->resolveCalls == 1, "kept page image not resolved again");
+
+        info->chapters[0].pages[0].image.expires = QDateTime::currentSecsSinceEpoch() - 1;
+        check(repository.pageImage(info, 0, 0).wait() && fake->resolveCalls == 2, "expired page image resolved again");
+
+        info->serialize();
+        auto copy = MangaInfo::deserialize(fake.get(), info->directory() + "mangainfo.dat");
+        check(copy && copy->chapters[0].pages[0].image.isEmpty() && !copy->chapters[0].pages[0].link.isEmpty(),
+              "page images aren't read from the file, the page lists are");
+
+        auto broken = ImageLink::fromUrl(server + "/status/404");
+        info->chapters[0].pages[0].image = broken;
+        auto job = repository.downloadImage(fake.get(), broken, info->directory() + "test/broken.jpg");
+        job->await(5000);
+        check(job->hasFailed() && info->chapters[0].pages[0].image.isEmpty(),
+              "a page image that couldn't be downloaded is forgotten");
+    }
+
+    // --- updates of the info
+    {
+        fake->nextChapters = chapterList({"X", "B", "Y"});
+        int calls = fake->infoCalls;
+        auto first = repository.updateInfo(info);
+        auto second = repository.updateInfo(info);
+        check(first.wait() && second.wait() && fake->infoCalls == calls + 1, "an update that runs is joined");
+
+        QList<Error> signalled;
+        auto c = QObject::connect(&repository, &MangaRepository::infoUpdateFailed,
+                                  [&](QSharedPointer<MangaInfo> i, const Error &e)
+                                  {
+                                      if (i == info)
+                                          signalled << e;
+                                  });
+        fake->nextError = {Error::Parse, "broken page", 0};
+        auto failed = repository.updateInfo(info).wait();
+        check(!failed && failed.error().code == Error::Parse && signalled.size() == 1 &&
+                  signalled[0].message == "broken page" && info->chapters.size() == 3,
+              "a failed update is signalled, the info stays");
+        fake->nextError = {};
+
+        fake->nextChapters = chapterList({"X"});
+        auto shrunk = repository.updateInfo(info).wait();
+        check(!shrunk && shrunk.error().code == Error::Parse && signalled.size() == 2 && info->chapters.size() == 3,
+              "a chapter list that shrank a lot isn't taken");
+        QObject::disconnect(c);
+    }
 
     // --- the reader follows its chapter
     {
         ReadingProgress(MangaIndex(1, 1), B, 3, 2).serialize("Fake", url);
-        MangaController controller(&nm);
+        MangaController controller(&nm, &repository);
         controller.setCurrentManga(info);
         check(controller.currentIndex.chapter == 1 && controller.currentIndex.page == 1, "reader opens at the progress");
         check(update({"B", "X", "Y"}), "update 5 done");
@@ -272,7 +353,7 @@ int storageTests(const QString &server)
 
     // --- favorites by url
     {
-        FavoritesManager favorites(sources, &nm);
+        FavoritesManager favorites(sources, &repository, &nm);
         QStringList events;
         QObject::connect(&favorites, &FavoritesManager::favoriteInserted, [&](int i) { events << QString("ins %1").arg(i); });
         QObject::connect(&favorites, &FavoritesManager::favoriteRemoved, [&](int i) { events << QString("rem %1").arg(i); });
@@ -285,7 +366,7 @@ int storageTests(const QString &server)
               "a new favorite has its reading progress");
     }
     {
-        FavoritesManager favorites(sources, &nm);
+        FavoritesManager favorites(sources, &repository, &nm);
         check(favorites.count() == 2 && favorites.favorite(1).mangaUrl == url &&
                   favorites.favorite(0).mangaUrl == url2 && !favorites.info(0),
               "favorites round trip, infos not loaded yet");
@@ -351,7 +432,8 @@ int storageTests(const QString &server)
     auto download = [&](const ImageLink &image, const QString &name)
     {
         auto path = info->directory() + "test/" + name + ".jpg";
-        auto job = fake->downloadImage(image, path);
+        auto job = repository.downloadImage(fake.get(), image, path);
+
         job->await(10000);
         return QImage(path).size();
     };

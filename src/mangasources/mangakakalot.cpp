@@ -37,7 +37,7 @@ static QString slugFromUrl(const QString &url)
     return parts.size() == 2 && parts[0] == "manga" ? parts[1] : QString();
 }
 
-Mangakakalot::Mangakakalot(NetworkManager *networkManager) : AbstractMangaSource(networkManager)
+Mangakakalot::Mangakakalot(NetworkManager *networkManager) : MangaSourceBase(networkManager)
 {
     name = "Mangakakalot";
     // manganato.com / mangakakalot.com are gone, mangakakalot.gg, natomanga.com and nelomanga.net
@@ -46,7 +46,6 @@ Mangakakalot::Mangakakalot(NetworkManager *networkManager) : AbstractMangaSource
     sitemapUrl = baseUrl + "sitemap.xml";
     popularUrl = baseUrl + "genre/all?type=topview&state=all&page=%1";
     chaptersApiUrl = baseUrl + "api/manga/%1/chapters?limit=%2&offset=%3";
-    mangaInfoTimeout = 6000;
 
     // the image cdns only answer with the referer of one of the mirrors
     addImageHost("2xstorage.com");
@@ -91,7 +90,7 @@ QSharedPointer<DownloadBufferJob> Mangakakalot::downloadChapterList(const QStrin
     return download(chaptersApiUrl.arg(slug).arg(-1).arg(offset), 8000);
 }
 
-bool Mangakakalot::updateMangaList(UpdateProgressToken *token)
+Task<MangaListUpdate> Mangakakalot::fetchMangaList(UpdateProgressToken *token, MangaList current)
 {
     QRegularExpression sitemaprx(R"lit(<loc>\s*(https?://[^<\s]*/sitemap-comic-\d+\.xml)\s*</loc>)lit");
     QRegularExpression slugrx(R"lit(<loc>\s*https?://[^/<]+/manga/([^/<\s]+)\s*</loc>)lit");
@@ -106,21 +105,15 @@ bool Mangakakalot::updateMangaList(UpdateProgressToken *token)
 
     auto job = download(sitemapUrl, 7000);
 
-    if (!job->await())
-    {
-        token->sendError(job->errorString);
-        return false;
-    }
+    if (!co_await job)
+        co_return MangaListUpdate::failed(job->error);
 
     QStringList sitemapUrls;
     for (auto &match : getAllRxMatches(sitemaprx, job->text()))
         sitemapUrls.append(normalizeUrl(match.captured(1)));
 
     if (sitemapUrls.isEmpty())
-    {
-        token->sendError("Couldn't find the manga sitemaps.");
-        return false;
-    }
+        co_return MangaListUpdate::failed({Error::Parse, "Couldn't find the manga sitemaps.", 0});
 
     token->sendProgress(5);
 
@@ -128,9 +121,9 @@ bool Mangakakalot::updateMangaList(UpdateProgressToken *token)
     // comes from the sitemaps. they contain no titles: the ones of the popular pages and of the
     // previous list are taken, the others are made from the slug
     QHash<QString, QString> knownTitles;
-    for (int i = 0; i < mangaList.titles.size() && i < mangaList.urls.size(); i++)
-        if (mangaList.urls[i].startsWith("manga/"))
-            knownTitles.insert(mangaList.urls[i].mid(6), mangaList.titles[i]);
+    for (int i = 0; i < current.titles.size() && i < current.urls.size(); i++)
+        if (current.urls[i].startsWith("manga/"))
+            knownTitles.insert(current.urls[i].mid(6), current.titles[i]);
 
     QStringList orderedSlugs;
     QSet<QString> slugs;
@@ -143,21 +136,24 @@ bool Mangakakalot::updateMangaList(UpdateProgressToken *token)
         orderedSlugs.append(slug);
     };
 
+    // a failed page only degrades the popularity order
+    Error popularError;
     if (!state.popularDone)
         state.popular.clear();
     for (int page = 1; page <= 2 && !state.popularDone && !token->canceled; page++)
     {
         auto popularJob = download(popularUrl.arg(page), 5000, 0);
-        if (!popularJob->await())
+        if (!co_await popularJob)
         {
-            qDebug() << "Mangakakalot: popular page failed:" << popularJob->errorString;
+            qDebug() << "Mangakakalot: popular page failed:" << popularJob->error.message;
+            popularError = popularJob->error;
+            popularError.message = "Couldn't load the popular titles: " + popularError.message;
             break;
         }
 
         for (auto &match : getAllRxMatches(popularrx, popularJob->text()))
             state.popular.append({match.captured(1), htmlToPlainText(match.captured(2)).trimmed()});
     }
-    // a failed page only degrades the popularity order
     state.popularDone = !token->canceled;
 
     for (const auto &[slug, title] : std::as_const(state.popular))
@@ -190,11 +186,8 @@ bool Mangakakalot::updateMangaList(UpdateProgressToken *token)
     DownloadQueue queue(networkManager, missingSitemaps, 2, lambda, true, 60000, requestHeadersFunction());
     queue.setCancellationToken(&token->canceled);
     queue.start();
-    if (!missingSitemaps.isEmpty() && !queue.awaitCompletion())
-    {
-        token->sendError(queue.lastErrorMessage);
-        return false;
-    }
+    if (!missingSitemaps.isEmpty() && !co_await queue)
+        co_return MangaListUpdate::failed(queue.lastError);
 
     for (const auto &url : std::as_const(sitemapUrls))
         for (const auto &slug : state.sitemapSlugs.value(url))
@@ -220,79 +213,21 @@ bool Mangakakalot::updateMangaList(UpdateProgressToken *token)
         mangas.append(title, "manga/" + slug);
     }
 
-    this->mangaList = mangas;
-
     qDebug() << "mangas:" << mangas.size << "time:" << timer.elapsed();
 
     token->sendProgress(100);
 
-    return true;
+    if (!popularError.message.isEmpty())
+        co_return MangaListUpdate::partial(mangas, popularError);
+    co_return MangaListUpdate::complete(mangas);
 }
 
-Result<QSharedPointer<MangaInfo>, QString> Mangakakalot::getMangaInfo(const QString &mangaUrl,
-                                                                      const QString &mangaTitle)
-{
-    // the chapter list comes from the api: load it in parallel to the manga page
-    auto slug = slugFromUrl(mangaUrl);
-    if (!slug.isEmpty())
-        prefetchChapters(slug, downloadChapterList(slug, 0));
-
-    auto res = AbstractMangaSource::getMangaInfo(mangaUrl, mangaTitle);
-    prefetchedChapters.remove(slug);
-
-    return res;
-}
-
-void Mangakakalot::prefetchChapters(const QString &slug, QSharedPointer<DownloadBufferJob> job)
-{
-    PrefetchedChapters prefetched{job, {}};
-    prefetched.age.start();
-    prefetchedChapters.insert(slug, prefetched);
-}
-
-QSharedPointer<DownloadBufferJob> Mangakakalot::takePrefetchedChapters(const QString &slug)
-{
-    // left from an update whose manga page couldn't be loaded, the chapters may have changed since
-    const qint64 maxAgeMs = 60 * 1000;
-
-    auto prefetched = prefetchedChapters.take(slug);
-    if (!prefetched.job || prefetched.age.elapsed() > maxAgeMs)
-        return {};
-    return prefetched.job;
-}
-
-void Mangakakalot::updateMangaInfoAsync(QSharedPointer<MangaInfo> info, bool updateCover)
-{
-    // load the chapter list before the manga page, so updateMangaInfoFinishedLoading doesn't
-    // have to wait for it on the ui thread
-    auto slug = slugFromUrl(info->url);
-    if (slug.isEmpty())
-    {
-        AbstractMangaSource::updateMangaInfoAsync(info, updateCover);
-        return;
-    }
-
-    auto job = downloadChapterList(slug, 0);
-    executeOnJobCompletion(job,
-                           [this, info, updateCover, slug, job]()
-                           {
-                               prefetchChapters(slug, job);
-                               AbstractMangaSource::updateMangaInfoAsync(info, updateCover);
-                           });
-    // without it the update loads the chapter list itself (e.g. after a rate limit)
-    QObject::connect(job.get(), &DownloadJobBase::downloadError, job.get(),
-                     [this, info, updateCover]() { AbstractMangaSource::updateMangaInfoAsync(info, updateCover); });
-}
-
-Result<MangaChapterCollection, QString> Mangakakalot::updateMangaInfoFinishedLoading(
-    QSharedPointer<DownloadBufferJob> job, QSharedPointer<MangaInfo> info)
+Task<Result<MangaDetails>> Mangakakalot::fetchMangaInfo(QString mangaUrl, MangaChapterCollection)
 {
     QRegularExpression slugrx(R"lit(data-comic-slug="([^"]+)")lit");
     QRegularExpression authorrx(R"lit(<li>Author\(s\)\s*:(.*?)</li>)lit",
                                 QRegularExpression::DotMatchesEverythingOption);
-    QRegularExpression artistrx;
     QRegularExpression statusrx(R"lit(<li>Status\s*:([^<]*)</li>)lit");
-    QRegularExpression yearrx;
     QRegularExpression genresrx(R"lit(<li class="genres">Genres\s*:(.*?)</li>)lit",
                                 QRegularExpression::DotMatchesEverythingOption);
     QRegularExpression summaryrx(R"lit(<div id="contentBox"[^>]*>(?:\s*<h2>.*?</h2>)?(.*?)</div>)lit",
@@ -302,20 +237,37 @@ Result<MangaChapterCollection, QString> Mangakakalot::updateMangaInfoFinishedLoa
     QRegularExpression genrerx(R"lit(<a[^>]*>([^<]*)</a>)lit");
     QRegularExpression entityrx(R"lit(&(?:quot|amp|lt|gt|#0?39);)lit");
 
+    static const QRegularExpression bbrx(R"(\[.*?\])");
+
+    // the chapter list comes from the api: its first page loads in parallel to the manga page
+    auto urlSlug = slugFromUrl(mangaUrl);
+    QSharedPointer<DownloadBufferJob> chaptersJob;
+    if (!urlSlug.isEmpty())
+        chaptersJob = downloadChapterList(urlSlug, 0);
+
+    auto job = download(mangaUrl, 6000);
+    if (!co_await job)
+        co_return Err(job->error);
+
     const auto html = job->text();
     auto slugmatch = slugrx.match(html);
     if (!slugmatch.hasMatch())
-        return Err(QString("Couldn't parse the manga page."));
+        co_return Err(Error::Parse, "Couldn't parse the manga page.");
 
     auto slug = slugmatch.captured(1);
 
-    fillMangaInfo(info, html, authorrx, artistrx, statusrx, yearrx, genresrx, summaryrx, coverrx);
-
-    info->author = info->author.trimmed();
-    info->status = info->status.trimmed();
-    info->summary = info->summary.trimmed();
-    if (info->summary.contains(entityrx))
-        info->summary = htmlToPlainText(info->summary).trimmed();
+    MangaDetails details;
+    auto authormatch = authorrx.match(html);
+    if (authormatch.hasMatch())
+        details.author = htmlToPlainText(authormatch.captured(1)).remove('\n').trimmed();
+    auto statusmatch = statusrx.match(html);
+    if (statusmatch.hasMatch())
+        details.status = htmlToPlainText(statusmatch.captured(1)).trimmed();
+    auto summarymatch = summaryrx.match(html);
+    if (summarymatch.hasMatch())
+        details.summary = htmlToPlainText(summarymatch.captured(1)).remove(bbrx).trimmed();
+    if (details.summary.contains(entityrx))
+        details.summary = htmlToPlainText(details.summary).trimmed();
 
     auto genresmatch = genresrx.match(html);
     if (genresmatch.hasMatch())
@@ -323,34 +275,34 @@ Result<MangaChapterCollection, QString> Mangakakalot::updateMangaInfoFinishedLoa
         QStringList genres;
         for (auto &match : getAllRxMatches(genrerx, genresmatch.captured(1)))
             genres.append(htmlToPlainText(match.captured(1)).trimmed());
-        info->genres = genres.join(", ");
+        details.genres = genres.join(", ");
     }
 
-    if (info->coverUrl.isEmpty())
-    {
-        auto ogcovermatch = ogcoverrx.match(html);
-        if (ogcovermatch.hasMatch())
-            info->coverUrl = ogcovermatch.captured(1);
-    }
+    details.coverUrl = capture(coverrx, html);
+    if (details.coverUrl.isEmpty())
+        details.coverUrl = capture(ogcoverrx, html);
     // some mangas have only the cdn host as cover, the site shows its placeholder then
-    if (QUrl(info->coverUrl).path().length() <= 1)
-        info->coverUrl = baseUrl + "images/404-avatar.webp";
+    if (QUrl(details.coverUrl).path().length() <= 1)
+        details.coverUrl = baseUrl + "images/404-avatar.webp";
     else
-        addImageHost(QUrl(info->coverUrl).host());
+        addImageHost(QUrl(details.coverUrl).host());
+    auto fallbackUrl = coverFallbackUrl(details.coverUrl);
+    if (!fallbackUrl.isEmpty())
+        details.coverFallbackUrls.append(fallbackUrl);
 
-    // the chapter list is loaded from the api, newest first. the first request is usually
-    // started by getMangaInfo or updateMangaInfoAsync already
+    // the chapter list is loaded from the api, newest first
     QList<MangaChapter> chapters;
     QSet<QString> chapterUrls;
     int offset = 0;
-    auto chaptersJob = takePrefetchedChapters(slug);
+    if (slug != urlSlug)
+        chaptersJob.reset();
     for (int request = 0; request < 10; request++)
     {
-        if (request > 0 || !chaptersJob || chaptersJob->hasFailed())
+        if (request > 0 || !chaptersJob)
             chaptersJob = downloadChapterList(slug, offset);
 
-        if (!chaptersJob->await())
-            return Err(chaptersJob->errorString);
+        if (!co_await chaptersJob)
+            co_return Err(chaptersJob->error);
 
         bool hasMore = false;
         try
@@ -360,11 +312,11 @@ Result<MangaChapterCollection, QString> Mangakakalot::updateMangaInfoFinishedLoa
 
             if (!res || !doc.IsObject() || !doc.HasMember("success") || !doc["success"].IsBool() ||
                 !doc["success"].GetBool() || !doc.HasMember("data") || !doc["data"].IsObject())
-                return Err(QString("Couldn't load the chapter list."));
+                co_return Err(Error::Parse, "Couldn't load the chapter list.");
 
             auto &data = doc["data"];
             if (!data.HasMember("chapters") || !data["chapters"].IsArray())
-                return Err(QString("Couldn't load the chapter list."));
+                co_return Err(Error::Parse, "Couldn't load the chapter list.");
 
             auto chapterArray = data["chapters"].GetArray();
             for (const auto &ch : chapterArray)
@@ -402,21 +354,20 @@ Result<MangaChapterCollection, QString> Mangakakalot::updateMangaInfoFinishedLoa
         }
         catch (const JsonError &)
         {
-            return Err(QString("Couldn't parse the chapter list."));
+            co_return Err(Error::Parse, "Couldn't parse the chapter list.");
         }
 
         if (!hasMore)
             break;
     }
 
-    MangaChapterCollection newchapters;
     for (int i = chapters.size() - 1; i >= 0; i--)
-        newchapters.append(chapters[i]);
+        details.chapters.append(chapters[i]);
 
-    return Ok(newchapters);
+    co_return details;
 }
 
-Result<QList<ImageLink>, QString> Mangakakalot::getPageList(const QString &chapterUrl)
+Task<Result<QList<ImageLink>>> Mangakakalot::fetchPageList(QString chapterUrl)
 {
     QRegularExpression cdnrx(R"lit(cdns\s*=\s*\[\s*"([^"]+)")lit");
     QRegularExpression imagesrx(R"lit(chapterImages\s*=\s*\[([^\]]*)\])lit");
@@ -425,10 +376,9 @@ Result<QList<ImageLink>, QString> Mangakakalot::getPageList(const QString &chapt
 
     auto job = download(chapterUrl, 7000);
 
-    if (!job->await())
-        return Err(job->errorString);
+    if (!co_await job)
+        co_return Err(job->error);
     const auto html = job->text();
-
 
     QStringList imageUrls;
 
@@ -464,32 +414,31 @@ Result<QList<ImageLink>, QString> Mangakakalot::getPageList(const QString &chapt
     for (const auto &imageUrl : std::as_const(imageUrls))
         addImageHost(QUrl(imageUrl).host());
 
-    return joinSplitPages(imageUrls);
+    co_return co_await joinSplitPages(imageUrls);
 }
 
 // The site cuts images taller than 1500 px into pieces of 1500 px and the rest: a page of 1100x1565 becomes
 // 1100x1500 and 1100x65, which would be a page of its own showing a thin line. The parts of a page are
 // joined again (the image job stitches the appendUrl below the page), the pieces of long strips (manhwa) stay
 // pages of their own.
-Result<QList<ImageLink>, QString> Mangakakalot::joinSplitPages(const QStringList &imageUrls)
+Task<Result<QList<ImageLink>>> Mangakakalot::joinSplitPages(QStringList imageUrls)
 {
     QElapsedTimer timer;
     timer.start();
     // The sizes that didn't come in time are asked for once more: the list is stored with the chapter, pages
     // that weren't joined because of a slow connection would stay that way.
-    QList<int> timedOut;
-    auto sizes = probeImageSizes(imageUrls, 8000, &timedOut);
-    if (!timedOut.isEmpty())
+    auto probe = co_await probeImageSizes(imageUrls, 8000);
+    auto &sizes = probe.sizes;
+    if (!probe.timedOut.isEmpty())
     {
         QStringList again;
-        for (int i : std::as_const(timedOut))
+        for (int i : std::as_const(probe.timedOut))
             again.append(imageUrls[i]);
-        QList<int> stillTimedOut;
-        auto moreSizes = probeImageSizes(again, 8000, &stillTimedOut);
-        for (int k = 0; k < timedOut.size(); k++)
-            sizes[timedOut[k]] = moreSizes[k];
-        if (stillTimedOut.size() * 4 > imageUrls.size())
-            return Err(QString("The pages of the chapter couldn't be checked, the connection is too slow."));
+        auto more = co_await probeImageSizes(again, 8000);
+        for (int k = 0; k < probe.timedOut.size(); k++)
+            sizes[probe.timedOut[k]] = more.sizes[k];
+        if (more.timedOut.size() * 4 > imageUrls.size())
+            co_return Err(Error::Timeout, "The pages of the chapter couldn't be checked, the connection is too slow.");
     }
 
     QList<ImageLink> pages;
@@ -505,8 +454,9 @@ Result<QList<ImageLink>, QString> Mangakakalot::joinSplitPages(const QStringList
     qDebug() << "Page sizes probed in" << timer.elapsed() << "ms:" << imageUrls.size() << "images," << unknown
              << "unknown ->" << pages.size() << "pages";
 
-    return Ok(pages);
+    co_return pages;
 }
+
 
 QList<QPair<int, int>> Mangakakalot::pairSplitImages(const QList<QSize> &sizes)
 {

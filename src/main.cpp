@@ -1,3 +1,4 @@
+#include <QApplication>
 #include <QtCore>
 
 #include "mainwidget.h"

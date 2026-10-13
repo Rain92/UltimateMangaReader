@@ -2,22 +2,25 @@
 
 #include "mangaindex.h"
 #include "mangainfo.h"
+#include "mangarepository.h"
 
 class MangaIndexTraverser : public MangaIndex
 {
 private:
+    MangaRepository *repository;
     QSharedPointer<MangaInfo> mangaInfo;
 
 public:
-    MangaIndexTraverser(QSharedPointer<MangaInfo> mangaInfo, int chapter,
+    // loads the page lists of the chapters it gets to (blocking, with an event loop)
+    MangaIndexTraverser(MangaRepository *repository, QSharedPointer<MangaInfo> mangaInfo, int chapter,
                         int page);
     MangaIndexTraverser(const MangaIndexTraverser &mangaIndex) = default;
 
-    Result<bool, QString> increment();
+    Result<bool> increment();
 
-    Result<bool, QString> decrement();
+    Result<bool> decrement();
 
-    Result<bool, QString> setChecked(int chapter, int page);
+    Result<bool> setChecked(int chapter, int page);
 
     inline MangaChapter &currentChapter()
     {

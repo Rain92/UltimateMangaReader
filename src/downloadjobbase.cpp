@@ -14,7 +14,7 @@ DownloadJobBase::DownloadJobBase(QNetworkAccessManager *networkManager, const Do
     : request(request),
       url(request.url),
       isCompleted(false),
-      errorString(),
+      error(),
       httpStatus(0),
       responseHeaders(),
       networkManager(networkManager),
@@ -28,7 +28,8 @@ DownloadJobBase::DownloadJobBase(QNetworkAccessManager *networkManager, const Do
       retryHold()
 {
     deadlineTimer.setSingleShot(true);
-    connect(&deadlineTimer, &QTimer::timeout, this, [this]() { abortWith("Download timeout."); });
+    connect(&deadlineTimer, &QTimer::timeout, this,
+            [this]() { abortWith({Error::Timeout, "Download timeout.", httpStatus}); });
     retryTimer.setSingleShot(true);
     connect(&retryTimer, &QTimer::timeout, this,
             [this]()
@@ -95,7 +96,7 @@ void DownloadJobBase::restart()
 
 void DownloadJobBase::cancel()
 {
-    abortWith("Download cancelled");
+    abortWith({Error::Cancelled, "Download cancelled", 0});
 }
 
 bool DownloadJobBase::await(int maxWait)
@@ -134,7 +135,7 @@ void DownloadJobBase::resetState()
     url = request.url;
     isCompleted = false;
     failed = false;
-    errorString = "";
+    error = {};
     httpStatus = 0;
     responseHeaders.clear();
     deadlineTimer.stop();
@@ -166,7 +167,7 @@ bool DownloadJobBase::retryLater(QNetworkReply *reply)
         return false;
 
     retries++;
-    qDebug() << "Retrying in" << delay << "ms:" << request.url << replyErrorString(reply);
+    qDebug() << "Retrying in" << delay << "ms:" << request.url << replyError(reply).message;
     // no standby until then, it would stop the timer
     retryHold = holdActivity();
     retryTimer.start(int(delay));
@@ -207,7 +208,7 @@ void DownloadJobBase::finishCompleted()
         Qt::QueuedConnection);
 }
 
-void DownloadJobBase::finishFailed(const QString &error)
+void DownloadJobBase::finishFailed(const Error &error)
 {
     if (isFinished())
         return;
@@ -216,8 +217,8 @@ void DownloadJobBase::finishFailed(const QString &error)
     retryTimer.stop();
     retryHold.reset();
     failed = true;
-    errorString = error;
-    qDebug() << "Download failed:" << request.url << error;
+    this->error = error;
+    qDebug() << "Download failed:" << request.url << error.message;
     QMetaObject::invokeMethod(
         this,
         [this, finishedRun = run]()
@@ -228,7 +229,7 @@ void DownloadJobBase::finishFailed(const QString &error)
         Qt::QueuedConnection);
 }
 
-void DownloadJobBase::abortWith(const QString &error)
+void DownloadJobBase::abortWith(const Error &error)
 {
     finishFailed(error);
     if (reply)
@@ -239,11 +240,15 @@ void DownloadJobBase::abortWith(const QString &error)
     }
 }
 
-QString DownloadJobBase::replyErrorString(QNetworkReply *reply)
+Error DownloadJobBase::replyError(QNetworkReply *reply)
 {
     int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-    return status > 0 ? QString("Download error %1: %2").arg(status).arg(reply->errorString())
-                      : QString("Download error: %1").arg(reply->errorString());
+    if (status > 0)
+        return {Error::Http, QString("Download error %1: %2").arg(status).arg(reply->errorString()), status};
+
+    // the transfer timeout of the request
+    auto code = reply->error() == QNetworkReply::OperationCanceledError ? Error::Timeout : Error::Network;
+    return {code, QString("Download error: %1").arg(reply->errorString()), 0};
 }
 
 bool DownloadJobBase::isTransientError(QNetworkReply *reply) const

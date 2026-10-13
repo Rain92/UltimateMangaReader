@@ -6,14 +6,16 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
     : QObject(parent),
       networkManager(new NetworkManager(this)),
       sources(new SourceRegistry(networkManager, this)),
-      mangaController(new MangaController(networkManager, this)),
-      favoritesManager(new FavoritesManager(sources->active(), networkManager, this)),
-      mangaChapterDownloadManager(new MangaChapterDownloadManager(networkManager, this)),
+      repository(new MangaRepository(networkManager, this)),
+      mangaLists(),
+      mangaController(new MangaController(networkManager, repository, this)),
+      favoritesManager(new FavoritesManager(sources->active(), repository, networkManager, this)),
+      mangaChapterDownloadManager(new MangaChapterDownloadManager(networkManager, repository, this)),
       suspendManager(new SuspendManager(networkManager, this)),
       settings(),
       standbyManager(new StandbyManager(&settings, suspendManager, networkManager,
                                         mangaChapterDownloadManager, this)),
-      mangaListUpdater(new MangaListUpdater(sources, &settings, standbyManager, this)),
+      mangaListUpdater(new MangaListUpdater(sources, &mangaLists, &settings, standbyManager, this)),
       timer(),
       clockAlignTimer(),
       autoSuspendTimer(),
@@ -24,9 +26,8 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
     setupDirectories();
     settings.deserialize();
 
-    // the manga lists are loaded when they are needed (AbstractMangaSource::loadMangaList())
-    for (const auto& ms : sources->all())
-        ms->listOrder = settings.mangaOrder;
+    // the manga lists are loaded when they are needed
+    mangaLists.setOrder(settings.mangaOrder);
 
     updateActiveSources();
 
@@ -45,6 +46,15 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
     connect(mangaController, &MangaController::currentIndexChanged, favoritesManager,
             [this](const ReadingProgress &progress)
             { favoritesManager->setProgress(mangaController->currentManga.get(), progress); });
+
+    // the chapters of the manga that is open might not be the current ones (without a connection that's no
+    // news)
+    connect(repository, &MangaRepository::infoUpdateFailed, this,
+            [this](QSharedPointer<MangaInfo> info, const Error &error)
+            {
+                if (info == mangaController->currentManga && networkManager->connected)
+                    emit this->error(QString("Couldn't update %1: %2").arg(info->title, error.message));
+            });
 
     // auto suspend
     connect(networkManager, &NetworkManager::activity, this, &UltimateMangaReaderCore::activity);
@@ -151,14 +161,15 @@ void UltimateMangaReaderCore::setCurrentManga(const QString& mangaUrl, const QSt
     int request = ++mangaRequests;
     auto shownManga = mangaController->currentManga;
 
-    auto res = currentMangaSource->loadMangaInfo(mangaUrl, mangatitle);
+    auto res = repository->loadInfo(currentMangaSource, mangaUrl, mangatitle).wait();
+
     if (request != mangaRequests || mangaController->currentManga != shownManga)
         return;
 
-    if (res.isOk())
-        mangaController->setCurrentManga(res.unwrap());
+    if (res.has_value())
+        mangaController->setCurrentManga(res.value());
     else
-        emit error(res.unwrapErr());
+        emit error(res.error().message);
 }
 
 void UltimateMangaReaderCore::setupDirectories()

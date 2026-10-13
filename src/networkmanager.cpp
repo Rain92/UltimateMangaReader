@@ -55,8 +55,6 @@ NetworkManager::~NetworkManager()
     wifiThread.wait();
 }
 
-
-
 void NetworkManager::connectWifiAsync()
 {
     if (connectingWifi.exchange(true))
@@ -231,14 +229,19 @@ QSharedPointer<DownloadFileJob> NetworkManager::startFileDownload(DownloadFileJo
 QSharedPointer<DownloadFileJob> NetworkManager::downloadAsFile(const QString &url, const QString &localPath,
                                                                const HttpHeaders &headers)
 {
+    return downloadAsFile(DownloadFileJob::defaultRequest(url, headers), localPath);
+
+}
+
+QSharedPointer<DownloadFileJob> NetworkManager::downloadAsFile(DownloadRequest request, const QString &localPath)
+{
     if (auto job = runningFileDownload(localPath))
         return job;
 
-    auto urlf = fixUrl(url);
-    qDebug() << "Downloading as file:" << urlf;
+    request.url = fixUrl(request.url);
+    qDebug() << "Downloading as file:" << request.url;
 
-    return startFileDownload(
-        new DownloadFileJob(networkManager, DownloadFileJob::defaultRequest(urlf, headers), localPath));
+    return startFileDownload(new DownloadFileJob(networkManager, request, localPath));
 }
 
 QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const ImageLink &image,
@@ -274,10 +277,10 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const Imag
                     emit downloadedImage(sjob->filepath, sjob->resultImage);
             });
     connect(sjob, &DownloadJobBase::downloadError, this,
-            [keepAlive, urlf, this]()
+            [keepAlive, url = image.url, this]()
             {
                 keepAlive->clear();
-                emit imageDownloadFailed(urlf);
+                emit imageDownloadFailed(url);
             });
 
     return job;
@@ -351,76 +354,37 @@ void NetworkManager::ensureCertificates()
     QSslConfiguration::setDefaultConfiguration(sslConfig);
 }
 
-QList<QSize> NetworkManager::probeImageSizes(const QStringList &urls, int timeout, QList<int> *timedOut,
-                                             const std::function<HttpHeaders(const QString &)> &headersFor)
+Task<NetworkManager::ImageSizes> NetworkManager::probeImageSizes(
+    QStringList urls, int timeout, std::function<HttpHeaders(const QString &)> headersFor)
 {
     // a few KB hold the size of any WebP, PNG and of JPEGs without large metadata
     const int headerBytes = 4096;
 
-    QList<QSize> sizes;
-    for (int i = 0; i < urls.size(); i++)
-        sizes.append(QSize());
-    QList<QNetworkReply *> replies;
-    int running = 0;
-
-    auto hold = DownloadJobBase::holdActivity();
-    QEventLoop loop;
-    for (int i = 0; i < urls.size(); i++)
+    QList<QSharedPointer<DownloadBufferJob>> jobs;
+    for (const auto &url : std::as_const(urls))
     {
-        auto urlf = fixUrl(urls[i]);
-        QNetworkRequest request =
-            DownloadJobBase::createRequest(urlf, headersFor ? headersFor(urlf) : HttpHeaders());
-        request.setRawHeader("Range", "bytes=0-" + QByteArray::number(headerBytes - 1));
-
-        auto reply = networkManager->get(request);
-        DownloadJobBase::prepareReply(reply);
-        replies.append(reply);
-        running++;
-
+        DownloadRequest request;
+        request.url = url;
+        request.headers = headersFor ? headersFor(fixUrl(url)) : HttpHeaders();
+        request.headers.append({"Range", "bytes=0-" + QByteArray::number(headerBytes - 1)});
+        request.timeout = timeout;
+        request.maxRetries = 0;
         // servers that ignore the range send everything, the start is enough
-        auto done = [this, reply, i, &sizes, &running, &loop]()
-        {
-            if (reply->property("probed").toBool())
-                return;
-
-            int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-            bool finished = reply->isFinished();
-            if (!finished && reply->bytesAvailable() < headerBytes)
-                return;
-
-            reply->setProperty("probed", true);
-            if (reply->error() == QNetworkReply::NoError && (status == 200 || status == 206))
-            {
-                QSize size;
-                if (readImageSize(reply->read(headerBytes), size))
-                    sizes[i] = size;
-            }
-            if (!finished)
-                reply->abort();
-
-            if (--running == 0)
-                loop.quit();
-        };
-        connect(reply, &QNetworkReply::readyRead, &loop, done);
-        connect(reply, &QNetworkReply::finished, &loop, done);
+        request.maxBytes = headerBytes;
+        jobs.append(download(request));
     }
 
-    if (running > 0)
+    ImageSizes result;
+    for (int i = 0; i < jobs.size(); i++)
     {
-        QTimer::singleShot(timeout, &loop, &QEventLoop::quit);
-        loop.exec();
-    }
-
-    for (int i = 0; i < replies.size(); i++)
-    {
-        auto reply = replies[i];
-        if (timedOut && !reply->property("probed").toBool())
-            timedOut->append(i);
-        reply->disconnect(&loop);
-        reply->abort();
-        reply->deleteLater();
+        QSize size;
+        if (!co_await jobs[i] || !readImageSize(jobs[i]->buffer, size))
+            size = QSize();
+        result.sizes.append(size);
+        if (jobs[i]->error.code == Error::Timeout)
+            result.timedOut.append(i);
     }
 
     emit activity();
-    return sizes;
+    co_return result;
 }

@@ -14,7 +14,8 @@ public:
 
     void sendProgress(int p);
     void sendError(const QString &message);
-    void sendFinished();
+    // message: what is missing in the lists that were updated (see MangaListUpdate::Partial), if anything
+    void sendFinished(const QString &message = {});
 
     // What the current source got done so far: a retry with the same token continues from there instead of
     // starting over. It is cleared when the source finished.
@@ -34,7 +35,7 @@ public:
 signals:
     void updateProgress();
     void updateError(const QString &message);
-    void updateFinished();
+    void updateFinished(const QString &message);
 
 private:
     QHash<QString, std::any> resumeStates;

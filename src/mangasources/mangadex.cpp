@@ -311,15 +311,13 @@ static MangaChapterCollection buildChapterList(QVector<DexChapter> &chapters, bo
     return newchapters;
 }
 
-MangaDex::MangaDex(NetworkManager *dm)
-    : AbstractMangaSource(dm), apiRequestIntervalMs(0), apiRequestCount(0), atHomeSchedule(0)
+MangaDex::MangaDex(NetworkManager *networkManager)
+    : MangaSourceBase(networkManager), apiRequestIntervalMs(0), apiRequestCount(0), atHomeSchedule(0)
 {
     name = "MangaDex";
     apiUrl = "https://api.mangadex.org";
     uploadsUrl = "https://uploads.mangadex.org";
     baseUrl = apiUrl;
-    // the chapter list is loaded right after with its own timeouts, allow for slow wifi here as well
-    mangaInfoTimeout = 6000;
     atHomeClock.start();
 
     // the api requires a non-spoofed user agent, so don't send the default browser one
@@ -327,8 +325,8 @@ MangaDex::MangaDex(NetworkManager *dm)
                                               "UltimateMangaReader (github.com/Rain92/UltimateMangaReader)");
 }
 
-bool MangaDex::downloadThrottled(const QStringList &urls, UpdateProgressToken *token,
-                                 const std::function<bool(int, QSharedPointer<DownloadBufferJob>)> &handler)
+Task<Result<>> MangaDex::downloadThrottled(QStringList urls, UpdateProgressToken *token,
+                                           std::function<bool(int, QSharedPointer<DownloadBufferJob>)> handler)
 {
     // the api allows about 5 requests per second. Its edge servers reject a random part of the
     // list requests at once with "400 Bad Request", retrying right away almost always works.
@@ -361,10 +359,7 @@ bool MangaDex::downloadThrottled(const QStringList &urls, UpdateProgressToken *t
     while (!pending.isEmpty() || !running.isEmpty())
     {
         if (token->canceled)
-        {
-            token->sendError("Download cancelled");
-            return false;
-        }
+            co_return Err(Error::Cancelled, "Download cancelled");
 
         // the finished ones, in whatever order they finished
         auto done = std::find_if(running.begin(), running.end(), [&](const auto &r) { return isDone(r.second); });
@@ -379,14 +374,11 @@ bool MangaDex::downloadThrottled(const QStringList &urls, UpdateProgressToken *t
                 continue;
             }
 
-            auto error = job->errorString.isEmpty() ? QString("Couldn't parse manga list.") : job->errorString;
+            auto error = job->hasFailed() ? job->error : Error{Error::Parse, "Couldn't parse manga list.", 0};
             if (retries[i]++ >= maxRetries)
-            {
-                token->sendError(error);
-                return false;
-            }
+                co_return Err(error);
 
-            qDebug() << "MangaDex: retrying" << urls[i] << error;
+            qDebug() << "MangaDex: retrying" << urls[i] << error.message;
             if (retries[i] > 1)
             {
                 apiRequestIntervalMs = apiRequestIntervalMs * 3 / 2;
@@ -403,8 +395,7 @@ bool MangaDex::downloadThrottled(const QStringList &urls, UpdateProgressToken *t
             apiRequestIntervalMs = qBound(minRequestIntervalMs, apiRequestIntervalMs, maxRequestIntervalMs);
             if (apiRequestTimer.isValid() && apiRequestTimer.elapsed() < apiRequestIntervalMs)
             {
-                DownloadJobBase::waitMs(
-                    qMin<qint64>(apiRequestIntervalMs - apiRequestTimer.elapsed(), stepMs));
+                co_await delay(qMin<qint64>(apiRequestIntervalMs - apiRequestTimer.elapsed(), stepMs));
                 continue;
             }
 
@@ -424,28 +415,24 @@ bool MangaDex::downloadThrottled(const QStringList &urls, UpdateProgressToken *t
             qint64 nextRetry = retryAt[pending.first()];
             for (int i : std::as_const(pending))
                 nextRetry = qMin(nextRetry, retryAt[i]);
-            DownloadJobBase::waitMs(qMin<qint64>(nextRetry - clock.elapsed(), stepMs));
+            co_await delay(qMin<qint64>(nextRetry - clock.elapsed(), stepMs));
             continue;
         }
 
-        // until any of the running ones finished. Not job->await: it blocks until that one finished
-        auto hold = DownloadJobBase::holdActivity();
-        QEventLoop loop;
+        // until any of the running ones finished (they are kept in running meanwhile)
+        QList<DownloadJobBase *> jobs;
         for (const auto &r : std::as_const(running))
-        {
-            QObject::connect(r.second.get(), &DownloadJobBase::completed, &loop, &QEventLoop::quit);
-            QObject::connect(r.second.get(), &DownloadJobBase::downloadError, &loop, &QEventLoop::quit);
-        }
-        QTimer::singleShot(stepMs, &loop, &QEventLoop::quit);
-        loop.exec();
+            jobs.append(r.second.get());
+        co_await anyFinished(jobs, stepMs);
     }
 
-    return true;
+    co_return {};
 }
 
-bool MangaDex::crawlMangaWindow(const QString &query, int maxResults, MangaDexUpdateState &state,
-                                UpdateProgressToken *token)
+Task<Result<>> MangaDex::crawlMangaWindow(QString query, int maxResults, MangaDexUpdateState *statePointer,
+                                          UpdateProgressToken *token)
 {
+    auto &state = *statePointer;
     const int limit = 100;
     // offset + limit must not exceed 10000
     const int numPopular = 2000;
@@ -503,8 +490,9 @@ bool MangaDex::crawlMangaWindow(const QString &query, int maxResults, MangaDexUp
     if (!state.pages.contains(0))
     {
         requestedPages = {0};
-        if (!downloadThrottled({query.arg(0)}, token, handler))
-            return false;
+        auto first = co_await downloadThrottled({query.arg(0)}, token, handler);
+        if (!first)
+            co_return first;
     }
 
     int numPages = (qMin(state.total, maxResults) + limit - 1) / limit;
@@ -518,8 +506,9 @@ bool MangaDex::crawlMangaWindow(const QString &query, int maxResults, MangaDexUp
             urls.append(query.arg(p * limit));
         }
 
-    if (!downloadThrottled(urls, token, handler))
-        return false;
+    auto rest = co_await downloadThrottled(urls, token, handler);
+    if (!rest)
+        co_return rest;
 
     for (const auto &entries : std::as_const(state.pages))
         for (const auto &[id, title] : entries)
@@ -530,10 +519,10 @@ bool MangaDex::crawlMangaWindow(const QString &query, int maxResults, MangaDexUp
             }
     state.pages.clear();
 
-    return true;
+    co_return {};
 }
 
-bool MangaDex::updateMangaList(UpdateProgressToken *token)
+Task<MangaListUpdate> MangaDex::fetchMangaList(UpdateProgressToken *token, MangaList)
 {
     // a retry continues with the window and the pages the failed attempt didn't get
     auto &state = token->resumeState<MangaDexUpdateState>();
@@ -558,8 +547,9 @@ bool MangaDex::updateMangaList(UpdateProgressToken *token)
     // most followed titles first, so ordering by popularity is meaningful at the top of the list
     if (state.window < 0)
     {
-        if (!crawlMangaWindow(query + "&order[followedCount]=desc", numPopular, state, token))
-            return false;
+        auto crawled = co_await crawlMangaWindow(query + "&order[followedCount]=desc", numPopular, &state, token);
+        if (!crawled)
+            co_return MangaListUpdate::failed(crawled.error());
 
         state.window = 0;
         state.total = 0;
@@ -573,8 +563,9 @@ bool MangaDex::updateMangaList(UpdateProgressToken *token)
         if (!state.since.isEmpty())
             windowQuery += "&createdAtSince=" + state.since;
 
-        if (!crawlMangaWindow(windowQuery, windowSize, state, token))
-            return false;
+        auto crawled = co_await crawlMangaWindow(windowQuery, windowSize, &state, token);
+        if (!crawled)
+            co_return MangaListUpdate::failed(crawled.error());
 
         if (state.total <= windowSize)
             break;
@@ -582,37 +573,34 @@ bool MangaDex::updateMangaList(UpdateProgressToken *token)
         // createdAtSince is inclusive, the overlapping entries are skipped as duplicates
         auto next = state.lastCreatedAt.left(19);
         if (next.isEmpty() || next <= state.since)
-        {
-            token->sendError("Couldn't page through the manga list.");
-            return false;
-        }
+            co_return MangaListUpdate::failed({Error::Parse, "Couldn't page through the manga list.", 0});
         state.since = next;
         state.total = 0;
         state.lastCreatedAt.clear();
     }
 
-    this->mangaList = state.mangas;
-
     qDebug() << "mangas:" << state.mangas.size << "requests:" << apiRequestCount << "time:" << timer.elapsed();
 
     token->sendProgress(100);
 
-    return true;
+    co_return MangaListUpdate::complete(state.mangas);
 }
 
-QString MangaDex::mangaInfoRequestUrl(const QString &mangaUrl) const
+Task<Result<MangaDetails>> MangaDex::fetchMangaInfo(QString mangaUrl, MangaChapterCollection known)
 {
+    // the manga list has the urls of the mangas, the info also needs its authors and the cover
+    auto requestUrl = mangaUrl;
     auto match = uuidrx.match(mangaUrl);
-    if (!match.hasMatch())
-        return mangaUrl;
+    if (match.hasMatch())
+        requestUrl = apiUrl + "/manga/" + match.captured() +
+                     "?includes[]=author&includes[]=artist&includes[]=cover_art";
 
-    return apiUrl + "/manga/" + match.captured() +
-           "?includes[]=author&includes[]=artist&includes[]=cover_art";
-}
+    // the chapter list is loaded right after with its own timeouts, allow for slow wifi here as well
+    auto job = download(requestUrl, 6000);
+    if (!co_await job)
+        co_return Err(job->error);
 
-Result<MangaChapterCollection, QString> MangaDex::updateMangaInfoFinishedLoading(
-    QSharedPointer<DownloadBufferJob> job, QSharedPointer<MangaInfo> info)
-{
+    MangaDetails details;
     QString mangaId;
     bool resetOnNewVolume = false;
 
@@ -622,20 +610,20 @@ Result<MangaChapterCollection, QString> MangaDex::updateMangaInfoFinishedLoading
         ParseResult res = doc.Parse(job->buffer.data());
         if (!res || !doc.IsObject() || getStringSafe(doc, "result") != "ok" || !doc.HasMember("data") ||
             !doc["data"].IsObject())
-            return Err(QString("Couldn't parse manga infos."));
+            co_return Err(Error::Parse, "Couldn't parse manga infos.");
 
         const auto &data = doc["data"];
         mangaId = getStringSafe(data, "id");
 
         if (mangaId.isEmpty() || !data.HasMember("attributes") || !data["attributes"].IsObject())
-            return Err(QString("Couldn't parse manga infos."));
+            co_return Err(Error::Parse, "Couldn't parse manga infos.");
 
         const auto &attributes = data["attributes"];
 
-        info->status = capitalize(getStringSafe(attributes, "status"));
+        details.status = capitalize(getStringSafe(attributes, "status"));
 
         if (attributes.HasMember("year") && attributes["year"].IsInt())
-            info->releaseYear = QString::number(attributes["year"].GetInt());
+            details.releaseYear = QString::number(attributes["year"].GetInt());
 
         QStringList genres;
         QStringList themes;
@@ -662,10 +650,10 @@ Result<MangaChapterCollection, QString> MangaDex::updateMangaInfoFinishedLoading
                     themes.append(tagName);
             }
         genres.append(themes);
-        info->genres = genres.join(", ");
+        details.genres = genres.join(", ");
 
         if (attributes.HasMember("description"))
-            info->summary = htmlToPlainText(markdownToHtml(getStringSafe(attributes["description"], "en")));
+            details.summary = htmlToPlainText(markdownToHtml(getStringSafe(attributes["description"], "en")));
 
         resetOnNewVolume = attributes.HasMember("chapterNumbersResetOnNewVolume") &&
                            attributes["chapterNumbersResetOnNewVolume"].IsBool() &&
@@ -694,29 +682,34 @@ Result<MangaChapterCollection, QString> MangaDex::updateMangaInfoFinishedLoading
                 {
                     auto fileName = getStringSafe(relAttributes, "fileName");
                     if (!fileName.isEmpty())
-                        info->coverUrl =
+                        details.coverUrl =
                             QString("%1/covers/%2/%3.512.jpg").arg(uploadsUrl, mangaId, fileName);
                 }
             }
 
-        info->author = authors.join(", ");
-        info->artist = artists.join(", ");
+        details.author = authors.join(", ");
+        details.artist = artists.join(", ");
     }
     catch (const JsonError &)
     {
-        return Err(QString("Couldn't parse manga infos."));
+        co_return Err(Error::Parse, "Couldn't parse manga infos.");
     }
 
     QSet<QString> loadedChapters;
-    for (const auto &ch : std::as_const(info->chapters))
+    for (const auto &ch : std::as_const(known))
         if (ch.pagesLoaded)
             loadedChapters.insert(ch.chapterUrl);
 
-    return getChapters(mangaId, resetOnNewVolume, loadedChapters);
+    auto chapters = co_await fetchChapters(mangaId, resetOnNewVolume, loadedChapters);
+    if (!chapters)
+        co_return Err(chapters.error());
+    details.chapters = *chapters;
+
+    co_return details;
 }
 
-Result<MangaChapterCollection, QString> MangaDex::getChapters(const QString &mangaId, bool resetOnNewVolume,
-                                                              const QSet<QString> &loadedChapters)
+Task<Result<MangaChapterCollection>> MangaDex::fetchChapters(QString mangaId, bool resetOnNewVolume,
+                                                             QSet<QString> loadedChapters)
 {
     // max limit of the feed endpoint, offset + limit must not exceed 10000
     const int limit = 500;
@@ -740,11 +733,14 @@ Result<MangaChapterCollection, QString> MangaDex::getChapters(const QString &man
         request.retryDelay = 1000;
         request.retryStatuses = {400};
         auto job = download(request);
-        job->await();
 
         // never return a partial list, merging it would delete the pages of the missing chapters
-        if (!job->isCompleted)
-            return Err("Couldn't load chapter list: " + job->errorString);
+        if (!co_await job)
+        {
+            auto error = job->error;
+            error.message = "Couldn't load chapter list: " + error.message;
+            co_return Err(error);
+        }
 
         try
         {
@@ -753,7 +749,7 @@ Result<MangaChapterCollection, QString> MangaDex::getChapters(const QString &man
 
             if (!res || !doc.IsObject() || getStringSafe(doc, "result") != "ok" || !doc.HasMember("data") ||
                 !doc["data"].IsArray())
-                return Err(QString("Couldn't parse chapter list."));
+                co_return Err(Error::Parse, "Couldn't parse chapter list.");
 
             total = doc.HasMember("total") && doc["total"].IsInt() ? doc["total"].GetInt() : 0;
 
@@ -785,14 +781,14 @@ Result<MangaChapterCollection, QString> MangaDex::getChapters(const QString &man
         }
         catch (const JsonError &)
         {
-            return Err(QString("Couldn't parse chapter list."));
+            co_return Err(Error::Parse, "Couldn't parse chapter list.");
         }
     }
 
-    return Ok(buildChapterList(chapters, resetOnNewVolume));
+    co_return buildChapterList(chapters, resetOnNewVolume);
 }
 
-Result<QList<ImageLink>, QString> MangaDex::getPageList(const QString &chapterUrl)
+Task<Result<QList<ImageLink>>> MangaDex::fetchPageList(QString chapterUrl)
 {
     // the at-home endpoint allows 40 requests per minute: allow 8 at once, then one every 2 s
     // (38 per minute at most), so even during a bulk download a chapter is never delayed for long
@@ -806,27 +802,29 @@ Result<QList<ImageLink>, QString> MangaDex::getPageList(const QString &chapterUr
     for (int attempt = 0; attempt < 2; attempt++)
     {
         if (attempt > 0)
-            DownloadJobBase::waitMs(1000);
+            co_await delay(1000);
 
         auto now = atHomeClock.elapsed();
         atHomeSchedule = qMax(atHomeSchedule, now) + atHomeIntervalMs;
-        DownloadJobBase::waitMs(atHomeSchedule - atHomeBurst * atHomeIntervalMs - now);
+        auto wait = atHomeSchedule - atHomeBurst * atHomeIntervalMs - now;
+        if (wait > 0)
+            co_await delay(wait);
 
         job = download(apiUrl + "/at-home/server/" + chapterId, 8000, 0);
 
         // only retry quick rejections (edge servers, gateways), not timeouts or missing chapters
-        if (job->await() || (job->httpStatus != 400 && job->httpStatus < 500))
-
+        if (co_await job || (job->httpStatus != 400 && job->httpStatus < 500))
             break;
     }
 
     if (!job->isCompleted)
     {
+        auto error = job->error;
         if (job->httpStatus == 404)
-            return Err(QString("Chapter is not available on MangaDex (removed or licensed)."));
+            error = {Error::NotFound, "Chapter is not available on MangaDex (removed or licensed).", 404};
         if (job->httpStatus == 429)
-            return Err(QString("Too many chapters requested from MangaDex, try again in a minute."));
-        return Err(job->errorString);
+            error.message = "Too many chapters requested from MangaDex, try again in a minute.";
+        co_return Err(error);
     }
 
     QStringList imageUrls;
@@ -838,7 +836,7 @@ Result<QList<ImageLink>, QString> MangaDex::getPageList(const QString &chapterUr
 
         if (!res || !doc.IsObject() || getStringSafe(doc, "result") != "ok" || !doc.HasMember("chapter") ||
             !doc["chapter"].IsObject())
-            return Err(QString("Couldn't parse page list."));
+            co_return Err(Error::Parse, "Couldn't parse page list.");
 
         const auto &chapter = doc["chapter"];
         auto hash = getStringSafe(chapter, "hash");
@@ -859,7 +857,7 @@ Result<QList<ImageLink>, QString> MangaDex::getPageList(const QString &chapterUr
         }
 
         if (hash.isEmpty() || !chapter.HasMember(pagesMember) || !chapter[pagesMember].IsArray())
-            return Err(QString("Couldn't parse page list."));
+            co_return Err(Error::Parse, "Couldn't parse page list.");
 
         for (const auto &page : chapter[pagesMember].GetArray())
             if (page.IsString())
@@ -868,8 +866,9 @@ Result<QList<ImageLink>, QString> MangaDex::getPageList(const QString &chapterUr
     }
     catch (const JsonError &)
     {
-        return Err(QString("Couldn't parse page list."));
+        co_return Err(Error::Parse, "Couldn't parse page list.");
     }
 
-    return Ok(ImageLink::fromUrls(imageUrls));
+    co_return ImageLink::fromUrls(imageUrls);
 }
+

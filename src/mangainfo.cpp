@@ -5,14 +5,14 @@
 #include "cachefile.h"
 #include "perftimer.h"
 
-MangaInfo::MangaInfo(AbstractMangaSource *mangasource)
+MangaInfo::MangaInfo(MangaSourceBase *mangasource)
     : QObject(), updated(false), mangaSource(mangasource)
 {
 }
 
 MangaInfo::~MangaInfo() = default;
 
-QSharedPointer<MangaInfo> MangaInfo::deserialize(AbstractMangaSource *mangasource, const QString &path)
+QSharedPointer<MangaInfo> MangaInfo::deserialize(MangaSourceBase *mangasource, const QString &path)
 {
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly))
@@ -32,6 +32,10 @@ QSharedPointer<MangaInfo> MangaInfo::deserialize(AbstractMangaSource *mangasourc
     }
 
     mi->coverPath = CONF.absoluteCachePath(mi->coverPath);
+
+    for (auto &chapter : mi->chapters)
+        for (auto &page : chapter.pages)
+            page.image = {};
 
     return mi;
 }
@@ -74,19 +78,6 @@ void MangaInfo::updateCompleted(const MangaChapterCollection::MergeResult &merge
     }
 
     emit updatedSignal(merge.newChapters);
-}
-
-void MangaInfo::takeOverDetails(const MangaInfo &other)
-{
-    author = other.author;
-    artist = other.artist;
-    releaseYear = other.releaseYear;
-    genres = other.genres;
-    status = other.status;
-    summary = other.summary;
-    coverPath = other.coverPath;
-    coverUrl = other.coverUrl;
-    chapters = other.chapters;
 }
 
 void MangaInfo::sendCoverLoaded()

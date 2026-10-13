@@ -16,9 +16,9 @@ void UpdateProgressToken::sendError(const QString& message)
     emit updateError(message);
 }
 
-void UpdateProgressToken::sendFinished()
+void UpdateProgressToken::sendFinished(const QString& message)
 {
-    emit updateFinished();
+    emit updateFinished(message);
 }
 
 void UpdateProgressToken::clearResumeState()

@@ -4,10 +4,11 @@
 
 #include "perftimer.h"
 
-MangaController::MangaController(NetworkManager *networkManager, QObject *parent)
+MangaController::MangaController(NetworkManager *networkManager, MangaRepository *repository, QObject *parent)
     : QObject(parent),
-      currentIndex(nullptr, 0, 0),
+      currentIndex(repository, nullptr, 0, 0),
       networkManager(networkManager),
+      repository(repository),
       preloadQueue(networkManager, {}, 1, false),
       preloading(false),
       preloadAgain(false),
@@ -33,7 +34,7 @@ bool MangaController::setCurrentManga(QSharedPointer<MangaInfo> mangaInfo)
 
     currentManga.clear();
     currentManga = mangaInfo;
-    currentIndex = MangaIndexTraverser(currentManga, 0, 0);
+    currentIndex = MangaIndexTraverser(repository, currentManga, 0, 0);
     deserializeProgress();
 
     QObject::connect(currentManga.get(), &MangaInfo::chaptersMoved, this, &MangaController::chaptersMoved);
@@ -44,13 +45,13 @@ bool MangaController::setCurrentManga(QSharedPointer<MangaInfo> mangaInfo)
     // another manga was opened while the page list loaded (event loop), that one is shown
     if (currentManga != mangaInfo)
         return false;
-    if (res.isOk())
+    if (res.has_value())
         currentIndexChangedInternal(false);
     else
-        emit error(res.unwrapErr());
+        emit error(res.error().message);
 
     emit activity();
-    return res.isOk();
+    return res.has_value();
 }
 
 void MangaController::chaptersMoved()
@@ -58,13 +59,13 @@ void MangaController::chaptersMoved()
     // the reading progress has the url of the chapter, it is found again
     deserializeProgress();
     auto res = assurePagesLoaded();
-    if (res.isOk())
+    if (res.has_value())
         currentIndexChangedInternal(false);
     else
-        emit error(res.unwrapErr());
+        emit error(res.error().message);
 }
 
-Result<void, QString> MangaController::assurePagesLoaded()
+Result<> MangaController::assurePagesLoaded()
 {
     if (currentManga->chapters.count() == 0)
         return Err(QString("Manga has no chapters."));
@@ -74,9 +75,9 @@ Result<void, QString> MangaController::assurePagesLoaded()
 
     if (!currentIndex.currentChapter().pagesLoaded)
     {
-        auto res = currentManga->mangaSource->updatePageList(currentManga, currentIndex.chapter);
+        auto res = repository->loadPageList(currentManga, currentIndex.chapter).wait();
 
-        if (!res.isOk())
+        if (!res.has_value())
             return res;
 
         currentManga->serialize();
@@ -88,59 +89,16 @@ Result<void, QString> MangaController::assurePagesLoaded()
     if (currentIndex.page >= currentIndex.currentChapter().pages.count())
         currentIndex.page = 0;
 
-    return Ok();
+    return {};
 }
 
 void MangaController::setCurrentIndex(const MangaIndex &index)
 {
     auto res = currentIndex.setChecked(index.chapter, index.page);
-    if (res.isOk())
+    if (res.has_value())
         currentIndexChangedInternal(true);
     else
-        emit error(res.unwrapErr());
-}
-
-// The page list and the image url can need downloads with event loops: page turns, chapter updates and another
-// manga can come in between, so nothing is taken by reference and the slots are checked again before writing.
-Result<ImageLink, QString> MangaController::getImageLink(QSharedPointer<MangaInfo> manga, MangaIndex index)
-{
-    if (index.chapter < 0 || index.chapter >= manga->chapters.count())
-        return Err(QString("Chapter number out of bounds."));
-
-    const QString chapterUrl = manga->chapters[index.chapter].chapterUrl;
-    if (!manga->chapters[index.chapter].pagesLoaded)
-    {
-        manga->mangaSource->updatePageList(manga, index.chapter);
-        manga->serialize();
-    }
-
-    auto page = [&manga, &index, &chapterUrl]() -> MangaPage *
-    {
-        if (index.chapter >= manga->chapters.count())
-            return nullptr;
-        auto &chapter = manga->chapters[index.chapter];
-        if (chapter.chapterUrl != chapterUrl || index.page < 0 || index.page >= chapter.pages.count())
-            return nullptr;
-        return &chapter.pages[index.page];
-    };
-
-    if (!page())
-        return Err(QString("Page index out of bounds."));
-
-    ImageLink image = page()->image;
-    if (image.isEmpty())
-    {
-        const ImageLink link = page()->link;
-        auto res = manga->mangaSource->getImageLink(link);
-        if (!res.isOk())
-            return Err(res.unwrapErr());
-        image = res.unwrap();
-
-        if (page() && page()->link.url == link.url)
-            page()->image = image;
-    }
-
-    return Ok(image);
+        emit error(res.error().message);
 }
 
 void MangaController::currentIndexChangedInternal(bool preload)
@@ -174,21 +132,23 @@ void MangaController::updateCurrentImage()
         return;
     }
 
-    auto image = getImageLink(manga, index);
+    // the page list and the image can need downloads (an event loop): page turns, chapter updates and another
+    // manga can come in between
+    auto image = repository->pageImage(manga, index.chapter, index.page).wait();
 
     // another page turn came in between, it shows its own page
     if (!isCurrent())
         return;
 
-    if (!image.isOk())
+    if (!image.has_value())
     {
         emit currentImageChanged("error");
-        emit error(image.unwrapErr());
+        emit error(image.error().message);
         return;
     }
 
     // a running preload of the page is reused
-    auto job = manga->mangaSource->downloadImage(image.unwrap(), path);
+    auto job = repository->downloadImage(manga->mangaSource, image.value(), path);
 
     if (job->isCompleted)
     {
@@ -199,7 +159,7 @@ void MangaController::updateCurrentImage()
     if (job->hasFailed())
     {
         emit currentImageChanged("error");
-        emit error(job->errorString);
+        emit error(job->error.message);
         return;
     }
 
@@ -220,7 +180,7 @@ void MangaController::updateCurrentImage()
                          if (isCurrent())
                          {
                              emit currentImageChanged("error");
-                             emit error(pageJob->errorString);
+                             emit error(pageJob->error.message);
                          }
                      });
 }
@@ -236,26 +196,26 @@ void MangaController::advanceMangaPage(PageTurnDirection direction)
     if (direction == Forward)
     {
         auto res = currentIndex.increment();
-        if (res.isOk())
+        if (res.has_value())
         {
-            inbound = res.unwrap();
+            inbound = res.value();
         }
         else
         {
-            emit error(res.unwrapErr());
+            emit error(res.error().message);
             return;
         }
     }
     else  // if (direction == backward)
     {
         auto res = currentIndex.decrement();
-        if (res.isOk())
+        if (res.has_value())
         {
-            inbound = res.unwrap();
+            inbound = res.value();
         }
         else
         {
-            emit error(res.unwrapErr());
+            emit error(res.error().message);
             return;
         }
     }
@@ -278,11 +238,11 @@ void MangaController::preloadImage(QSharedPointer<MangaInfo> manga, const MangaI
         return;
     }
 
-    auto image = getImageLink(manga, index);
+    auto image = repository->pageImage(manga, index.chapter, index.page).wait();
 
-    if (!image.isOk())
+    if (!image.has_value())
     {
-        emit error(image.unwrapErr());
+        emit error(image.error().message);
         return;
     }
 
@@ -299,7 +259,8 @@ void MangaController::preloadImage(QSharedPointer<MangaInfo> manga, const MangaI
     if (failed != failedDownloads.constEnd() && clock.elapsed() - failed.value() < skipFailedMs)
         return;
 
-    preloadQueue.appendDownload(manga->mangaSource->imageDownload(image.unwrap(), path));
+    preloadQueue.appendDownload(repository->imageDownload(manga->mangaSource, image.value(), path));
+
 }
 
 void MangaController::preloadPopular()
@@ -351,9 +312,9 @@ void MangaController::preloadNeighboursOnce()
 
             auto &traverser = isForward ? forwardindex : backwardindex;
             auto res = isForward ? traverser.increment() : traverser.decrement();
-            if (res.isErr())
-                emit error(res.unwrapErr());
-            else if (res.unwrap())
+            if (!res.has_value())
+                emit error(res.error().message);
+            else if (res.value())
                 preloadImage(manga, traverser);
 
             if (preloadAgain || currentManga != manga)

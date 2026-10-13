@@ -6,6 +6,7 @@
 #include <memory>
 
 #include "httpheader.h"
+#include "result.h"
 
 // What to download and how hard to try.
 struct DownloadRequest
@@ -18,6 +19,10 @@ struct DownloadRequest
     int timeout = 6000;
     // an attempt that transfers nothing for this long fails (ms), 0: no limit
     int transferTimeout = 0;
+    // Only the start of the body (of a successful response): the download completes when it has this many
+    // bytes, 0: all of it.
+    qint64 maxBytes = 0;
+
     // Attempts after errors that may go away (no answer, 408, 429, 5xx and the retryStatuses). The pause before
     // one doubles from retryDelay up to maxRetryDelay, unless the server asks for another one (Retry-After).
     int maxRetries = 3;
@@ -28,8 +33,8 @@ struct DownloadRequest
 
 // A download. Every run (start() or restart()) finishes once, after its retries, with completed() or
 // downloadError(). Both are emitted from the event loop, never from within a call to the job, and only when the
-// job's network requests are done. The response (url, httpStatus, responseHeaders, errorString and the data of
-// the subclass) is set when it finishes, before the signal.
+// job's network requests are done. The response (url, httpStatus, responseHeaders, error and the data of the
+// subclass) is set when it finishes, before the signal.
 class DownloadJobBase : public QObject
 {
     Q_OBJECT
@@ -43,7 +48,8 @@ public:
     // the url that answered (after redirects)
     QString url;
     bool isCompleted;
-    QString errorString;
+    // why it failed (Timeout, Cancelled, Http with the status, Network, Storage for a file that can't be written)
+    Error error;
     // of the last response, also of failed ones (0 without a response, e.g. no connection)
     int httpStatus;
     HttpHeaders responseHeaders;
@@ -103,12 +109,12 @@ protected:
 
     // Finish the run. The signal is emitted from the event loop (not for a run that was restarted meanwhile).
     void finishCompleted();
-    void finishFailed(const QString &error);
+    void finishFailed(const Error &error);
     // Stops the running request and fails with error.
-    void abortWith(const QString &error);
+    void abortWith(const Error &error);
 
-    // "Download error 404: ..."
-    static QString replyErrorString(QNetworkReply *reply);
+    // Http with the status, or Network without an answer: "Download error 404: ..."
+    static Error replyError(QNetworkReply *reply);
 
 private:
     bool failed;

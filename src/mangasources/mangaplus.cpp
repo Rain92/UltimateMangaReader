@@ -144,19 +144,19 @@ private:
 //      SuccessResult success = 1;
 //      ErrorResult error = 2;   // ErrorResult { Popup englishPopup = 2; } Popup { subject = 1; body = 2; }
 //    }
-Result<ProtoMessage, QString> parseResponse(const QByteArray &buffer)
+Result<ProtoMessage> parseResponse(const QByteArray &buffer)
 {
     ProtoMessage response(buffer);
 
     if (response.has(1))
-        return Ok(response.getMessage(1));
+        return response.getMessage(1);
 
     auto popup = response.getMessage(2).getMessage(2);
     auto subject = popup.getString(1).trimmed();
     auto body = popup.getString(2).trimmed();
 
     if (subject.isEmpty() && body.isEmpty())
-        return Err(QString("Couldn't parse MangaPlus response."));
+        return Err(Error::Parse, "Couldn't parse MangaPlus response.");
 
     return Err(subject.isEmpty() || body.isEmpty() ? subject + body : subject + ": " + body);
 }
@@ -206,7 +206,11 @@ QString titleStatus(const ProtoMessage &detail, const QStringList &genres, int c
     return "";
 }
 
+// the download manager resolves the images of all chapters before it downloads them
+const qint64 usableImageMargin = 600;
+
 qint64 urlExpiry(const QString &url)
+
 {
     static const QRegularExpression expiresrx(R"lit([?&]expires=(\d+))lit");
 
@@ -237,7 +241,7 @@ ImageLink findImage(const QList<ImageLink> &images, const QString &fileName)
 
 }  // namespace
 
-MangaPlus::MangaPlus(NetworkManager *dm) : AbstractMangaSource(dm)
+MangaPlus::MangaPlus(NetworkManager *networkManager) : MangaSourceBase(networkManager)
 {
     name = "MangaPlus";
     baseUrl = "https://jumpg-webapi.tokyo-cdn.com/";
@@ -246,92 +250,40 @@ MangaPlus::MangaPlus(NetworkManager *dm) : AbstractMangaSource(dm)
     titleDetailUrl = "api/title_detailV3?title_id=%1&clang=eng";
     pagesUrl = "api/manga_viewer_v3?chapter_id=%1&split=yes&img_quality=super_high&clang=eng";
 
-    // the api server is far away (~300 ms rtt), a new connection often takes longer than 2 s
-    mangaInfoTimeout = 6000;
-
     // like the web client: without a session token the api answers with an "Account Banned" error
     headerRules.add("jumpg-webapi.tokyo-cdn.com", "SESSION-TOKEN",
                     QUuid::createUuid().toString(QUuid::WithoutBraces).toLatin1());
     headerRules.add("tokyo-cdn.com", "Origin", "https://mangaplus.shueisha.co.jp");
     headerRules.add("tokyo-cdn.com", "Referer", "https://mangaplus.shueisha.co.jp/");
-
-    QObject::connect(networkManager, &NetworkManager::imageDownloadFailed, &replyContext,
-                     [this](const QString &url) { forgetFailedImageUrl(url); });
 }
 
 // image urls expire one to two hours after they were loaded (at the start of the hour after next) and their
 // view token is only sent in the session that loaded them
 bool MangaPlus::isUsableImage(const ImageLink &image) const
 {
-    // the download manager resolves the urls of all chapters before it downloads the images
-    const qint64 margin = 600;
-
     auto token = viewToken(image);
-    return urlExpiry(image.url) > QDateTime::currentSecsSinceEpoch() + margin &&
+    return urlExpiry(image.url) > QDateTime::currentSecsSinceEpoch() + usableImageMargin &&
            (token.isEmpty() || viewTokens.contains(token));
 }
 
-// the stored infos contain resolved image urls that can't be used any more. the core only resolves empty image
-// urls again, the ones of downloaded pages are kept, so these pages can still be read without a network
-// connection
-void MangaPlus::cleanUpStoredUrls(QSharedPointer<MangaInfo> info)
+
+Task<MangaListUpdate> MangaPlus::fetchMangaList(UpdateProgressToken *token, MangaList)
 {
-    for (auto &chapter : info->chapters)
-    {
-        for (int p = 0; p < chapter.pages.count(); p++)
-        {
-            auto &image = chapter.pages[p].image;
-            if (!image.isEmpty() && !isUsableImage(image) && !QFile::exists(info->pagePath(chapter.chapterUrl, p)))
-                image = {};
-        }
-    }
-}
+    const Error cancelled{Error::Cancelled, "Download cancelled", 0};
 
-// the core keeps a resolved image url until its page is downloaded, even after the url expired. a url that
-// couldn't be downloaded is forgotten, so it is resolved (and refreshed if needed) again the next time
-void MangaPlus::forgetFailedImageUrl(const QString &url)
-{
-    QUrl imageUrl(url);
-    if (!imageUrl.host().endsWith("tokyo-cdn.com") || !imageUrl.path().contains("/manga_page/"))
-        return;
-
-    auto failedUrl = imageUrl.toString(QUrl::RemoveFragment);
-
-
-    for (const auto &weakInfo : std::as_const(liveInfos))
-    {
-        auto info = weakInfo.toStrongRef();
-        if (!info)
-            continue;
-
-        for (auto &chapter : info->chapters)
-            for (auto &page : chapter.pages)
-                if (page.image.url == failedUrl)
-                    page.image = {};
-    }
-}
-
-bool MangaPlus::updateMangaList(UpdateProgressToken *token)
-{
     auto job = download(baseUrl + mangalistUrl, 20000);
 
-    if (!job->await())
-    {
-        token->sendError(job->errorString);
-        return false;
-    }
+    if (!co_await job)
+        co_return MangaListUpdate::failed(job->error);
 
     if (token->canceled)
-        return false;
+        co_return MangaListUpdate::failed(cancelled);
 
     token->sendProgress(40);
 
     auto successR = parseResponse(job->buffer);
-    if (successR.isErr())
-    {
-        token->sendError(successR.unwrapErr());
-        return false;
-    }
+    if (!successR.has_value())
+        co_return MangaListUpdate::failed(successR.error());
 
     //    message AllTitlesViewV2 { repeated AllTitlesGroup groups = 1; }
     //    message AllTitlesGroup { string theTitle = 1; repeated Title titles = 2; }   // one per language
@@ -345,7 +297,7 @@ bool MangaPlus::updateMangaList(UpdateProgressToken *token)
     QList<quint64> titleIds;
     QHash<quint64, QString> titles;
 
-    for (const auto &group : successR.unwrap().getMessage(25).getMessages(1))
+    for (const auto &group : successR.value().getMessage(25).getMessages(1))
     {
         for (const auto &title : group.getMessages(2))
         {
@@ -361,10 +313,7 @@ bool MangaPlus::updateMangaList(UpdateProgressToken *token)
     }
 
     if (titleIds.isEmpty())
-    {
-        token->sendError("Couldn't parse the manga list.");
-        return false;
-    }
+        co_return MangaListUpdate::failed({Error::Parse, "Couldn't parse the manga list.", 0});
 
     // popularity order: hottest and completed rankings first, then the rest in A-Z order
     //    message TitleRankingViewV2 { repeated TitleRankingGroup rankedTitles = 3; }
@@ -372,32 +321,38 @@ bool MangaPlus::updateMangaList(UpdateProgressToken *token)
     QList<quint64> orderedIds;
     QSet<quint64> added;
     int progress = 40;
+    // a ranking that couldn't be loaded only degrades the order
+    Error rankingError;
 
     for (const auto &type : QStringList{"hottest", "completed"})
     {
         auto rankingJob = download(baseUrl + rankingUrl.arg(type), 10000);
 
-        bool ok = rankingJob->await();
+        bool ok = co_await rankingJob;
 
         if (token->canceled)
-            return false;
+            co_return MangaListUpdate::failed(cancelled);
 
         token->sendProgress(progress += 25);
 
         if (!ok)
         {
-            qDebug() << "MangaPlus: couldn't load ranking" << type << rankingJob->errorString;
+            qDebug() << "MangaPlus: couldn't load ranking" << type << rankingJob->error.message;
+            rankingError = rankingJob->error;
+            rankingError.message = "Couldn't load the ranking: " + rankingError.message;
             continue;
         }
 
         auto rankingR = parseResponse(rankingJob->buffer);
-        if (rankingR.isErr())
+        if (!rankingR.has_value())
         {
-            qDebug() << "MangaPlus: couldn't load ranking" << type << rankingR.unwrapErr();
+            qDebug() << "MangaPlus: couldn't load ranking" << type << rankingR.error().message;
+            rankingError = rankingR.error();
+            rankingError.message = "Couldn't load the ranking: " + rankingError.message;
             continue;
         }
 
-        for (const auto &group : rankingR.unwrap().getMessage(37).getMessages(3))
+        for (const auto &group : rankingR.value().getMessage(37).getMessages(3))
         {
             for (const auto &title : group.getMessages(2))
             {
@@ -421,27 +376,23 @@ bool MangaPlus::updateMangaList(UpdateProgressToken *token)
     for (auto titleId : std::as_const(orderedIds))
         mangas.append(titles[titleId], titleDetailUrl.arg(titleId));
 
-    this->mangaList = mangas;
-
     token->sendProgress(100);
 
-    return true;
+    if (!rankingError.message.isEmpty())
+        co_return MangaListUpdate::partial(mangas, rankingError);
+    co_return MangaListUpdate::complete(mangas);
 }
 
-// called for every stored info before it is used (opened from the manga list or shown in the favorites)
-void MangaPlus::updateMangaInfoAsync(QSharedPointer<MangaInfo> info, bool updateCover)
+Task<Result<MangaDetails>> MangaPlus::fetchMangaInfo(QString mangaUrl, MangaChapterCollection)
 {
-    cleanUpStoredUrls(info);
+    // the api server is far away (~300 ms rtt), a new connection often takes longer than 2 s
+    auto job = download(mangaUrl, 6000);
+    if (!co_await job)
+        co_return Err(job->error);
 
-    AbstractMangaSource::updateMangaInfoAsync(info, updateCover);
-}
-
-Result<MangaChapterCollection, QString> MangaPlus::updateMangaInfoFinishedLoading(
-    QSharedPointer<DownloadBufferJob> job, QSharedPointer<MangaInfo> info)
-{
     auto successR = parseResponse(job->buffer);
-    if (successR.isErr())
-        return Err(successR.unwrapErr());
+    if (!successR.has_value())
+        co_return Err(successR.error());
 
     //    message TitleDetailView {
     //      Title title = 1;
@@ -453,26 +404,28 @@ Result<MangaChapterCollection, QString> MangaPlus::updateMangaInfoFinishedLoadin
     //      repeated Tag tags = 31;   // Tag { string tag = 1; string slug = 2; }
     //      TitleLabels titleLabels = 32;   // TitleLabels { int32 releaseSchedule = 1; }
     //    }
-    auto detail = successR.unwrap().getMessage(8);
+    auto detail = successR.value().getMessage(8);
     auto title = detail.getMessage(1);
 
     if (!title.has(1))
-        return Err(QString("Couldn't parse manga info."));
+        co_return Err(Error::Parse, "Couldn't parse manga info.");
+
+    MangaDetails details;
 
     QStringList authors;
     for (const auto &author : title.getString(3).split('/', Qt::SkipEmptyParts))
         if (!author.trimmed().isEmpty())
             authors.append(author.trimmed());
 
-    info->author = authors.join(", ");
-    info->artist = info->author;
+    details.author = authors.join(", ");
+    details.artist = details.author;
 
     QStringList genres;
     for (const auto &tag : detail.getMessages(31))
         if (!tag.getString(1).trimmed().isEmpty())
             genres.append(tag.getString(1).trimmed());
 
-    info->genres = genres.join(", ");
+    details.genres = genres.join(", ");
 
     QStringList summary;
     for (int field : {3, 8, 7})
@@ -485,8 +438,7 @@ Result<MangaChapterCollection, QString> MangaPlus::updateMangaInfoFinishedLoadin
     auto coverUrl = title.getString(4);
     if (coverUrl.isEmpty())
         coverUrl = detail.getString(2);
-    if (!coverUrl.isEmpty())
-        info->coverUrl = coverUrl;
+    details.coverUrl = coverUrl;
 
     //    message ChapterGroup {
     //      string chapterNumbers = 1;
@@ -520,9 +472,9 @@ Result<MangaChapterCollection, QString> MangaPlus::updateMangaInfoFinishedLoadin
         }
     }
 
-    info->status = titleStatus(detail, genres, allChapterIds.size());
+    details.status = titleStatus(detail, genres, allChapterIds.size());
 
-    MangaChapterCollection newchapters;
+    auto &newchapters = details.chapters;
     QSet<quint64> chapterIds;
 
     for (const auto &chapter : std::as_const(chapters))
@@ -541,24 +493,24 @@ Result<MangaChapterCollection, QString> MangaPlus::updateMangaInfoFinishedLoadin
     if (newchapters.isEmpty() && hasSubscriptionChapters)
         summary.append("The chapters of this title are only readable with a MANGA Plus subscription.");
 
-    info->summary = summary.join("\n\n");
+    details.summary = summary.join("\n\n");
 
-    return Ok(newchapters);
+    co_return details;
 }
 
-Result<QList<ImageLink>, QString> MangaPlus::getPageList(const QString &chapterUrl)
+Task<Result<QList<ImageLink>>> MangaPlus::fetchPageList(QString chapterUrl)
 {
     // the chapter urls are relative to the api
     auto url = chapterUrl.startsWith("http") ? chapterUrl : baseUrl + chapterUrl;
 
     auto job = download(url, 7000);
 
-    if (!job->await())
-        return Err(job->errorString);
+    if (!co_await job)
+        co_return Err(job->error);
 
     auto successR = parseResponse(job->buffer);
-    if (successR.isErr())
-        return Err(successR.unwrapErr());
+    if (!successR.has_value())
+        co_return Err(successR.error());
 
     //    message MangaViewer {
     //      repeated Page pages = 1;
@@ -572,7 +524,7 @@ Result<QList<ImageLink>, QString> MangaPlus::getPageList(const QString &chapterU
     //      uint32 height = 3;
     //      string encryptionKey = 5;
     //    }
-    auto viewer = successR.unwrap().getMessage(10);
+    auto viewer = successR.value().getMessage(10);
 
     auto token = viewer.getString(19).toLatin1();
     if (!token.isEmpty())
@@ -589,21 +541,25 @@ Result<QList<ImageLink>, QString> MangaPlus::getPageList(const QString &chapterU
         image.xorKey = hexstr2array(mangaPage.getString(5));
         if (!token.isEmpty())
             image.headers.append({viewTokenHeader, token});
+        // only used in this session (the view token), the image is resolved again before it expires
+        auto expiry = urlExpiry(image.url);
+        if (expiry != std::numeric_limits<qint64>::max())
+            image.expires = expiry - usableImageMargin;
         images.append(image);
     }
 
-    return Ok(images);
+    co_return images;
 }
 
 // the pages of the page list are its images. expired ones and the ones loaded in an earlier session are
 // replaced by the images of a fresh page list of their chapter
-Result<ImageLink, QString> MangaPlus::getImageLink(const ImageLink &page)
+Task<Result<ImageLink>> MangaPlus::resolveImage(ImageLink page)
 {
     static const QRegularExpression pagerx(R"lit(/chapter/(\d+)/manga_page/(?:[^/?#]*/)*([^/?#]+)\?)lit");
 
     auto match = pagerx.match(page.url);
     if (!match.hasMatch() || isUsableImage(page))
-        return Ok(page);
+        co_return page;
 
     auto chapterId = match.captured(1);
     auto fileName = "/" + match.captured(2) + "?";
@@ -624,20 +580,20 @@ Result<ImageLink, QString> MangaPlus::getImageLink(const ImageLink &page)
         refreshedPageLists[chapterId].time = now;
 
         runningRefreshes[chapterId]++;
-        auto pagesR = getPageList(pagesUrl.arg(chapterId));
+        auto pagesR = co_await fetchPageList(pagesUrl.arg(chapterId));
         if (--runningRefreshes[chapterId] == 0)
             runningRefreshes.remove(chapterId);
 
-        if (pagesR.isErr())
-            return Err(pagesR.unwrapErr());
+        if (!pagesR.has_value())
+            co_return Err(pagesR.error());
 
         // the hash can have changed meanwhile, nothing refers into it across the download
-        refreshedPageLists[chapterId] = {now, pagesR.unwrap()};
+        refreshedPageLists[chapterId] = {now, pagesR.value()};
         image = findImage(refreshedPageLists[chapterId].images, fileName);
     }
 
     if (image.isEmpty())
-        return Err(QString("Couldn't refresh the expired page url."));
+        co_return Err(QString("Couldn't refresh the expired page url."));
 
-    return Ok(image);
+    co_return image;
 }

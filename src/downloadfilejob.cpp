@@ -29,7 +29,7 @@ void DownloadFileJob::startAttempt()
     QString error = prepareTarget();
     if (!error.isEmpty())
     {
-        finishFailed(error);
+        finishFailed({Error::Storage, error, 0});
         return;
     }
 
@@ -57,7 +57,7 @@ void DownloadFileJob::readyRead()
         QString error = "Can't write file: " + partFile.errorString();
         partFile.close();
         partFile.remove();
-        abortWith(error);
+        abortWith({Error::Storage, error, 0});
     }
 }
 
@@ -80,7 +80,7 @@ void DownloadFileJob::replyFinished()
     // Only the last attempt counts as failed, until then the job is handed out to whoever asks for the same
     // file.
     if (!retryLater(reply.get()))
-        finishFailed(replyErrorString(reply.get()));
+        finishFailed(replyError(reply.get()));
 }
 
 void DownloadFileJob::replySucceeded()
@@ -96,7 +96,7 @@ void DownloadFileJob::replySucceeded()
     {
         QString error = "Can't write file: " + partFile.errorString();
         partFile.remove();
-        finishFailed(error);
+        finishFailed({Error::Storage, error, 0});
         return;
     }
 
@@ -107,7 +107,8 @@ void DownloadFileJob::replySucceeded()
     {
         QString error = "Can't save file: " + partFile.errorString();
         partFile.remove();
-        finishFailed(error);
+        finishFailed({Error::Storage, error, 0});
+
         return;
     }
 

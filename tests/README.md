@@ -3,8 +3,8 @@
 A headless harness (`harness/`) that runs the core of the app on the desktop:
 
 - **Sources:** what each source makes of a few fixed mangas (`picks/<source>.txt`). This covers the info, the first and last chapters, the page lists, the image links with their headers, and the first image after processing (its size and a hash of its pixels). It also covers the update of the manga list for the sources where that takes few requests.
-- **jobs:** the contract of the download jobs, against a local test server (`harness/testserver.py`).
-- **storage:** the cache layout, mangas and chapters by URL, the reading progress, the favorites and the image links, against the same server.
+- **jobs:** the contract of the download jobs and of the coroutines that wait for them (`src/task.h`), against a local test server (`harness/testserver.py`).
+- **storage:** the cache layout, mangas and chapters by URL, the reading progress, the favorites, the manga lists and the repository (page images, joined updates, failed updates), against the same server and a fake source.
 
 ```
 tests/run.sh                    # all tests
@@ -36,7 +36,19 @@ harness [--cache <dir>] [--record <dir> | --replay <dir>] <command>
   list <source>
   pick <source>                    # updates the list, prints mangas for a picks file
   download <source> <title> <url> [chapters]   # the download manager, against the sites
+  flow <source> <title> <url>      # reading, favorites and a chapter download through the core
+  listflow <source>                # list updates and a cancelled one through the core
   jobs <port> | storage <port>
 ```
 
 Without `--record` or `--replay` the harness asks the sites.
+
+`flow` and `listflow` drive `UltimateMangaReaderCore` the way the GUI does. They only run against the sites and check each step, with no golden output. Run them after changes to the core, for example with the first line of a picks file:
+
+```
+cd ../build-UltimateMangaReader-tests
+./harness flow MangaTown "Tales of Demons and Gods" https://www.mangatown.com/manga/tales_of_demons_and_gods/
+./harness listflow MangaPlus
+```
+
+Comick's CDN answers 429 until an image is in its cache, so a chapter download there can lose a page or two.

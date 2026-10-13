@@ -1,6 +1,7 @@
 #pragma once
 
 #include "networkmanager.h"
+#include "task.h"
 
 enum DownloadType
 {
@@ -8,7 +9,7 @@ enum DownloadType
     DownloadTypeScaledImage
 };
 
-// See AbstractMangaSource::imageDownload().
+// See MangaRepository::imageDownload().
 struct FileDownloadDescriptor
 {
     FileDownloadDescriptor(const ImageLink &image, const QString &path) : image(image), path(path) {}
@@ -35,7 +36,8 @@ public:
     // finished (completed or failed)
     int completed;
     int errors;
-    QString lastErrorMessage;
+    Error lastError;
+
     bool cancelOnError;
 
     void start();
@@ -46,6 +48,8 @@ public:
     void resetJobCount();
     // Waits until all downloads finished. Returns whether all of them completed.
     bool awaitCompletion();
+    // Downloads are running or waiting to start.
+    bool isRunning() const { return runningJobs > 0 || !jobDescriptorQueue.isEmpty(); }
     // the queue stops when it is set (checked when a download finishes)
     void setCancellationToken(bool *token);
 
@@ -73,3 +77,29 @@ private:
     void startSingle();
     void downloadFinished(QSharedPointer<DownloadJobBase> job, bool success);
 };
+
+// co_await queue: waits until its downloads finished, true if all of them completed.
+struct QueueAwaiter
+{
+    DownloadQueue *queue;
+    std::shared_ptr<void> hold;
+
+    bool await_ready() const { return !queue->isRunning(); }
+    void await_suspend(std::coroutine_handle<> handle)
+    {
+        hold = DownloadJobBase::holdActivity();
+        resumeOnSignal(QList<DownloadQueue *>{queue}, handle, 0, &DownloadQueue::allCompleted);
+
+    }
+    bool await_resume()
+    {
+        hold.reset();
+        return queue->errors == 0;
+    }
+};
+
+inline QueueAwaiter operator co_await(DownloadQueue &queue)
+{
+    return {&queue, {}};
+}
+

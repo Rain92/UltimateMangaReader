@@ -9,10 +9,11 @@
 #include "perftimer.h"
 #include "sizes.h"
 
-FavoritesManager::FavoritesManager(const QMap<QString, AbstractMangaSource *> &mangasources,
-                                   NetworkManager *networkManager, QObject *parent)
+FavoritesManager::FavoritesManager(const QMap<QString, MangaSourceBase *> &mangasources,
+                                   MangaRepository *repository, NetworkManager *networkManager, QObject *parent)
     : QObject(parent),
       mangasources(mangasources),
+      repository(repository),
       networkManager(networkManager),
       entries(),
       infosLoaded(false),
@@ -161,7 +162,7 @@ void FavoritesManager::moveFavoriteToFront(int i)
 void FavoritesManager::loadEntry(Entry &entry)
 {
     auto source = mangasources.value(entry.favorite.hostname);
-    entry.info = source ? source->loadCachedMangaInfo(entry.favorite.mangaUrl, entry.favorite.title) : nullptr;
+    entry.info = source ? repository->cachedInfo(source, entry.favorite.mangaUrl, entry.favorite.title) : nullptr;
     entry.progress = ReadingProgress(entry.favorite.hostname, entry.favorite.mangaUrl);
     connectInfo(entry.info);
 }
@@ -240,14 +241,14 @@ QSharedPointer<MangaInfo> FavoritesManager::requireInfo(int i)
     if (!source)
         return {};
 
-    auto res = source->loadMangaInfo(fav.mangaUrl, fav.title);
-    if (res.isErr())
+    auto res = repository->loadInfo(source, fav.mangaUrl, fav.title).wait();
+    if (!res.has_value())
     {
-        emit error(res.unwrapErr());
+        emit error(res.error().message);
         return {};
     }
 
-    info = res.unwrap();
+    info = res.value();
     int now = indexOf(fav);
     if (now >= 0)
     {
@@ -274,19 +275,12 @@ void FavoritesManager::updateInfos()
     const qint64 minUpdateIntervalMs = 60 * 1000;
 
     // a copy: an update that is done right away (e.g. a failed request) can reorder the favorites
-    const auto infos = [this]()
-    {
-        QList<QSharedPointer<MangaInfo>> infos;
-        for (const auto &entry : std::as_const(entries))
-            infos.append(entry.info);
-        return infos;
-    }();
-
-    for (const auto &info : infos)
+    QList<QSharedPointer<MangaInfo>> infos;
+    for (const auto &entry : std::as_const(entries))
     {
         // the source might have been disabled since the infos were loaded
-        auto source = info ? mangasources.value(info->hostname) : nullptr;
-        if (!source)
+        const auto &info = entry.info;
+        if (!info || !mangasources.value(info->hostname))
             continue;
 
         // also the ones without chapters (e.g. all of them removed at the source)
@@ -295,8 +289,32 @@ void FavoritesManager::updateInfos()
             continue;
         lastUpdate.start();
 
-        source->updateMangaInfoAsync(info, false);
+        infos.append(info);
     }
+
+    if (!infos.isEmpty())
+        update(infos);
+}
+
+Task<> FavoritesManager::update(QList<QSharedPointer<MangaInfo>> infos)
+{
+    std::vector<Task<Result<>>> updates;
+    for (const auto &info : std::as_const(infos))
+        updates.push_back(repository->updateInfo(info, false));
+
+    int failed = 0;
+    Error firstError;
+    for (const auto &update : updates)
+    {
+        auto result = co_await update;
+        if (!result && !result.error().isCancelled() && failed++ == 0)
+            firstError = result.error();
+    }
+
+    // without a connection that's no news
+    if (failed > 0 && networkManager->connected)
+        emit error(failed == 1 ? "Couldn't update a favorite: " + firstError.message
+                               : QString("Couldn't update %1 favorites: %2").arg(failed).arg(firstError.message));
 }
 
 void FavoritesManager::resetUpdatedStatus()
@@ -351,13 +369,14 @@ void FavoritesManager::clearInvalidFavorites()
         bool valid = info && !info->chapters.isEmpty();
         if (!valid && info)
         {
-            auto res = info->mangaSource->loadMangaInfo(fav.mangaUrl, fav.title);
+            auto res = repository->loadInfo(info->mangaSource, fav.mangaUrl, fav.title).wait();
+
             i = indexOf(fav);
             if (i < 0)
                 continue;
-            if (res.isOk())
+            if (res.has_value())
             {
-                entries[i].info = res.unwrap();
+                entries[i].info = res.value();
                 connectInfo(entries[i].info);
                 valid = !entries[i].info->chapters.isEmpty();
             }

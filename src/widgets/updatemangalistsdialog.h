@@ -40,7 +40,8 @@ private:
 
     void resetUI();
     void setupSourcesList();
-    void updateFinished();
+    void updateFinished(const QString &message);
+
     void updateProgress();
     void updateError(const QString &message);
 };

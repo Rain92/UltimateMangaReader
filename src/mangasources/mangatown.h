@@ -1,7 +1,6 @@
 #pragma once
 
-#include "abstractmangasource.h"
-#include "mangainfo.h"
+#include "mangasourcebase.h"
 
 // What an update of the manga list got done so far, see UpdateProgressToken::resumeState().
 struct MangaTownUpdateState
@@ -18,17 +17,15 @@ struct MangaTownUpdateState
     int processedPages = 0;
 };
 
-class MangaTown : public AbstractMangaSource
+class MangaTown : public MangaSourceBase
 {
 public:
-    MangaTown(NetworkManager *dm);
-    virtual ~MangaTown() = default;
+    explicit MangaTown(NetworkManager *networkManager);
 
-    bool updateMangaList(UpdateProgressToken *token) override;
-    Result<MangaChapterCollection, QString> updateMangaInfoFinishedLoading(
-        QSharedPointer<DownloadBufferJob> job, QSharedPointer<MangaInfo> info) override;
-    Result<QList<ImageLink>, QString> getPageList(const QString &chapterUrl) override;
-    Result<ImageLink, QString> getImageLink(const ImageLink &page) override;
+    Task<MangaListUpdate> fetchMangaList(UpdateProgressToken *token, MangaList current) override;
+    Task<Result<MangaDetails>> fetchMangaInfo(QString mangaUrl, MangaChapterCollection known) override;
+    Task<Result<QList<ImageLink>>> fetchPageList(QString chapterUrl) override;
+    Task<Result<ImageLink>> resolveImage(ImageLink page) override;
 
 private:
     QString dictionaryUrl;

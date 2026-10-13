@@ -96,7 +96,9 @@ void DownloadScaledImageJob::appendixFinished()
     // wouldn't try again.
     if (status == 0)
     {
-        finishFailed("Couldn't download the rest of the page: " + appendReply->errorString());
+        auto error = replyError(appendReply.get());
+        error.message = "Couldn't download the rest of the page: " + appendReply->errorString();
+        finishFailed(error);
         return;
     }
 
@@ -134,6 +136,7 @@ void DownloadScaledImageJob::processingFinished(quint64 id, const QImage &image)
     }
     else
     {
-        finishFailed("Failed to load or process image.");
+        finishFailed({Error::Failed, "Failed to load or process image.", 0});
+
     }
 }

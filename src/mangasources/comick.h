@@ -2,8 +2,7 @@
 
 #include <QSet>
 
-#include "abstractmangasource.h"
-#include "mangainfo.h"
+#include "mangasourcebase.h"
 
 // What an update of the manga list got done so far, see UpdateProgressToken::resumeState().
 struct ComickUpdateState
@@ -18,17 +17,16 @@ struct ComickUpdateState
     bool knownTitlesLoaded = false;
 };
 
-class Comick : public AbstractMangaSource
+class Comick : public MangaSourceBase
 {
 public:
-    explicit Comick(NetworkManager *dm);
+    explicit Comick(NetworkManager *networkManager);
     virtual ~Comick();
 
-    bool updateMangaList(UpdateProgressToken *token) override;
-    Result<MangaChapterCollection, QString> updateMangaInfoFinishedLoading(
-        QSharedPointer<DownloadBufferJob> job, QSharedPointer<MangaInfo> info) override;
-    Result<QList<ImageLink>, QString> getPageList(const QString &chapterUrl) override;
-    Result<ImageLink, QString> getImageLink(const ImageLink &page) override;
+    Task<MangaListUpdate> fetchMangaList(UpdateProgressToken *token, MangaList current) override;
+    Task<Result<MangaDetails>> fetchMangaInfo(QString mangaUrl, MangaChapterCollection known) override;
+    Task<Result<QList<ImageLink>>> fetchPageList(QString chapterUrl) override;
+    Task<Result<ImageLink>> resolveImage(ImageLink page) override;
 
 private:
     QString apiUrl;
@@ -39,9 +37,10 @@ private:
 
     QSharedPointer<DownloadBufferJob> startCacheWarmUp(const QString &imageUrl, int timeout);
 
-    bool fetchSearch(const QString &order, int pages, ComickUpdateState &state, UpdateProgressToken *token,
-                     int progressFrom, int progressTo);
-    bool fetchSitemaps(ComickUpdateState &state, UpdateProgressToken *token);
-    Result<MangaChapterCollection, QString> fetchChapters(const QString &slug,
-                                                          const MangaChapterCollection &current);
+    // the state is the one of the token
+    Task<bool> fetchSearch(QString order, int pages, ComickUpdateState *state, UpdateProgressToken *token,
+                           int progressFrom, int progressTo);
+    Task<Result<>> fetchSitemaps(ComickUpdateState *state, UpdateProgressToken *token);
+    Task<Result<MangaChapterCollection>> fetchChapters(QString slug, MangaChapterCollection current);
+
 };

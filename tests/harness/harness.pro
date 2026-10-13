@@ -12,6 +12,7 @@ SOURCES += \
     ../../src/device_desktop.cpp \
     capture.cpp \
     fixtures.cpp \
+    flowtests.cpp \
     jobtests.cpp \
     main.cpp \
     storagetests.cpp \

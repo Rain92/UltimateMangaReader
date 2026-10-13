@@ -3,11 +3,12 @@
 #include <QDir>
 #include <QTemporaryDir>
 
-#include "abstractmangasource.h"
 #include "fixtures.h"
 #include "harness.h"
 #include "mangachapterdownloadmanager.h"
 #include "mangainfo.h"
+#include "mangarepository.h"
+#include "mangasourcebase.h"
 #include "networkmanager.h"
 #include "settings.h"
 #include "sourceregistry.h"
@@ -15,7 +16,7 @@
 
 QTextStream out(stdout);
 
-AbstractMangaSource *findSource(const QList<QSharedPointer<AbstractMangaSource>> &sources, const QString &name)
+MangaSourceBase *findSource(const QList<QSharedPointer<MangaSourceBase>> &sources, const QString &name)
 {
     for (const auto &source : sources)
         if (source->name == name)
@@ -30,6 +31,8 @@ static int usage()
            "  list <source>                   the update of the manga list\n"
            "  pick <source>                   updates the list, prints mangas for a picks file\n"
            "  download <source> <title> <url> [chapters]   the chapter downloads (download manager)\n"
+           "  flow <source> <title> <url>     reading, favorites and downloads through the core like the gui\n"
+           "  listflow <source>               list updates (and a cancelled one) through the core like the gui\n"
            "  jobs <port>                     the download jobs, against testserver.py\n"
            "  storage <port>                  the storage of the app, against testserver.py\n"
            "--record writes the responses of the sites into the directory, --replay answers the requests from\n"
@@ -38,10 +41,10 @@ static int usage()
 }
 
 // The picks: the most popular manga and two others further down the list.
-static int pick(AbstractMangaSource *source)
+static int pick(MangaSourceBase *source)
 {
-    int failures = captureList(source);
-    const auto &list = source->mangaList;
+    MangaList list;
+    int failures = captureList(source, &list);
     QList<int> order(list.titles.size());
     std::iota(order.begin(), order.end(), 0);
     std::sort(order.begin(), order.end(),
@@ -54,19 +57,19 @@ static int pick(AbstractMangaSource *source)
     return failures;
 }
 
-static int download(NetworkManager &nm, AbstractMangaSource *source, const QString &title, const QString &url,
-                    int count)
+static int download(NetworkManager &nm, MangaRepository &repository, MangaSourceBase *source, const QString &title,
+                    const QString &url, int count)
 {
-    auto res = source->loadMangaInfo(url, title, false);
-    if (res.isErr())
+    auto res = repository.loadInfo(source, url, title, false).wait();
+    if (!res.has_value())
     {
-        out << "info: ERROR " << res.unwrapErr() << "\n";
+        out << "info: ERROR " << res.error().message << "\n";
         return 1;
     }
-    auto info = res.unwrap();
+    auto info = res.value();
     count = qMin(count, int(info->chapters.size()));
 
-    MangaChapterDownloadManager manager(&nm);
+    MangaChapterDownloadManager manager(&nm, &repository);
     QObject::connect(&manager, &MangaChapterDownloadManager::error,
                      [](const QString &e) { out << "error: " << e << "\n"; });
     bool done = false;
@@ -131,7 +134,15 @@ int main(int argc, char **argv)
     auto arg = [&](int i) { return args.value(i); };
 
     int failures;
-    if (command == "jobs" || command == "storage")
+    if (command == "flow" && args.size() == 3)
+    {
+        failures = flowTests(arg(0), arg(1), arg(2));
+    }
+    else if (command == "listflow" && args.size() == 1)
+    {
+        failures = listFlowTests(arg(0));
+    }
+    else if (command == "jobs" || command == "storage")
     {
         if (args.isEmpty())
             return usage();
@@ -154,6 +165,7 @@ int main(int argc, char **argv)
         Settings settings;
         nm.setDownloadSettings(QSize(1404, 1872), &settings);
         SourceRegistry sources(&nm);
+        MangaRepository repository(&nm);
         auto source = findSource(sources.all(), arg(0));
         if (!source)
         {
@@ -162,13 +174,14 @@ int main(int argc, char **argv)
         }
 
         if (command == "capture" && args.size() == 2)
-            failures = captureMangas(source, arg(1));
+            failures = captureMangas(repository, source, arg(1));
         else if (command == "list")
             failures = captureList(source);
         else if (command == "pick")
             failures = pick(source);
         else if (command == "download" && args.size() >= 3)
-            failures = download(nm, source, arg(1), arg(2), args.size() > 3 ? arg(3).toInt() : 2);
+            failures = download(nm, repository, source, arg(1), arg(2), args.size() > 3 ? arg(3).toInt() : 2);
+
         else
             return usage();
     }

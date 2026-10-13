@@ -1,14 +1,15 @@
 #include "mangaindextraverser.h"
 
-MangaIndexTraverser::MangaIndexTraverser(QSharedPointer<MangaInfo> mangainfo, int chapter, int page)
-    : MangaIndex(chapter, page), mangaInfo(mangainfo)
+MangaIndexTraverser::MangaIndexTraverser(MangaRepository *repository, QSharedPointer<MangaInfo> mangainfo,
+                                         int chapter, int page)
+    : MangaIndex(chapter, page), repository(repository), mangaInfo(mangainfo)
 {
 }
 
-Result<bool, QString> MangaIndexTraverser::increment()
+Result<bool> MangaIndexTraverser::increment()
 {
     if (chapter < 0 || chapter >= mangaInfo->chapters.count())
-        return Ok(false);
+        return false;
 
     if (page + 1 < mangaInfo->chapters.at(chapter).pages.count())
     {
@@ -20,14 +21,14 @@ Result<bool, QString> MangaIndexTraverser::increment()
     }
     else
     {
-        return Ok(false);
+        return false;
     }
 }
 
-Result<bool, QString> MangaIndexTraverser::decrement()
+Result<bool> MangaIndexTraverser::decrement()
 {
     if (chapter < 0 || chapter >= mangaInfo->chapters.count())
-        return Ok(false);
+        return false;
 
     if (page > 0)
     {
@@ -37,9 +38,9 @@ Result<bool, QString> MangaIndexTraverser::decrement()
     {
         if (!mangaInfo->chapters.at(chapter - 1).pagesLoaded)
         {
-            auto res = mangaInfo->mangaSource->updatePageList(mangaInfo, chapter - 1);
-            if (!res.isOk())
-                return Err(res.unwrapErr());
+            auto res = repository->loadPageList(mangaInfo, chapter - 1).wait();
+            if (!res.has_value())
+                return Err(res.error());
             // the next session would download it again
             mangaInfo->serialize();
         }
@@ -48,29 +49,30 @@ Result<bool, QString> MangaIndexTraverser::decrement()
     }
     else
     {
-        return Ok(false);
+        return false;
     }
 }
 
-Result<bool, QString> MangaIndexTraverser::setChecked(int chapter, int page)
+Result<bool> MangaIndexTraverser::setChecked(int chapter, int page)
 {
     if (chapter < 0 || page < 0 || chapter >= mangaInfo->chapters.count() ||
         (chapter == this->chapter && page == this->page))
-        return Ok(false);
+        return false;
 
     if (!mangaInfo->chapters.at(chapter).pagesLoaded)
     {
-        auto res = mangaInfo->mangaSource->updatePageList(mangaInfo, chapter);
-        if (!res.isOk())
-            return Err(res.unwrapErr());
+        auto res = repository->loadPageList(mangaInfo, chapter).wait();
+
+        if (!res.has_value())
+            return Err(res.error());
         mangaInfo->serialize();
     }
 
     if (page >= mangaInfo->chapters.at(chapter).pages.count())
-        return Ok(false);
+        return false;
 
     this->chapter = chapter;
     this->page = page;
 
-    return Ok(true);
+    return true;
 }

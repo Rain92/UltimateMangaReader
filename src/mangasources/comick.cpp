@@ -417,15 +417,14 @@ static void keepLoadedUploads(MangaChapterCollection &chapters, const MangaChapt
 }
 
 // appends the uploads of a chapter list page, returns the number of pages
-static Result<int, QString> fetchUploads(NetworkManager *networkManager, const QString &url,
-                                         QList<Upload> &uploads)
+static Task<Result<int>> fetchUploads(NetworkManager *networkManager, QString url, QList<Upload> *uploads)
 {
     DownloadRequest request;
     request.url = url;
     auto job = networkManager->download(request);
 
-    if (!job->await())
-        return Err(job->errorString);
+    if (!co_await job)
+        co_return Err(job->error);
 
     try
     {
@@ -433,20 +432,20 @@ static Result<int, QString> fetchUploads(NetworkManager *networkManager, const Q
         ParseResult res = doc.Parse(job->buffer.data());
 
         if (!res || !doc.IsObject() || !doc.HasMember("data") || !doc["data"].IsArray())
-            return Err(QString("Couldn't parse chapter list."));
+            co_return Err(Error::Parse, "Couldn't parse chapter list.");
 
-        parseUploads(doc["data"], uploads);
+        parseUploads(doc["data"], *uploads);
 
         if (doc.HasMember("pagination") && doc["pagination"].IsObject() &&
             doc["pagination"].HasMember("last_page") && doc["pagination"]["last_page"].IsInt())
-            return Ok(doc["pagination"]["last_page"].GetInt());
+            co_return doc["pagination"]["last_page"].GetInt();
     }
     catch (const JsonError &)
     {
-        return Err(QString("Couldn't parse chapter list."));
+        co_return Err(Error::Parse, "Couldn't parse chapter list.");
     }
 
-    return Ok(1);
+    co_return 1;
 }
 
 static QString titleFromSlug(const QString &slug)
@@ -484,13 +483,11 @@ static QString decodeXmlEntities(QString str)
         .replace("&amp;", "&");
 }
 
-Comick::Comick(NetworkManager *networkManager) : AbstractMangaSource(networkManager)
+Comick::Comick(NetworkManager *networkManager) : MangaSourceBase(networkManager)
 {
     name = "Comick";
     baseUrl = "https://comick.art";
     apiUrl = baseUrl + "/api";
-    // the comic pages are 150-350 kB
-    mangaInfoTimeout = 6000;
 
     // the image cdn blocks requests without referer
     headerRules.add("comicknew.pictures", "Referer", "https://comick.art/");
@@ -500,7 +497,7 @@ Comick::Comick(NetworkManager *networkManager) : AbstractMangaSource(networkMana
 
 Comick::~Comick() = default;
 
-bool Comick::updateMangaList(UpdateProgressToken *token)
+Task<MangaListUpdate> Comick::fetchMangaList(UpdateProgressToken *token, MangaList current)
 {
     // a retry continues with the sitemaps the failed attempt didn't get
     auto &state = token->resumeState<ComickUpdateState>();
@@ -513,8 +510,8 @@ bool Comick::updateMangaList(UpdateProgressToken *token)
 
     if (!state.knownTitlesLoaded)
     {
-        for (int i = 0; i < mangaList.size; i++)
-            state.knownTitles.insert(mangaList.urls[i], mangaList.titles[i]);
+        for (int i = 0; i < current.size; i++)
+            state.knownTitles.insert(current.urls[i], current.titles[i]);
         state.knownTitlesLoaded = true;
     }
 
@@ -523,40 +520,34 @@ bool Comick::updateMangaList(UpdateProgressToken *token)
     if (!state.searched)
     {
         // the order of the list is the popularity, a retry searches again
-        bool ok = fetchSearch("user_follow_count", popularPages, state, token, 0, 18);
-        ok = ok && !token->canceled && fetchSearch("created_at", latestPages, state, token, 18, 20);
+        bool ok = co_await fetchSearch("user_follow_count", popularPages, &state, token, 0, 18);
+        ok = ok && !token->canceled && co_await fetchSearch("created_at", latestPages, &state, token, 18, 20);
 
         if (token->canceled)
-        {
-            token->sendError(QString("Download cancelled"));
-            return false;
-        }
+            co_return MangaListUpdate::failed({Error::Cancelled, "Download cancelled", 0});
 
         if (!ok)
-        {
-            token->sendError(QString("Couldn't load the popular titles."));
-            return false;
-        }
+            co_return MangaListUpdate::failed({Error::Failed, "Couldn't load the popular titles.", 0});
 
         state.searched = true;
     }
 
     // a retry continues with the sitemaps that are missing, the list is only taken when it is complete
-    if (!fetchSitemaps(state, token))
-        return false;
-
-    this->mangaList = state.mangas;
+    auto sitemaps = co_await fetchSitemaps(&state, token);
+    if (!sitemaps)
+        co_return MangaListUpdate::failed(sitemaps.error());
 
     qDebug() << "mangas:" << state.mangas.size << "time:" << timer.elapsed();
 
     token->sendProgress(100);
 
-    return true;
+    co_return MangaListUpdate::complete(state.mangas);
 }
 
-bool Comick::fetchSearch(const QString &order, int pages, ComickUpdateState &state, UpdateProgressToken *token,
-                         int progressFrom, int progressTo)
+Task<bool> Comick::fetchSearch(QString order, int pages, ComickUpdateState *statePointer,
+                               UpdateProgressToken *token, int progressFrom, int progressTo)
 {
+    auto &state = *statePointer;
     auto &mangas = state.mangas;
     auto &urls = state.urls;
 
@@ -571,10 +562,10 @@ bool Comick::fetchSearch(const QString &order, int pages, ComickUpdateState &sta
 
         auto job = download(searchUrl, 10000);
 
-        if (!job->await())
+        if (!co_await job)
         {
-            qDebug() << "Comick: search failed:" << order << job->errorString;
-            return false;
+            qDebug() << "Comick: search failed:" << order << job->error.message;
+            co_return false;
         }
 
         cursor = "";
@@ -585,7 +576,7 @@ bool Comick::fetchSearch(const QString &order, int pages, ComickUpdateState &sta
             ParseResult res = doc.Parse(job->buffer.data());
 
             if (!res || !doc.IsObject() || !doc.HasMember("data") || !doc["data"].IsArray())
-                return false;
+                co_return false;
 
             for (const auto &r : doc["data"].GetArray())
             {
@@ -606,7 +597,7 @@ bool Comick::fetchSearch(const QString &order, int pages, ComickUpdateState &sta
         }
         catch (const JsonError &)
         {
-            return false;
+            co_return false;
         }
 
         token->sendProgress(progressFrom + (progressTo - progressFrom) * (page + 1) / pages);
@@ -615,30 +606,25 @@ bool Comick::fetchSearch(const QString &order, int pages, ComickUpdateState &sta
             break;
     }
 
-    return true;
+    co_return true;
 }
 
-bool Comick::fetchSitemaps(ComickUpdateState &state, UpdateProgressToken *token)
+Task<Result<>> Comick::fetchSitemaps(ComickUpdateState *statePointer, UpdateProgressToken *token)
 {
     QRegularExpression sitemaprx(R"lit(<loc>\s*([^<\s]*/sitemap-comic-(\d+)\.xml)\s*</loc>)lit");
 
+    auto &state = *statePointer;
     auto indexJob = download(baseUrl + "/sitemap.xml", 10000);
 
-    if (!indexJob->await())
-    {
-        token->sendError(indexJob->errorString);
-        return false;
-    }
+    if (!co_await indexJob)
+        co_return Err(indexJob->error);
 
     QMap<int, QString> sitemaps;
     for (auto &match : getAllRxMatches(sitemaprx, QString::fromUtf8(indexJob->buffer)))
         sitemaps.insert(match.captured(2).toInt(), match.captured(1));
 
     if (sitemaps.isEmpty())
-    {
-        token->sendError(QString("Couldn't parse manga list."));
-        return false;
-    }
+        co_return Err(Error::Parse, "Couldn't parse manga list.");
 
     for (auto it = sitemaps.cbegin(); it != sitemaps.cend(); ++it)
     {
@@ -647,17 +633,11 @@ bool Comick::fetchSitemaps(ComickUpdateState &state, UpdateProgressToken *token)
 
         auto job = download(it.value(), 30000);
 
-        if (!job->await())
-        {
-            token->sendError(job->errorString);
-            return false;
-        }
+        if (!co_await job)
+            co_return Err(job->error);
 
         if (token->canceled)
-        {
-            token->sendError(QString("Download cancelled"));
-            return false;
-        }
+            co_return Err(Error::Cancelled, "Download cancelled");
 
         const auto &buffer = job->buffer;
         int pos = 0;
@@ -688,13 +668,18 @@ bool Comick::fetchSitemaps(ComickUpdateState &state, UpdateProgressToken *token)
         token->sendProgress(qMin(99, 20 + 80 * state.sitemapsDone.size() / sitemaps.size()));
     }
 
-    return true;
+    co_return {};
 }
 
-Result<MangaChapterCollection, QString> Comick::updateMangaInfoFinishedLoading(
-    QSharedPointer<DownloadBufferJob> job, QSharedPointer<MangaInfo> info)
+Task<Result<MangaDetails>> Comick::fetchMangaInfo(QString mangaUrl, MangaChapterCollection known)
 {
+    // the comic pages are 150-350 kB
+    auto job = download(mangaUrl, 6000);
+    if (!co_await job)
+        co_return Err(job->error);
+
     // all infos are embedded as json in the comic page
+    MangaDetails details;
     const auto &buffer = job->buffer;
     int spos = buffer.indexOf(R"(id="comic-data")");
     if (spos >= 0)
@@ -702,7 +687,7 @@ Result<MangaChapterCollection, QString> Comick::updateMangaInfoFinishedLoading(
     int epos = spos >= 0 ? buffer.indexOf("</script>", spos) : -1;
 
     if (spos < 0 || epos < 0)
-        return Err(QString("Couldn't parse manga infos."));
+        co_return Err(Error::Parse, "Couldn't parse manga infos.");
 
     QString slug;
 
@@ -713,7 +698,7 @@ Result<MangaChapterCollection, QString> Comick::updateMangaInfoFinishedLoading(
         ParseResult res = doc.Parse(data.constData());
 
         if (!res || !doc.IsObject())
-            return Err(QString("Couldn't parse manga infos."));
+            co_return Err(Error::Parse, "Couldn't parse manga infos.");
 
         slug = getStringSafe(doc, "slug");
 
@@ -721,14 +706,14 @@ Result<MangaChapterCollection, QString> Comick::updateMangaInfoFinishedLoading(
         {
             int status = doc["status"].GetInt();
             if (status >= 1 && status <= statuses.size())
-                info->status = statuses[status - 1];
+                details.status = statuses[status - 1];
         }
 
         if (doc.HasMember("year") && doc["year"].IsInt() && doc["year"].GetInt() > 0)
-            info->releaseYear = QString::number(doc["year"].GetInt());
+            details.releaseYear = QString::number(doc["year"].GetInt());
 
-        info->author = joinNames(doc, "authors");
-        info->artist = joinNames(doc, "artists");
+        details.author = joinNames(doc, "authors");
+        details.artist = joinNames(doc, "artists");
 
         QStringList genres;
         auto demographic = getStringSafe(doc, "demographic_name").trimmed();
@@ -746,7 +731,7 @@ Result<MangaChapterCollection, QString> Comick::updateMangaInfoFinishedLoading(
                 if (getStringSafe(genre, "group") == "Genre" && !genreName.isEmpty())
                     genres.append(genreName);
             }
-        info->genres = genres.join(", ");
+        details.genres = genres.join(", ");
 
         // the description ends with a block of links to the official releases
         auto summary = getStringSafe(doc, "parsed");
@@ -756,61 +741,43 @@ Result<MangaChapterCollection, QString> Comick::updateMangaInfoFinishedLoading(
         summary = htmlToPlainText(summary).trimmed();
         if (summary.isEmpty())
             summary = getStringSafe(doc, "desc").section("\n---", 0, 0).trimmed();
-        info->summary = summary;
+        details.summary = summary;
 
-        auto cover = getStringSafe(doc, "default_thumbnail").trimmed();
-        if (!cover.isEmpty())
-            info->coverUrl = cover;
+        details.coverUrl = getStringSafe(doc, "default_thumbnail").trimmed();
     }
     catch (const JsonError &)
     {
-        return Err(QString("Couldn't parse manga infos."));
+        co_return Err(Error::Parse, "Couldn't parse manga infos.");
     }
 
     if (slug.isEmpty())
-        return Err(QString("Couldn't parse manga infos."));
+        co_return Err(Error::Parse, "Couldn't parse manga infos.");
 
-    // the core downloads the cover afterwards if it isn't on disk yet (same path). that fails while
-    // the cdn is throttled, so it is also downloaded as soon as the warm-up got it into the cache.
-    auto coverPath = info->coverPath.isEmpty() ? defaultCoverPath(info) : info->coverPath;
-    if (!info->coverUrl.isEmpty() && !QFile::exists(coverPath))
-    {
-        QWeakPointer<MangaInfo> weakInfo = info;
-        executeOnJobCompletion(startCacheWarmUp(info->coverUrl, 8000),
-                               [this, weakInfo]()
-                               {
-                                   if (auto info = weakInfo.toStrongRef())
-                                       downloadCoverAsync(info, false);
-                               });
-    }
+    auto chapters = co_await fetchChapters(slug, known);
+    if (!chapters.has_value())
+        co_return Err(chapters.error());
 
-    auto chapters = fetchChapters(slug, info->chapters);
+    details.chapters = chapters.value();
+    keepLoadedUploads(details.chapters, known);
 
-    if (chapters.isErr())
-        return chapters;
-
-    auto newChapters = chapters.unwrap();
-    keepLoadedUploads(newChapters, info->chapters);
-
-    return Ok(newChapters);
+    co_return details;
 }
 
-Result<MangaChapterCollection, QString> Comick::fetchChapters(const QString &slug,
-                                                              const MangaChapterCollection &current)
+Task<Result<MangaChapterCollection>> Comick::fetchChapters(QString slug, MangaChapterCollection current)
 {
     auto listUrl = QString("%1/comics/%2/chapter-list?lang=en&chapOrder=asc").arg(apiUrl, slug);
 
     // all english uploads of all groups, sorted by chapter number (whole volumes first)
     QList<Upload> uploads;
-    auto firstPage = fetchUploads(networkManager, listUrl, uploads);
+    auto firstPage = co_await fetchUploads(networkManager, listUrl, &uploads);
 
-    if (firstPage.isErr())
-        return Err(firstPage.unwrapErr());
+    if (!firstPage.has_value())
+        co_return Err(firstPage.error());
 
-    int lastPage = firstPage.unwrap();
+    int lastPage = firstPage.value();
 
     if (uploads.isEmpty())
-        return Ok(MangaChapterCollection());
+        co_return MangaChapterCollection();
 
     // an update keeps the uploads of the current chapters where there is a choice
     QSet<QString> currentHids;
@@ -823,12 +790,12 @@ Result<MangaChapterCollection, QString> Comick::fetchChapters(const QString &slu
     {
         for (int page = 2; page <= lastPage; page++)
         {
-            auto res = fetchUploads(networkManager, listUrl + "&page=" + QString::number(page), uploads);
-            if (res.isErr())
-                return Err(res.unwrapErr());
+            auto res = co_await fetchUploads(networkManager, listUrl + "&page=" + QString::number(page), &uploads);
+            if (!res.has_value())
+                co_return Err(res.error());
         }
 
-        return Ok(chaptersByVolume(slug, uploads, currentHids));
+        co_return chaptersByVolume(slug, uploads, currentHids);
     }
 
     // the chapter endpoint contains the complete list of its language with one entry per chapter
@@ -836,7 +803,7 @@ Result<MangaChapterCollection, QString> Comick::fetchChapters(const QString &slu
     QList<Upload> entries;
     auto anchor = anchorUpload(uploads, currentHids);
     auto job = download(apiUrl + "/comics/" + chapterPath(slug, anchor), 8000);
-    bool loaded = job->await();
+    bool loaded = co_await job;
 
     if (loaded)
     {
@@ -872,12 +839,12 @@ Result<MangaChapterCollection, QString> Comick::fetchChapters(const QString &slu
     {
         // all uploads are known already. an update keeps its current list instead, the choice of
         // the uploads can differ from the chapter endpoint.
-        qDebug() << "Comick: chapter list from the uploads:" << job->errorString;
+        qDebug() << "Comick: chapter list from the uploads:" << job->error.message;
         entries = onePerNumber(uploads, anchor.group);
     }
     else
     {
-        return Err(job->errorString.isEmpty() ? QString("Couldn't parse chapter list.") : job->errorString);
+        co_return Err(job->hasFailed() ? job->error : Error{Error::Parse, "Couldn't parse chapter list.", 0});
     }
 
     std::stable_sort(entries.begin(), entries.end(),
@@ -925,11 +892,12 @@ Result<MangaChapterCollection, QString> Comick::fetchChapters(const QString &slu
     {
         for (int page = 2; page <= qMin(lastPage, maxListPages); page++)
         {
-            auto res = fetchUploads(networkManager, listUrl + "&page=" + QString::number(page), uploads);
-            if (res.isErr())
+            auto res = co_await fetchUploads(networkManager, listUrl + "&page=" + QString::number(page), &uploads);
+            if (!res.has_value())
             {
+
                 if (!current.isEmpty())
-                    return Err(res.unwrapErr());
+                    co_return Err(res.error());
                 break;
             }
         }
@@ -950,7 +918,7 @@ Result<MangaChapterCollection, QString> Comick::fetchChapters(const QString &slu
         for (const auto &volume : std::as_const(volumes))
             chapters.append(makeChapter(slug, volume));
 
-        return Ok(chapters);
+        co_return chapters;
     }
 
     // next to numbered chapters the volumes are dropped, except the first one (often a prologue)
@@ -984,15 +952,15 @@ Result<MangaChapterCollection, QString> Comick::fetchChapters(const QString &slu
             chapters.insert(pos, makeChapter(slug, it.value()));
         }
 
-    return Ok(chapters);
+    co_return chapters;
 }
 
-Result<QList<ImageLink>, QString> Comick::getPageList(const QString &chapterUrl)
+Task<Result<QList<ImageLink>>> Comick::fetchPageList(QString chapterUrl)
 {
     auto job = download(apiUrl + "/comics/" + chapterUrl, 8000);
 
-    if (!job->await())
-        return Err(job->errorString);
+    if (!co_await job)
+        co_return Err(job->error);
 
     QStringList imageUrls;
 
@@ -1002,7 +970,7 @@ Result<QList<ImageLink>, QString> Comick::getPageList(const QString &chapterUrl)
         ParseResult res = doc.Parse(job->buffer.data());
 
         if (!res || !doc.IsObject() || !doc.HasMember("chapter") || !doc["chapter"].IsObject())
-            return Err(QString("Couldn't parse page list."));
+            co_return Err(Error::Parse, "Couldn't parse page list.");
 
         const auto &chapter = doc["chapter"];
 
@@ -1016,7 +984,7 @@ Result<QList<ImageLink>, QString> Comick::getPageList(const QString &chapterUrl)
     }
     catch (const JsonError &)
     {
-        return Err(QString("Couldn't parse page list."));
+        co_return Err(Error::Parse, "Couldn't parse page list.");
     }
 
     // remembered for warming up the following pages
@@ -1025,12 +993,12 @@ Result<QList<ImageLink>, QString> Comick::getPageList(const QString &chapterUrl)
     for (int i = 0; i + 1 < imageUrls.size(); i++)
         nextPages.insert(imageUrls[i], imageUrls[i + 1]);
 
-    return Ok(ImageLink::fromUrls(imageUrls));
+    co_return ImageLink::fromUrls(imageUrls);
 }
 
-Result<ImageLink, QString> Comick::getImageLink(const ImageLink &page)
+Task<Result<ImageLink>> Comick::resolveImage(ImageLink page)
 {
-    const QString &pageUrl = page.url;
+    const QString pageUrl = page.url;
 
     // the following pages are usually requested next
     auto next = pageUrl;
@@ -1045,7 +1013,7 @@ Result<ImageLink, QString> Comick::getImageLink(const ImageLink &page)
     if (!warmUp || warmUp->hasFailed())
         warmUp = startCacheWarmUp(pageUrl, 5000);
 
-    warmUp->await(5000);
+    co_await waitFor(warmUp, 5000);
 
     // warm-ups of skipped pages
     if (pageWarmUps.size() > 32)
@@ -1059,5 +1027,6 @@ Result<ImageLink, QString> Comick::getImageLink(const ImageLink &page)
         }
     }
 
-    return Ok(page);
+    co_return page;
 }
+

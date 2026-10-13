@@ -21,5 +21,7 @@ protected:
     void resetState() override;
 
 private:
+    void readyRead();
     void replyFinished();
+
 };

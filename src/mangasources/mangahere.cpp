@@ -91,7 +91,7 @@ static QString normalizeUrl(QString url)
     return url;
 }
 
-MangaHere::MangaHere(NetworkManager *networkManager) : AbstractMangaSource(networkManager)
+MangaHere::MangaHere(NetworkManager *networkManager) : MangaSourceBase(networkManager)
 {
     name = "MangaHere";
     baseUrl = "https://www.mangahere.cc";
@@ -99,9 +99,6 @@ MangaHere::MangaHere(NetworkManager *networkManager) : AbstractMangaSource(netwo
     fanfoxUrl = "https://fanfox.net";
     dictionaryUrl = "https://www.mangahere.cc/directory/";
     mangaListUrl = "https://www.mangahere.cc/mangalist/";
-
-    // the info page of long series is ~600 KB (~40 KB gzipped)
-    mangaInfoTimeout = 5000;
 
     networkManager->addCookie(".mangahere.cc", "isAdult", "1");
     networkManager->addCookie(".fanfox.net", "isAdult", "1");
@@ -114,7 +111,7 @@ MangaHere::MangaHere(NetworkManager *networkManager) : AbstractMangaSource(netwo
     headerRules.add("mangafox.me", "Referer", R"(https://fanfox.net/)");
 }
 
-bool MangaHere::updateMangaList(UpdateProgressToken *token)
+Task<MangaListUpdate> MangaHere::fetchMangaList(UpdateProgressToken *token, MangaList)
 {
     QRegularExpression popularrx(
         R"lit(<a href="(/manga/[^"]*)" title="([^"]*)"><img class="manga-list-1-cover")lit");
@@ -157,7 +154,7 @@ bool MangaHere::updateMangaList(UpdateProgressToken *token)
                             requestHeadersFunction());
         queue.setCancellationToken(&token->canceled);
         queue.start();
-        queue.awaitCompletion();
+        co_await queue;
 
         state.popularDone = !token->canceled;
     }
@@ -166,26 +163,22 @@ bool MangaHere::updateMangaList(UpdateProgressToken *token)
 
     for (int attempt = 1;; attempt++)
     {
-        while (!job->isCompleted && job->errorString.isEmpty() && !token->canceled)
-            awaitSignal(job.get(), 500, &DownloadJobBase::completed, &DownloadJobBase::downloadError);
+        // the download takes a while, a cancel is noticed in between
+        while (!job->isFinished() && !token->canceled)
+            co_await waitFor(job, 500);
 
         if (token->canceled)
-        {
-            token->sendError("Download cancelled");
-            return false;
-        }
+            co_return MangaListUpdate::failed({Error::Cancelled, "Download cancelled", 0});
 
         // the list is occasionally cut off
         if (job->isCompleted && job->buffer.contains(R"(<div class="footer-bar">)"))
             break;
 
         if (attempt >= 2)
-        {
-            token->sendError(job->isCompleted ? QString("Manga list incomplete.") : job->errorString);
-            return false;
-        }
+            co_return MangaListUpdate::failed(job->isCompleted ? Error{Error::Parse, "Manga list incomplete.", 0}
+                                                               : job->error);
 
-        qDebug() << "MangaHere: manga list incomplete, retrying" << job->errorString;
+        qDebug() << "MangaHere: manga list incomplete, retrying" << job->error.message;
         job = download(mangaListUrl, 180000);
     }
 
@@ -223,22 +216,16 @@ bool MangaHere::updateMangaList(UpdateProgressToken *token)
     qDebug() << "popular:" << popularCount << "matches:" << matches;
 
     if (matches == 0)
-    {
-        token->sendError("Couldn't process manga list.");
-        return false;
-    }
-
-    this->mangaList = mangas;
+        co_return MangaListUpdate::failed({Error::Parse, "Couldn't process manga list.", 0});
 
     qDebug() << "mangas:" << mangas.size << "time:" << timer.elapsed();
 
     token->sendProgress(100);
 
-    return true;
+    co_return MangaListUpdate::complete(mangas);
 }
 
-Result<MangaChapterCollection, QString> MangaHere::updateMangaInfoFinishedLoading(
-    QSharedPointer<DownloadBufferJob> job, QSharedPointer<MangaInfo> info)
+Task<Result<MangaDetails>> MangaHere::fetchMangaInfo(QString mangaUrl, MangaChapterCollection)
 {
     QRegularExpression authorrx(R"lit(<p class="detail-info-right-say">\s*Author:(.*?)</p>)lit");
     QRegularExpression authornamerx(R"lit(<a[^>]*>([^<]*)</a>)lit");
@@ -257,32 +244,42 @@ Result<MangaChapterCollection, QString> MangaHere::updateMangaInfoFinishedLoadin
     QRegularExpression chapterrx(
         R"lit(<a href="(/manga/[^"]*)"[^>]*>\s*<div class="detail-main-list-main">\s*<p class="title3">([^<]*)</p>)lit");
 
+    // the info page of long series is ~600 KB (~40 KB gzipped)
+    auto job = download(mangaUrl, 5000);
+    if (!co_await job)
+        co_return Err(job->error);
+
     const QString buffer = job->text();
 
     if (!buffer.contains(R"(class="detail-info")"))
-        return Err(QString("Couldn't process manga info."));
+        co_return Err(Error::Parse, "Couldn't process manga info.");
 
     // don't drop chapters because of a cut off page
     if (!buffer.contains(R"(<div class="footer-bar">)"))
-        return Err(QString("Manga info incomplete."));
+        co_return Err(Error::Parse, "Manga info incomplete.");
 
     // blocked titles and titles without chapters show a message instead of the chapter list
     int spos = buffer.indexOf(R"(<div id="chapterlist">)");
     if (spos < 0)
     {
         auto blockedmatch = blockedrx.match(buffer);
-        return Err(blockedmatch.hasMatch() ? htmlToPlainText(blockedmatch.captured(1)).trimmed()
-                                           : QString("Couldn't process chapters."));
+        co_return blockedmatch.hasMatch() ? Err(Error::NotFound, htmlToPlainText(blockedmatch.captured(1)).trimmed())
+                                          : Err(Error::Parse, "Couldn't process chapters.");
     }
 
     int epos = buffer.indexOf(R"(class="detail-main-list-more")", spos);
     auto matches = getAllRxMatches(chapterrx, buffer, spos, epos);
     if (matches.isEmpty())
-        return Err(QString("Couldn't process chapters."));
+        co_return Err(Error::Parse, "Couldn't process chapters.");
 
-    // summary and author are parsed here, fillMangaInfo would strip "[...]" from them
-    fillMangaInfo(info, buffer, QRegularExpression(), QRegularExpression(), statusrx, QRegularExpression(),
-                  genresrx, QRegularExpression(), coverrx);
+    MangaDetails details;
+    auto statusmatch = statusrx.match(buffer);
+    if (statusmatch.hasMatch())
+        details.status = htmlToPlainText(statusmatch.captured(1)).trimmed();
+    auto genresmatch = genresrx.match(buffer);
+    if (genresmatch.hasMatch())
+        details.genres = genresFromHtml(genresmatch.captured(1));
+    details.coverUrl = normalizeUrl(capture(coverrx, buffer));
 
     // placeholder links like "[Add]" aren't authors
     QStringList authors;
@@ -292,17 +289,14 @@ Result<MangaChapterCollection, QString> MangaHere::updateMangaInfoFinishedLoadin
         if (!name.isEmpty() && !(name.startsWith('[') && name.endsWith(']')))
             authors.append(name);
     }
-    info->author = authors.join(", ");
+    details.author = authors.join(", ");
 
-    // keep the paragraphs
+    // keep the paragraphs (summary and author aren't stripped of "[...]")
     auto summary = summaryrx.match(buffer).captured(1).trimmed();
-    info->summary = htmlToPlainText(summary.remove('\r').replace('\n', "<br>")).trimmed();
-
-    info->status = info->status.trimmed();
-    info->coverUrl = normalizeUrl(info->coverUrl);
+    details.summary = htmlToPlainText(summary.remove('\r').replace('\n', "<br>")).trimmed();
 
     // newest chapter first on the website
-    MangaChapterCollection newchapters;
+    auto &newchapters = details.chapters;
     QSet<QString> chapterUrls;
     for (int i = matches.count() - 1; i >= 0; i--)
     {
@@ -318,10 +312,10 @@ Result<MangaChapterCollection, QString> MangaHere::updateMangaInfoFinishedLoadin
         newchapters.append(MangaChapter(title, url));
     }
 
-    return Ok(newchapters);
+    co_return details;
 }
 
-Result<QList<ImageLink>, QString> MangaHere::getPageList(const QString &chapterUrl)
+Task<Result<QList<ImageLink>>> MangaHere::fetchPageList(QString chapterUrl)
 {
     QRegularExpression chapterpathrx(R"lit(/manga/(.+/)[^/]*$)lit");
     QRegularExpression imagerx(R"lit(<img class="lazy" data-original="([^"]*)")lit");
@@ -337,7 +331,7 @@ Result<QList<ImageLink>, QString> MangaHere::getPageList(const QString &chapterU
     {
         auto job = download(mobileUrl + "/roll_manga/" + pathmatch.captured(1), 4000, 0);
 
-        if (job->await())
+        if (co_await job)
         {
             const auto html = job->text();
             QStringList imageUrls;
@@ -347,18 +341,18 @@ Result<QList<ImageLink>, QString> MangaHere::getPageList(const QString &chapterU
             auto numpagesmatch = numpagesrx.match(html);
             if (!imageUrls.isEmpty() && numpagesmatch.hasMatch() &&
                 numpagesmatch.captured(1).toInt() == imageUrls.count())
-                return Ok(ImageLink::fromUrls(imageUrls));
+                co_return ImageLink::fromUrls(imageUrls);
         }
-        qDebug() << "MangaHere: mobile reader unavailable:" << job->errorString;
+        qDebug() << "MangaHere: mobile reader unavailable:" << job->error.message;
     }
 
-    auto desktopR = getPageListDesktop(chapterUrl, qMax(4000, 8000 - int(timer.elapsed())));
-    if (desktopR.isErr())
-        return Err(desktopR.unwrapErr());
-    return Ok(ImageLink::fromUrls(desktopR.unwrap()));
+    auto desktopR = co_await fetchPageListDesktop(chapterUrl, qMax(4000, 8000 - int(timer.elapsed())));
+    if (!desktopR.has_value())
+        co_return Err(desktopR.error());
+    co_return ImageLink::fromUrls(desktopR.value());
 }
 
-Result<QStringList, QString> MangaHere::getPageListDesktop(const QString &chapterUrl, int timeout)
+Task<Result<QStringList>> MangaHere::fetchPageListDesktop(QString chapterUrl, int timeout)
 {
     QRegularExpression chapteridrx(R"(var chapterid\s*=\s*(\d+))");
     QRegularExpression imagecountrx(R"(var imagecount\s*=\s*(\d+))");
@@ -371,8 +365,8 @@ Result<QStringList, QString> MangaHere::getPageListDesktop(const QString &chapte
 
     auto job = download(chapterUrl, timeout);
 
-    if (!job->await())
-        return Err(job->errorString);
+    if (!co_await job)
+        co_return Err(job->error);
     const auto html = job->text();
 
     // removed or blocked chapters, the sister site fanfox.net often still has the blocked ones
@@ -381,11 +375,11 @@ Result<QStringList, QString> MangaHere::getPageListDesktop(const QString &chapte
     {
         if (chapterUrl.startsWith(baseUrl))
         {
-            auto fanfoxR = getPageListDesktop(fanfoxUrl + chapterUrl.mid(baseUrl.length()), 4000);
-            if (fanfoxR.isOk())
-                return fanfoxR;
+            auto fanfoxR = co_await fetchPageListDesktop(fanfoxUrl + chapterUrl.mid(baseUrl.length()), 4000);
+            if (fanfoxR.has_value())
+                co_return fanfoxR;
         }
-        return Err(htmlToPlainText(blockedmatch.captured(1)).trimmed());
+        co_return Err(Error::NotFound, htmlToPlainText(blockedmatch.captured(1)).trimmed());
     }
 
     QString key;
@@ -410,7 +404,7 @@ Result<QStringList, QString> MangaHere::getPageListDesktop(const QString &chapte
                 imageUrls.removeLast();
 
             if (!imageUrls.isEmpty())
-                return Ok(imageUrls);
+                co_return imageUrls;
         }
         else if (script.contains("guidkey"))
         {
@@ -423,7 +417,7 @@ Result<QStringList, QString> MangaHere::getPageListDesktop(const QString &chapte
     auto imagecountmatch = imagecountrx.match(html);
 
     if (!chapteridmatch.hasMatch() || !imagecountmatch.hasMatch())
-        return Err(QString("Couldn't process pagelist."));
+        co_return Err(Error::Parse, "Couldn't process pagelist.");
 
     // the last page is always an advertisement
     int numPages = imagecountmatch.captured(1).toInt();
@@ -437,14 +431,14 @@ Result<QStringList, QString> MangaHere::getPageListDesktop(const QString &chapte
     for (int i = 1; i <= numPages; i++)
         pageUrls.append(funUrl + QString::number(i) + "&key=" + key);
 
-    return Ok(pageUrls);
+    co_return pageUrls;
 }
 
-Result<ImageLink, QString> MangaHere::getImageLink(const ImageLink &page)
+Task<Result<ImageLink>> MangaHere::resolveImage(ImageLink page)
 {
-    const QString &pageUrl = page.url;
+    const QString pageUrl = page.url;
     if (!pageUrl.contains("/chapterfun.ashx"))
-        return Ok(page);
+        co_return page;
 
     QRegularExpression pixrx(R"lit(var pix="([^"]*)")lit");
     QRegularExpression pvaluerx(R"lit(var pvalue=\["([^"]*)")lit");
@@ -457,8 +451,8 @@ Result<ImageLink, QString> MangaHere::getImageLink(const ImageLink &page)
     {
         auto job = download(url, 6000 - int(timer.elapsed()));
 
-        if (!job->await())
-            return Err(job->errorString);
+        if (!co_await job)
+            co_return Err(job->error);
 
         // the answer is sometimes empty, retry without key
         if (job->buffer.isEmpty())
@@ -475,8 +469,9 @@ Result<ImageLink, QString> MangaHere::getImageLink(const ImageLink &page)
         if (!pixmatch.hasMatch() || !pvaluematch.hasMatch())
             break;
 
-        return Ok(ImageLink::fromUrl(normalizeUrl(pixmatch.captured(1) + pvaluematch.captured(1))));
+        co_return ImageLink::fromUrl(normalizeUrl(pixmatch.captured(1) + pvaluematch.captured(1)));
     }
 
-    return Err(QString("Couldn't process pages/images."));
+    co_return Err(Error::Parse, "Couldn't process pages/images.");
+
 }

@@ -6,7 +6,7 @@
 struct MangaPage
 {
     // from the page list of the chapter: the image, or a page of the site that
-    // AbstractMangaSource::getImageLink() resolves to it
+    // MangaSourceBase::resolveImage() resolves to it
     ImageLink link;
     // the resolved image, empty until then (or again when it expired)
     ImageLink image;

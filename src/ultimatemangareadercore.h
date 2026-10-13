@@ -5,7 +5,9 @@
 #include "favoritesmanager.h"
 #include "mangachapterdownloadmanager.h"
 #include "mangacontroller.h"
+#include "mangaliststore.h"
 #include "mangalistupdater.h"
+#include "mangarepository.h"
 #include "settings.h"
 #include "sourceregistry.h"
 #include "standbymanager.h"
@@ -20,7 +22,10 @@ public:
 
     NetworkManager *networkManager;
     SourceRegistry *sources;
+    MangaRepository *repository;
+    MangaListStore mangaLists;
     MangaController *mangaController;
+
     FavoritesManager *favoritesManager;
     MangaChapterDownloadManager *mangaChapterDownloadManager;
     SuspendManager *suspendManager;

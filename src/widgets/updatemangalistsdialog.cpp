@@ -105,10 +105,12 @@ void UpdateMangaListsDialog::updateProgress()
     ui->progressBar->setValue(sum / numsources);
 }
 
-void UpdateMangaListsDialog::updateFinished()
+void UpdateMangaListsDialog::updateFinished(const QString &message)
 {
     updateCompleted = true;
-    ui->labelProgress->setText("All updates completed!");
+    ui->labelProgress->setText(message.isEmpty() ? QString("All updates completed!")
+                                                 : "All updates completed. " + message);
+
     ui->progressBar->setValue(100);
     ui->pushButtonOk->hide();
     ui->pushButtonCancel->hide();

@@ -153,8 +153,10 @@ MainWidget::MainWidget(QWidget *parent)
     QObject::connect(core->favoritesManager, &FavoritesManager::error, this, &MainWidget::showErrorMessage);
 
     // HomeWidget
+    ui->homeWidget->setMangaLists(&core->mangaLists);
     QObject::connect(ui->homeWidget, &HomeWidget::mangaSourceClicked, core,
-                     [this](AbstractMangaSource *source)
+
+                     [this](MangaSourceBase *source)
                      {
                          core->sources->setCurrent(source);
                          core->activity();

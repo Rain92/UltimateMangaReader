@@ -6,7 +6,9 @@
 #include <QString>
 #include <QTimer>
 
-#include "abstractmangasource.h"
+#include "mangarepository.h"
+#include "mangasourcebase.h"
+#include "task.h"
 #include "favorite.h"
 #include "networkmanager.h"
 #include "readingprogress.h"
@@ -26,8 +28,8 @@ class FavoritesManager : public QObject
 {
     Q_OBJECT
 public:
-    explicit FavoritesManager(const QMap<QString, AbstractMangaSource *> &mangasources,
-                              NetworkManager *networkManager, QObject *parent = nullptr);
+    FavoritesManager(const QMap<QString, MangaSourceBase *> &mangasources, MangaRepository *repository,
+                     NetworkManager *networkManager, QObject *parent = nullptr);
     ~FavoritesManager();
 
     int count() const { return entries.count(); }
@@ -43,7 +45,8 @@ public:
     bool toggleFavorite(QSharedPointer<MangaInfo> info);
 
     void moveFavoriteToFront(int i);
-    // Updates the infos from the sites in the background (new chapters).
+    // Updates the infos from the sites in the background (new chapters). The ones that fail are reported
+    // together (error()).
     void updateInfos();
     // Loads the infos and the reading progress from the cache, without downloads, so it doesn't block. An info
     // that isn't cached yet only has its title and url until updateInfos() loaded it.
@@ -80,7 +83,8 @@ private:
         ReadingProgress progress;
     };
 
-    const QMap<QString, AbstractMangaSource *> &mangasources;
+    const QMap<QString, MangaSourceBase *> &mangasources;
+    MangaRepository *repository;
     NetworkManager *networkManager;
     QList<Entry> entries;
     bool infosLoaded;
@@ -96,8 +100,10 @@ private:
     // of the last loadThumbnails(), 0 before
     qreal thumbnailPixelRatio;
 
+    Task<> update(QList<QSharedPointer<MangaInfo>> infos);
     void serialize();
     void deserialize();
+
     void loadEntry(Entry &entry);
     void connectInfo(const QSharedPointer<MangaInfo> &info);
     void removeAt(int i);

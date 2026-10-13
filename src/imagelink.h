@@ -14,10 +14,14 @@ struct ImageLink
     QString appendUrl;
     // sent besides the headers of the source (e.g. a token of the page list)
     HttpHeaders headers;
+    // when the url stops working (seconds since the epoch), 0: it doesn't. Not stored: the images of the pages
+    // are resolved again in every session (see MangaInfo::deserialize()).
+    qint64 expires = 0;
 
     bool isEmpty() const { return url.isEmpty(); }
 
-    static ImageLink fromUrl(const QString &url) { return {url, {}, {}, {}}; }
+    static ImageLink fromUrl(const QString &url) { return {url, {}, {}, {}, 0}; }
+
     static QList<ImageLink> fromUrls(const QStringList &urls)
     {
         QList<ImageLink> links;

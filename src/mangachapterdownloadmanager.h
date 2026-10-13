@@ -4,8 +4,10 @@
 
 #include "downloadqueue.h"
 #include "mangainfo.h"
+#include "mangarepository.h"
 #include "networkmanager.h"
-#include "thirdparty/result.h"
+#include "result.h"
+#include "task.h"
 
 // The chapters to download, by url: an update of the chapters can move them until they are downloaded.
 struct MangaChapterRange
@@ -18,7 +20,8 @@ class MangaChapterDownloadManager : public QObject
 {
     Q_OBJECT
 public:
-    explicit MangaChapterDownloadManager(NetworkManager *networkManager, QObject *parent = nullptr);
+    MangaChapterDownloadManager(NetworkManager *networkManager, MangaRepository *repository,
+                                QObject *parent = nullptr);
 
     void cancelDownloads();
     bool isRunning() const { return running; }
@@ -51,9 +54,13 @@ private:
     QList<MangaChapterRange> failedChapters;
 
     NetworkManager *networkManager;
+    MangaRepository *repository;
     DownloadQueue downloadQueue;
 
     void processNextJob();
+    // Loads the page lists and the images of the pages of the job, then the queue downloads the images.
+    Task<> runJob(MangaChapterRange job);
+
     void downloadQueueJobsCompleted();
     void recordFailedChapters();
     int failedChapterCount() const;

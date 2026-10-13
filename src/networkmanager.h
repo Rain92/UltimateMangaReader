@@ -15,6 +15,7 @@
 #include "imagelink.h"
 #include "imageprocessor.h"
 #include "settings.h"
+#include "task.h"
 
 // Calls beforeRequest before every request it sends.
 class NetworkAccessManager : public QNetworkAccessManager
@@ -69,13 +70,12 @@ public:
     explicit NetworkManager(QObject *parent = nullptr);
     ~NetworkManager();
 
-
-
     // A download into memory. The requests get the headers (besides a browser's User-Agent).
     QSharedPointer<DownloadBufferJob> download(DownloadRequest request);
     // A download into a file that is running already is reused.
     QSharedPointer<DownloadFileJob> downloadAsFile(const QString &url, const QString &localPath,
                                                    const HttpHeaders &headers = {});
+    QSharedPointer<DownloadFileJob> downloadAsFile(DownloadRequest request, const QString &localPath);
     // Downloads a page and saves it processed for the screen, with the headers of image. A download into the
     // same file that is running already is reused.
     QSharedPointer<DownloadFileJob> downloadAsScaledImage(const ImageLink &image, const QString &localPath);
@@ -100,11 +100,17 @@ public:
     // A download into the file is running (or waiting for a retry).
     bool isDownloading(const QString &localPath) const;
 
-    // Reads the sizes of the images from the start of their files (in parallel, blocking with an event loop
-    // for at most timeout ms). Images that couldn't be loaded or read have an invalid size.
-    // timedOut gets the indices of the urls that didn't answer in time (the other failures are the servers')
-    QList<QSize> probeImageSizes(const QStringList &urls, int timeout = 10000, QList<int> *timedOut = nullptr,
-                                 const std::function<HttpHeaders(const QString &)> &headersFor = nullptr);
+    struct ImageSizes
+    {
+        // by the index of the url, invalid for the images that couldn't be loaded or read
+        QList<QSize> sizes;
+        // the indices of the urls that didn't answer in time (the other failures are the servers')
+        QList<int> timedOut;
+    };
+    // Reads the sizes of the images from the start of their files, in parallel, for at most timeout ms.
+    // headersFor: the headers of the requests.
+    Task<ImageSizes> probeImageSizes(QStringList urls, int timeout,
+                                     std::function<HttpHeaders(const QString &)> headersFor);
 
     // written on the WiFi thread
     std::atomic<bool> connected;
@@ -115,7 +121,7 @@ signals:
     void wifiConnectFinished(bool connected);
     void activity();
     void downloadedImage(const QString &path, QSharedPointer<QImage> img);
-    // a page couldn't be downloaded (after its retries)
+    // a page couldn't be downloaded (after its retries), url: the one of its ImageLink
     void imageDownloadFailed(const QString &url);
 
 private:

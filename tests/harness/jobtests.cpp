@@ -7,7 +7,64 @@
 #include "harness.h"
 #include "networkmanager.h"
 #include "staticsettings.h"
+#include "task.h"
 #include "utils.h"
+
+// coroutines for the tests of Task
+
+static Task<Result<QString>> fetchText(NetworkManager *nm, QString url)
+{
+    DownloadRequest request;
+    request.url = url;
+    request.timeout = 3000;
+    auto job = nm->download(request);
+    if (!co_await job)
+        co_return Err(job->error);
+    co_return job->text();
+}
+
+// two downloads at the same time, the second one is awaited after the first
+static Task<qsizetype> fetchTwo(NetworkManager *nm, QString url1, QString url2)
+{
+    auto a = fetchText(nm, url1);
+    auto b = fetchText(nm, url2);
+    auto textA = co_await a;
+    auto textB = co_await b;
+    co_return (textA ? textA->size() : -100) + (textB ? textB->size() : -100);
+}
+
+static Task<> countLater(int *counter, int ms)
+{
+    co_await delay(ms);
+    (*counter)++;
+}
+
+static Task<bool> waitAtMost(NetworkManager *nm, QString url, int maxWait)
+{
+    DownloadRequest request;
+    request.url = url;
+    auto job = nm->download(request);
+    bool completed = co_await waitFor(job, maxWait);
+    co_return completed || job->isFinished();
+}
+
+static Task<bool> firstOfTwo(NetworkManager *nm, QString slowUrl, QString fastUrl)
+{
+    DownloadRequest slow, fast;
+    slow.url = slowUrl;
+    fast.url = fastUrl;
+    auto slowJob = nm->download(slow);
+    auto fastJob = nm->download(fast);
+    co_await anyFinished({slowJob.get(), fastJob.get()}, 0);
+    co_return fastJob->isCompleted && !slowJob->isFinished();
+}
+
+static Task<bool> awaitQueue(NetworkManager *nm, QStringList urls)
+{
+    DownloadQueue queue(nm, urls, 2, nullptr, false);
+    queue.start();
+    co_return co_await queue;
+}
 
 int jobTests(NetworkManager &nm, const QString &base)
 {
@@ -31,7 +88,7 @@ int jobTests(NetworkManager &nm, const QString &base)
         t.start();
         bool ok = job->await();
         check("the timeout ends the download", !ok && t.elapsed() < 1500);
-        check("timeout error", job->errorString == "Download timeout.");
+        check("timeout error", job->error.code == Error::Timeout && job->error.message == "Download timeout.");
         check("timed out job is finished and aborted", job->hasFailed() && DownloadJobBase::activeReplies() == 0);
     }
     {
@@ -43,7 +100,8 @@ int jobTests(NetworkManager &nm, const QString &base)
     {
         auto job = nm.download(request("/status/404"));
         bool ok = job->await();
-        check("404 fails without retry", !ok && job->httpStatus == 404 && job->errorString.contains("404"));
+        check("404 fails without retry", !ok && job->httpStatus == 404 && job->error.code == Error::Http &&
+                                             job->error.httpStatus == 404 && job->error.message.contains("404"));
         check("the body of an error response is kept", job->text() == "status");
     }
     {
@@ -113,7 +171,7 @@ int jobTests(NetworkManager &nm, const QString &base)
         QElapsedTimer t;
         t.start();
         bool ok = job->await();
-        check("cancel ends the download", !ok && t.elapsed() < 1000 && job->errorString == "Download cancelled");
+        check("cancel ends the download", !ok && t.elapsed() < 1000 && job->error.isCancelled());
         QCoreApplication::processEvents();
         check("a cancelled download leaves no activity", DownloadJobBase::activeReplies() == 0);
     }
@@ -128,7 +186,7 @@ int jobTests(NetworkManager &nm, const QString &base)
         while (!signalled && t.elapsed() < 2000)
             QCoreApplication::processEvents();
         check("unwritable file fails from the event loop",
-              signalled && !synchronous && job->errorString.startsWith("Can't create file"));
+              signalled && !synchronous && job->error.code == Error::Storage && job->error.message.startsWith("Can't create file"));
     }
     {
         QString dir = CONF.cacheDir + "jobtest/";
@@ -190,6 +248,71 @@ int jobTests(NetworkManager &nm, const QString &base)
         job->await();
         check("await holds activity besides its reply", whileWaiting == 2 && DownloadJobBase::activeReplies() == 0);
     }
+    {
+        DownloadRequest r = request("/file/start");
+        r.maxBytes = 4096;
+        auto job = nm.download(r);
+        check("maxBytes: the start of the body", job->await() && job->buffer.size() == 4096);
+
+        auto sizes = nm.probeImageSizes({base + "/image/100x150", base + "/image/40x30", base + "/status/404",
+                                         base + "/delay/2"},
+                                        500, nullptr)
+                         .wait();
+        check("image sizes probed", sizes.sizes == QList<QSize>{{100, 150}, {40, 30}, {}, {}} &&
+                                        sizes.timedOut == QList<int>{3});
+    }
+
+    // --- Task
+    {
+        auto text = fetchText(&nm, base + "/final").wait();
+        check("a task waits for its download, wait() gets the result", text && *text == "final");
+
+        auto failed = fetchText(&nm, base + "/status/404").wait();
+        check("a failed download is the error of the task", !failed && failed.error().code == Error::Http &&
+                                                                 failed.error().httpStatus == 404);
+
+        QElapsedTimer t;
+        t.start();
+        auto sum = fetchTwo(&nm, base + "/delay/0.3", base + "/delay/0.3").wait();
+        check("tasks run at the same time", sum == 8 && t.elapsed() < 550);
+
+        int counter = 0;
+        countLater(&counter, 50);
+        t.restart();
+        while (counter == 0 && t.elapsed() < 2000)
+            QCoreApplication::processEvents(QEventLoop::WaitForMoreEvents, 50);
+        check("a task finishes without being kept", counter == 1);
+
+        auto task = fetchText(&nm, base + "/delay/0.1");
+        QString late, now;
+        task.then([&](const Result<QString> &r) { late = r.value_or("error"); });
+        check("then: not before it finished", late.isEmpty() && !task.isFinished());
+        (void)task.wait();
+        task.then([&](const Result<QString> &r) { now = r.value_or("error"); });
+        check("then: when it finished, right away for a finished one", late == "late" && now == "late");
+
+        t.restart();
+        bool done = waitAtMost(&nm, base + "/delay/1", 200).wait();
+        check("waitFor goes on after its limit", !done && t.elapsed() < 600);
+
+        check("anyFinished goes on with the first one",
+              firstOfTwo(&nm, base + "/delay/1", base + "/final").wait());
+
+        check("co_await of a queue", awaitQueue(&nm, {base + "/final", base + "/delay/0.2"}).wait() &&
+                                         !awaitQueue(&nm, {base + "/final", base + "/status/404"}).wait());
+
+        int during = -1;
+        QTimer::singleShot(100, [&during]() { during = DownloadJobBase::activeReplies(); });
+        (void)fetchText(&nm, base + "/delay/0.3").wait();
+        check("waiting for a task holds activity", during >= 2);
+
+        // the downloads that the tests left behind
+        t.restart();
+        while (DownloadJobBase::activeReplies() > 0 && t.elapsed() < 3000)
+            QCoreApplication::processEvents(QEventLoop::WaitForMoreEvents, 50);
+    }
+
     check("no active replies at the end", DownloadJobBase::activeReplies() == 0);
     return failures;
 }
+

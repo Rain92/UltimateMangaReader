@@ -7,16 +7,17 @@
 #include "mangachapter.h"
 #include "mangaindextraverser.h"
 #include "mangainfo.h"
+#include "mangarepository.h"
 #include "readingprogress.h"
+#include "result.h"
 #include "staticsettings.h"
-#include "thirdparty/result.h"
 
 class MangaController : public QObject
 {
     Q_OBJECT
 
 public:
-    MangaController(NetworkManager *networkManager, QObject *parent = nullptr);
+    MangaController(NetworkManager *networkManager, MangaRepository *repository, QObject *parent = nullptr);
 
     QSharedPointer<MangaInfo> currentManga;
     MangaIndexTraverser currentIndex;
@@ -26,8 +27,6 @@ public:
 
     void setCurrentIndex(const MangaIndex &index);
     void advanceMangaPage(PageTurnDirection direction);
-
-    Result<ImageLink, QString> getImageLink(QSharedPointer<MangaInfo> manga, MangaIndex index);
 
     void preloadNeighbours();
     void preloadImage(QSharedPointer<MangaInfo> manga, const MangaIndex &index);
@@ -47,7 +46,7 @@ signals:
 
 private:
     void completedImagePreload(const QString &, const QString &path);
-    Result<void, QString> assurePagesLoaded();
+    Result<> assurePagesLoaded();
     void currentIndexChangedInternal(bool preload);
     void chaptersMoved();
     void updateCurrentImage();
@@ -55,7 +54,9 @@ private:
     void deserializeProgress();
     void serializeProgress();
     NetworkManager *networkManager;
+    MangaRepository *repository;
     DownloadQueue preloadQueue;
+
     bool preloading;
     bool preloadAgain;
     bool turning;

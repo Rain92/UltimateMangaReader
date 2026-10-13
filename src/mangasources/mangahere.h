@@ -1,7 +1,6 @@
 #pragma once
 
-#include "abstractmangasource.h"
-#include "mangainfo.h"
+#include "mangasourcebase.h"
 
 // What an update of the manga list got done so far, see UpdateProgressToken::resumeState().
 struct MangaHereUpdateState
@@ -11,17 +10,15 @@ struct MangaHereUpdateState
     QVector<QList<QPair<QString, QString>>> popular;
 };
 
-class MangaHere : public AbstractMangaSource
+class MangaHere : public MangaSourceBase
 {
 public:
-    explicit MangaHere(NetworkManager *dm);
-    virtual ~MangaHere() = default;
+    explicit MangaHere(NetworkManager *networkManager);
 
-    bool updateMangaList(UpdateProgressToken *token) override;
-    Result<MangaChapterCollection, QString> updateMangaInfoFinishedLoading(
-        QSharedPointer<DownloadBufferJob> job, QSharedPointer<MangaInfo> info) override;
-    Result<QList<ImageLink>, QString> getPageList(const QString &chapterUrl) override;
-    Result<ImageLink, QString> getImageLink(const ImageLink &page) override;
+    Task<MangaListUpdate> fetchMangaList(UpdateProgressToken *token, MangaList current) override;
+    Task<Result<MangaDetails>> fetchMangaInfo(QString mangaUrl, MangaChapterCollection known) override;
+    Task<Result<QList<ImageLink>>> fetchPageList(QString chapterUrl) override;
+    Task<Result<ImageLink>> resolveImage(ImageLink page) override;
 
 private:
     QString mobileUrl;
@@ -29,5 +26,6 @@ private:
     QString dictionaryUrl;
     QString mangaListUrl;
 
-    Result<QStringList, QString> getPageListDesktop(const QString &chapterUrl, int timeout);
+    Task<Result<QStringList>> fetchPageListDesktop(QString chapterUrl, int timeout);
+
 };

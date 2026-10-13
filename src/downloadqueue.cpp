@@ -11,7 +11,7 @@ DownloadQueue::DownloadQueue(NetworkManager* networkManager, const QList<QString
       totalJobs(urls.count()),
       completed(0),
       errors(0),
-      lastErrorMessage(""),
+      lastError(),
       cancelOnError(cancelOnError),
       networkManager(networkManager),
       runningJobs(0),
@@ -34,7 +34,7 @@ DownloadQueue::DownloadQueue(NetworkManager* networkManager, const QList<FileDow
       totalJobs(urlAndPaths.count()),
       completed(0),
       errors(0),
-      lastErrorMessage(""),
+      lastError(),
       cancelOnError(cancelOnError),
       networkManager(networkManager),
       runningJobs(0),
@@ -112,10 +112,10 @@ void DownloadQueue::downloadFinished(QSharedPointer<DownloadJobBase> job, bool s
     else
     {
         errors++;
-        lastErrorMessage = job->errorString;
+        lastError = job->error;
         if (cancelOnError)
             clearQueue();
-        emit singleDownloadFailed(job->request.url, path, job->errorString);
+        emit singleDownloadFailed(job->request.url, path, job->error.message);
     }
 
     // counts as one error
@@ -123,7 +123,8 @@ void DownloadQueue::downloadFinished(QSharedPointer<DownloadJobBase> job, bool s
     {
         cancelled = true;
         errors++;
-        lastErrorMessage = "Download cancelled";
+        lastError = {Error::Cancelled, "Download cancelled", 0};
+
         clearQueue();
     }
 
@@ -172,7 +173,8 @@ bool DownloadQueue::awaitCompletion()
 {
     // allCompleted was emitted already, or never will be
     auto hold = DownloadJobBase::holdActivity();
-    if (runningJobs > 0 || !jobDescriptorQueue.isEmpty())
+    if (isRunning())
+
         awaitSignal(this, -1, &DownloadQueue::allCompleted);
 
     return errors == 0;

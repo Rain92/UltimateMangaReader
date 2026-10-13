@@ -5,8 +5,7 @@
 #include <functional>
 #include <tuple>
 
-#include "abstractmangasource.h"
-#include "mangainfo.h"
+#include "mangasourcebase.h"
 
 // What an update of the manga list got done so far, see UpdateProgressToken::resumeState().
 struct MangaDexUpdateState
@@ -26,18 +25,14 @@ struct MangaDexUpdateState
     int processed = 0;
 };
 
-class MangaDex : public AbstractMangaSource
+class MangaDex : public MangaSourceBase
 {
 public:
-    explicit MangaDex(NetworkManager *dm);
-    virtual ~MangaDex() = default;
+    explicit MangaDex(NetworkManager *networkManager);
 
-    bool updateMangaList(UpdateProgressToken *token) override;
-    // the manga list has the urls of the mangas, the info also needs its authors and the cover
-    QString mangaInfoRequestUrl(const QString &mangaUrl) const override;
-    Result<MangaChapterCollection, QString> updateMangaInfoFinishedLoading(
-        QSharedPointer<DownloadBufferJob> job, QSharedPointer<MangaInfo> info) override;
-    Result<QList<ImageLink>, QString> getPageList(const QString &chapterUrl) override;
+    Task<MangaListUpdate> fetchMangaList(UpdateProgressToken *token, MangaList current) override;
+    Task<Result<MangaDetails>> fetchMangaInfo(QString mangaUrl, MangaChapterCollection known) override;
+    Task<Result<QList<ImageLink>>> fetchPageList(QString chapterUrl) override;
 
 private:
     QString apiUrl;
@@ -49,11 +44,13 @@ private:
     QElapsedTimer atHomeClock;
     qint64 atHomeSchedule;
 
-    Result<MangaChapterCollection, QString> getChapters(const QString &mangaId, bool resetOnNewVolume,
-                                                        const QSet<QString> &loadedChapters);
+    Task<Result<MangaChapterCollection>> fetchChapters(QString mangaId, bool resetOnNewVolume,
+                                                       QSet<QString> loadedChapters);
 
-    bool crawlMangaWindow(const QString &query, int maxResults, MangaDexUpdateState &state,
-                          UpdateProgressToken *token);
-    bool downloadThrottled(const QStringList &urls, UpdateProgressToken *token,
-                           const std::function<bool(int, QSharedPointer<DownloadBufferJob>)> &handler);
+    // the state is the one of the token
+    Task<Result<>> crawlMangaWindow(QString query, int maxResults, MangaDexUpdateState *state,
+                                    UpdateProgressToken *token);
+    Task<Result<>> downloadThrottled(QStringList urls, UpdateProgressToken *token,
+                                     std::function<bool(int, QSharedPointer<DownloadBufferJob>)> handler);
+
 };

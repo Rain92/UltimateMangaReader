@@ -1,22 +1,16 @@
 #pragma once
 
-#include "abstractmangasource.h"
-#include "mangainfo.h"
+#include "mangasourcebase.h"
 
-class MangaPlus : public AbstractMangaSource
+class MangaPlus : public MangaSourceBase
 {
 public:
-    explicit MangaPlus(NetworkManager *dm);
-    virtual ~MangaPlus() = default;
+    explicit MangaPlus(NetworkManager *networkManager);
 
-    bool updateMangaList(UpdateProgressToken *token) override;
-
-    void updateMangaInfoAsync(QSharedPointer<MangaInfo> info, bool updateCover = true) override;
-
-    Result<MangaChapterCollection, QString> updateMangaInfoFinishedLoading(
-        QSharedPointer<DownloadBufferJob> job, QSharedPointer<MangaInfo> info) override;
-    Result<QList<ImageLink>, QString> getPageList(const QString &chapterUrl) override;
-    Result<ImageLink, QString> getImageLink(const ImageLink &page) override;
+    Task<MangaListUpdate> fetchMangaList(UpdateProgressToken *token, MangaList current) override;
+    Task<Result<MangaDetails>> fetchMangaInfo(QString mangaUrl, MangaChapterCollection known) override;
+    Task<Result<QList<ImageLink>>> fetchPageList(QString chapterUrl) override;
+    Task<Result<ImageLink>> resolveImage(ImageLink page) override;
 
 private:
     struct RefreshedPageList
@@ -35,9 +29,6 @@ private:
     // the refreshes that wait for their page list, by chapter
     QHash<QString, int> runningRefreshes;
 
-    QObject replyContext;
-
     bool isUsableImage(const ImageLink &image) const;
-    void cleanUpStoredUrls(QSharedPointer<MangaInfo> info);
-    void forgetFailedImageUrl(const QString &url);
+
 };
