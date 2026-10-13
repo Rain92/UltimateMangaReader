@@ -26,11 +26,19 @@ public:
     {
     }
 
+    // Answers the requests instead of the network, e.g. with recorded responses (tests/harness). send() sends
+    // the request. Not set in the app.
+    using Interceptor = std::function<QNetworkReply *(QNetworkAccessManager *manager, Operation op,
+                                                      const QNetworkRequest &request,
+                                                      const std::function<QNetworkReply *()> &send)>;
+    inline static Interceptor interceptor;
+
 protected:
     QNetworkReply *createRequest(Operation op, const QNetworkRequest &request, QIODevice *outgoingData) override
     {
         beforeRequest();
-        return QNetworkAccessManager::createRequest(op, request, outgoingData);
+        auto send = [&]() { return QNetworkAccessManager::createRequest(op, request, outgoingData); };
+        return interceptor ? interceptor(this, op, request, send) : send();
     }
 
 private:

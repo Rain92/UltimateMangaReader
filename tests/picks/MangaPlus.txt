@@ -1,0 +1,3 @@
+One Piece	https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=100020&clang=eng
+The Ura Files	https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=100816&clang=eng
+Maison and the Man-Eating Apartment	https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=100453&clang=eng

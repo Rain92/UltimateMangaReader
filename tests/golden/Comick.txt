@@ -1,0 +1,117 @@
+=== The Beginning After the End | https://comick.art/comic/00-the-beginning-after-the-end-1
+  title: The Beginning After the End
+  url: https://comick.art/comic/00-the-beginning-after-the-end-1
+  author: TurtleMe
+  artist: Fuyuki23, Eginhardt, Wudijiurenwang, 333335, YOYO
+  status: Ongoing
+  year: 2018
+  genres: Isekai, Action, Adventure, Tragedy, Fantasy
+  summary: King Grey has unrivaled strength, wealth, and prestige in a world governed by martial ability. Howev...
+  coverUrl: https://cdn1.comicknew.pictures/00-the-beginning-after-the-end-1/covers/101b409e.webp
+  chapters: 248
+  ch 0: Ch. 1 | 00-the-beginning-after-the-end-1/r5bcQ_C5-chapter-1-en
+  ch 1: Ch. 2 | 00-the-beginning-after-the-end-1/OGX1G-chapter-2-en
+  ch 2: Ch. 3 | 00-the-beginning-after-the-end-1/NGKZK-chapter-3-en
+  ch 245: Ch. 224: The Dinner | 00-the-beginning-after-the-end-1/cxuzyflG-chapter-224-en
+  ch 246: Ch. 225: A Major Shift | 00-the-beginning-after-the-end-1/Md8oN6bf-chapter-225-en
+  ch 247: Ch. 225.5: End of Season Announcement | 00-the-beginning-after-the-end-1/SYgYVZds-chapter-225.5-en
+  chapter 0: Ch. 1 | 00-the-beginning-after-the-end-1/r5bcQ_C5-chapter-1-en
+    pages: 50
+    page 0: https://cdn1.comicknew.pictures/00-the-beginning-after-the-end-1/0_1.0/en/ae440ae5/0.webp
+      imageUrl: https://cdn1.comicknew.pictures/00-the-beginning-after-the-end-1/0_1.0/en/ae440ae5/0.webp
+      headers: Referer: https://comick.art/
+      image: ok 1404x3510
+      pixels: 2c0abd5756594369
+    page 1: https://cdn1.comicknew.pictures/00-the-beginning-after-the-end-1/0_1.0/en/ae440ae5/1.webp
+      imageUrl: https://cdn1.comicknew.pictures/00-the-beginning-after-the-end-1/0_1.0/en/ae440ae5/1.webp
+      headers: Referer: https://comick.art/
+    page 49: https://cdn1.comicknew.pictures/00-the-beginning-after-the-end-1/0_1.0/en/ae440ae5/49.webp
+      imageUrl: https://cdn1.comicknew.pictures/00-the-beginning-after-the-end-1/0_1.0/en/ae440ae5/49.webp
+      headers: Referer: https://comick.art/
+  chapter 247: Ch. 225.5: End of Season Announcement | 00-the-beginning-after-the-end-1/SYgYVZds-chapter-225.5-en
+    pages: 1
+    page 0: https://cdn1.comicknew.pictures/00-the-beginning-after-the-end-1/0_225.5/en/9877320d/0.webp
+      imageUrl: https://cdn1.comicknew.pictures/00-the-beginning-after-the-end-1/0_225.5/en/9877320d/0.webp
+      headers: Referer: https://comick.art/
+=== Blink Master of the Magic Academy | https://comick.art/comic/quick-teleporting-genius-from-magic-school
+  title: Blink Master of the Magic Academy
+  url: https://comick.art/comic/quick-teleporting-genius-from-magic-school
+  author: Eunmilhi
+  artist: Seoyu, SEOU
+  status: Ongoing
+  year: 2024
+  genres: Shounen, Isekai, Action, Adventure, Fantasy
+  summary: In the game Aether World, Baek Yuseol is considered the most useless character because he can't use ...
+  coverUrl: https://cdn1.comicknew.pictures/quick-teleporting-genius-from-magic-school/covers/101b409e.webp
+  chapters: 70
+  ch 0: Ch. 1 | quick-teleporting-genius-from-magic-school/Iu7f2UE-chapter-1-en
+  ch 1: Ch. 2 | quick-teleporting-genius-from-magic-school/Iu8dKGA-chapter-2-en
+  ch 2: Ch. 3 | quick-teleporting-genius-from-magic-school/Iu9hK8A-chapter-3-en
+  ch 67: Ch. 68 | quick-teleporting-genius-from-magic-school/5UInjyWh-chapter-68-en
+  ch 68: Ch. 69 | quick-teleporting-genius-from-magic-school/zTefdayi-chapter-69-en
+  ch 69: Ch. 70 | quick-teleporting-genius-from-magic-school/IEarvLRk-chapter-70-en
+  chapter 0: Ch. 1 | quick-teleporting-genius-from-magic-school/Iu7f2UE-chapter-1-en
+    pages: 149
+    page 0: https://cdn1.comicknew.pictures/quick-teleporting-genius-from-magic-school/0_1/en/6f2081b8/0.webp
+      imageUrl: https://cdn1.comicknew.pictures/quick-teleporting-genius-from-magic-school/0_1/en/6f2081b8/0.webp
+      headers: Referer: https://comick.art/
+      image: ok 1060x1872
+      pixels: f8e035e203695d5a
+    page 1: https://cdn1.comicknew.pictures/quick-teleporting-genius-from-magic-school/0_1/en/6f2081b8/1.webp
+      imageUrl: https://cdn1.comicknew.pictures/quick-teleporting-genius-from-magic-school/0_1/en/6f2081b8/1.webp
+      headers: Referer: https://comick.art/
+    page 148: https://cdn1.comicknew.pictures/quick-teleporting-genius-from-magic-school/0_1/en/6f2081b8/148.webp
+      imageUrl: https://cdn1.comicknew.pictures/quick-teleporting-genius-from-magic-school/0_1/en/6f2081b8/148.webp
+      headers: Referer: https://comick.art/
+  chapter 69: Ch. 70 | quick-teleporting-genius-from-magic-school/IEarvLRk-chapter-70-en
+    pages: 13
+    page 0: https://cdn1.comicknew.pictures/quick-teleporting-genius-from-magic-school/0_70/en/4667a8ff/0.webp
+      imageUrl: https://cdn1.comicknew.pictures/quick-teleporting-genius-from-magic-school/0_70/en/4667a8ff/0.webp
+      headers: Referer: https://comick.art/
+    page 1: https://cdn1.comicknew.pictures/quick-teleporting-genius-from-magic-school/0_70/en/4667a8ff/1.webp
+      imageUrl: https://cdn1.comicknew.pictures/quick-teleporting-genius-from-magic-school/0_70/en/4667a8ff/1.webp
+      headers: Referer: https://comick.art/
+    page 12: https://cdn1.comicknew.pictures/quick-teleporting-genius-from-magic-school/0_70/en/4667a8ff/12.webp
+      imageUrl: https://cdn1.comicknew.pictures/quick-teleporting-genius-from-magic-school/0_70/en/4667a8ff/12.webp
+      headers: Referer: https://comick.art/
+=== Yuusha ni Zenbu Ubawareta Ore wa Yuusha no Hahaoya to Party o Kumimashita! | https://comick.art/comic/00-the-hero-took-everything-from-me-so-i-partied-with-the-hero-s-mother
+  title: Yuusha ni Zenbu Ubawareta Ore wa Yuusha no Hahaoya to Party o Kumimashita!
+  url: https://comick.art/comic/00-the-hero-took-everything-from-me-so-i-partied-with-the-hero-s-mother
+  author: Ishino Yassan
+  artist: Kuon Makoto
+  status: Ongoing
+  year: 2022
+  genres: Shounen, Isekai, Romance, Adventure, Fantasy
+  summary: As a member of the hero's party Ceres, has set out to defeat the demon king. But one day, he was sud...
+  coverUrl: https://cdn1.comicknew.pictures/00-the-hero-took-everything-from-me-so-i-partied-with-the-hero-s-mother/covers/101b409e.webp
+  chapters: 33
+  ch 0: Ch. 1 | 00-the-hero-took-everything-from-me-so-i-partied-with-the-hero-s-mother/8nmjW-chapter-1-en
+  ch 1: Ch. 2 | 00-the-hero-took-everything-from-me-so-i-partied-with-the-hero-s-mother/XdBiMxuC-chapter-2-en
+  ch 2: Ch. 3 | 00-the-hero-took-everything-from-me-so-i-partied-with-the-hero-s-mother/i4TGvEgq-chapter-3-en
+  ch 30: Ch. 27 | 00-the-hero-took-everything-from-me-so-i-partied-with-the-hero-s-mother/1miiFwLg-chapter-27-en
+  ch 31: Ch. 28 | 00-the-hero-took-everything-from-me-so-i-partied-with-the-hero-s-mother/rv74Jx1M-chapter-28-en
+  ch 32: Ch. 29 | 00-the-hero-took-everything-from-me-so-i-partied-with-the-hero-s-mother/vQOukvRE-chapter-29-en
+  chapter 0: Ch. 1 | 00-the-hero-took-everything-from-me-so-i-partied-with-the-hero-s-mother/8nmjW-chapter-1-en
+    pages: 48
+    page 0: https://cdn1.comicknew.pictures/00-the-hero-took-everything-from-me-so-i-partied-with-the-hero-s-mother/1_1.0/en/ff3277f7/0.webp
+      imageUrl: https://cdn1.comicknew.pictures/00-the-hero-took-everything-from-me-so-i-partied-with-the-hero-s-mother/1_1.0/en/ff3277f7/0.webp
+      headers: Referer: https://comick.art/
+      image: ok 1204x1872
+      pixels: 4ceb3af66bc44b18
+    page 1: https://cdn1.comicknew.pictures/00-the-hero-took-everything-from-me-so-i-partied-with-the-hero-s-mother/1_1.0/en/ff3277f7/1.webp
+      imageUrl: https://cdn1.comicknew.pictures/00-the-hero-took-everything-from-me-so-i-partied-with-the-hero-s-mother/1_1.0/en/ff3277f7/1.webp
+      headers: Referer: https://comick.art/
+    page 47: https://cdn1.comicknew.pictures/00-the-hero-took-everything-from-me-so-i-partied-with-the-hero-s-mother/1_1.0/en/ff3277f7/47.webp
+      imageUrl: https://cdn1.comicknew.pictures/00-the-hero-took-everything-from-me-so-i-partied-with-the-hero-s-mother/1_1.0/en/ff3277f7/47.webp
+      headers: Referer: https://comick.art/
+  chapter 32: Ch. 29 | 00-the-hero-took-everything-from-me-so-i-partied-with-the-hero-s-mother/vQOukvRE-chapter-29-en
+    pages: 29
+    page 0: https://cdn1.comicknew.pictures/00-the-hero-took-everything-from-me-so-i-partied-with-the-hero-s-mother/0_29/en/ff3277f7/0.webp
+      imageUrl: https://cdn1.comicknew.pictures/00-the-hero-took-everything-from-me-so-i-partied-with-the-hero-s-mother/0_29/en/ff3277f7/0.webp
+      headers: Referer: https://comick.art/
+    page 1: https://cdn1.comicknew.pictures/00-the-hero-took-everything-from-me-so-i-partied-with-the-hero-s-mother/0_29/en/ff3277f7/1.webp
+      imageUrl: https://cdn1.comicknew.pictures/00-the-hero-took-everything-from-me-so-i-partied-with-the-hero-s-mother/0_29/en/ff3277f7/1.webp
+      headers: Referer: https://comick.art/
+    page 28: https://cdn1.comicknew.pictures/00-the-hero-took-everything-from-me-so-i-partied-with-the-hero-s-mother/0_29/en/ff3277f7/28.webp
+      imageUrl: https://cdn1.comicknew.pictures/00-the-hero-took-everything-from-me-so-i-partied-with-the-hero-s-mother/0_29/en/ff3277f7/28.webp
+      headers: Referer: https://comick.art/

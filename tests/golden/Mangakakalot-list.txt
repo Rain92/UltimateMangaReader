@@ -1,0 +1,14 @@
+=== list Mangakakalot
+  update: ok
+  entries: 98005, absolute urls 0
+  0: I Faked a Pregnancy, but My Husband Returned | manga/i-faked-a-pregnancy-but-my-husband-returned | rank 0
+  1: That's the Guy! | manga/thats-the-guy | rank 1
+  2: The Heart of the Lotus | manga/the-heart-of-the-lotus | rank 2
+  3: Vesper | manga/vesper | rank 3
+  4: Minor Legend | manga/minor-legend | rank 4
+  98000: Make Heroine Ni Tensei Shitara Seijo Ni Narimashita | manga/make-heroine-ni-tensei-shitara-seijo-ni-narimashita | rank 98000
+  98001: Unrequited Love For N Years | manga/unrequited-love-for-n-years | rank 98001
+  98002: Director Of The Second Production Department The Gama | manga/director-of-the-second-production-department-the-gama | rank 98002
+  98003: Fate Stay Night Be Strong Archer Kun Doujinshi | manga/fate-stay-night-be-strong-archer-kun-doujinshi | rank 98003
+  98004: Tama Wo Hinichi | manga/tama-wo-hinichi | rank 98004
+  hash: a65a3326a2992832

@@ -1,0 +1,123 @@
+=== One Piece | https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=100020&clang=eng
+  title: One Piece
+  url: https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=100020&clang=eng
+  author: Eiichiro Oda
+  artist: Eiichiro Oda
+  status: Ongoing
+  year: 
+  genres: Battle / Action, Sci-Fi / Fantasy
+  summary: As a child, Monkey D. Luffy was inspired to become a pirate by listening to the tales of the buccane...
+  coverUrl: https://jumpg-assets.tokyo-cdn.com/secure/title/100020/title_thumbnail_portrait_list/616286.jpg?hash=oGJMmG1BrGYlrpgUaG2DDA&expires=2145884400
+  chapters: 6
+  ch 0: Chapter 1: Romance Dawn | api/manga_viewer_v3?chapter_id=1000486&split=yes&img_quality=super_high&clang=eng
+  ch 1: Chapter 2: They Call Him ‘Straw Hat Luffy’ | api/manga_viewer_v3?chapter_id=1000487&split=yes&img_quality=super_high&clang=eng
+  ch 2: Chapter 3: Enter Zolo: Pirate Hunter | api/manga_viewer_v3?chapter_id=1000488&split=yes&img_quality=super_high&clang=eng
+  ch 3: Chapter 1193: Still Practicing | api/manga_viewer_v3?chapter_id=1030380&split=yes&img_quality=super_high&clang=eng
+  ch 4: Chapter 1194: All Things Are In Flux | api/manga_viewer_v3?chapter_id=1030381&split=yes&img_quality=super_high&clang=eng
+  ch 5: Chapter 1195: Weakness | api/manga_viewer_v3?chapter_id=1030615&split=yes&img_quality=super_high&clang=eng
+  chapter 0: Chapter 1: Romance Dawn | api/manga_viewer_v3?chapter_id=1000486&split=yes&img_quality=super_high&clang=eng
+    pages: 53
+    page 0: https://jumpg-assets3.tokyo-cdn.com/secure/title/100020/chapter/1000486/manga_page/super_high/1.jpg?hash=crUbgyfzawWILwxz69skKw&expires=1791932400#vwt=b2a2f805ea16eba633d9c270eb1bf697|xor:9fc7d58a868172d276677675ff6a8cb59457ae83d47523f779735c1acd7d76049f0eea3a6395308350d5853c81af23cd1e2d2fe356bb3bfded280fcbc76a05f9
+      imageUrl: https://jumpg-assets3.tokyo-cdn.com/secure/title/100020/chapter/1000486/manga_page/super_high/1.jpg?hash=crUbgyfzawWILwxz69skKw&expires=1791932400#vwt=b2a2f805ea16eba633d9c270eb1bf697|xor:9fc7d58a868172d276677675ff6a8cb59457ae83d47523f779735c1acd7d76049f0eea3a6395308350d5853c81af23cd1e2d2fe356bb3bfded280fcbc76a05f9
+      headers: Origin: https://mangaplus.shueisha.co.jp | Referer: https://mangaplus.shueisha.co.jp/ | Plus-Vw-Token: <token>
+      image: ok 1244x1872
+      pixels: c983e73683932577
+    page 1: https://jumpg-assets3.tokyo-cdn.com/secure/title/100020/chapter/1000486/manga_page/super_high/2.jpg?hash=kPu3X_f5DZ8aIApPIuNLpg&expires=1791932400#vwt=b2a2f805ea16eba633d9c270eb1bf697|xor:9fc7d58a868172d276677675ff6a8cb59457ae83d47523f779735c1acd7d76049f0eea3a6395308350d5853c81af23cd1e2d2fe356bb3bfded280fcbc76a05f9
+      imageUrl: https://jumpg-assets3.tokyo-cdn.com/secure/title/100020/chapter/1000486/manga_page/super_high/2.jpg?hash=kPu3X_f5DZ8aIApPIuNLpg&expires=1791932400#vwt=b2a2f805ea16eba633d9c270eb1bf697|xor:9fc7d58a868172d276677675ff6a8cb59457ae83d47523f779735c1acd7d76049f0eea3a6395308350d5853c81af23cd1e2d2fe356bb3bfded280fcbc76a05f9
+      headers: Origin: https://mangaplus.shueisha.co.jp | Referer: https://mangaplus.shueisha.co.jp/ | Plus-Vw-Token: <token>
+    page 52: https://jumpg-assets3.tokyo-cdn.com/secure/title/100020/chapter/1000486/manga_page/super_high/53.jpg?hash=VmwPCrW6Qjar1FLmAMbnvw&expires=1791932400#vwt=b2a2f805ea16eba633d9c270eb1bf697|xor:9fc7d58a868172d276677675ff6a8cb59457ae83d47523f779735c1acd7d76049f0eea3a6395308350d5853c81af23cd1e2d2fe356bb3bfded280fcbc76a05f9
+      imageUrl: https://jumpg-assets3.tokyo-cdn.com/secure/title/100020/chapter/1000486/manga_page/super_high/53.jpg?hash=VmwPCrW6Qjar1FLmAMbnvw&expires=1791932400#vwt=b2a2f805ea16eba633d9c270eb1bf697|xor:9fc7d58a868172d276677675ff6a8cb59457ae83d47523f779735c1acd7d76049f0eea3a6395308350d5853c81af23cd1e2d2fe356bb3bfded280fcbc76a05f9
+      headers: Origin: https://mangaplus.shueisha.co.jp | Referer: https://mangaplus.shueisha.co.jp/ | Plus-Vw-Token: <token>
+  chapter 5: Chapter 1195: Weakness | api/manga_viewer_v3?chapter_id=1030615&split=yes&img_quality=super_high&clang=eng
+    pages: 17
+    page 0: https://jumpg-assets3.tokyo-cdn.com/secure/title/100020/chapter/1030615/manga_page/super_high/1.jpg?hash=bsFwQ56XpzNFwPA32-QPLQ&expires=1791932400#vwt=cafc51faddc614648c3190e253e3cead|xor:f1a8096517cda99518022e84d8c5fea93405a657476046a7b51022c28824f89934667bb770f9b621f1ffcbb141ba753267e7cd653ba5f4c2f25667ae7f7e09d5
+      imageUrl: https://jumpg-assets3.tokyo-cdn.com/secure/title/100020/chapter/1030615/manga_page/super_high/1.jpg?hash=bsFwQ56XpzNFwPA32-QPLQ&expires=1791932400#vwt=cafc51faddc614648c3190e253e3cead|xor:f1a8096517cda99518022e84d8c5fea93405a657476046a7b51022c28824f89934667bb770f9b621f1ffcbb141ba753267e7cd653ba5f4c2f25667ae7f7e09d5
+      headers: Origin: https://mangaplus.shueisha.co.jp | Referer: https://mangaplus.shueisha.co.jp/ | Plus-Vw-Token: <token>
+    page 1: https://jumpg-assets3.tokyo-cdn.com/secure/title/100020/chapter/1030615/manga_page/super_high/2.jpg?hash=64YVUvEr8Lp0I6LC9vIsNw&expires=1791932400#vwt=cafc51faddc614648c3190e253e3cead|xor:f1a8096517cda99518022e84d8c5fea93405a657476046a7b51022c28824f89934667bb770f9b621f1ffcbb141ba753267e7cd653ba5f4c2f25667ae7f7e09d5
+      imageUrl: https://jumpg-assets3.tokyo-cdn.com/secure/title/100020/chapter/1030615/manga_page/super_high/2.jpg?hash=64YVUvEr8Lp0I6LC9vIsNw&expires=1791932400#vwt=cafc51faddc614648c3190e253e3cead|xor:f1a8096517cda99518022e84d8c5fea93405a657476046a7b51022c28824f89934667bb770f9b621f1ffcbb141ba753267e7cd653ba5f4c2f25667ae7f7e09d5
+      headers: Origin: https://mangaplus.shueisha.co.jp | Referer: https://mangaplus.shueisha.co.jp/ | Plus-Vw-Token: <token>
+    page 16: https://jumpg-assets3.tokyo-cdn.com/secure/title/100020/chapter/1030615/manga_page/super_high/17.jpg?hash=G6LTVTZxjORu8bm_oQFFmw&expires=1791932400#vwt=cafc51faddc614648c3190e253e3cead|xor:f1a8096517cda99518022e84d8c5fea93405a657476046a7b51022c28824f89934667bb770f9b621f1ffcbb141ba753267e7cd653ba5f4c2f25667ae7f7e09d5
+      imageUrl: https://jumpg-assets3.tokyo-cdn.com/secure/title/100020/chapter/1030615/manga_page/super_high/17.jpg?hash=G6LTVTZxjORu8bm_oQFFmw&expires=1791932400#vwt=cafc51faddc614648c3190e253e3cead|xor:f1a8096517cda99518022e84d8c5fea93405a657476046a7b51022c28824f89934667bb770f9b621f1ffcbb141ba753267e7cd653ba5f4c2f25667ae7f7e09d5
+      headers: Origin: https://mangaplus.shueisha.co.jp | Referer: https://mangaplus.shueisha.co.jp/ | Plus-Vw-Token: <token>
+=== The Ura Files | https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=100816&clang=eng
+  title: The Ura Files
+  url: https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=100816&clang=eng
+  author: Shun Numa, Yuushin Kuroki
+  artist: Shun Numa, Yuushin Kuroki
+  status: Ongoing
+  year: 
+  genres: Battle / Action, Comedy, Romantic Comedy
+  summary: Average high school student Momotaro Kibitsu is actually a secret agent entrusted to protect the nat...
+  coverUrl: https://jumpg-assets.tokyo-cdn.com/secure/title/100816/title_thumbnail_portrait_list/615164.jpg?hash=2dWq3mrQ0USvCpCnWLn1lg&expires=2145884400
+  chapters: 6
+  ch 0: Report 1: Ura's School Commute | api/manga_viewer_v3?chapter_id=1030344&split=yes&img_quality=super_high&clang=eng
+  ch 1: Report 2: Ura's Lunchtime | api/manga_viewer_v3?chapter_id=1030345&split=yes&img_quality=super_high&clang=eng
+  ch 2: Report 3: Ura at Karaoke | api/manga_viewer_v3?chapter_id=1030346&split=yes&img_quality=super_high&clang=eng
+  ch 3: Report 4: Ura's Groupies | api/manga_viewer_v3?chapter_id=1030347&split=yes&img_quality=super_high&clang=eng
+  ch 4: Report 5: Ura's Hero | api/manga_viewer_v3?chapter_id=1030847&split=yes&img_quality=super_high&clang=eng
+  ch 5: Report 6: Ura's Club Rush | api/manga_viewer_v3?chapter_id=1030848&split=yes&img_quality=super_high&clang=eng
+  chapter 0: Report 1: Ura's School Commute | api/manga_viewer_v3?chapter_id=1030344&split=yes&img_quality=super_high&clang=eng
+    pages: 55
+    page 0: https://jumpg-assets3.tokyo-cdn.com/secure/title/100816/chapter/1030344/manga_page/super_high/1.jpg?hash=5EKGOD0qpuDvjwrIbMt2PA&expires=1791932400#vwt=18a1d27365c71cd3ce1af8bcd3cb99f8|xor:d9990b9f51fb0f241b776030dd10c184a9732fbbc4e6d74dc111a3ee5ae47f61dfecdd58fa056e33d3a4c01a5fc3e6725c885df18f7976b159fb2e9b07d39caa
+      imageUrl: https://jumpg-assets3.tokyo-cdn.com/secure/title/100816/chapter/1030344/manga_page/super_high/1.jpg?hash=5EKGOD0qpuDvjwrIbMt2PA&expires=1791932400#vwt=18a1d27365c71cd3ce1af8bcd3cb99f8|xor:d9990b9f51fb0f241b776030dd10c184a9732fbbc4e6d74dc111a3ee5ae47f61dfecdd58fa056e33d3a4c01a5fc3e6725c885df18f7976b159fb2e9b07d39caa
+      headers: Origin: https://mangaplus.shueisha.co.jp | Referer: https://mangaplus.shueisha.co.jp/ | Plus-Vw-Token: <token>
+      image: ok 1248x1872
+      pixels: 749fbbb4c29dc6a1
+    page 1: https://jumpg-assets3.tokyo-cdn.com/secure/title/100816/chapter/1030344/manga_page/super_high/2.jpg?hash=MvhOrkeXoDrIuLtq3i-Qow&expires=1791932400#vwt=18a1d27365c71cd3ce1af8bcd3cb99f8|xor:d9990b9f51fb0f241b776030dd10c184a9732fbbc4e6d74dc111a3ee5ae47f61dfecdd58fa056e33d3a4c01a5fc3e6725c885df18f7976b159fb2e9b07d39caa
+      imageUrl: https://jumpg-assets3.tokyo-cdn.com/secure/title/100816/chapter/1030344/manga_page/super_high/2.jpg?hash=MvhOrkeXoDrIuLtq3i-Qow&expires=1791932400#vwt=18a1d27365c71cd3ce1af8bcd3cb99f8|xor:d9990b9f51fb0f241b776030dd10c184a9732fbbc4e6d74dc111a3ee5ae47f61dfecdd58fa056e33d3a4c01a5fc3e6725c885df18f7976b159fb2e9b07d39caa
+      headers: Origin: https://mangaplus.shueisha.co.jp | Referer: https://mangaplus.shueisha.co.jp/ | Plus-Vw-Token: <token>
+    page 54: https://jumpg-assets3.tokyo-cdn.com/secure/title/100816/chapter/1030344/manga_page/super_high/55.jpg?hash=DdiVqu7cEzIvvJjTkx7WeQ&expires=1791932400#vwt=18a1d27365c71cd3ce1af8bcd3cb99f8|xor:d9990b9f51fb0f241b776030dd10c184a9732fbbc4e6d74dc111a3ee5ae47f61dfecdd58fa056e33d3a4c01a5fc3e6725c885df18f7976b159fb2e9b07d39caa
+      imageUrl: https://jumpg-assets3.tokyo-cdn.com/secure/title/100816/chapter/1030344/manga_page/super_high/55.jpg?hash=DdiVqu7cEzIvvJjTkx7WeQ&expires=1791932400#vwt=18a1d27365c71cd3ce1af8bcd3cb99f8|xor:d9990b9f51fb0f241b776030dd10c184a9732fbbc4e6d74dc111a3ee5ae47f61dfecdd58fa056e33d3a4c01a5fc3e6725c885df18f7976b159fb2e9b07d39caa
+      headers: Origin: https://mangaplus.shueisha.co.jp | Referer: https://mangaplus.shueisha.co.jp/ | Plus-Vw-Token: <token>
+  chapter 5: Report 6: Ura's Club Rush | api/manga_viewer_v3?chapter_id=1030848&split=yes&img_quality=super_high&clang=eng
+    pages: 19
+    page 0: https://jumpg-assets3.tokyo-cdn.com/secure/title/100816/chapter/1030848/manga_page/super_high/1.jpg?hash=cfKvpvWccHV8d049w5oyMw&expires=1791932400#vwt=135935f21a3d032955c73fa3121f8adc|xor:4c36c7fbbac228e34d7cc0e423083f057914fa70050742370560ec2cfdf701e5e1a0d9cd92671c31b1b8930ab5ba876ce7a53babfca40294a22ad238807ee1bb
+      imageUrl: https://jumpg-assets3.tokyo-cdn.com/secure/title/100816/chapter/1030848/manga_page/super_high/1.jpg?hash=cfKvpvWccHV8d049w5oyMw&expires=1791932400#vwt=135935f21a3d032955c73fa3121f8adc|xor:4c36c7fbbac228e34d7cc0e423083f057914fa70050742370560ec2cfdf701e5e1a0d9cd92671c31b1b8930ab5ba876ce7a53babfca40294a22ad238807ee1bb
+      headers: Origin: https://mangaplus.shueisha.co.jp | Referer: https://mangaplus.shueisha.co.jp/ | Plus-Vw-Token: <token>
+    page 1: https://jumpg-assets3.tokyo-cdn.com/secure/title/100816/chapter/1030848/manga_page/super_high/2.jpg?hash=tVYJ5Wn_tTflRxPPDhH_XA&expires=1791932400#vwt=135935f21a3d032955c73fa3121f8adc|xor:4c36c7fbbac228e34d7cc0e423083f057914fa70050742370560ec2cfdf701e5e1a0d9cd92671c31b1b8930ab5ba876ce7a53babfca40294a22ad238807ee1bb
+      imageUrl: https://jumpg-assets3.tokyo-cdn.com/secure/title/100816/chapter/1030848/manga_page/super_high/2.jpg?hash=tVYJ5Wn_tTflRxPPDhH_XA&expires=1791932400#vwt=135935f21a3d032955c73fa3121f8adc|xor:4c36c7fbbac228e34d7cc0e423083f057914fa70050742370560ec2cfdf701e5e1a0d9cd92671c31b1b8930ab5ba876ce7a53babfca40294a22ad238807ee1bb
+      headers: Origin: https://mangaplus.shueisha.co.jp | Referer: https://mangaplus.shueisha.co.jp/ | Plus-Vw-Token: <token>
+    page 18: https://jumpg-assets3.tokyo-cdn.com/secure/title/100816/chapter/1030848/manga_page/super_high/19.jpg?hash=r20nZLE9W3w0cOe7hFt4Xg&expires=1791932400#vwt=135935f21a3d032955c73fa3121f8adc|xor:4c36c7fbbac228e34d7cc0e423083f057914fa70050742370560ec2cfdf701e5e1a0d9cd92671c31b1b8930ab5ba876ce7a53babfca40294a22ad238807ee1bb
+      imageUrl: https://jumpg-assets3.tokyo-cdn.com/secure/title/100816/chapter/1030848/manga_page/super_high/19.jpg?hash=r20nZLE9W3w0cOe7hFt4Xg&expires=1791932400#vwt=135935f21a3d032955c73fa3121f8adc|xor:4c36c7fbbac228e34d7cc0e423083f057914fa70050742370560ec2cfdf701e5e1a0d9cd92671c31b1b8930ab5ba876ce7a53babfca40294a22ad238807ee1bb
+      headers: Origin: https://mangaplus.shueisha.co.jp | Referer: https://mangaplus.shueisha.co.jp/ | Plus-Vw-Token: <token>
+=== Maison and the Man-Eating Apartment | https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=100453&clang=eng
+  title: Maison and the Man-Eating Apartment
+  url: https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=100453&clang=eng
+  author: Kuu Tanaka, Akima
+  artist: Kuu Tanaka, Akima
+  status: Ongoing
+  year: 
+  genres: Sci-Fi / Fantasy
+  summary: The clock strikes at the single second before the end of the world. Yet humanity has escaped extinct...
+  coverUrl: https://jumpg-assets.tokyo-cdn.com/secure/title/100453/title_thumbnail_portrait_list/402858.jpg?hash=yvf7wHW9m__42EAFKEcIiA&expires=2145884400
+  chapters: 12
+  ch 0: Chapter 1: The Landlord is Born | api/manga_viewer_v3?chapter_id=1024123&split=yes&img_quality=super_high&clang=eng
+  ch 1: Chapter 2: Taking Out the Oversized Garbage, Part 1 | api/manga_viewer_v3?chapter_id=1024124&split=yes&img_quality=super_high&clang=eng
+  ch 2: Chapter 3: Taking Out the Oversized Garbage, Part 2 | api/manga_viewer_v3?chapter_id=1024125&split=yes&img_quality=super_high&clang=eng
+  ch 9: Chapter 42: The Truth About the Apartment | api/manga_viewer_v3?chapter_id=1030500&split=yes&img_quality=super_high&clang=eng
+  ch 10: Chapter 43: Risky’s True Identity | api/manga_viewer_v3?chapter_id=1030501&split=yes&img_quality=super_high&clang=eng
+  ch 11: Chapter 44: The Goal | api/manga_viewer_v3?chapter_id=1030777&split=yes&img_quality=super_high&clang=eng
+  chapter 0: Chapter 1: The Landlord is Born | api/manga_viewer_v3?chapter_id=1024123&split=yes&img_quality=super_high&clang=eng
+    pages: 63
+    page 0: https://jumpg-assets3.tokyo-cdn.com/secure/title/100453/chapter/1024123/manga_page/super_high/1.jpg?hash=NHoJAxNg8_3T1pcPoSsAvQ&expires=1791932400#vwt=f9fec9c6be6384aba261c9c30396e702|xor:820da2ae9e7b233352b2e84a5ad4563c1728c341e17f325439d4a19a4bd098a12df9a91b1eccb285fd9e475e98c6ec3b7b07d598b101631b3e869c57d88b5022
+      imageUrl: https://jumpg-assets3.tokyo-cdn.com/secure/title/100453/chapter/1024123/manga_page/super_high/1.jpg?hash=NHoJAxNg8_3T1pcPoSsAvQ&expires=1791932400#vwt=f9fec9c6be6384aba261c9c30396e702|xor:820da2ae9e7b233352b2e84a5ad4563c1728c341e17f325439d4a19a4bd098a12df9a91b1eccb285fd9e475e98c6ec3b7b07d598b101631b3e869c57d88b5022
+      headers: Origin: https://mangaplus.shueisha.co.jp | Referer: https://mangaplus.shueisha.co.jp/ | Plus-Vw-Token: <token>
+      image: ok 1280x1872
+      pixels: 8e41fbdacce069c2
+    page 1: https://jumpg-assets3.tokyo-cdn.com/secure/title/100453/chapter/1024123/manga_page/super_high/2.jpg?hash=Gn62EzwEFAVRy_UIls_feQ&expires=1791932400#vwt=f9fec9c6be6384aba261c9c30396e702|xor:820da2ae9e7b233352b2e84a5ad4563c1728c341e17f325439d4a19a4bd098a12df9a91b1eccb285fd9e475e98c6ec3b7b07d598b101631b3e869c57d88b5022
+      imageUrl: https://jumpg-assets3.tokyo-cdn.com/secure/title/100453/chapter/1024123/manga_page/super_high/2.jpg?hash=Gn62EzwEFAVRy_UIls_feQ&expires=1791932400#vwt=f9fec9c6be6384aba261c9c30396e702|xor:820da2ae9e7b233352b2e84a5ad4563c1728c341e17f325439d4a19a4bd098a12df9a91b1eccb285fd9e475e98c6ec3b7b07d598b101631b3e869c57d88b5022
+      headers: Origin: https://mangaplus.shueisha.co.jp | Referer: https://mangaplus.shueisha.co.jp/ | Plus-Vw-Token: <token>
+    page 62: https://jumpg-assets3.tokyo-cdn.com/secure/title/100453/chapter/1024123/manga_page/super_high/63.jpg?hash=Y8ZpP9lRN8lZcv0EdfJNCw&expires=1791932400#vwt=f9fec9c6be6384aba261c9c30396e702|xor:820da2ae9e7b233352b2e84a5ad4563c1728c341e17f325439d4a19a4bd098a12df9a91b1eccb285fd9e475e98c6ec3b7b07d598b101631b3e869c57d88b5022
+      imageUrl: https://jumpg-assets3.tokyo-cdn.com/secure/title/100453/chapter/1024123/manga_page/super_high/63.jpg?hash=Y8ZpP9lRN8lZcv0EdfJNCw&expires=1791932400#vwt=f9fec9c6be6384aba261c9c30396e702|xor:820da2ae9e7b233352b2e84a5ad4563c1728c341e17f325439d4a19a4bd098a12df9a91b1eccb285fd9e475e98c6ec3b7b07d598b101631b3e869c57d88b5022
+      headers: Origin: https://mangaplus.shueisha.co.jp | Referer: https://mangaplus.shueisha.co.jp/ | Plus-Vw-Token: <token>
+  chapter 11: Chapter 44: The Goal | api/manga_viewer_v3?chapter_id=1030777&split=yes&img_quality=super_high&clang=eng
+    pages: 22
+    page 0: https://jumpg-assets3.tokyo-cdn.com/secure/title/100453/chapter/1030777/manga_page/super_high/1.jpg?hash=P8zEu6Y6NxQbeYq4GowaCQ&expires=1791932400#vwt=5e97a2d9fcabfcfbbc5eab67244552a9|xor:0e510f7c13c2801393b51c6d9a354dcd788ad8b243742129c192f4810826deafa0daa947bbac0d1e1d96d78aa68d2946adac8c711d383e9165426bf41dba4949
+      imageUrl: https://jumpg-assets3.tokyo-cdn.com/secure/title/100453/chapter/1030777/manga_page/super_high/1.jpg?hash=P8zEu6Y6NxQbeYq4GowaCQ&expires=1791932400#vwt=5e97a2d9fcabfcfbbc5eab67244552a9|xor:0e510f7c13c2801393b51c6d9a354dcd788ad8b243742129c192f4810826deafa0daa947bbac0d1e1d96d78aa68d2946adac8c711d383e9165426bf41dba4949
+      headers: Origin: https://mangaplus.shueisha.co.jp | Referer: https://mangaplus.shueisha.co.jp/ | Plus-Vw-Token: <token>
+    page 1: https://jumpg-assets3.tokyo-cdn.com/secure/title/100453/chapter/1030777/manga_page/super_high/2.jpg?hash=f2hQo1KxrHw48gdrXEqPBw&expires=1791932400#vwt=5e97a2d9fcabfcfbbc5eab67244552a9|xor:0e510f7c13c2801393b51c6d9a354dcd788ad8b243742129c192f4810826deafa0daa947bbac0d1e1d96d78aa68d2946adac8c711d383e9165426bf41dba4949
+      imageUrl: https://jumpg-assets3.tokyo-cdn.com/secure/title/100453/chapter/1030777/manga_page/super_high/2.jpg?hash=f2hQo1KxrHw48gdrXEqPBw&expires=1791932400#vwt=5e97a2d9fcabfcfbbc5eab67244552a9|xor:0e510f7c13c2801393b51c6d9a354dcd788ad8b243742129c192f4810826deafa0daa947bbac0d1e1d96d78aa68d2946adac8c711d383e9165426bf41dba4949
+      headers: Origin: https://mangaplus.shueisha.co.jp | Referer: https://mangaplus.shueisha.co.jp/ | Plus-Vw-Token: <token>
+    page 21: https://jumpg-assets3.tokyo-cdn.com/secure/title/100453/chapter/1030777/manga_page/super_high/22.jpg?hash=JBf5JbUGK4msTBDZJ2IRTA&expires=1791932400#vwt=5e97a2d9fcabfcfbbc5eab67244552a9|xor:0e510f7c13c2801393b51c6d9a354dcd788ad8b243742129c192f4810826deafa0daa947bbac0d1e1d96d78aa68d2946adac8c711d383e9165426bf41dba4949
+      imageUrl: https://jumpg-assets3.tokyo-cdn.com/secure/title/100453/chapter/1030777/manga_page/super_high/22.jpg?hash=JBf5JbUGK4msTBDZJ2IRTA&expires=1791932400#vwt=5e97a2d9fcabfcfbbc5eab67244552a9|xor:0e510f7c13c2801393b51c6d9a354dcd788ad8b243742129c192f4810826deafa0daa947bbac0d1e1d96d78aa68d2946adac8c711d383e9165426bf41dba4949
+      headers: Origin: https://mangaplus.shueisha.co.jp | Referer: https://mangaplus.shueisha.co.jp/ | Plus-Vw-Token: <token>

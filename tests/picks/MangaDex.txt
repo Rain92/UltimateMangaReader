@@ -1,0 +1,3 @@
+Solo Leveling	https://api.mangadex.org/manga/32d76d19-8a05-4db0-9fc2-e0b0648fe9d0
+Chainsaw Man	https://api.mangadex.org/manga/a77742b1-befd-49a4-bff5-1ad4e6b0ef7b
+Uzaki-chan Wants to Hang Out!	https://api.mangadex.org/manga/5a90308a-8b12-4a4d-9c6d-2487028fe319

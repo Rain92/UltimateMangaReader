@@ -66,3 +66,5 @@ compile_commands.json
 **/.history
 
 build/
+# the recorded responses of the sites (tests/README.md)
+tests/fixtures/

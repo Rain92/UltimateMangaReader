@@ -1,0 +1,93 @@
+=== Solo Leveling | https://api.mangadex.org/manga/32d76d19-8a05-4db0-9fc2-e0b0648fe9d0
+  title: Solo Leveling
+  url: https://api.mangadex.org/manga/32d76d19-8a05-4db0-9fc2-e0b0648fe9d0
+  author: h-goon (현군), Chugong (추공), Gi So-Ryeong (기소령)
+  artist: REDICE Studio (레드아이스 스튜디오), Jang Sung-Rak (장성락)
+  status: Completed
+  year: 2018
+  genres: Action, Adventure, Drama, Fantasy, Monsters, Magic, Supernatural
+  summary: 10 years ago, after “the Gate” that connected the real world with the monster world opened, some of ...
+  coverUrl: https://uploads.mangadex.org/covers/32d76d19-8a05-4db0-9fc2-e0b0648fe9d0/e90bdc47-c8b9-4df7-b2c0-17641b645ee1.jpg.512.jpg
+  chapters: 0
+=== Chainsaw Man | https://api.mangadex.org/manga/a77742b1-befd-49a4-bff5-1ad4e6b0ef7b
+  title: Chainsaw Man
+  url: https://api.mangadex.org/manga/a77742b1-befd-49a4-bff5-1ad4e6b0ef7b
+  author: Fujimoto Tatsuki
+  artist: Fujimoto Tatsuki
+  status: Completed
+  year: 2018
+  genres: Shounen, Action, Comedy, Horror, Monsters, Demons, Supernatural
+  summary: Broke young man + chainsaw dog demon = Chainsaw Man! \n\nThe name says it all! Denji's life of pover...
+  coverUrl: https://uploads.mangadex.org/covers/a77742b1-befd-49a4-bff5-1ad4e6b0ef7b/6e518bd1-5f60-446b-8832-bfe6bf74834b.jpg.512.jpg
+  chapters: 97
+  ch 0: Ch. 1 A Dog and a Chainsaw | 73af4d8d-1532-4a72-b1b9-8f4e5cd295c9
+  ch 1: Ch. 2 Pochita's Whereabouts | deea3463-a37e-46bc-bf88-4a7899c02c20
+  ch 2: Ch. 3 Arrival in Tokyo | 139f4a2c-5b1a-4b43-9c6c-df1f26b1f5e3
+  ch 94: Ch. 95 Chainsawman vs The Devil of Domination | bf3dd196-c301-40c9-9338-109159c4fa41
+  ch 95: Ch. 96 This Flavor | 7259bb55-bb83-4dd8-ac7e-f9c4d7472ce6
+  ch 96: Ch. 97 Love, Love, Chainsaw. | 77fc6e02-a381-411d-ace6-4c00deacadb4
+  chapter 0: Ch. 1 A Dog and a Chainsaw | 73af4d8d-1532-4a72-b1b9-8f4e5cd295c9
+    pages: 53
+    page 0: https://uploads.mangadex.org/data-saver/d828fa5fffd26b264ad400b3b0fdffe8/A1-bf40bc4a7040ee983de15871349aef33f5314d96134e99c5d017384ff7ee316e.jpg
+      imageUrl: https://uploads.mangadex.org/data-saver/d828fa5fffd26b264ad400b3b0fdffe8/A1-bf40bc4a7040ee983de15871349aef33f5314d96134e99c5d017384ff7ee316e.jpg
+      headers: User-Agent: UltimateMangaReader (github.com/Rain92/UltimateMangaReader)
+      image: ok 1280x1872
+      pixels: 98098975b2893cec
+    page 1: https://uploads.mangadex.org/data-saver/d828fa5fffd26b264ad400b3b0fdffe8/A2-da1c9aeca4ebff79b06ef2a227ed9527a4509e4149817e24d67cd3c17d942641.jpg
+      imageUrl: https://uploads.mangadex.org/data-saver/d828fa5fffd26b264ad400b3b0fdffe8/A2-da1c9aeca4ebff79b06ef2a227ed9527a4509e4149817e24d67cd3c17d942641.jpg
+      headers: User-Agent: UltimateMangaReader (github.com/Rain92/UltimateMangaReader)
+    page 52: https://uploads.mangadex.org/data-saver/d828fa5fffd26b264ad400b3b0fdffe8/A53-b21926d6b8fe0b61e73751045a5e7d1b5e2b72c59ac84a5db685e90ca9f66254.jpg
+      imageUrl: https://uploads.mangadex.org/data-saver/d828fa5fffd26b264ad400b3b0fdffe8/A53-b21926d6b8fe0b61e73751045a5e7d1b5e2b72c59ac84a5db685e90ca9f66254.jpg
+      headers: User-Agent: UltimateMangaReader (github.com/Rain92/UltimateMangaReader)
+  chapter 96: Ch. 97 Love, Love, Chainsaw. | 77fc6e02-a381-411d-ace6-4c00deacadb4
+    pages: 23
+    page 0: https://uploads.mangadex.org/data-saver/554b6d5bcece279f439171f5a7d428c3/1-3f1a9bdc26cc6e4c09bfaaa7ff23f153f771fdfb9aed6027f0738adec57d0e19.jpg
+      imageUrl: https://uploads.mangadex.org/data-saver/554b6d5bcece279f439171f5a7d428c3/1-3f1a9bdc26cc6e4c09bfaaa7ff23f153f771fdfb9aed6027f0738adec57d0e19.jpg
+      headers: User-Agent: UltimateMangaReader (github.com/Rain92/UltimateMangaReader)
+    page 1: https://uploads.mangadex.org/data-saver/554b6d5bcece279f439171f5a7d428c3/2-1f81ab984515f937d443a58c647f86dcd2b611795c63355c7c32c83f23c697cd.jpg
+      imageUrl: https://uploads.mangadex.org/data-saver/554b6d5bcece279f439171f5a7d428c3/2-1f81ab984515f937d443a58c647f86dcd2b611795c63355c7c32c83f23c697cd.jpg
+      headers: User-Agent: UltimateMangaReader (github.com/Rain92/UltimateMangaReader)
+    page 22: https://uploads.mangadex.org/data-saver/554b6d5bcece279f439171f5a7d428c3/23-c4978490cf69be9e9e17727f895b7c3655d3c655cfddb6591ffd320d7f576155.jpg
+      imageUrl: https://uploads.mangadex.org/data-saver/554b6d5bcece279f439171f5a7d428c3/23-c4978490cf69be9e9e17727f895b7c3655d3c655cfddb6591ffd320d7f576155.jpg
+      headers: User-Agent: UltimateMangaReader (github.com/Rain92/UltimateMangaReader)
+=== Uzaki-chan Wants to Hang Out! | https://api.mangadex.org/manga/5a90308a-8b12-4a4d-9c6d-2487028fe319
+  title: Uzaki-chan Wants to Hang Out!
+  url: https://api.mangadex.org/manga/5a90308a-8b12-4a4d-9c6d-2487028fe319
+  author: Take
+  artist: Take
+  status: Hiatus
+  year: 2017
+  genres: Shounen, Romance, Comedy, Slice of Life, School Life
+  summary: Annoying! Cute! But Annoying! Shinichi Sakurai is a grumpy-faced, athletic and quiet college student...
+  coverUrl: https://uploads.mangadex.org/covers/5a90308a-8b12-4a4d-9c6d-2487028fe319/e960c712-d0dc-4f59-a578-319d62cf410e.jpg.512.jpg
+  chapters: 169
+  ch 0: Ch. 1.1 A Kouhai and A Senpai Who Wants To Be Left Alone | 20412a3f-6305-4c49-aad1-6c3303d183cd
+  ch 1: Ch. 1.2 Kouhai and the Batting Center | 5dbea486-6e32-4774-8f58-4de9dd8201e4
+  ch 2: Ch. 1.3 Kouhai and Eating Ramen | c622832b-d6cd-4543-8dc3-3355b579510f
+  ch 166: Ch. 140 Kouhai and Income 4 | a8cd3264-65e6-4c54-947d-c7df5159cf3a
+  ch 167: Ch. 141 Kouhai And Income 5 | ed32838a-5850-4b68-93de-ec25d1357483
+  ch 168: Ch. 142 | 9731e8a5-05d4-46bd-8f4d-34907c9b5ad5
+  chapter 0: Ch. 1.1 A Kouhai and A Senpai Who Wants To Be Left Alone | 20412a3f-6305-4c49-aad1-6c3303d183cd
+    pages: 5
+    page 0: https://uploads.mangadex.org/data-saver/82f4ec47e0e81859fb7d0de331c715b0/F1-b57285f6cb713df4252949ce5ce1f751e12974349e6bca5f8eebcc19c157deee.jpg
+      imageUrl: https://uploads.mangadex.org/data-saver/82f4ec47e0e81859fb7d0de331c715b0/F1-b57285f6cb713df4252949ce5ce1f751e12974349e6bca5f8eebcc19c157deee.jpg
+      headers: User-Agent: UltimateMangaReader (github.com/Rain92/UltimateMangaReader)
+      image: ok 1300x1872
+      pixels: 0e2564db737acab8
+    page 1: https://uploads.mangadex.org/data-saver/82f4ec47e0e81859fb7d0de331c715b0/F2-714cbdb7823de2720ea78a03dcbcc27db4899ee36bbb801b02db3f715c3eb7ad.jpg
+      imageUrl: https://uploads.mangadex.org/data-saver/82f4ec47e0e81859fb7d0de331c715b0/F2-714cbdb7823de2720ea78a03dcbcc27db4899ee36bbb801b02db3f715c3eb7ad.jpg
+      headers: User-Agent: UltimateMangaReader (github.com/Rain92/UltimateMangaReader)
+    page 4: https://uploads.mangadex.org/data-saver/82f4ec47e0e81859fb7d0de331c715b0/F5-67250ea349c4b96b43e517b6ab415cd548777534e2fb9e76ffeb11d29d6b5f49.jpg
+      imageUrl: https://uploads.mangadex.org/data-saver/82f4ec47e0e81859fb7d0de331c715b0/F5-67250ea349c4b96b43e517b6ab415cd548777534e2fb9e76ffeb11d29d6b5f49.jpg
+      headers: User-Agent: UltimateMangaReader (github.com/Rain92/UltimateMangaReader)
+  chapter 168: Ch. 142 | 9731e8a5-05d4-46bd-8f4d-34907c9b5ad5
+    pages: 15
+    page 0: https://uploads.mangadex.org/data-saver/fd2a36da067a901c35bd6a95d45500a1/1-477ccb2c408afb7644ea659359099826017f76290449ca56520ba9538e09f2a7.jpg
+      imageUrl: https://uploads.mangadex.org/data-saver/fd2a36da067a901c35bd6a95d45500a1/1-477ccb2c408afb7644ea659359099826017f76290449ca56520ba9538e09f2a7.jpg
+      headers: User-Agent: UltimateMangaReader (github.com/Rain92/UltimateMangaReader)
+    page 1: https://uploads.mangadex.org/data-saver/fd2a36da067a901c35bd6a95d45500a1/2-3af6d68d52a2069eab0573ab20a6954e1025444dbe77c13904c2fe741a073274.jpg
+      imageUrl: https://uploads.mangadex.org/data-saver/fd2a36da067a901c35bd6a95d45500a1/2-3af6d68d52a2069eab0573ab20a6954e1025444dbe77c13904c2fe741a073274.jpg
+      headers: User-Agent: UltimateMangaReader (github.com/Rain92/UltimateMangaReader)
+    page 14: https://uploads.mangadex.org/data-saver/fd2a36da067a901c35bd6a95d45500a1/15-268ce3f1a6f0e2a78cc25505101f98646ef2e949515c9a04359bcaab1e911c38.jpg
+      imageUrl: https://uploads.mangadex.org/data-saver/fd2a36da067a901c35bd6a95d45500a1/15-268ce3f1a6f0e2a78cc25505101f98646ef2e949515c9a04359bcaab1e911c38.jpg
+      headers: User-Agent: UltimateMangaReader (github.com/Rain92/UltimateMangaReader)
