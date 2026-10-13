@@ -1,14 +1,27 @@
 #include "mangareaderwidget.h"
 
+#include <QtConcurrent>
+
 #include "ui_mangareaderwidget.h"
+
+#include "perftimer.h"
 
 #ifdef KOBO
 #include "koboplatformfunctions.h"
 #endif
 
 MangaReaderWidget::MangaReaderWidget(QWidget *parent)
-    : QWidget(parent), ui(new Ui::MangaReaderWidget), imgcache(), settings(nullptr)
+    : QWidget(parent),
+      ui(new Ui::MangaReaderWidget),
+      imgcache(),
+      prefetchPool(),
+      prefetch(),
+      prefetchFuture(),
+      prefetchQueue(),
+      settings(nullptr)
 {
+    prefetchPool.setMaxThreadCount(1);
+
     ui->setupUi(this);
     adjustUI();
 
@@ -18,6 +31,7 @@ MangaReaderWidget::MangaReaderWidget(QWidget *parent)
     ui->readerNavigationBar->setVisible(false);
 
     gotodialog = new GotoDialog(this);
+    QObject::connect(gotodialog, &QDialog::accepted, this, &MangaReaderWidget::gotoDialogAccepted);
 
     connect(ui->toolButtonLessLight, &QToolButton::clicked,
             [this]() { ui->horizontalSliderLight->setValue(ui->horizontalSliderLight->value() - 1); });
@@ -41,6 +55,10 @@ MangaReaderWidget::MangaReaderWidget(QWidget *parent)
 
 MangaReaderWidget::~MangaReaderWidget()
 {
+    // the result of a running decode is posted to this widget
+    prefetchQueue.clear();
+    prefetchPool.waitForDone();
+
     imgcache.clear();
     delete ui;
 }
@@ -83,6 +101,10 @@ bool MangaReaderWidget::event(QEvent *event)
 
 bool MangaReaderWidget::buttonPressEvent(QKeyEvent *event)
 {
+    // a held button turns one page
+    if (event->isAutoRepeat())
+        return true;
+
     if (event->key() == Qt::Key_PageUp)
         emit advancPageClicked(
             conditionalReverse(Forward, settings->buttonAdvance != AdvancePageHWButton::Up));
@@ -137,7 +159,10 @@ bool MangaReaderWidget::gestureEvent(QGestureEvent *event)
 
         if (ui->readerNavigationBar->isVisible())
         {
-            if (pos.y() > this->height() * SIZES.readerBottomMenuThreshold * 2)
+            // the taps on the bars' buttons (e.g. Goto...) come through here too, they don't hide the bars
+            bool onBars = ui->readerNavigationBar->geometry().contains(pos) ||
+                          ui->readerFrontLightBar->geometry().contains(pos);
+            if (!onBars && pos.y() > this->height() * SIZES.readerBottomMenuThreshold * 2)
                 showMenuBar(false);
         }
         else if (pos.y() < this->height() * SIZES.readerBottomMenuThreshold ||
@@ -174,6 +199,14 @@ void MangaReaderWidget::updateCurrentIndex(const ReadingProgress &progress)
                                  QString::number(progress.numPages));
 
     gotodialog->setup(progress);
+
+    // with the turn, not when the page shows up: a page that has to be downloaded first would take the bars
+    // away while they are in use
+    showMenuBar(false);
+
+    // the neighbours of the previous page, the new ones are queued after the turn (the page itself can show
+    // up later than that when it has to be downloaded first)
+    prefetchQueue.clear();
 }
 
 void MangaReaderWidget::on_pushButtonReaderHome_clicked()
@@ -193,7 +226,8 @@ void MangaReaderWidget::on_pushButtonReaderFavorites_clicked()
 
 void MangaReaderWidget::showImage(const QString &path)
 {
-    showMenuBar(false);
+    if (perfLoggingEnabled())
+        qDebug() << "[perf] show page" << QFileInfo(path).fileName();
 
     if (QFile::exists(path))
     {
@@ -202,11 +236,12 @@ void MangaReaderWidget::showImage(const QString &path)
         if (i != -1)
         {
             qDebug() << "Cachehit:" << i;
-            ui->mangaImageWidget->setImage(imgcache[i].first);
+            imgcache.move(i, 0);
+            ui->mangaImageWidget->setImage(imgcache[0].first);
         }
         else
         {
-            if (addImageToCache(path, false))
+            if (takePrefetchedImage(path) || loadImageToCache(path))
             {
                 i = searchCache(path);
                 ui->mangaImageWidget->setImage(imgcache[i].first);
@@ -263,39 +298,82 @@ bool MangaReaderWidget::addImageToCache(const QString &path, QSharedPointer<QIma
     return true;
 }
 
-bool MangaReaderWidget::addImageToCache(const QString &path, bool isPreload)
+bool MangaReaderWidget::loadImageToCache(const QString &path)
 {
-    //    QElapsedTimer t;
-    //    t.start();
+    auto img = QSharedPointer<QImage>(new QImage(loadQImageFast(path, settings->ditheringMode >= SWDithering)));
 
-    int i = searchCache(path);
-    if (i != -1)
+    return addImageToCache(path, img);
+}
+
+void MangaReaderWidget::prefetchImage(const QString &path)
+{
+    if (searchCache(path) != -1 || (prefetch && prefetch->path == path) || prefetchQueue.contains(path))
+        return;
+
+    prefetchQueue.append(path);
+    startPrefetch();
+}
+
+void MangaReaderWidget::startPrefetch()
+{
+    if (prefetch || prefetchQueue.isEmpty())
+        return;
+
+    // the cache would have to drop pages for them
+    if (!enoughFreeSystemMemory())
     {
-        imgcache.move(i, 0);
+        prefetchQueue.clear();
+        return;
     }
-    else if (isPreload && !enoughFreeSystemMemory())
-    {
+
+    auto job = std::make_shared<Prefetch>();
+    job->path = prefetchQueue.takeFirst();
+    prefetch = job;
+
+    bool dither = settings->ditheringMode >= SWDithering;
+    QThread *guiThread = QThread::currentThread();
+    prefetchFuture = QtConcurrent::run(&prefetchPool,
+                                       [this, job, dither, guiThread]()
+                                       {
+                                           // waitForFinished() runs a task that didn't start yet itself
+                                           if (QThread::currentThread() != guiThread)
+                                               lowerThreadPriority();
+                                           job->image = loadQImageFast(job->path, dither);
+                                           QMetaObject::invokeMethod(
+                                               this, [this, job]() { prefetchFinished(job); },
+                                               Qt::QueuedConnection);
+                                       });
+}
+
+void MangaReaderWidget::prefetchFinished(const std::shared_ptr<Prefetch> &job)
+{
+    // the page was shown meanwhile (takePrefetchedImage()) or the cache was cleared, the next one is queued
+    // with the next page turn
+    if (job != prefetch)
+        return;
+
+    prefetch.reset();
+    if (!job->image.isNull())
+        addImageToCache(job->path, QSharedPointer<QImage>::create(std::move(job->image)));
+
+    startPrefetch();
+}
+
+// The page to show is being decoded in the background: waiting for it is faster than starting over.
+bool MangaReaderWidget::takePrefetchedImage(const QString &path)
+{
+    if (!prefetch || prefetch->path != path)
         return false;
-    }
-    else
-    {
-        auto img =
-            QSharedPointer<QImage>(new QImage(loadQImageFast(path, settings->ditheringMode >= SWDithering)));
 
-        if (!img || img->isNull())
-            return false;
+    PerfTimer timer("wait for prefetch");
+    prefetchFuture.waitForFinished();
 
-        imgcache.insert(0, {img, path});
+    auto job = prefetch;
+    prefetch.reset();
+    if (job->image.isNull())
+        return false;
 
-        if (imgcache.count() > CONF.imageCacheSize)
-            imgcache.removeLast();
-    }
-
-    checkMem();
-
-    //    qDebug() << "Load image2:" << t.elapsed() << path.split('/').last();
-
-    return true;
+    return addImageToCache(path, QSharedPointer<QImage>::create(std::move(job->image)));
 }
 
 int MangaReaderWidget::searchCache(const QString &path) const
@@ -310,7 +388,16 @@ int MangaReaderWidget::searchCache(const QString &path) const
 void MangaReaderWidget::clearCache()
 {
     imgcache.clear();
+    prefetch.reset();
+    prefetchQueue.clear();
     ui->mangaImageWidget->clearImage();
+}
+
+void MangaReaderWidget::clearImageCache()
+{
+    imgcache.clear();
+    prefetch.reset();
+    prefetchQueue.clear();
 }
 
 void MangaReaderWidget::setSettings(Settings *settings)
@@ -359,12 +446,15 @@ void MangaReaderWidget::on_horizontalSliderComfLight_valueChanged(int value)
 
 void MangaReaderWidget::on_pushButtonReaderGoto_clicked()
 {
-    if (gotodialog->exec() == QDialog::Accepted)
-    {
-        showMenuBar(false);
+    // not exec(): its nested event loop would keep the standby away while the dialog is open
+    gotodialog->open();
+}
 
-        emit gotoIndex(gotodialog->selectedindex);
-    }
+void MangaReaderWidget::gotoDialogAccepted()
+{
+    showMenuBar(false);
+
+    emit gotoIndex(gotodialog->selectedindex);
 }
 
 void MangaReaderWidget::showMenuBar(bool show)

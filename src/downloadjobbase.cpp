@@ -11,6 +11,8 @@ DownloadJobBase::DownloadJobBase(QNetworkAccessManager *networkManager, const QS
       reply(),
       managerGuard(networkManager),
       customHeaders(customHeaders),
+      retryHold(),
+      redirects(0),
       url(url),
       originalUrl(url),
       isCompleted(false),
@@ -33,6 +35,11 @@ bool DownloadJobBase::hasFailed() const
 
 QNetworkRequest DownloadJobBase::createRequest() const
 {
+    return createRequest(url);
+}
+
+QNetworkRequest DownloadJobBase::createRequest(const QString &url) const
+{
     QNetworkRequest request(url);
 
     // some hosts reject Qt's default user agent
@@ -50,6 +57,23 @@ QNetworkRequest DownloadJobBase::createRequest() const
 #endif
 
     return request;
+}
+
+bool DownloadJobBase::followRedirect()
+{
+    QUrl redirect = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
+    if (!redirect.isValid())
+        return false;
+
+    // relative ones are relative to the request
+    redirect = reply->url().resolved(redirect);
+    if (redirect == reply->url() || ++redirects > 5)
+        return false;
+
+    url = redirect.toString();
+    // not right away: this runs in a signal of the reply that restart() deletes
+    QTimer::singleShot(0, this, [this]() { restart(); });
+    return true;
 }
 
 void DownloadJobBase::trackReply(QNetworkReply *reply)
@@ -73,6 +97,12 @@ void DownloadJobBase::trackReply(QNetworkReply *reply)
 int DownloadJobBase::activeReplies()
 {
     return activeReplyCount.loadRelaxed();
+}
+
+std::shared_ptr<void> DownloadJobBase::holdActivity()
+{
+    activeReplyCount.ref();
+    return std::shared_ptr<void>(nullptr, [](void *) { activeReplyCount.deref(); });
 }
 
 QList<QNetworkCookie> DownloadJobBase::getCookies()

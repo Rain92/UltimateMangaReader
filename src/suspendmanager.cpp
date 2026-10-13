@@ -1,5 +1,30 @@
 #include "suspendmanager.h"
 
+#include <errno.h>
+#include <fcntl.h>
+#include <string.h>
+#include <unistd.h>
+
+#ifdef KOBO
+// Writes value to a sysfs file, logs why if that failed.
+static bool writeSysfsFile(const char *path, const char *value)
+{
+    int fd = open(path, O_RDWR);
+    if (fd < 0)
+    {
+        qDebug() << "Could not open" << path << ":" << strerror(errno);
+        return false;
+    }
+
+    ssize_t length = strlen(value);
+    bool ok = write(fd, value, length) == length;
+    if (!ok)
+        qDebug() << "Could not write to" << path << ":" << strerror(errno);
+    close(fd);
+    return ok;
+}
+#endif
+
 SuspendManager::SuspendManager(NetworkManager *networkManager, QObject *parent)
     : QObject(parent), sleeping(false), networkManager(networkManager), timer()
 {
@@ -27,52 +52,19 @@ bool SuspendManager::suspend()
 
 bool SuspendManager::suspendInternal()
 {
-    if (networkManager->connected)
-        networkManager->disconnectWifi();
+    // also when it isn't connected: the WiFi might be on without a connection
+    networkManager->disconnectWifi();
 
 #ifdef KOBO
-    int handleSE = open("/sys/power/state-extended", O_RDWR);
-    if (!handleSE)
-    {
-        qDebug() << "Could not open /sys/power/state-extended";
+    if (!writeSysfsFile("/sys/power/state-extended", "1\n"))
         return false;
-    }
-    auto ret = write(handleSE, "1\n", 2);
-    close(handleSE);
-    if (!ret)
-    {
-        qDebug() << "Could not write to /sys/power/state-extended:" << ret;
-        return false;
-    }
 
     QThread::sleep(2);
     QProcess::execute("sync", {});
 
-    int handleS = open("/sys/power/state", O_RDWR);
-    if (!handleS)
-    {
-        qDebug() << "Could not open /sys/power/state";
-        int handleSE2 = open("/sys/power/state-extended", O_RDWR);
-        if (!handleSE2)
-        {
-            qDebug() << "Could not open /sys/power/state-extended";
-        }
-        else
-        {
-            write(handleSE2, "0\n", 2);
-            close(handleSE2);
-        }
-
+    // returns when the device woke up again. If it fails (e.g. EBUSY while USB is connected) the timer tries again.
+    if (!writeSysfsFile("/sys/power/state", "mem\n"))
         return false;
-    }
-    ret = write(handleS, "mem\n", 4);
-    if (!ret)
-    {
-        qDebug() << "Could not write to /sys/power/state:" << ret;
-        return false;
-    }
-
-    close(handleS);
 #endif
 
     sleeping = true;
@@ -85,38 +77,10 @@ bool SuspendManager::resume()
     qDebug() << QTime::currentTime().toString("hh:mm:ss") << "Waking up...";
 
 #ifdef KOBO
-
-    int handleSE = open("/sys/power/state-extended", O_RDWR);
-    if (!handleSE)
-    {
-        qDebug() << "Could not open /sys/power/state-extended";
-        return false;
-    }
-    auto ret = write(handleSE, "0\n", 2);
-    if (!ret)
-    {
-        qDebug() << "Could not write to /sys/power/state-extended:" << ret;
-        return false;
-    }
-    close(handleSE);
-
+    // the app wakes up also if these fail
+    writeSysfsFile("/sys/power/state-extended", "0\n");
     QThread::msleep(100);
-
-    int handleNC = open("/sys/devices/virtual/input/input1/neocmd", O_RDWR);
-    if (!handleNC)
-    {
-        qDebug() << "Could not open /sys/devices/virtual/input/input1/neocmd";
-    }
-    else
-    {
-        ret = write(handleNC, "a\n", 2);
-        if (!ret)
-        {
-            qDebug() << "Could not write to /sys/devices/virtual/input/input1/neocmd:" << ret;
-            return false;
-        }
-        close(handleNC);
-    }
+    writeSysfsFile("/sys/devices/virtual/input/input1/neocmd", "a\n");
 #endif
 
     timer.stop();

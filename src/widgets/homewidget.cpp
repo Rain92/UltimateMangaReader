@@ -91,6 +91,13 @@ void HomeWidget::on_listViewSources_clicked(const QModelIndex &index)
 void HomeWidget::currentMangaSourceChanged(AbstractMangaSource *source)
 {
     currentMangaSource = source;
+    if (currentMangaSource)
+        currentMangaSource->loadMangaList();
+
+    // the results of the previous source (or list)
+    filteredMangaUrls.clear();
+    filteredMangaTitles.clear();
+    filteractive = false;
 
     refreshMangaListView();
     if (ui->lineEditFilter->text() != "")
@@ -99,7 +106,7 @@ void HomeWidget::currentMangaSourceChanged(AbstractMangaSource *source)
 
 void HomeWidget::on_pushButtonFilter_clicked()
 {
-    if (currentMangaSource == nullptr || currentMangaSource->mangaList.size == 0)
+    if (currentMangaSource == nullptr)
         return;
 
     QString ss = ui->lineEditFilter->text();
@@ -158,6 +165,9 @@ void HomeWidget::refreshMangaListView()
 void HomeWidget::on_listViewMangas_clicked(const QModelIndex &index)
 {
     int idx = index.row();
+    if (!currentMangaSource || idx < 0 ||
+        idx >= (filteractive ? filteredMangaUrls.size() : currentMangaSource->mangaList.urls.size()))
+        return;
 
     QString mangaUrl = filteractive ? filteredMangaUrls[idx] : currentMangaSource->mangaList.urls[idx];
 

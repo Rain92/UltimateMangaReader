@@ -18,6 +18,7 @@ class GotoDialog : public QDialog
     Q_OBJECT
 
 public:
+    void open() override;
     explicit GotoDialog(QWidget *parent = nullptr);
     ~GotoDialog();
 

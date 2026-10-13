@@ -64,14 +64,19 @@ private:
 
     void connect(QSharedPointer<DownloadJobBase> job)
     {
-        if (!job->isCompleted)
+        if (job->isCompleted)
         {
-            QObject::connect(job.get(), &DownloadJobBase::completed, this, &BindingClass::action);
-            QObject::connect(job.get(), &DownloadJobBase::downloadError, this, &BindingClass::deleteLater);
+            action();
+        }
+        // a job that failed already doesn't signal anymore
+        else if (job->hasFailed())
+        {
+            deleteLater();
         }
         else
         {
-            action();
+            QObject::connect(job.get(), &DownloadJobBase::completed, this, &BindingClass::action);
+            QObject::connect(job.get(), &DownloadJobBase::downloadError, this, &BindingClass::deleteLater);
         }
     }
 
@@ -108,8 +113,14 @@ qint64 getCacheSize();
 qint64 getFreeSpace();
 
 unsigned long long getTotalSystemMemory();
+// The memory that is free or only holds caches the kernel drops when it needs the memory.
 unsigned long long getFreeSystemMemory();
 bool enoughFreeSystemMemory();
+
+// For background work that the gui thread shouldn't have to wait for (the device has a single core).
+void lowerThreadPriority();
+// The calling thread only runs while no other thread wants the cpu (or again normally).
+void setIdleThreadPriority(bool idle);
 
 void decryptXorInplace(QByteArray& data, const QByteArray& key);
 #ifdef __ARM_NEON__

@@ -14,6 +14,9 @@
 #include "imagerotate.h"
 #include "thirdparty/simdimageresize.h"
 
+// Whether an image of that size may be decoded (memory, and the int sizes of the buffers).
+bool decodedSizeAllowed(qint64 width, qint64 height);
+
 bool isJpeg(const QByteArray &buffer);
 bool isPng(const QByteArray &buffer);
 bool isWebp(const QByteArray &buffer);
@@ -23,6 +26,10 @@ bool readWebpSize(const QByteArray &data, QSize &size);
 
 // Reads the image size from the JPEG header only.
 bool readJpegSize(const QByteArray &data, QSize &size);
+
+// Reads the size of a JPEG, PNG or WebP from the start of the file (a few KB are enough unless a JPEG
+// has large metadata before its frame header).
+bool readImageSize(const QByteArray &header, QSize &size);
 
 // Decodes a JPEG or PNG straight into a Format_Grayscale8 QImage (no intermediate buffer).
 QImage decodeToQImage(const QByteArray &data);

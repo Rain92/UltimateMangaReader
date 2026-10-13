@@ -748,7 +748,7 @@ Result<MangaChapterCollection, QString> MangaDex::getChapters(const QString &man
     auto feedUrl = apiUrl + "/manga/" + mangaId + "/feed?limit=500&offset=%1&translatedLanguage[]=en" +
                    contentRatings +
                    "&includeExternalUrl=0&includeEmptyPages=0&includeFuturePublishAt=0&includeUnavailable=0"
-                   "&order[volume]=asc&order[chapter]=asc";
+                   "&order[volume]=asc&order[chapter]=asc&order[createdAt]=asc";
 
     QVector<DexChapter> chapters;
     QSet<QString> chapterIds;
@@ -756,10 +756,16 @@ Result<MangaChapterCollection, QString> MangaDex::getChapters(const QString &man
 
     for (int offset = 0; offset < total && offset + limit <= maxResults; offset += limit)
     {
+        // the edge rejects requests with 400 while it throttles (e.g. during a list update), a retry usually works
         auto job = networkManager->downloadAsString(feedUrl.arg(offset), 8000);
+        for (int attempt = 0; !job->await(8000) && job->httpStatus == 400 && attempt < 2; attempt++)
+        {
+            waitMs(1000);
+            job = networkManager->downloadAsString(feedUrl.arg(offset), 8000);
+        }
 
         // never return a partial list, merging it would delete the pages of the missing chapters
-        if (!job->await(8000))
+        if (!job->isCompleted)
             return Err("Couldn't load chapter list: " + job->errorString);
 
         try

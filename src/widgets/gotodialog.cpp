@@ -1,5 +1,7 @@
 #include "gotodialog.h"
 
+#include <QLineEdit>
+
 #include "ui_gotodialog.h"
 
 GotoDialog::GotoDialog(QWidget *parent)
@@ -16,8 +18,13 @@ GotoDialog::GotoDialog(QWidget *parent)
 
     ui->pushButtonCancel->setFixedHeight(SIZES.buttonSize);
 
-    ui->spinBoxChapter->installEventFilter(this);
-    ui->spinBoxPage->installEventFilter(this);
+    // the taps land on the line edits inside the boxes
+    for (auto box : {ui->spinBoxChapter, ui->spinBoxPage})
+    {
+        box->installEventFilter(this);
+        if (auto edit = box->findChild<QLineEdit *>())
+            edit->installEventFilter(this);
+    }
 
     ui->numpadWidget->setFixedHeight(SIZES.numpadHeight);
 }
@@ -41,12 +48,26 @@ void GotoDialog::setup(const ReadingProgress &progress)
     ui->spinBoxChapter->setCorrectionMode(QAbstractSpinBox::CorrectToNearestValue);
 }
 
+void GotoDialog::open()
+{
+    QDialog::open();
+
+    // typing replaces the number of the page (the usual case), also when the box kept the focus from the last time
+    ui->spinBoxPage->setFocus();
+    ui->spinBoxPage->selectAll();
+}
+
 bool GotoDialog::eventFilter(QObject *obj, QEvent *event)
 {
-    if (event->type() == QEvent::FocusIn)
+    // a tap into a box replaces its number when typing, also when it has the focus already (then the typed
+    // digits would be appended to the old number, which the box rejects when it exceeds the maximum)
+    if (event->type() == QEvent::FocusIn || event->type() == QEvent::MouseButtonPress)
     {
-        auto box = static_cast<QSpinBox *>(obj);
-        QTimer::singleShot(0, box, &QSpinBox::selectAll);
+        auto box = qobject_cast<QSpinBox *>(obj);
+        if (!box)
+            box = qobject_cast<QSpinBox *>(obj->parent());
+        if (box)
+            QTimer::singleShot(0, box, &QSpinBox::selectAll);
 
         return false;
     }

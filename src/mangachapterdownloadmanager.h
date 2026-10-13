@@ -12,12 +12,12 @@
 struct MangaChapterRange
 {
 public:
-    MangaChapterRange(QSharedPointer<MangaInfo> mangaInfo, int fromChapter, int toChapterInclusive)
-        : mangaInfo(mangaInfo), fromChapter(fromChapter), toChapterInclusive(toChapterInclusive){};
+    MangaChapterRange() = default;
+    MangaChapterRange(QSharedPointer<MangaInfo> mangaInfo, const QList<int> &chapters)
+        : mangaInfo(mangaInfo), chapters(chapters){};
 
     QSharedPointer<MangaInfo> mangaInfo;
-    int fromChapter;
-    int toChapterInclusive;
+    QList<int> chapters;
 };
 
 class MangaChapterDownloadManager : public QObject
@@ -29,26 +29,40 @@ public:
     void cancelDownloads();
     bool isRunning() const { return running; }
     void downloadMangaChapters(QSharedPointer<MangaInfo> mangaInfo, int fromChapter, int toChapterInclusive);
+    // downloads the chapters again that didn't complete since the downloads were started
+    void retryFailedDownloads();
 
 signals:
     void downloadStart(const QString &mangaTitle);
-    void downloadPagelistProgress(int completed, int total);
+    void downloadPagelistProgress(int completed, int total, int errors);
     void downloadPagesProgress(int completed, int total, int errors);
     void downloadImagesProgress(int completed, int total, int errors);
     void error(const QString &error);
-    void downloadCompleted();
+    // failedChapters: of all the jobs since the downloads were started, retryFailedDownloads() downloads them again
+    void downloadCompleted(int failedChapters);
 
 private:
-    bool cancelled;
+    // incremented by a cancel
+    int generation;
     bool running;
 
     QQueue<MangaChapterRange> downloadJobs;
+
+    // the running job: its generation, the chapters that failed and the images to check when its downloads are done
+    int currentGeneration;
+    QSharedPointer<MangaInfo> currentManga;
+    QSet<int> currentFailed;
+    QList<QPair<int, QString>> currentImagePaths;
+    // by chapter url, the indexes can change until a retry
+    QList<QPair<QSharedPointer<MangaInfo>, QStringList>> failedChapters;
 
     NetworkManager *networkManager;
     DownloadQueue downloadQueue;
 
     void processNextJob();
     void downloadQueueJobsCompleted();
+    void recordFailedChapters();
+    int failedChapterCount() const;
 };
 
 #endif  // MANGACHAPTERDOWNLOADMANAGER_H

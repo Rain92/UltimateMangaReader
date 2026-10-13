@@ -61,22 +61,8 @@ void DownloadBufferJob::downloadFinished()
 {
     timeoutTimer.stop();
 
-    QUrl redirect = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
-    if (redirect.isValid())
-    {
-        if (redirect.host() != "")
-        {
-            this->url = redirect.toString();
-        }
-        else
-        {
-            QUrl base(this->url);
-            base.setPath(redirect.path());
-            this->url = base.toString();
-        }
-        this->restart();
+    if (followRedirect())
         return;
-    }
 
     if (errorString != "" || (reply->error() != QNetworkReply::NoError))
     {

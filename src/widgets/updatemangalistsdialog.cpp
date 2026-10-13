@@ -3,7 +3,11 @@
 #include "ui_updatemangalistsdialog.h"
 
 UpdateMangaListsDialog::UpdateMangaListsDialog(Settings *settings, QWidget *parent)
-    : QDialog(parent), ui(new Ui::UpdateMangaListsDialog), settings(settings), progressToken(nullptr)
+    : QDialog(parent),
+      ui(new Ui::UpdateMangaListsDialog),
+      settings(settings),
+      progressToken(nullptr),
+      updateCompleted(false)
 {
     ui->setupUi(this);
 
@@ -43,7 +47,7 @@ void UpdateMangaListsDialog::resetUI()
         while ((item = ui->frameMangaScources->layout()->itemAt(i++)) != nullptr)
         {
             auto *checkbox = dynamic_cast<QCheckBox *>(item->widget());
-            if (checkbox != nullptr)
+            if (checkbox != nullptr && !updateCompleted)
             {
                 if ((progressToken->sourcesProgress.contains(checkbox->text()) &&
                      progressToken->sourcesProgress[checkbox->text()] == 100))
@@ -59,6 +63,7 @@ void UpdateMangaListsDialog::resetUI()
                    &UpdateMangaListsDialog::updateProgress);
     }
 
+    updateCompleted = false;
     progressToken.reset(new UpdateProgressToken());
     connect(progressToken.get(), &UpdateProgressToken::updateError, this,
             &UpdateMangaListsDialog::updateError);
@@ -102,6 +107,7 @@ void UpdateMangaListsDialog::updateProgress()
 
 void UpdateMangaListsDialog::updateFinished()
 {
+    updateCompleted = true;
     ui->labelProgress->setText("All updates completed!");
     ui->progressBar->setValue(100);
     ui->pushButtonOk->hide();

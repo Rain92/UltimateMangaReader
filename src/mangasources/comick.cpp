@@ -71,6 +71,7 @@ enum class Numbering
 static void cacheWarmUpAttempt(QSharedPointer<CacheWarmUp> warmUp)
 {
     auto reply = warmUp->networkAccessManager->head(warmUp->request);
+    DownloadJobBase::trackReply(reply);
 
     int remaining = warmUp->timeout - int(warmUp->timer.elapsed());
     QTimer::singleShot(qBound(100, remaining, 2000), reply, &QNetworkReply::abort);
@@ -85,8 +86,10 @@ static void cacheWarmUpAttempt(QSharedPointer<CacheWarmUp> warmUp)
 
                          if (throttled && warmUp->timer.elapsed() + 400 < warmUp->timeout)
                          {
+                             // no standby in between, it would stop the timer
+                             auto hold = DownloadJobBase::holdActivity();
                              QTimer::singleShot(400, warmUp->networkAccessManager,
-                                                [warmUp]() { cacheWarmUpAttempt(warmUp); });
+                                                [warmUp, hold]() { cacheWarmUpAttempt(warmUp); });
                              return;
                          }
 
@@ -623,19 +626,30 @@ bool Comick::updateMangaList(UpdateProgressToken *token)
     QElapsedTimer timer;
     timer.start();
 
+    if (!state.knownTitlesLoaded)
+    {
+        for (int i = 0; i < mangaList.size; i++)
+            state.knownTitles.insert(mangaList.urls[i], mangaList.titles[i]);
+        state.knownTitlesLoaded = true;
+    }
+
     // the most popular and the newest titles come from the search api (real titles),
     // the rest of the catalogue from the sitemaps (only slugs)
     if (!state.searched)
     {
-        if (!fetchSearch("user_follow_count", popularPages, state.mangas, state.urls, token, 0, 18))
-            qDebug() << "Comick: popular titles incomplete:" << state.mangas.size;
-
-        if (!token->canceled && !fetchSearch("created_at", latestPages, state.mangas, state.urls, token, 18, 20))
-            qDebug() << "Comick: newest titles incomplete:" << state.mangas.size;
+        // the order of the list is the popularity, a retry searches again
+        bool ok = fetchSearch("user_follow_count", popularPages, state, token, 0, 18);
+        ok = ok && !token->canceled && fetchSearch("created_at", latestPages, state, token, 18, 20);
 
         if (token->canceled)
         {
             token->sendError(QString("Download cancelled"));
+            return false;
+        }
+
+        if (!ok)
+        {
+            token->sendError(QString("Couldn't load the popular titles."));
             return false;
         }
 
@@ -662,9 +676,12 @@ bool Comick::updateMangaList(UpdateProgressToken *token)
     return true;
 }
 
-bool Comick::fetchSearch(const QString &order, int pages, MangaList &mangas, QSet<QString> &urls,
-                         UpdateProgressToken *token, int progressFrom, int progressTo)
+bool Comick::fetchSearch(const QString &order, int pages, ComickUpdateState &state, UpdateProgressToken *token,
+                         int progressFrom, int progressTo)
 {
+    auto &mangas = state.mangas;
+    auto &urls = state.urls;
+
     QString cursor;
 
     for (int page = 0; page < pages && !token->canceled; page++)
@@ -702,7 +719,9 @@ bool Comick::fetchSearch(const QString &order, int pages, MangaList &mangas, QSe
                     continue;
 
                 urls.insert(url);
-                mangas.append(title.isEmpty() ? titleFromSlug(slug) : title, url);
+                if (title.isEmpty())
+                    title = titleFromSlug(slug);
+                mangas.append(state.knownTitles.value(url, title), url);
             }
 
             cursor = getStringSafe(doc, "next_cursor");
@@ -780,7 +799,7 @@ bool Comick::fetchSitemaps(ComickUpdateState &state, UpdateProgressToken *token)
                 if (!slug.isEmpty() && !slug.contains('/') && !state.urls.contains(url))
                 {
                     state.urls.insert(url);
-                    state.mangas.append(titleFromSlug(slug), url);
+                    state.mangas.append(state.knownTitles.value(url, titleFromSlug(slug)), url);
                 }
             }
 

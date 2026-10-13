@@ -1,5 +1,9 @@
 #include "mangakakalot.h"
 
+#include <QElapsedTimer>
+
+#include <algorithm>
+
 #define RAPIDJSON_ASSERT(x) \
     if (!(x))               \
         throw QException();
@@ -83,6 +87,30 @@ Mangakakalot::Mangakakalot(NetworkManager *networkManager) : AbstractMangaSource
     // the image cdns only answer with the referer of one of the mirrors
     addImageHost("2xstorage.com");
     addImageHost("waitst.com");
+}
+
+// The covers are on several hosts of the cdn and some are missing on the one the site links (503 for good,
+// like some pages), imgs-2 had all of them so far.
+QString Mangakakalot::coverFallbackUrl(const QString &coverUrl)
+{
+    QUrl url(coverUrl);
+    if (!url.host().endsWith(".2xstorage.com") || !url.path().startsWith("/thumb/"))
+        return {};
+
+    url.setHost(url.host() == "imgs-2.2xstorage.com" ? "img-r2.2xstorage.com" : "imgs-2.2xstorage.com");
+    return url.toString();
+}
+
+void Mangakakalot::chaptersMerged(QSharedPointer<MangaInfo> info)
+{
+    QString joinedMarker = CONF.mangainfodir(name, info->title) + "joinedpages";
+    if (!pendingJoinedMarkers.remove(joinedMarker))
+        return;
+
+    QDir().mkpath(CONF.mangainfodir(name, info->title));
+    QFile marker(joinedMarker);
+    if (!marker.open(QIODevice::WriteOnly))
+        qDebug() << "Couldn't write" << joinedMarker;
 }
 
 void Mangakakalot::addImageHost(const QString &host)
@@ -384,6 +412,9 @@ void Mangakakalot::updateMangaInfoAsync(QSharedPointer<MangaInfo> info, bool upd
                                prefetchedChapters.insert(slug, job);
                                AbstractMangaSource::updateMangaInfoAsync(info, updateCover);
                            });
+    // without it the update loads the chapter list itself (e.g. after a rate limit)
+    QObject::connect(job.get(), &DownloadJobBase::downloadError, job.get(),
+                     [this, info, updateCover]() { AbstractMangaSource::updateMangaInfoAsync(info, updateCover); });
 }
 
 Result<MangaChapterCollection, QString> Mangakakalot::updateMangaInfoFinishedLoading(
@@ -514,18 +545,43 @@ Result<MangaChapterCollection, QString> Mangakakalot::updateMangaInfoFinishedLoa
             break;
     }
 
-    // the image urls of chapters from the old domains are dead: only downloaded pages count as
-    // loaded, so the chapters that aren't completely downloaded are loaded again from the new site
+    // Page lists from before split pages were joined (see joinSplitPages()) are loaded again once, unless
+    // pages were downloaded already: their files and the reading progress count the pages of the old list.
+    QString joinedMarker = CONF.mangainfodir(name, info->title) + "joinedpages";
+    bool reloadUnjoined = !QFile::exists(joinedMarker);
+
     for (int c = 0; c < info->chapters.count(); c++)
     {
         auto &chapter = info->chapters[c];
-        if (!chapter.pagesLoaded || isMirrorUrl(chapter.chapterUrl))
+        if (!chapter.pagesLoaded)
             continue;
 
-        for (int p = 0; p < chapter.imageUrlList.count(); p++)
-            if (!QFile::exists(getImagePath(DownloadImageDescriptor("", info->title, c, p))))
-                chapter.imageUrlList[p] = "";
+        auto pageOnDisk = [&](int p)
+        { return QFile::exists(getImagePath(DownloadImageDescriptor("", info->title, c, p))); };
+
+        // the image urls of chapters from the old domains are dead: only downloaded pages count as
+        // loaded, so the chapters that aren't completely downloaded are loaded again from the new site
+        if (!isMirrorUrl(chapter.chapterUrl))
+        {
+            for (int p = 0; p < chapter.imageUrlList.count(); p++)
+                if (!pageOnDisk(p))
+                    chapter.imageUrlList[p] = "";
+            continue;
+        }
+
+        if (reloadUnjoined && !chapter.pageUrlList.isEmpty() && !pageOnDisk(0))
+        {
+            bool anyOnDisk = false;
+            for (int p = 1; p < chapter.pageUrlList.count() && !anyOnDisk; p++)
+                anyOnDisk = pageOnDisk(p);
+            if (!anyOnDisk)
+                chapter.pagesLoaded = false;
+        }
     }
+
+    // the marker is written in chaptersMerged(): the new list can still be rejected
+    if (reloadUnjoined)
+        pendingJoinedMarkers.insert(joinedMarker);
 
     MangaChapterCollection newchapters;
     for (int i = chapters.size() - 1; i >= 0; i--)
@@ -584,5 +640,116 @@ Result<QStringList, QString> Mangakakalot::getPageList(const QString &chapterUrl
     for (const auto &imageUrl : std::as_const(imageUrls))
         addImageHost(QUrl(imageUrl).host());
 
-    return Ok(imageUrls);
+    return joinSplitPages(imageUrls);
+}
+
+// The site cuts images taller than 1500 px into pieces of 1500 px and the rest: a page of 1100x1565 becomes
+// 1100x1500 and 1100x65, which would be a page of its own showing a thin line. The parts of a page are
+// joined again ("<piece url>|append:<rest url>", the image job stitches them), the pieces of long strips
+// (manhwa) stay pages of their own.
+Result<QStringList, QString> Mangakakalot::joinSplitPages(const QStringList &imageUrls)
+{
+    QElapsedTimer timer;
+    timer.start();
+    // The sizes that didn't come in time are asked for once more: the list is stored with the chapter, pages
+    // that weren't joined because of a slow connection would stay that way.
+    QList<int> timedOut;
+    auto sizes = networkManager->probeImageSizes(imageUrls, 8000, &timedOut);
+    if (!timedOut.isEmpty())
+    {
+        QStringList again;
+        for (int i : std::as_const(timedOut))
+            again.append(imageUrls[i]);
+        QList<int> stillTimedOut;
+        auto moreSizes = networkManager->probeImageSizes(again, 8000, &stillTimedOut);
+        for (int k = 0; k < timedOut.size(); k++)
+            sizes[timedOut[k]] = moreSizes[k];
+        if (stillTimedOut.size() * 4 > imageUrls.size())
+            return Err(QString("The pages of the chapter couldn't be checked, the connection is too slow."));
+    }
+
+    QStringList pages;
+    for (const auto &page : pairSplitImages(sizes))
+        pages.append(page.second < 0 ? imageUrls[page.first]
+                                     : imageUrls[page.first] + "|append:" + imageUrls[page.second]);
+
+    int unknown = std::count_if(sizes.begin(), sizes.end(), [](const QSize &s) { return !s.isValid(); });
+    qDebug() << "Page sizes probed in" << timer.elapsed() << "ms:" << imageUrls.size() << "images," << unknown
+             << "unknown ->" << pages.size() << "pages";
+
+    return Ok(pages);
+}
+
+QList<QPair<int, int>> Mangakakalot::pairSplitImages(const QList<QSize> &sizes)
+{
+    const int pieceHeight = 1500;
+    const int n = sizes.size();
+
+    auto known = [&](int i) { return i >= 0 && i < n && sizes[i].isValid(); };
+    auto isPiece = [&](int i) { return known(i) && sizes[i].height() == pieceHeight; };
+    // the middle and the end of long strips follow a piece of the same width
+    auto continuesStrip = [&](int i) { return isPiece(i - 1) && sizes[i - 1].width() == sizes[i].width(); };
+    // the rest of the image of a piece: together they have the proportions of a page, or the rest is short
+    // (also at the end of a long strip)
+    auto isRestOf = [&](int rest, int width, bool ofStrip = false)
+    {
+        if (!known(rest) || sizes[rest].width() != width || sizes[rest].height() >= pieceHeight)
+            return false;
+        int height = sizes[rest].height();
+        return height <= pieceHeight / 4 || (!ofStrip && pieceHeight + height <= 2 * width);
+    };
+
+    int pieces = 0, pairs = 0, unknown = 0;
+    for (int i = 0; i < n; i++)
+    {
+        if (!known(i))
+            unknown++;
+        else if (isPiece(i))
+        {
+            pieces++;
+            if (!continuesStrip(i) && isRestOf(i + 1, sizes[i].width()))
+                pairs++;
+        }
+    }
+
+    // Some images are missing at the source (they always fail). Where most pages are a piece and a rest, a
+    // missing one is taken as the part its neighbours lack, the page shows the other part only then.
+    bool pagesSplit = pairs > 0 && pairs * 2 >= pieces && unknown * 4 <= n;
+    // the width of the closest piece, for a missing piece
+    auto pieceWidthNear = [&](int i)
+    {
+        for (int d = 1; d < n; d++)
+            for (int j : {i - d, i + d})
+                if (isPiece(j))
+                    return sizes[j].width();
+        return -1;
+    };
+
+    QList<QPair<int, int>> pages;
+    for (int i = 0; i < n; i++)
+    {
+        if (isPiece(i))
+        {
+            int width = sizes[i].width();
+            bool strip = continuesStrip(i);
+            bool nextIsPieceOfMissingOne = !known(i + 1) && isRestOf(i + 2, pieceWidthNear(i + 1));
+            if (isRestOf(i + 1, width, strip) ||
+                (pagesSplit && !strip && i + 1 < n && !known(i + 1) && !nextIsPieceOfMissingOne))
+            {
+                pages.append({i, i + 1});
+                i++;
+                continue;
+            }
+        }
+        else if (pagesSplit && !known(i) && isRestOf(i + 1, pieceWidthNear(i)))
+        {
+            pages.append({i, i + 1});
+            i++;
+            continue;
+        }
+
+        pages.append({i, -1});
+    }
+
+    return pages;
 }

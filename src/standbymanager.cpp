@@ -11,12 +11,14 @@
 #include <QDebug>
 #include <QEvent>
 #include <QFile>
+#include <QThread>
 
 #include "mangachapterdownloadmanager.h"
 #include "networkmanager.h"
 #include "staticsettings.h"
 #include "suspendmanager.h"
 
+#ifdef KOBO
 static const char *powerStatePath = "/sys/power/state";
 static const char *wakeAlarmPath = "/sys/class/rtc/rtc0/wakealarm";
 
@@ -31,6 +33,7 @@ static bool writeSysfs(const char *path, const QByteArray &value, int *error = n
         close(fd);
     return ok;
 }
+#endif
 
 static qint64 clockMs(clockid_t clock)
 {
@@ -135,9 +138,10 @@ void StandbyManager::idleTimeout()
     if (!settings->standbyWhenIdle || suspendManager->sleeping)
         return;
 
-    // standby would stall downloads and preloads (or the WiFi scripts), check again later
+    // standby would stall downloads and preloads (or the WiFi scripts), check again later. A nested event loop
+    // waits for something too (a blocking download, a pause between requests).
     if (inhibited || networkManager->isBusy() || networkManager->isConnectingWifi() ||
-        chapterDownloadManager->isRunning())
+        chapterDownloadManager->isRunning() || QThread::currentThread()->loopLevel() > 1)
     {
         idleTimer.start(delayMs());
         return;

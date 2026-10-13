@@ -68,6 +68,9 @@ void MangaInfoWidget::setManga(QSharedPointer<MangaInfo> manga)
 {
     if (currentmanga != manga)
     {
+        // the updates of the other mangas (e.g. favorites in the background) aren't shown here
+        if (currentmanga)
+            currentmanga->disconnect(this);
         currentmanga.clear();
         currentmanga = manga;
 
@@ -140,12 +143,14 @@ void MangaInfoWidget::updateInfos()
     ui->pushButtonReadFirst->setEnabled(enable);
     ui->pushButtonReadLatest->setEnabled(enable);
     ui->toolButtonDownload->setVisible(enable);
-    ui->toolButtonAddFavorites->setVisible(enable);
+    // a favorite whose chapters are gone at the source (e.g. MangaDex titles licensed away) can still be removed
+    ui->toolButtonAddFavorites->setVisible(enable || ui->toolButtonAddFavorites->isChecked());
 }
 
 void MangaInfoWidget::setFavoriteButtonState(bool state)
 {
     ui->toolButtonAddFavorites->setChecked(state);
+    ui->toolButtonAddFavorites->setVisible(state || (currentmanga && !currentmanga->chapters.isEmpty()));
 }
 
 void MangaInfoWidget::on_toolButtonAddFavorites_clicked()

@@ -8,7 +8,7 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
       currentManga(),
       networkManager(new NetworkManager(this)),
       mangaController(new MangaController(networkManager, this)),
-      favoritesManager(new FavoritesManager(activeMangaSources, this)),
+      favoritesManager(new FavoritesManager(activeMangaSources, networkManager, this)),
       mangaChapterDownloadManager(new MangaChapterDownloadManager(networkManager, this)),
       suspendManager(new SuspendManager(networkManager, this)),
       settings(),
@@ -19,7 +19,8 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
       autoSuspendTimer(),
       autoSuspendStart(0),
       currentDay(QDate::currentDate().day()),
-      updatingMangaLists(false)
+      updatingMangaLists(false),
+      mangaRequests(0)
 {
     setupDirectories();
     settings.deserialize();
@@ -31,10 +32,9 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
     mangaSources.append(QSharedPointer<AbstractMangaSource>(new Comick(networkManager)));
     mangaSources.append(QSharedPointer<AbstractMangaSource>(new MangaPlus(networkManager)));
 
-    currentMangaSource = mangaSources.first().get();
-
-    for (const auto& ms : qAsConst(mangaSources))
-        ms->deserializeMangaList();
+    // the manga lists are loaded when they are needed (AbstractMangaSource::loadMangaList())
+    for (const auto& ms : std::as_const(mangaSources))
+        ms->listOrder = settings.mangaOrder;
 
     updateActiveScources();
 
@@ -160,9 +160,14 @@ void UltimateMangaReaderCore::updateActiveScources()
     }
     settings.enabledMangaSources = enabledMangaSources;
 
-    this->currentMangaSource = nullptr;
-
     emit activeMangaSourcesChanged(activeMangaSources.values());
+
+    // the list of a source that was disabled isn't shown anymore
+    if (currentMangaSource && !activeMangaSources.values().contains(currentMangaSource))
+    {
+        currentMangaSource = nullptr;
+        emit currentMangaSourceChanged(nullptr);
+    }
 }
 
 void UltimateMangaReaderCore::setCurrentMangaSource(AbstractMangaSource* mangaSource)
@@ -175,7 +180,17 @@ void UltimateMangaReaderCore::setCurrentMangaSource(AbstractMangaSource* mangaSo
 
 void UltimateMangaReaderCore::setCurrentManga(const QString& mangaUrl, const QString& mangatitle)
 {
+    if (!currentMangaSource)
+        return;
+
+    // the latest choice wins, also over a favorite that was opened meanwhile
+    int request = ++mangaRequests;
+    auto shownManga = mangaController->currentManga;
+
     auto res = currentMangaSource->loadMangaInfo(mangaUrl, mangatitle);
+    if (request != mangaRequests || mangaController->currentManga != shownManga)
+        return;
+
     if (res.isOk())
         mangaController->setCurrentManga(res.unwrap());
     else
@@ -253,16 +268,47 @@ void UltimateMangaReaderCore::updateMangaLists(QSharedPointer<UpdateProgressToke
             continue;
 
         progressToken->currentSourceName = name;
+        // the updates compare with it and keep its titles
+        ms->loadMangaList();
+        int oldSize = ms->mangaList.size;
         if (!ms->updateMangaList(progressToken.get()))
         {
             ok = false;
             break;
         }
 
+        // A list that shrank a lot is more likely a broken update (the site changed) than the titles being
+        // gone: the old one (still on disk) stays, a retry starts over.
+        int newSize = ms->mangaList.size;
+        if (oldSize > 0 && newSize < oldSize / 2)
+        {
+            qDebug() << "Update of" << name << "found only" << newSize << "of" << oldSize << "titles";
+            ms->deserializeMangaList();
+            if (ms == currentMangaSource)
+                emit currentMangaSourceChanged(ms);
+            progressToken->clearResumeState();
+            progressToken->sourcesProgress[name] = 0;
+            progressToken->sendError(QString("%1: the update found only %2 of %3 titles, the old list is kept.")
+                                         .arg(name)
+                                         .arg(newSize)
+                                         .arg(oldSize));
+            ok = false;
+            break;
+        }
+
         // only the updated lists, writing all of them takes a while on the device
         ms->mangaList.filter();
+        ms->makeTitlesUnique();
         ms->mangaList.sortBy(settings.mangaOrder);
-        ms->serializeMangaList();
+        // the list on the home screen indexes into it (a cancelled update can go on for a while)
+        if (ms == currentMangaSource)
+            emit currentMangaSourceChanged(ms);
+        if (!ms->serializeMangaList())
+        {
+            progressToken->sendError(QString("Couldn't save the list of %1.").arg(name));
+            ok = false;
+            break;
+        }
         progressToken->clearResumeState();
     }
 
@@ -280,8 +326,12 @@ void UltimateMangaReaderCore::sortMangaLists()
     QElapsedTimer timer;
     timer.start();
 
-    for (const auto& ms : qAsConst(mangaSources))
+    // the lists that aren't loaded yet are sorted when they are (loading all of them takes seconds)
+    for (const auto& ms : std::as_const(mangaSources))
     {
+        ms->listOrder = settings.mangaOrder;
+        if (!ms->mangaListLoaded)
+            continue;
         ms->mangaList.sortBy(settings.mangaOrder);
         ms->serializeMangaList();
     }

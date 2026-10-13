@@ -3,6 +3,12 @@
 #include <QGuiApplication>
 #include <atomic>
 
+#ifdef Q_OS_LINUX
+#include <sched.h>
+#include <sys/resource.h>
+#include <sys/syscall.h>
+#endif
+
 #include "staticsettings.h"
 
 // read by the threads that generate cover thumbnails
@@ -40,8 +46,29 @@ QList<QRegularExpressionMatch> getAllRxMatches(const QRegularExpression& rx, con
 
 QString makePathLegal(QString filename)
 {
-    const QRegularExpression forbiddenchars(R"([\/:*"<>|?])");
-    QString ret = filename.remove(forbiddenchars).replace(' ', "-");
+    // without a regular expression: it's applied to every title of a manga list after updates
+    QString ret;
+    ret.reserve(filename.size() + 1);
+    for (QChar c : std::as_const(filename))
+    {
+        switch (c.unicode())
+        {
+            case '/':
+            case ':':
+            case '*':
+            case '"':
+            case '<':
+            case '>':
+            case '|':
+            case '?':
+                break;
+            case ' ':
+                ret.append('-');
+                break;
+            default:
+                ret.append(c);
+        }
+    }
     if (ret.endsWith('.'))
         ret.append("_");
     return ret;
@@ -165,6 +192,28 @@ unsigned long long getTotalSystemMemory()
 
 unsigned long long getFreeSystemMemory()
 {
+#ifdef Q_OS_LINUX
+    // MemFree alone is soon taken up by the page cache (every page that was downloaded or read), the image
+    // cache of the reader was always cleared then. The Kobo's kernel (3.0) has no MemAvailable yet.
+    QFile file("/proc/meminfo");
+    if (file.open(QIODevice::ReadOnly))
+    {
+        QHash<QByteArray, qint64> values;
+        for (const QByteArray& line : file.readAll().split('\n'))
+        {
+            int colon = line.indexOf(':');
+            if (colon > 0)
+                values.insert(line.left(colon), line.mid(colon + 1).trimmed().split(' ').first().toLongLong());
+        }
+
+        if (values.contains("MemAvailable"))
+            return values["MemAvailable"] * 1024;
+        if (values.contains("MemFree"))
+            return qMax<qint64>(0, values["MemFree"] + values["Buffers"] + values["Cached"] - values["Shmem"]) *
+                   1024;
+    }
+#endif
+
     long pages = sysconf(_SC_AVPHYS_PAGES);
     long page_size = sysconf(_SC_PAGE_SIZE);
     return pages * page_size;
@@ -173,6 +222,25 @@ unsigned long long getFreeSystemMemory()
 bool enoughFreeSystemMemory()
 {
     return getFreeSystemMemory() / 1024 / 1024 > 100;
+}
+
+void lowerThreadPriority()
+{
+#ifdef Q_OS_LINUX
+    // QThread priorities don't apply to SCHED_OTHER on Linux, the nice value of the thread does
+    setpriority(PRIO_PROCESS, syscall(SYS_gettid), 5);
+#endif
+}
+
+void setIdleThreadPriority(bool idle)
+{
+#ifdef Q_OS_LINUX
+    // pid 0 is the calling thread
+    sched_param param = {};
+    sched_setscheduler(0, idle ? SCHED_IDLE : SCHED_OTHER, &param);
+#else
+    Q_UNUSED(idle);
+#endif
 }
 
 void decryptXorInplace(QByteArray& data, const QByteArray& key)

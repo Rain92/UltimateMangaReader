@@ -1,11 +1,5 @@
 #include "imageprocessor.h"
 
-#ifdef Q_OS_LINUX
-#include <sys/resource.h>
-#include <sys/syscall.h>
-#include <unistd.h>
-#endif
-
 #include "imageprocessingnative.h"
 #include "imageprocessingqt.h"
 #include "perftimer.h"
@@ -16,24 +10,39 @@ QImage processDownloadedImage(const ImageProcessingRequest &request)
     PerfTimer timer("processImage");
 
     QByteArray array = request.data;
+    QByteArray appendArray = request.appendData;
 
     if (request.encryption.type == XorEncryption)
     {
 #ifdef __ARM_NEON__
         decryptXorInplace_NEON(array, request.encryption.key);
+        if (!appendArray.isEmpty())
+            decryptXorInplace_NEON(appendArray, request.encryption.key);
 #else
         decryptXorInplace(array, request.encryption.key);
+        if (!appendArray.isEmpty())
+            decryptXorInplace(appendArray, request.encryption.key);
 #endif
         timer.lap("decrypt");
     }
 
     QImage pimg;
 
-    if (isJpeg(array) || isPng(array) || isWebp(array))
-        pimg = processImageN(array, request.filepath, request.screenSize, request.doublePageMode,
-                             request.trim, request.manhwaMode, request.swDither);
+    if (!appendArray.isEmpty())
+    {
+        pimg = processStitchedImageN(array, appendArray, request.filepath, request.screenSize,
+                                     request.doublePageMode, request.trim, request.manhwaMode);
+        if (pimg.isNull())
+            qDebug() << "Stitching failed, using the first part only:" << request.filepath;
+    }
 
-    if (pimg.isNull())
+    bool decoded = false;
+    if (pimg.isNull() && (isJpeg(array) || isPng(array) || isWebp(array)))
+        pimg = processImageN(array, request.filepath, request.screenSize, request.doublePageMode,
+                             request.trim, request.manhwaMode, request.swDither, &decoded);
+
+    // Qt's decoders are for what the native ones can't decode, they wouldn't do better with the rest
+    if (pimg.isNull() && !decoded)
     {
         qDebug() << "Fast decoding failed, using fallback!";
 
@@ -51,12 +60,8 @@ ImageProcessor::ImageProcessor(QObject *parent)
     worker.moveToThread(&thread);
     thread.start();
 
-#ifdef Q_OS_LINUX
-    // QThread priorities don't apply to SCHED_OTHER on Linux, so lower the nice value of the thread
-    // instead: page turns on the gui thread shouldn't have to wait for preloads.
-    QMetaObject::invokeMethod(
-        &worker, [] { setpriority(PRIO_PROCESS, syscall(SYS_gettid), 5); }, Qt::QueuedConnection);
-#endif
+    // page turns on the gui thread shouldn't have to wait for preloads
+    QMetaObject::invokeMethod(&worker, [] { lowerThreadPriority(); }, Qt::QueuedConnection);
 }
 
 ImageProcessor::~ImageProcessor()
@@ -75,7 +80,16 @@ quint64 ImageProcessor::process(const ImageProcessingRequest &request)
         &worker,
         [this, id, request]
         {
-            QImage image = processDownloadedImage(request);
+            QImage image;
+            try
+            {
+                image = processDownloadedImage(request);
+            }
+            catch (const std::bad_alloc &)
+            {
+                // an exception would end the thread's event loop and the app with it
+                qDebug() << "Out of memory processing" << request.filepath;
+            }
             emit finished(id, image);
             pending.deref();
         },

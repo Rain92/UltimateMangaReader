@@ -14,6 +14,7 @@ public:
 protected:
     virtual void focusInEvent(QFocusEvent *e);
     virtual void focusOutEvent(QFocusEvent *e);
+    virtual void mousePressEvent(QMouseEvent *e);
 };
 
 #endif  // CLINEEDIT_H

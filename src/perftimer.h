@@ -3,7 +3,10 @@
 
 #include <QDebug>
 #include <QElapsedTimer>
+#include <QTimer>
 #include <QtGlobal>
+
+#include <memory>
 
 // Timing logs for the image pipeline, enabled with the environment variable UMR_PROFILE=1.
 inline bool perfLoggingEnabled()
@@ -43,5 +46,28 @@ private:
     bool enabled;
     QElapsedTimer timer;
 };
+
+// Logs "[perf] GUI stall: x ms" whenever the thread of \a parent didn't get back to its event loop for
+// longer than \a thresholdMs (only with UMR_PROFILE=1).
+inline void startStallWatchdog(QObject *parent, int thresholdMs = 150)
+{
+    if (!perfLoggingEnabled())
+        return;
+
+    const int intervalMs = 50;
+    auto clock = std::make_shared<QElapsedTimer>();
+    clock->start();
+
+    auto timer = new QTimer(parent);
+    timer->setTimerType(Qt::PreciseTimer);
+    QObject::connect(timer, &QTimer::timeout, parent,
+                     [clock, intervalMs, thresholdMs]()
+                     {
+                         qint64 gap = clock->restart();
+                         if (gap > intervalMs + thresholdMs)
+                             qDebug().nospace() << "[perf] GUI stall: " << gap - intervalMs << " ms";
+                     });
+    timer->start(intervalMs);
+}
 
 #endif  // PERFTIMER_H

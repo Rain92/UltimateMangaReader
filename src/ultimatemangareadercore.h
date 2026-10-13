@@ -75,6 +75,8 @@ private:
     qint64 autoSuspendStart;
     int currentDay;
     bool updatingMangaLists;
+    // counts the opened mangas: loading one can take a download, another one may be opened meanwhile
+    int mangaRequests;
 
     void timerTick();
     void alignClock();

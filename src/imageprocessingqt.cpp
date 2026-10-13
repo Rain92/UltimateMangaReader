@@ -4,6 +4,13 @@
 
 int calcRotationInfo(QSize imgSize, QSize screenSize, DoublePageMode doublePageMode)
 {
+    // strips (e.g. the rest of a page that a source cut in two) aren't double pages, rotated they'd become a
+    // thin line across the screen
+    const double maxDoublePageAspect = 2.5;
+    int longSide = qMax(imgSize.width(), imgSize.height());
+    if (longSide > maxDoublePageAspect * qMin(imgSize.width(), imgSize.height()))
+        return 0;
+
     bool rot90 = (imgSize.width() <= imgSize.height()) != (screenSize.width() <= screenSize.height());
 
     if (rot90 && doublePageMode == DoublePage90CW)
@@ -46,7 +53,9 @@ QSize calcRescaleSize(QSize imgSize, QSize screenSize, bool rot90, bool manhwaMo
             rescaleSize = fitToSize(imgSize, screenSize);
         }
     }
-    rescaleSize.setWidth(rescaleSize.width() + 4 - rescaleSize.width() % 4);
+    // a multiple of 4, but not wider than it fits: the reader centers it and would cut off its edges
+    rescaleSize.setWidth(qMax(16, rescaleSize.width() & ~3));
+    rescaleSize.setHeight(qMax(1, rescaleSize.height()));
     return rescaleSize;
 }
 

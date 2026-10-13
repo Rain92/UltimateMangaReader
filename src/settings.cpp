@@ -1,5 +1,7 @@
 #include "settings.h"
 
+#include <QSaveFile>
+
 #include "staticsettings.h"
 
 Settings::Settings()
@@ -18,6 +20,12 @@ Settings::Settings()
       timer()
 {
     QObject::connect(&timer, &QTimer::timeout, [this]() { this->serialize(); });
+}
+
+Settings::~Settings()
+{
+    if (timer.isActive())
+        serialize();
 }
 
 void Settings::deserialize()
@@ -40,14 +48,15 @@ void Settings::scheduleSerialize()
 void Settings::serialize()
 {
     timer.stop();
-    QFile file(QString(CONF.cacheDir) + "/settings.dat");
+    QSaveFile file(QString(CONF.cacheDir) + "/settings.dat");
     if (!file.open(QIODevice::WriteOnly))
         return;
 
     QDataStream out(&file);
     out.setVersion(CONF.dataStreamVersion);
     out << *this;
-    file.close();
+    if (out.status() != QDataStream::Ok || !file.commit())
+        qDebug() << "Couldn't save the settings";
 }
 
 QDataStream &operator<<(QDataStream &str, const Settings &m)

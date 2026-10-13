@@ -48,6 +48,15 @@ public:
 
     bool serializeMangaList();
     bool deserializeMangaList();
+    // Titles are the key of the info cache, the favorites and the reading progress: every entry of an updated
+    // list needs its own title, one that stays the same with later updates.
+    void makeTitlesUnique();
+    // Loads the list from its file the first time it is needed: the lists of all sources have tens of MB
+    // (seconds to read on the device, more in memory) and most sessions don't need them.
+    void loadMangaList();
+    bool mangaListLoaded = false;
+    // the order of the list setting: a list that was saved in another one is sorted when it's loaded
+    MangaOrderMethod listOrder = OrderByPopularity;
 
     QString getImagePath(const DownloadImageDescriptor &descriptor);
 
@@ -57,6 +66,17 @@ public:
 
     virtual void updateMangaInfoAsync(QSharedPointer<MangaInfo> mangainfo, bool updateCover = true);
     void downloadCoverAsync(QSharedPointer<MangaInfo> mangainfo, bool updateCover = true);
+    // Another url to try when the cover can't be downloaded (e.g. the same file on another host of the cdn).
+    virtual QString coverFallbackUrl(const QString &coverUrl)
+    {
+        Q_UNUSED(coverUrl)
+        return {};
+    }
+    // Called when the chapters of an update were taken over into the info (before it is saved).
+    virtual void chaptersMerged(QSharedPointer<MangaInfo> info)
+    {
+        Q_UNUSED(info)
+    }
     Result<void, QString> updatePageList(QSharedPointer<MangaInfo> info, int chapter);
 
 protected:
@@ -66,8 +86,17 @@ protected:
     NetworkManager *networkManager;
     QTextDocument htmlConverter;
 
+    // Merges the chapters an update loaded into the info (moves or removes the downloaded pages accordingly).
+    Result<void, QString> mergeChapters(QSharedPointer<MangaInfo> info, MangaChapterCollection newChapters,
+                                        int oldnumchapters);
     void removeChapterPages(QSharedPointer<MangaInfo> info, QList<QPair<int, int>> moveMapping);
     void reorderChapterPages(QSharedPointer<MangaInfo> info, QList<QPair<int, int>> moveMapping);
+
+    // The infos in use, by title (like their files): every part of the app gets the same object for a manga.
+    // Two copies would both apply a chapter update to the pages and the reading progress.
+    QHash<QString, QWeakPointer<MangaInfo>> liveInfos;
+    QSharedPointer<MangaInfo> liveInfo(const QString &title);
+    void registerInfo(const QSharedPointer<MangaInfo> &info);
 
     QString defaultCoverPath(QSharedPointer<MangaInfo> mangainfo);
     void fillMangaInfo(QSharedPointer<MangaInfo> info, const QString &buffer,

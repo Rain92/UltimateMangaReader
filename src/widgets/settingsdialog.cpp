@@ -34,6 +34,8 @@ void SettingsDialog::adjustUI()
 void SettingsDialog::open()
 {
     resetUI();
+    // it keeps where it was scrolled to the last time
+    ui->scrollArea->verticalScrollBar()->setValue(0);
     QRect screenGeometry = this->parentWidget()->geometry();
     int x = (screenGeometry.width() - this->width()) / 2 + this->parentWidget()->x();
     int y = (screenGeometry.height() - this->height()) / 2 + this->parentWidget()->y();

@@ -129,9 +129,8 @@ QRect getTrimRect(const QByteArray &buffer, int imgWidth, int imgHeight, int str
 
     int width = rightMin - leftMin + 1;
     int height = bottom - top + 1;
-    int ntw = qMax(0, width + 4 - width % 4);
-    if (ntw + rightMin > imgWidth)
-        ntw -= 4;
+    if (width <= 0 || height <= 0)
+        return QRect();
 
-    return QRect(leftMin, top, ntw, height);
+    return QRect(leftMin, top, width, height);
 }

@@ -49,6 +49,19 @@ void MangaList::sortBy(MangaOrderMethod method)
         }
 }
 
+bool MangaList::isSortedBy(MangaOrderMethod method) const
+{
+    for (int i = 1; i < size; i++)
+    {
+        bool inOrder = method == OrderByTitle
+                           ? QString::compare(titles[i - 1], titles[i], Qt::CaseInsensitive) <= 0
+                           : popularityRanks[i - 1] <= popularityRanks[i];
+        if (!inOrder)
+            return false;
+    }
+    return true;
+}
+
 void MangaList::append(const QString &title, const QString &url)
 {
     titles.append(title);

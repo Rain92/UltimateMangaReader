@@ -12,6 +12,8 @@ class Settings
 {
 public:
     Settings();
+    // saves a change that is still waiting for the timer
+    ~Settings();
 
     void deserialize();
     void serialize();

@@ -50,8 +50,13 @@ void DownloadFileJob::restart()
 {
     isCompleted = false;
     errorString = "";
+    retryHold.reset();
     reply.reset();
     start();
+
+    // the file can exist by now (another job for the same path), whoever waits for the job needs the signal
+    if (isCompleted)
+        QTimer::singleShot(0, this, [this]() { emit completed(); });
 }
 
 void DownloadFileJob::downloadFileReadyRead()
@@ -67,13 +72,8 @@ void DownloadFileJob::downloadFileFinished()
         file.close();
     }
 
-    QUrl redirect = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
-    if (redirect.isValid() && reply->url() != redirect)
-    {
-        this->url = redirect.toString();
-        this->restart();
+    if (followRedirect())
         return;
-    }
 
     if (reply->error() != QNetworkReply::NoError)
     {
@@ -109,6 +109,7 @@ void DownloadFileJob::onError(QNetworkReply::NetworkError)
     {
         int delayMs = 1000 << retries++;
         qDebug() << "Retrying in" << delayMs << "ms:" << url << reply->errorString();
+        retryHold = holdActivity();
         // not right away: this runs in a signal of the reply that restart() deletes
         QTimer::singleShot(delayMs, this, &DownloadFileJob::restart);
         return;

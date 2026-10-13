@@ -1,5 +1,9 @@
 #include "mangainfo.h"
 
+#include <QSaveFile>
+
+#include "perftimer.h"
+
 MangaInfo::MangaInfo(AbstractMangaSource *mangasource)
     : QObject(), updated(false), mangaSource(mangasource), updateMutex(new QMutex())
 {
@@ -37,7 +41,8 @@ void MangaInfo::serialize()
     if (hostname.isEmpty() || title.isEmpty())
         return;
 
-    QFile file(CONF.mangainfodir(hostname, title) + "mangainfo.dat");
+    PerfTimer perf("serialize info");
+    QSaveFile file(CONF.mangainfodir(hostname, title) + "mangainfo.dat");
     if (!file.open(QIODevice::WriteOnly))
         return;
 
@@ -45,8 +50,8 @@ void MangaInfo::serialize()
     out.setVersion(CONF.dataStreamVersion);
     out << hostname << title << url << author << artist << releaseYear << status << genres << summary
         << coverUrl << CONF.relativeCachePath(coverPath) << chapters;
-
-    file.close();
+    if (out.status() != QDataStream::Ok || !file.commit())
+        qDebug() << "Couldn't save the info of" << title;
 }
 
 void MangaInfo::updateCompeted(bool updated, const QList<QPair<int, int> > &moveMap)

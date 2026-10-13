@@ -1,5 +1,7 @@
 #include "downloadmangachaptersdialog.h"
 
+#include <QLineEdit>
+
 #include "ui_downloadmangachaptersdialog.h"
 
 DownloadMangaChaptersDialog::DownloadMangaChaptersDialog(QWidget *parent)
@@ -9,8 +11,13 @@ DownloadMangaChaptersDialog::DownloadMangaChaptersDialog(QWidget *parent)
     adjustUI();
     setWindowFlags(Qt::Popup);
 
-    ui->spinBoxFrom->installEventFilter(this);
-    ui->spinBoxTo->installEventFilter(this);
+    // the taps land on the line edits inside the boxes
+    for (auto box : {ui->spinBoxFrom, ui->spinBoxTo})
+    {
+        box->installEventFilter(this);
+        if (auto edit = box->findChild<QLineEdit *>())
+            edit->installEventFilter(this);
+    }
 }
 
 void DownloadMangaChaptersDialog::adjustUI()
@@ -52,10 +59,14 @@ void DownloadMangaChaptersDialog::on_pushButtonCancel_clicked()
 
 bool DownloadMangaChaptersDialog::eventFilter(QObject *obj, QEvent *event)
 {
-    if (event->type() == QEvent::FocusIn)
+    // also on a tap into a box that has the focus already (see GotoDialog::eventFilter())
+    if (event->type() == QEvent::FocusIn || event->type() == QEvent::MouseButtonPress)
     {
-        auto box = static_cast<QSpinBox *>(obj);
-        QTimer::singleShot(0, box, &QSpinBox::selectAll);
+        auto box = qobject_cast<QSpinBox *>(obj);
+        if (!box)
+            box = qobject_cast<QSpinBox *>(obj->parent());
+        if (box)
+            QTimer::singleShot(0, box, &QSpinBox::selectAll);
         return false;
     }
     else if (event->type() == QEvent::RequestSoftwareInputPanel)

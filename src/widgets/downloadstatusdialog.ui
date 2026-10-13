@@ -176,6 +176,16 @@
       </widget>
      </item>
      <item>
+      <widget class="QPushButton" name="pushButtonRetry">
+       <property name="focusPolicy">
+        <enum>Qt::NoFocus</enum>
+       </property>
+       <property name="text">
+        <string> Retry failed </string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="pushButtonOk">
        <property name="focusPolicy">
         <enum>Qt::NoFocus</enum>

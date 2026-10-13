@@ -164,6 +164,8 @@ bool MangaTown::updateMangaList(UpdateProgressToken *token)
     auto &mangas = state.mangas;
     if (mangas.size == 0)
     {
+        // nothing worth resuming, a retry starts over
+        token->clearResumeState();
         token->sendError(QString("Couldn't parse manga list."));
         return false;
     }
@@ -234,6 +236,9 @@ Result<MangaChapterCollection, QString> MangaTown::updateMangaInfoFinishedLoadin
         return Ok(MangaChapterCollection());
     }
     int epos = job->bufferStr.indexOf(R"(</ul>)", spos);
+    // a page that was cut off would give some of the chapters only
+    if (epos == -1)
+        return Err(QString("Couldn't parse the chapter list."));
 
     MangaChapterCollection newchapters;
     QSet<QString> chapterUrls;

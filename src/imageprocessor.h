@@ -26,6 +26,8 @@ struct EncryptionDescriptor
 struct ImageProcessingRequest
 {
     QByteArray data;
+    // the rest of the page, which the source cut off into another image (stitched below data)
+    QByteArray appendData;
     QString filepath;
     QSize screenSize;
     DoublePageMode doublePageMode = DoublePageNoRotation;

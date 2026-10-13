@@ -70,16 +70,17 @@ void DownloadQueue::startSingle()
     else  // if (type == DownloadTypeScaledImage)
         job = networkManager->downloadAsScaledImage(descriptor.url, descriptor.path);
 
-    if (!job->isCompleted)
+    // a job can be done or have failed already (e.g. its file couldn't be created), it doesn't signal then
+    if (job->isCompleted || job->hasFailed())
+    {
+        downloadFinished(job, job->isCompleted);
+    }
+    else
     {
         QObject::connect(job.get(), &DownloadJobBase::completed, this,
                          [this, job]() { downloadFinished(job, true); });
         QObject::connect(job.get(), &DownloadJobBase::downloadError, this,
                          [this, job]() { downloadFinished(job, false); });
-    }
-    else
-    {
-        downloadFinished(job, job->errorString == "");
     }
 }
 

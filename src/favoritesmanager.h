@@ -15,7 +15,7 @@ class FavoritesManager : public QObject
     Q_OBJECT
 public:
     explicit FavoritesManager(const QMap<QString, AbstractMangaSource *> &mangasources,
-                              QObject *parent = nullptr);
+                              NetworkManager *networkManager, QObject *parent = nullptr);
 
     bool isFavorite(QSharedPointer<MangaInfo> info);
     bool toggleFavorite(QSharedPointer<MangaInfo> info);
@@ -46,11 +46,14 @@ signals:
 
 private:
     const QMap<QString, AbstractMangaSource *> &mangasources;
+    NetworkManager *networkManager;
     bool infosLoaded;
     QHash<QString, QElapsedTimer> lastUpdates;
+    bool updateAfterConnecting;
 
     void deserialize();
     QSharedPointer<MangaInfo> loadInfo(const Favorite &fav);
+    int indexOf(const Favorite &fav) const;
 };
 
 #endif  // READINGSTATEMANAGER_H

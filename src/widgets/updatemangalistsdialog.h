@@ -36,6 +36,8 @@ private:
     Ui::UpdateMangaListsDialog *ui;
     Settings *settings;
     QSharedPointer<UpdateProgressToken> progressToken;
+    // the sources an unfinished update completed are unchecked when the dialog is opened again
+    bool updateCompleted;
 
     void resetUI();
     void setupSourcesList();

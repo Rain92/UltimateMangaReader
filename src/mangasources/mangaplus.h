@@ -35,6 +35,8 @@ private:
 
     QSet<QString> viewTokens;
     QHash<QString, RefreshedPageList> refreshedPageLists;
+    // the refreshes that wait for their page list, by chapter
+    QHash<QString, int> runningRefreshes;
 
     QList<QWeakPointer<MangaInfo>> openedInfos;
     QObject replyContext;

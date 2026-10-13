@@ -19,6 +19,10 @@ struct ComickUpdateState
     QSet<QString> urls;
     bool searched = false;
     QSet<int> sitemapsDone;
+    // the titles of the list before the update by url: the cached infos and the reading progress are found by
+    // title, it mustn't change (titles from the sitemaps are made from the slugs, the search has the real ones)
+    QHash<QString, QString> knownTitles;
+    bool knownTitlesLoaded = false;
 };
 
 class Comick : public AbstractMangaSource
@@ -45,8 +49,8 @@ private:
     QHash<QString, QSharedPointer<CacheWarmUp>> pageWarmUps;
 
     QString normalizeUrl(const QString &url) const;
-    bool fetchSearch(const QString &order, int pages, MangaList &mangas, QSet<QString> &urls,
-                     UpdateProgressToken *token, int progressFrom, int progressTo);
+    bool fetchSearch(const QString &order, int pages, ComickUpdateState &state, UpdateProgressToken *token,
+                     int progressFrom, int progressTo);
     bool fetchSitemaps(ComickUpdateState &state, UpdateProgressToken *token);
     Result<MangaChapterCollection, QString> fetchChapters(const QString &slug,
                                                           const MangaChapterCollection &current);

@@ -685,22 +685,29 @@ Result<QString, QString> MangaPlus::getImageUrl(const QString &pageUrl)
     if (refreshedPageLists.size() > 16 && !refreshedPageLists.contains(chapterId))
         refreshedPageLists.clear();
 
-    auto &refreshed = refreshedPageLists[chapterId];
+    const auto refreshed = refreshedPageLists.value(chapterId);
     auto url = findImageUrl(refreshed.imageUrls, fileName);
 
-    // at most one request per chapter and minute: neither a failing network nor a wrong device clock
-    // may cause a request (and a timeout) per page
+    // At most one request per chapter and minute: neither a failing network nor a wrong device clock
+    // may cause a request (and a timeout) per page. Pages that are needed while the request runs (in an
+    // event loop, it can't be waited for) make their own one.
     auto now = QDateTime::currentSecsSinceEpoch();
-    if ((url.isEmpty() || !isUsableImageUrl(url)) && now - refreshed.time >= 60)
+    if ((url.isEmpty() || !isUsableImageUrl(url)) &&
+        (now - refreshed.time >= 60 || runningRefreshes.value(chapterId) > 0))
     {
-        refreshed.time = now;
+        refreshedPageLists[chapterId].time = now;
 
+        runningRefreshes[chapterId]++;
         auto pagesR = getPageList(pagesUrl.arg(chapterId));
+        if (--runningRefreshes[chapterId] == 0)
+            runningRefreshes.remove(chapterId);
+
         if (pagesR.isErr())
             return Err(pagesR.unwrapErr());
 
-        refreshed.imageUrls = pagesR.unwrap();
-        url = findImageUrl(refreshed.imageUrls, fileName);
+        // the hash can have changed meanwhile, nothing refers into it across the download
+        refreshedPageLists[chapterId] = {now, pagesR.unwrap()};
+        url = findImageUrl(refreshedPageLists[chapterId].imageUrls, fileName);
     }
 
     if (url.isEmpty())

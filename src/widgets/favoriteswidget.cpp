@@ -2,6 +2,8 @@
 
 #include <QSaveFile>
 
+#include "perftimer.h"
+
 #include "ui_favoriteswidget.h"
 
 static QString favoriteKey(const Favorite &fav)
@@ -55,6 +57,8 @@ FavoritesWidget::FavoritesWidget(QWidget *parent)
       thumbnailWatcher(),
       thumbnailBatch(),
       queuedThumbnails(),
+      thumbnailBatchTimer(),
+      thumbnailBatchRunning(false),
       opening(false)
 {
     ui->setupUi(this);
@@ -62,7 +66,7 @@ FavoritesWidget::FavoritesWidget(QWidget *parent)
     adjustUI();
 
     connect(&thumbnailWatcher, &QFutureWatcher<QImage>::resultReadyAt, this, &FavoritesWidget::thumbnailReady);
-    connect(&thumbnailWatcher, &QFutureWatcher<QImage>::finished, this, &FavoritesWidget::startThumbnailBatch);
+    connect(&thumbnailWatcher, &QFutureWatcher<QImage>::finished, this, &FavoritesWidget::thumbnailBatchFinished);
 }
 
 FavoritesWidget::~FavoritesWidget()
@@ -98,6 +102,8 @@ void FavoritesWidget::adjustUI()
 
 void FavoritesWidget::showFavoritesList()
 {
+    PerfTimer timer("showFavoritesList");
+
     // only from the cache, no downloads
     favoritesManager->loadInfos();
 
@@ -163,8 +169,9 @@ static QString statusText(const QSharedPointer<MangaInfo> &info)
     if (!info)
         return "Source not enabled";
 
+    // e.g. a MangaDex title whose chapters are all external links has an info but nothing to read
     if (info->chapters.isEmpty())
-        return "Not loaded yet";
+        return info->summary.isEmpty() && info->author.isEmpty() ? "Not loaded yet" : "No chapters available";
 
     return (info->updated ? "New chapters!\n" : info->status + "\n") +
            "Chapters: " + QString::number(info->chapters.size());
@@ -271,10 +278,26 @@ void FavoritesWidget::loadThumbnails(const QList<int> &rows)
     startThumbnailBatch();
 }
 
+void FavoritesWidget::thumbnailBatchFinished()
+{
+    thumbnailBatchRunning = false;
+
+    if (perfLoggingEnabled())
+        qDebug().nospace() << "[perf] thumbnails: " << thumbnailBatch.size() << " in "
+                           << thumbnailBatchTimer.elapsed() << " ms";
+
+    startThumbnailBatch();
+}
+
 void FavoritesWidget::startThumbnailBatch()
 {
-    if (thumbnailWatcher.isRunning() || queuedThumbnails.isEmpty())
+    // not isRunning(): that is false before the last results of the batch were delivered, a new future would
+    // drop them
+    if (thumbnailBatchRunning || queuedThumbnails.isEmpty())
         return;
+
+    thumbnailBatchRunning = true;
+    thumbnailBatchTimer.start();
 
     thumbnailBatch = queuedThumbnails;
     queuedThumbnails.clear();

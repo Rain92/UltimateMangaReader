@@ -29,16 +29,24 @@ MainWidget::MainWidget(QWidget *parent)
     downloadStatusDialog = new DownloadStatusDialog(this);
     aboutDialog = new AboutDialog(this);
 
-    updateMangaListsDialog->installEventFilter(this);
-    wifiDialog->installEventFilter(this);
-    downloadMangaChaptersDialog->installEventFilter(this);
-    downloadStatusDialog->installEventFilter(this);
+    // the hardware keys (power button, sleep cover) go to the open dialog, from where they reach the main widget
+    for (QDialog *dialog : {static_cast<QDialog *>(updateMangaListsDialog), static_cast<QDialog *>(wifiDialog),
+                            static_cast<QDialog *>(downloadMangaChaptersDialog),
+                            static_cast<QDialog *>(downloadStatusDialog), static_cast<QDialog *>(menuDialog),
+                            static_cast<QDialog *>(settingsDialog), static_cast<QDialog *>(clearCacheDialog),
+                            static_cast<QDialog *>(aboutDialog), ui->mangaReaderWidget->gotoDialog()})
+        dialog->installEventFilter(this);
 
     QObject::connect(menuDialog, &MenuDialog::finished,
                      [this](int b) { menuDialogButtonPressed(static_cast<MenuButton>(b)); });
 
-    QObject::connect(clearCacheDialog, &MenuDialog::finished,
-                     [this](int l) { core->clearDownloadCache(static_cast<ClearDownloadCacheLevel>(l)); });
+    // closing it (Cancel, a tap outside) finishes it with 0
+    QObject::connect(clearCacheDialog, &ClearCacheDialog::finished,
+                     [this](int l)
+                     {
+                         if (l >= ClearImages)
+                             core->clearDownloadCache(static_cast<ClearDownloadCacheLevel>(l));
+                     });
 
     QObject::connect(updateMangaListsDialog, &UpdateMangaListsDialog::updateClicked, core,
                      &UltimateMangaReaderCore::updateMangaLists);
@@ -52,6 +60,9 @@ MainWidget::MainWidget(QWidget *parent)
 
     QObject::connect(downloadStatusDialog, &DownloadStatusDialog::abortDownloads,
                      core->mangaChapterDownloadManager, &MangaChapterDownloadManager::cancelDownloads);
+
+    QObject::connect(downloadStatusDialog, &DownloadStatusDialog::retryFailed, core->mangaChapterDownloadManager,
+                     &MangaChapterDownloadManager::retryFailedDownloads);
 
     // NetworkManager
     updatePageSize();
@@ -106,6 +117,8 @@ MainWidget::MainWidget(QWidget *parent)
                          // clearing can remove favorites
                          if (ui->stackedWidget->currentIndex() == FavoritesTab)
                              ui->favoritesWidget->showFavoritesList();
+                         if (auto manga = core->mangaController->currentManga)
+                             ui->mangaInfoWidget->setFavoriteButtonState(core->favoritesManager->isFavorite(manga));
                      });
 
     // MangaController
@@ -119,9 +132,11 @@ MainWidget::MainWidget(QWidget *parent)
                          ui->mangaReaderWidget->clearCache();
                      });
 
+    QObject::connect(core->mangaController, &MangaController::pagesMoved, ui->mangaReaderWidget,
+                     &MangaReaderWidget::clearImageCache);
+
     QObject::connect(core->mangaController, &MangaController::completedImagePreloadSignal,
-                     ui->mangaReaderWidget,
-                     [this](auto path) { ui->mangaReaderWidget->addImageToCache(path, true); });
+                     ui->mangaReaderWidget, &MangaReaderWidget::prefetchImage);
 
     QObject::connect(core->mangaController, &MangaController::currentIndexChanged, ui->mangaReaderWidget,
                      &MangaReaderWidget::updateCurrentIndex);
@@ -179,8 +194,8 @@ MainWidget::MainWidget(QWidget *parent)
     QObject::connect(ui->favoritesWidget, &FavoritesWidget::favoriteClicked,
                      [this](auto mangainfo, auto jumptoreader)
                      {
-                         core->mangaController->setCurrentManga(mangainfo);
-                         if (jumptoreader)
+                         // the info stays on the screen if the reader can't show it (no chapters)
+                         if (core->mangaController->setCurrentManga(mangainfo) && jumptoreader)
                              setWidgetTab(MangaReaderTab);
                      });
 
@@ -206,9 +221,14 @@ MainWidget::MainWidget(QWidget *parent)
     QObject::connect(ui->mangaReaderWidget, &MangaReaderWidget::gotoIndex, core->mangaController,
                      &MangaController::setCurrentIndex);
 
-    QObject::connect(
-        core->networkManager, &NetworkManager::downloadedImage, ui->mangaReaderWidget,
-        qOverload<const QString &, QSharedPointer<QImage> >(&MangaReaderWidget::addImageToCache));
+    // the pages of chapters that are downloaded for later would only push the ones around the current page out
+    QObject::connect(core->networkManager, &NetworkManager::downloadedImage, ui->mangaReaderWidget,
+                     [this](const QString &path, QSharedPointer<QImage> img)
+                     {
+                         auto manga = core->mangaController->currentManga;
+                         if (manga && path.startsWith(CONF.mangaimagesdir(manga->hostname, manga->title)))
+                             ui->mangaReaderWidget->addImageToCache(path, img);
+                     });
 
     // SettingsDialog
     QObject::connect(settingsDialog, &SettingsDialog::activeMangasChanged, core,
@@ -261,14 +281,20 @@ void MainWidget::showEvent(QShowEvent *event)
 
     QTimer::singleShot(500, this, &MainWidget::onResume);
 
-    // UMR_OPEN_FAVORITE=<n> opens the n-th favorite in the reader right away (for profiling over ssh,
-    // where the screen can't be tapped)
+    // UMR_OPEN_FAVORITE=<n> opens the n-th favorite in the reader right away, -1 the favorites list (for
+    // profiling over ssh, where the screen can't be tapped)
     bool ok = false;
     int favoriteIndex = qEnvironmentVariableIntValue("UMR_OPEN_FAVORITE", &ok);
     if (ok)
         QTimer::singleShot(1500, this,
                            [this, favoriteIndex]()
                            {
+                               if (favoriteIndex == -1)
+                               {
+                                   setWidgetTab(FavoritesTab);
+                                   return;
+                               }
+
                                core->favoritesManager->loadInfos();
                                auto &infos = core->favoritesManager->favoriteinfos;
                                if (favoriteIndex < 0 || favoriteIndex >= infos.count() ||
@@ -324,6 +350,10 @@ bool MainWidget::buttonReleaseEvent(QKeyEvent *event)
 
 bool MainWidget::buttonPressEvent(QKeyEvent *event)
 {
+    // the repeats of a held button: the power button's timer must run on, the pages would fly by
+    if (event->isAutoRepeat())
+        return true;
+
     if (event->key() == POWERBUTTON)
     {
         qDebug() << "Powerkey press";
@@ -346,7 +376,7 @@ void MainWidget::timerTick()
 {
 #ifdef KOBO
     // low battery guard
-    if (KoboPlatformFunctions::getBatteryLevel() < 10)
+    if (KoboPlatformFunctions::getBatteryLevel() < 10 && !KoboPlatformFunctions::isBatteryCharging())
         close();
 #endif
 
@@ -357,7 +387,7 @@ void MainWidget::timerTick()
 void MainWidget::onSuspend()
 {
     core->enableTimers(false);
-    wifiDialog->close();
+    wifiDialog->cancel();
     screensaverDialog->showRandomScreensaver();
 
     disableFrontLight();
@@ -430,9 +460,11 @@ void MainWidget::setFrontLight(int light, int comflight)
     if (!koboDevice.frontlightSettings.hasFrontLight)
         return;
 
-    if (koboDevice.frontlightSettings.naturalLightInverted)
-        comflight = koboDevice.frontlightSettings.naturalLightMax - comflight;
-    KoboPlatformFunctions::setFrontlightLevel(light, comflight);
+    // only the hardware takes the inverted value, the settings keep the slider's (it flipped with every call)
+    int hardwareComflight = koboDevice.frontlightSettings.naturalLightInverted
+                                ? koboDevice.frontlightSettings.naturalLightMax - comflight
+                                : comflight;
+    KoboPlatformFunctions::setFrontlightLevel(light, hardwareComflight);
 #endif
 
     if (core->settings.lightValue != light || core->settings.comflightValue != comflight)
@@ -517,6 +549,8 @@ void MainWidget::setWidgetTab(WidgetTab tab)
         case MangaReaderTab:
             ui->navigationBar->setVisible(false);
             ui->frameHeader->setVisible(false);
+            // the preloads were cancelled above, the neighbours of the page are wanted now
+            QTimer::singleShot(50, core->mangaController, &MangaController::preloadNeighbours);
             break;
     }
     ui->frameHeader->repaint();

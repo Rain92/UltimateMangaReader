@@ -7,6 +7,9 @@ MangaIndexTraverser::MangaIndexTraverser(QSharedPointer<MangaInfo> mangainfo, in
 
 Result<bool, QString> MangaIndexTraverser::increment()
 {
+    if (chapter < 0 || chapter >= mangaInfo->chapters.count())
+        return Ok(false);
+
     if (page + 1 < mangaInfo->chapters.at(chapter).pageUrlList.count())
     {
         return setChecked(chapter, page + 1);
@@ -23,6 +26,9 @@ Result<bool, QString> MangaIndexTraverser::increment()
 
 Result<bool, QString> MangaIndexTraverser::decrement()
 {
+    if (chapter < 0 || chapter >= mangaInfo->chapters.count())
+        return Ok(false);
+
     if (page > 0)
     {
         return setChecked(chapter, page - 1);
@@ -34,6 +40,8 @@ Result<bool, QString> MangaIndexTraverser::decrement()
             auto res = mangaInfo->mangaSource->updatePageList(mangaInfo, chapter - 1);
             if (!res.isOk())
                 return Err(res.unwrapErr());
+            // the next session would download it again
+            mangaInfo->serialize();
         }
 
         return setChecked(chapter - 1, qMax(0, mangaInfo->chapters.at(chapter - 1).pageUrlList.count() - 1));
@@ -55,6 +63,7 @@ Result<bool, QString> MangaIndexTraverser::setChecked(int chapter, int page)
         auto res = mangaInfo->mangaSource->updatePageList(mangaInfo, chapter);
         if (!res.isOk())
             return Err(res.unwrapErr());
+        mangaInfo->serialize();
     }
 
     if (page >= mangaInfo->chapters.at(chapter).pageUrlList.count())

@@ -2,6 +2,8 @@
 
 #include <webp/decode.h>
 
+#include <QSaveFile>
+
 #ifdef __ARM_NEON__
 #include <arm_neon.h>
 #endif
@@ -11,6 +13,16 @@
 
 #define PNG_MAGIC_NUMBER_0 (char)0x89
 #define PNG_MAGIC_NUMBER_1 (char)0x50
+
+bool decodedSizeAllowed(qint64 width, qint64 height)
+{
+    // a few times the size of the largest real pages (long strips), small enough for the 512 MB devices
+    const qint64 maxPixels = 48 * 1000 * 1000;
+    bool allowed = width > 0 && height > 0 && width * height <= maxPixels;
+    if (!allowed)
+        qDebug() << "Image too large to decode:" << width << "x" << height;
+    return allowed;
+}
 
 bool isJpeg(const QByteArray &buffer)
 {
@@ -37,6 +49,51 @@ bool readWebpSize(const QByteArray &data, QSize &size)
         return false;
     size = QSize(width, height);
     return true;
+}
+
+bool readImageSize(const QByteArray &header, QSize &size)
+{
+    const auto *d = reinterpret_cast<const uchar *>(header.constData());
+    const int n = header.size();
+
+    if (isWebp(header))
+        return readWebpSize(header, size);
+
+    if (isPng(header))
+    {
+        // the IHDR chunk comes first
+        if (n < 24 || memcmp(d + 12, "IHDR", 4) != 0)
+            return false;
+        auto be32 = [d](int i) { return int(uint(d[i]) << 24 | d[i + 1] << 16 | d[i + 2] << 8 | d[i + 3]); };
+        size = QSize(be32(16), be32(20));
+        return size.isValid();
+    }
+
+    if (isJpeg(header))
+    {
+        // the decoder's header parsing wants everything up to the scan, the frame header is enough here
+        int i = 2;
+        while (i + 9 < n)
+        {
+            if (d[i] != 0xff)
+                return false;
+            const uchar marker = d[i + 1];
+            if (marker == 0xff)
+            {
+                i++;
+                continue;
+            }
+            // SOF0-SOF15 except DHT (c4), JPG (c8) and DAC (cc)
+            if (marker >= 0xc0 && marker <= 0xcf && marker != 0xc4 && marker != 0xc8 && marker != 0xcc)
+            {
+                size = QSize(d[i + 7] << 8 | d[i + 8], d[i + 5] << 8 | d[i + 6]);
+                return size.isValid();
+            }
+            i += 2 + (d[i + 2] << 8 | d[i + 3]);
+        }
+    }
+
+    return false;
 }
 
 namespace
@@ -103,6 +160,9 @@ bool decodeJpeg(tjhandle handle, const QByteArray &data, uchar *dst, int pitch)
     return tj3Decompress8(handle, (const uchar *)data.constData(), data.size(), dst, pitch, TJPF_GRAY) == 0;
 }
 
+// White, for transparent parts (libpng would blend them with whatever is in the buffer otherwise).
+const png_color pngBackground = {255, 255, 255};
+
 bool beginPngRead(png_image &image, const QByteArray &data)
 {
     memset(&image, 0, (sizeof image));
@@ -135,7 +195,7 @@ QImage decodeToQImage(const QByteArray &data)
             return QImage();
 
         QSize size = jpegHeaderSize(handle, data);
-        if (!size.isValid())
+        if (!size.isValid() || !decodedSizeAllowed(size.width(), size.height()))
             return QImage();
 
         QImage image(size, QImage::Format_Grayscale8);
@@ -150,9 +210,19 @@ QImage decodeToQImage(const QByteArray &data)
         if (!beginPngRead(pngImage, data))
             return QImage();
 
+        if (!decodedSizeAllowed(pngImage.width, pngImage.height))
+        {
+            png_image_free(&pngImage);
+            return QImage();
+        }
+
         QImage image(pngImage.width, pngImage.height, QImage::Format_Grayscale8);
-        if (image.isNull() ||
-            !png_image_finish_read(&pngImage, NULL, image.bits(), image.bytesPerLine(), NULL))
+        if (image.isNull())
+        {
+            png_image_free(&pngImage);
+            return QImage();
+        }
+        if (!png_image_finish_read(&pngImage, &pngBackground, image.bits(), image.bytesPerLine(), NULL))
             return QImage();
 
         return image;
@@ -183,13 +253,17 @@ bool saveQImageAsJpeg(const QImage &image, const QString &path, int quality)
 
     auto bufferGuard = qScopeGuard([&] { tj3Free(jpegBuf); });
 
-    QFile file(path);
+    // the reader takes an existing file for a finished page, it mustn't see one that is still written
+    QSaveFile file(path);
     if (!file.open(QIODevice::WriteOnly))
         return false;
-    file.write((const char *)jpegBuf, jpegSize);
-    file.close();
+    if (file.write((const char *)jpegBuf, jpegSize) != qint64(jpegSize))
+    {
+        file.cancelWriting();
+        return false;
+    }
 
-    return true;
+    return file.commit();
 }
 
 GreyscaleImage::GreyscaleImage() : buffer(), width(0), height(0) {}
@@ -230,6 +304,10 @@ bool GreyscaleImage::loadFromEncoded(const QByteArray &data)
     {
         return loadFromJpeg(data);
     }
+    else if (isWebp(data))
+    {
+        return loadFromWebp(data);
+    }
     else
     {
         return false;
@@ -252,6 +330,8 @@ bool GreyscaleImage::loadFromJpeg(const QByteArray &data, QSize minSize)
 
     width = TJSCALED(jpegSize.width(), factor);
     height = TJSCALED(jpegSize.height(), factor);
+    if (!decodedSizeAllowed(width, height))
+        return false;
 
     buffer.resize(width * height);
     return decodeJpeg(handle, data, (uchar *)buffer.data(), width);
@@ -263,30 +343,43 @@ bool GreyscaleImage::loadFromPng(const QByteArray &data)
     if (!beginPngRead(image, data))
         return false;
 
+    if (!decodedSizeAllowed(image.width, image.height))
+    {
+        png_image_free(&image);
+        return false;
+    }
+
     width = image.width;
     height = image.height;
 
     buffer.resize(width * height);
 
-    if (!png_image_finish_read(&image, NULL, buffer.data(), 0, NULL))
+    if (!png_image_finish_read(&image, &pngBackground, buffer.data(), 0, NULL))
         return false;
 
     return true;
+}
+
+static void resizeBilinear(const uchar *src, int srcWidth, int srcHeight, uchar *dst, int dstWidth,
+                           int dstHeight, int dstStride)
+{
+#ifdef __ARM_NEON__
+    // the NEON version works on 16 pixels at a time (and asserts that the target has them)
+    if (dstWidth >= 16)
+    {
+        Simd::Neon::ResizeBilinear(src, srcWidth, srcHeight, srcWidth, dst, dstWidth, dstHeight, dstStride, 1);
+        return;
+    }
+#endif
+    Simd::Base::ResizeBilinear(src, srcWidth, srcHeight, srcWidth, dst, dstWidth, dstHeight, dstStride, 1);
 }
 
 GreyscaleImage GreyscaleImage::resize(QSize newSize) const
 {
     QByteArray newBuffer;
     newBuffer.resize(newSize.width() * newSize.height());
-#ifdef __ARM_NEON__
-    Simd::Neon::ResizeBilinear((const uint8_t *)buffer.constData(), width, height, width,
-                               (uint8_t *)newBuffer.data(), newSize.width(), newSize.height(),
-                               newSize.width(), 1);
-#else
-    Simd::Base::ResizeBilinear((const uint8_t *)buffer.constData(), width, height, width,
-                               (uint8_t *)newBuffer.data(), newSize.width(), newSize.height(),
-                               newSize.width(), 1);
-#endif
+    resizeBilinear((const uchar *)buffer.constData(), width, height, (uchar *)newBuffer.data(),
+                   newSize.width(), newSize.height(), newSize.width());
     return GreyscaleImage(newSize, std::move(newBuffer));
 }
 
@@ -295,13 +388,8 @@ QImage GreyscaleImage::resizeToQImage(QSize newSize) const
     QImage image(newSize, QImage::Format_Grayscale8);
     if (image.isNull())
         return image;
-#ifdef __ARM_NEON__
-    Simd::Neon::ResizeBilinear((const uint8_t *)buffer.constData(), width, height, width, image.bits(),
-                               image.width(), image.height(), image.bytesPerLine(), 1);
-#else
-    Simd::Base::ResizeBilinear((const uint8_t *)buffer.constData(), width, height, width, image.bits(),
-                               image.width(), image.height(), image.bytesPerLine(), 1);
-#endif
+    resizeBilinear((const uchar *)buffer.constData(), width, height, image.bits(), image.width(),
+                   image.height(), image.bytesPerLine());
     return image;
 }
 
@@ -401,6 +489,8 @@ bool GreyscaleImage::loadFromWebp(const QByteArray &data)
 
     const int outWidth = config.input.width;
     const int outHeight = config.input.height;
+    if (!decodedSizeAllowed(outWidth, outHeight))
+        return false;
 
     // Only the luma plane is wanted (the same BT.601 Y the JPEG path yields), but the chroma planes
     // still need somewhere to go.

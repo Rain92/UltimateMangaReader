@@ -21,6 +21,8 @@ public:
     // Connects in the background, the dialog only shows up when that fails. With showProgress it shows up
     // right away (when the user asked for the connection).
     void connect(bool showProgress = false);
+    // Closes the dialog and ignores the result of a running attempt (e.g. for a suspend).
+    void cancel();
 
 private slots:
     void on_pushButtonRetry_clicked();
@@ -30,6 +32,7 @@ private slots:
 private:
     Ui::WifiDialog* ui;
     NetworkManager* networkManager;
+    bool awaitingResult;
 
     void connectFinished(bool connected);
 };

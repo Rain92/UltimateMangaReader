@@ -1,5 +1,7 @@
 #include "imageprocessingnative.h"
 
+#include <cmath>
+
 #include "perftimer.h"
 
 QImage loadQImageFast(const QString &path, bool)
@@ -42,10 +44,13 @@ static QImage finishPage(GreyscaleImage &img, int rot90, const QString &filepath
                          bool trim, bool manhwaMode, PerfTimer &timer);
 
 QImage processImageN(const QByteArray &buffer, const QString &filepath, QSize screenSize,
-                     DoublePageMode doublePageMode, bool trim, bool manhwaMode, bool useSWDither)
+                     DoublePageMode doublePageMode, bool trim, bool manhwaMode, bool useSWDither, bool *decoded)
 {
     Q_UNUSED(useSWDither)
     PerfTimer timer("processImageN");
+
+    if (decoded)
+        *decoded = false;
 
     GreyscaleImage img;
 
@@ -89,6 +94,36 @@ QImage processImageN(const QByteArray &buffer, const QString &filepath, QSize sc
     }
     timer.lap("decode");
 
+    if (decoded)
+        *decoded = true;
+
+    return finishPage(img, rot90, filepath, screenSize, trim, manhwaMode, timer);
+}
+
+QImage processStitchedImageN(const QByteArray &top, const QByteArray &bottom, const QString &filepath,
+                             QSize screenSize, DoublePageMode doublePageMode, bool trim, bool manhwaMode)
+{
+    PerfTimer timer("processStitchedImageN");
+
+    // decoded at full size, the parts only fit together that way
+    GreyscaleImage upper, lower;
+    if (!upper.loadFromEncoded(top) || !upper.isValid() || !lower.loadFromEncoded(bottom) || !lower.isValid())
+        return QImage();
+
+    if (upper.width != lower.width)
+    {
+        qDebug() << "Can't stitch images of different widths:" << upper.size() << lower.size();
+        return QImage();
+    }
+    timer.lap("decode");
+
+    // the buffers have no line padding, one below the other is just one after the other
+    QSize size(upper.width, upper.height + lower.height);
+    upper.buffer.append(lower.buffer);
+    GreyscaleImage img(size, std::move(upper.buffer));
+    timer.lap("stitch");
+
+    int rot90 = calcRotationInfo(img.size(), screenSize, doublePageMode);
     return finishPage(img, rot90, filepath, screenSize, trim, manhwaMode, timer);
 }
 
@@ -128,16 +163,34 @@ static QImage finishPage(GreyscaleImage &img, int rot90, const QString &filepath
         timer.lap("rotate");
     }
 
+    // Long strips (manhwa) are told apart by their shape before trimming: the trimmed content of a page can
+    // be a sliver (a gutter line on an empty page), as a strip it would become huge.
+    QSize untrimmed = img.size();
+    bool strip = manhwaMode && rot90 == 0 &&
+                 calcRescaleSize(untrimmed, screenSize, false, true).height() > screenSize.height();
+
     if (trim)
     {
         auto trimRect = getTrimRect(img.buffer, img.width, img.height, img.width);
 
-        if (trimRect.isValid())
+        // only margins: content that is a small part of the page isn't zoomed in on
+        if (trimRect.isValid() && trimRect.width() * 3 >= img.width && trimRect.height() * 3 >= img.height)
             img = img.crop(trimRect);
         timer.lap("trim");
     }
 
-    auto rescaleSize = calcRescaleSize(img.size(), screenSize, rot90 != 0, manhwaMode);
+    auto rescaleSize = calcRescaleSize(img.size(), screenSize, rot90 != 0, strip);
+
+    // JPEG can't be taller than 65535 px, and very long strips would need too much memory
+    const int maxHeight = 65500;
+    const double maxPixels = 24e6;
+    double shrink = qMin(1.0, double(maxHeight) / rescaleSize.height());
+    shrink = qMin(shrink, std::sqrt(maxPixels / (double(rescaleSize.width()) * rescaleSize.height())));
+    if (shrink < 1.0)
+    {
+        int width = qMax(16, int(rescaleSize.width() * shrink) & ~3);
+        rescaleSize = QSize(width, qMax(1, int(rescaleSize.height() * shrink)));
+    }
 
     QImage retimg = img.resizeToQImage(rescaleSize);
     timer.lap("resize");

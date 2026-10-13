@@ -1,6 +1,7 @@
 #ifndef FAVORITESWIDGET_H
 #define FAVORITESWIDGET_H
 
+#include <QElapsedTimer>
 #include <QFileInfo>
 #include <QFutureWatcher>
 #include <QLabel>
@@ -53,6 +54,8 @@ private:
     QFutureWatcher<QImage> thumbnailWatcher;
     QList<ThumbnailRequest> thumbnailBatch;
     QList<ThumbnailRequest> queuedThumbnails;
+    QElapsedTimer thumbnailBatchTimer;
+    bool thumbnailBatchRunning;
 
     // a click that has to download the info runs an event loop
     bool opening;
@@ -66,6 +69,7 @@ private:
 
     void loadThumbnails(const QList<int> &rows);
     void startThumbnailBatch();
+    void thumbnailBatchFinished();
     void thumbnailReady(int index);
     void setThumbnail(int row, const QImage &image);
     QLabel *iconLabel(int row) const;

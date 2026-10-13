@@ -17,6 +17,7 @@ struct MangaList
     void filter();
 
     void sortBy(MangaOrderMethod method = OrderByTitle);
+    bool isSortedBy(MangaOrderMethod method) const;
 
     void append(const QString &title, const QString &url);
 };

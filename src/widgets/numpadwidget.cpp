@@ -48,7 +48,13 @@ void NumpadWidget::numButtonPressed(QAbstractButton *button)
 
     QString repr = QKeySequence(key).toString();
 
-    QWidget *target = qApp->focusWidget();
+    // The focus widget of the numpad's window: the application's focus widget is only set while the window
+    // is the active one, which a dialog that is shown again isn't always (the key events went nowhere then).
+    QWidget *target = window()->focusWidget();
+    if (!target)
+        target = qApp->focusWidget();
+    if (!target)
+        return;
 
     QKeyEvent *pressEvent = new QKeyEvent(QEvent::KeyPress, key, Qt::NoModifier, repr);
     QKeyEvent *releaseEvent = new QKeyEvent(QEvent::KeyRelease, key, Qt::NoModifier, repr);

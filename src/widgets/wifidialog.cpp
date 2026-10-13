@@ -3,7 +3,7 @@
 #include "ui_wifidialog.h"
 
 WifiDialog::WifiDialog(QWidget *parent, NetworkManager *networkManager)
-    : QDialog(parent), ui(new Ui::WifiDialog), networkManager(networkManager)
+    : QDialog(parent), ui(new Ui::WifiDialog), networkManager(networkManager), awaitingResult(false)
 {
     ui->setupUi(this);
 
@@ -23,14 +23,22 @@ void WifiDialog::connect(bool showProgress)
     if (showProgress)
         open();
 
+    awaitingResult = true;
     networkManager->connectWifiAsync();
+}
+
+void WifiDialog::cancel()
+{
+    awaitingResult = false;
+    close();
 }
 
 void WifiDialog::connectFinished(bool connected)
 {
-    // the result of an older attempt, e.g. one from before a suspend
-    if (networkManager->isConnectingWifi())
+    // the result of an attempt from before a suspend, or of an older one while a newer one runs
+    if (!awaitingResult || networkManager->isConnectingWifi())
         return;
+    awaitingResult = false;
 
     if (connected)
     {

@@ -58,26 +58,22 @@ void ClearCacheDialog::on_pushButtonCancel_clicked()
 
 void ClearCacheDialog::on_pushButtonClear1_clicked()
 {
-    emit finished(ClearImages);
-    close();
+    done(ClearImages);
 }
 
 void ClearCacheDialog::on_pushButtonClear2_clicked()
 {
-    emit finished(ClearInfos);
-    close();
+    done(ClearInfos);
 }
 
 void ClearCacheDialog::on_pushButtonClear3_clicked()
 {
-    emit finished(ClearAll);
-    close();
+    done(ClearAll);
 }
 
 
 void ClearCacheDialog::on_pushButtonClearInvalidFavs_clicked()
 {
-    emit finished(ClearInvalidFavs);
-    close();
+    done(ClearInvalidFavs);
 }
 
