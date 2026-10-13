@@ -36,7 +36,6 @@ public:
     bool updateMangaList(UpdateProgressToken *token) override;
     Result<QSharedPointer<MangaInfo>, QString> getMangaInfo(const QString &mangaUrl,
                                                             const QString &mangaTitle) override;
-    void updateMangaInfoAsync(QSharedPointer<MangaInfo> info, bool updateCover = true) override;
     Result<MangaChapterCollection, QString> updateMangaInfoFinishedLoading(
         QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info) override;
     Result<QStringList, QString> getPageList(const QString &chapterUrl) override;

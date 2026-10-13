@@ -309,7 +309,6 @@ Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::getMangaInfo(con
     auto merged = mergeChapters(info, res.unwrap(), oldnumchapters);
     if (merged.isErr())
         return Err(merged.unwrapErr());
-    chaptersMerged(info);
 
     downloadCoverAsync(info);
 
@@ -370,8 +369,7 @@ void AbstractMangaSource::updateMangaInfoAsync(QSharedPointer<MangaInfo> info, b
 
         if (mergeChapters(info, res.unwrap(), oldnumchapters).isErr())
             return;
-        chaptersMerged(info);
-
+    
         downloadCoverAsync(info, updateCover);
         // also when there's no file (e.g. the infos were cleared)
         if (contents() != oldContents || !QFile::exists(CONF.mangainfodir(name, info->title) + "mangainfo.dat"))

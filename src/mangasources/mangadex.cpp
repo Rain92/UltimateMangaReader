@@ -74,7 +74,7 @@ static QString getMangaTitle(const Value &attributes)
         return "";
 
     // the main title of most japanese, korean and chinese series is the romanized original title,
-    // prefer the english one: title.en (unchanged for compatibility), then the english alt title
+    // prefer the english one: title.en, then the english alt title
     const Value *titles = attributes.HasMember("title") ? &attributes["title"] : nullptr;
 
     if (titles)
@@ -250,7 +250,6 @@ static MangaChapterCollection buildChapterList(QVector<DexChapter> &chapters, bo
 
         if (!ch.number.trimmed().isEmpty())
         {
-            // same format as older versions, so saved chapters still match
             ch.title = "Ch. " + ch.number;
             if (resetOnNewVolume && !ch.volume.isEmpty())
                 ch.title = "Vol. " + ch.volume + " " + ch.title;
@@ -625,14 +624,6 @@ Result<QSharedPointer<MangaInfo>, QString> MangaDex::getMangaInfo(const QString 
                                                                   const QString &mangaTitle)
 {
     return AbstractMangaSource::getMangaInfo(mangaRequestUrl(mangaUrl), mangaTitle);
-}
-
-void MangaDex::updateMangaInfoAsync(QSharedPointer<MangaInfo> info, bool updateCover)
-{
-    // older versions stored the manga url without the includes
-    info->url = mangaRequestUrl(info->url);
-
-    AbstractMangaSource::updateMangaInfoAsync(info, updateCover);
 }
 
 Result<MangaChapterCollection, QString> MangaDex::updateMangaInfoFinishedLoading(

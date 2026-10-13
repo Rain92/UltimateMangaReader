@@ -589,33 +589,6 @@ Comick::Comick(NetworkManager *networkManager) : AbstractMangaSource(networkMana
 
 Comick::~Comick() = default;
 
-QString Comick::normalizeUrl(const QString &url) const
-{
-    // old favorites point to the dead api (https://api.comick.fun/v1.0/comic/<slug>)
-    int pos = url.indexOf("/comic/");
-    if (pos < 0)
-        return url;
-
-    auto slug = url.mid(pos + 7).section('/', 0, 0).section('?', 0, 0);
-    if (slug.isEmpty())
-        return url;
-
-    return baseUrl + "/comic/" + slug;
-}
-
-Result<QSharedPointer<MangaInfo>, QString> Comick::getMangaInfo(const QString &mangaUrl,
-                                                                const QString &mangaTitle)
-{
-    return AbstractMangaSource::getMangaInfo(normalizeUrl(mangaUrl), mangaTitle);
-}
-
-void Comick::updateMangaInfoAsync(QSharedPointer<MangaInfo> info, bool updateCover)
-{
-    info->url = normalizeUrl(info->url);
-
-    AbstractMangaSource::updateMangaInfoAsync(info, updateCover);
-}
-
 bool Comick::updateMangaList(UpdateProgressToken *token)
 {
     // a retry continues with the sitemaps the failed attempt didn't get

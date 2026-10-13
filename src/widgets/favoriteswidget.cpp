@@ -314,7 +314,7 @@ void FavoritesWidget::setThumbnail(int row, const QImage &image)
     if (!label)
         return;
 
-    // thumbnails of an older version might have been made for another pixel ratio
+    // the thumbnail might have been made for another pixel ratio (desktop: the window was on another screen)
     QSize size = image.size().scaled(SIZES.favoriteCoverSize, SIZES.favoriteCoverSize, Qt::KeepAspectRatio);
     label->setFixedSize(size);
     label->setPixmap(QPixmap::fromImage(image));

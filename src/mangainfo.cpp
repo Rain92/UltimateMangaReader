@@ -30,11 +30,7 @@ QSharedPointer<MangaInfo> MangaInfo::deserialize(AbstractMangaSource *mangasourc
         return {};
     }
 
-    // older versions stored absolute paths, the cover always lives in the manga's own directory
-    if (QDir::isAbsolutePath(mi->coverPath))
-        mi->coverPath = CONF.mangainfodir(mi->hostname, mi->title) + QFileInfo(mi->coverPath).fileName();
-    else
-        mi->coverPath = CONF.absoluteCachePath(mi->coverPath);
+    mi->coverPath = CONF.absoluteCachePath(mi->coverPath);
 
     return mi;
 }

@@ -274,30 +274,6 @@ HttpHeaders MangaPlus::requestHeaders(const QString &url) const
     return headers;
 }
 
-QString MangaPlus::normalizeMangaUrl(const QString &url) const
-{
-    // older versions stored api/title_detail?title_id=<id>
-    QRegularExpression titleidrx(R"lit((?:title_id=|/titles/)(\d+))lit");
-
-    auto match = titleidrx.match(url);
-    if (!match.hasMatch())
-        return url;
-
-    return baseUrl + titleDetailUrl.arg(match.captured(1));
-}
-
-QString MangaPlus::normalizeChapterUrl(const QString &url) const
-{
-    // older versions stored api/manga_viewer?chapter_id=<id>
-    QRegularExpression chapteridrx(R"lit((?:chapter_id=|/viewer/)(\d+))lit");
-
-    auto match = chapteridrx.match(url);
-    if (!match.hasMatch())
-        return url;
-
-    return pagesUrl.arg(match.captured(1));
-}
-
 // image urls expire one to two hours after they were loaded (at the start of the hour after next) and their
 // view token is only sent in the session that loaded them
 bool MangaPlus::isUsableImageUrl(const QString &url) const
@@ -310,17 +286,14 @@ bool MangaPlus::isUsableImageUrl(const QString &url) const
            (token.isEmpty() || viewTokens.contains(token));
 }
 
-// the stored infos contain the urls of older versions of this source and resolved image urls that can't be
-// used any more. the core only resolves empty image urls again, the ones of downloaded pages are kept,
-// so these pages can still be read without a network connection
+// the stored infos contain resolved image urls that can't be used any more. the core only resolves empty image
+// urls again, the ones of downloaded pages are kept, so these pages can still be read without a network
+// connection
 void MangaPlus::cleanUpStoredUrls(QSharedPointer<MangaInfo> info)
 {
-    info->url = normalizeMangaUrl(info->url);
-
     for (int c = 0; c < info->chapters.count(); c++)
     {
         auto &chapter = info->chapters[c];
-        chapter.chapterUrl = normalizeChapterUrl(chapter.chapterUrl);
 
         for (int p = 0; p < chapter.imageUrlList.count(); p++)
         {
@@ -484,11 +457,10 @@ bool MangaPlus::updateMangaList(UpdateProgressToken *token)
     return true;
 }
 
-// favorites and manga lists of older versions contain api/title_detail urls
 Result<QSharedPointer<MangaInfo>, QString> MangaPlus::getMangaInfo(const QString &mangaUrl,
                                                                    const QString &mangaTitle)
 {
-    auto infoR = AbstractMangaSource::getMangaInfo(normalizeMangaUrl(mangaUrl), mangaTitle);
+    auto infoR = AbstractMangaSource::getMangaInfo(mangaUrl, mangaTitle);
 
     if (infoR.isOk())
         trackInfo(infoR.unwrap());
@@ -617,9 +589,8 @@ Result<MangaChapterCollection, QString> MangaPlus::updateMangaInfoFinishedLoadin
 
 Result<QStringList, QString> MangaPlus::getPageList(const QString &chapterUrl)
 {
-    auto url = normalizeChapterUrl(chapterUrl);
-    if (!url.startsWith("http"))
-        url.prepend(baseUrl);
+    // the chapter urls are relative to the api
+    auto url = chapterUrl.startsWith("http") ? chapterUrl : baseUrl + chapterUrl;
 
     auto job = downloadToBuffer(url, 7000);
 

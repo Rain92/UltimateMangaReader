@@ -75,11 +75,6 @@ public:
         Q_UNUSED(coverUrl)
         return {};
     }
-    // Called when the chapters of an update were taken over into the info (before it is saved).
-    virtual void chaptersMerged(QSharedPointer<MangaInfo> info)
-    {
-        Q_UNUSED(info)
-    }
     Result<void, QString> updatePageList(QSharedPointer<MangaInfo> info, int chapter);
 
 protected:

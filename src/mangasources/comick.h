@@ -29,9 +29,6 @@ public:
     virtual ~Comick();
 
     bool updateMangaList(UpdateProgressToken *token) override;
-    Result<QSharedPointer<MangaInfo>, QString> getMangaInfo(const QString &mangaUrl,
-                                                            const QString &mangaTitle) override;
-    void updateMangaInfoAsync(QSharedPointer<MangaInfo> info, bool updateCover = true) override;
     Result<MangaChapterCollection, QString> updateMangaInfoFinishedLoading(
         QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info) override;
     Result<QStringList, QString> getPageList(const QString &chapterUrl) override;
@@ -43,7 +40,6 @@ private:
     QHash<QString, QString> nextPages;
     QHash<QString, QSharedPointer<ComickCacheWarmUp>> pageWarmUps;
 
-    QString normalizeUrl(const QString &url) const;
     bool fetchSearch(const QString &order, int pages, ComickUpdateState &state, UpdateProgressToken *token,
                      int progressFrom, int progressTo);
     bool fetchSitemaps(ComickUpdateState &state, UpdateProgressToken *token);

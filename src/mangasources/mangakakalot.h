@@ -31,7 +31,6 @@ public:
         QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info) override;
     Result<QStringList, QString> getPageList(const QString &chapterUrl) override;
     QString coverFallbackUrl(const QString &coverUrl) override;
-    void chaptersMerged(QSharedPointer<MangaInfo> info) override;
 
     // Which images of a chapter belong together (see joinSplitPages()): the indices of the pages' images, the
     // second one is -1 for a page that wasn't split. Invalid sizes are images that couldn't be loaded.
@@ -42,7 +41,6 @@ private:
     QString popularUrl;
     QString chaptersApiUrl;
 
-    QHash<QString, QString> resolvedLegacyUrls;
     // The first page of a chapter list, loaded while the manga page is: taken by updateMangaInfoFinishedLoading,
     // unless the manga page couldn't be loaded. Only used while it is fresh.
     struct PrefetchedChapters
@@ -54,13 +52,10 @@ private:
     void prefetchChapters(const QString &slug, QSharedPointer<DownloadStringJob> job);
     QSharedPointer<DownloadStringJob> takePrefetchedChapters(const QString &slug);
     QSet<QString> imageHosts;
-    QSet<QString> pendingJoinedMarkers;
 
     void addImageHost(const QString &host);
     Result<QStringList, QString> joinSplitPages(const QStringList &imageUrls);
     QString normalizeUrl(const QString &url) const;
-    bool isMirrorUrl(const QString &url) const;
-    Result<QString, QString> resolveMangaUrl(const QString &mangaUrl, const QString &mangaTitle);
     QSharedPointer<DownloadStringJob> downloadChapterList(const QString &slug, int offset);
 };
 

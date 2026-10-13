@@ -42,8 +42,6 @@ private:
     QList<QWeakPointer<MangaInfo>> openedInfos;
     QObject replyContext;
 
-    QString normalizeMangaUrl(const QString &url) const;
-    QString normalizeChapterUrl(const QString &url) const;
     bool isUsableImageUrl(const QString &url) const;
     void cleanUpStoredUrls(QSharedPointer<MangaInfo> info);
     void trackInfo(QSharedPointer<MangaInfo> info);

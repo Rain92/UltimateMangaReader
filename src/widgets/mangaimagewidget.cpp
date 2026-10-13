@@ -134,14 +134,10 @@ QSize MangaImageWidget::deviceSize() const
 // e.g. before the window was resized) are scaled down to fit. tall: the page is scrolled vertically.
 QSize MangaImageWidget::displaySize(const QImage &img, QSize device, bool *tall) const
 {
-    // pages cached by older versions can be up to 4 px wider (calcRescaleSize() rounded the width up to a
-    // multiple of 4), those are still blitted
-    const int tolerance = 4;
-
     QSize size = img.size();
     bool isTall = size.height() > device.height() * 1.1;
 
-    if (size.width() > device.width() + tolerance || (!isTall && size.height() > device.height() + tolerance))
+    if (size.width() > device.width() || (!isTall && size.height() > device.height()))
     {
         // like the manhwa mode of calcRescaleSize()
         isTall = (double)size.height() / size.width() > 1.6 * device.height() / device.width();

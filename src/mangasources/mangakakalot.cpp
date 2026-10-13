@@ -12,38 +12,6 @@ using namespace rapidjson;
 static const char *const mirrorPattern =
     R"lit(^https?://(?:www\.)?(?:mangakakalove\.com|mangakakalot\.gg|manganato\.gg|natomanga\.com|nelomanga\.(?:net|com))/)lit";
 
-// the site builds its slugs from the title, apostrophes are either dropped or turned into a dash
-static QString slugify(const QString &title, bool dropApostrophes)
-{
-    QString slug;
-    bool separator = false;
-
-    bool ascii = std::all_of(title.begin(), title.end(), [](const QChar &c) { return c.unicode() < 0x80; });
-
-    for (const auto &c : ascii ? title.toLower() : title.normalized(QString::NormalizationForm_KD).toLower())
-    {
-        auto u = c.unicode();
-        if ((u >= 'a' && u <= 'z') || (u >= '0' && u <= '9'))
-        {
-            if (separator && !slug.isEmpty())
-                slug += '-';
-            separator = false;
-            slug += c;
-        }
-        else if (c.category() == QChar::Mark_NonSpacing || u == 0x2018 || u == 0x2019 ||
-                 (dropApostrophes && u == '\''))
-        {
-            continue;
-        }
-        else
-        {
-            separator = true;
-        }
-    }
-
-    return slug;
-}
-
 // "solo-leveling" -> "Solo Leveling", a double dash stands for a dash in the title
 static QString titleFromSlug(const QString &slug)
 {
@@ -97,18 +65,6 @@ QString Mangakakalot::coverFallbackUrl(const QString &coverUrl)
     return url.toString();
 }
 
-void Mangakakalot::chaptersMerged(QSharedPointer<MangaInfo> info)
-{
-    QString joinedMarker = CONF.mangainfodir(name, info->title) + "joinedpages";
-    if (!pendingJoinedMarkers.remove(joinedMarker))
-        return;
-
-    QDir().mkpath(CONF.mangainfodir(name, info->title));
-    QFile marker(joinedMarker);
-    if (!marker.open(QIODevice::WriteOnly))
-        qDebug() << "Couldn't write" << joinedMarker;
-}
-
 void Mangakakalot::addImageHost(const QString &host)
 {
     if (host.isEmpty() || imageHosts.contains(host) ||
@@ -130,60 +86,9 @@ QString Mangakakalot::normalizeUrl(const QString &url) const
     return baseUrl + url.mid(match.capturedEnd());
 }
 
-bool Mangakakalot::isMirrorUrl(const QString &url) const
-{
-    QRegularExpression mirrorrx(mirrorPattern);
-
-    return mirrorrx.match(url).hasMatch();
-}
-
 QSharedPointer<DownloadStringJob> Mangakakalot::downloadChapterList(const QString &slug, int offset)
 {
     return downloadAsString(chaptersApiUrl.arg(slug).arg(-1).arg(offset), 8000);
-}
-
-Result<QString, QString> Mangakakalot::resolveMangaUrl(const QString &mangaUrl, const QString &mangaTitle)
-{
-    if (isMirrorUrl(mangaUrl))
-        return Ok(normalizeUrl(mangaUrl));
-
-    // urls of the old manganato / mangakakalot domains used ids instead of slugs: find the slug
-    // by the title. an empty entry means that the site has no manga with this title
-    if (!resolvedLegacyUrls.contains(mangaUrl))
-    {
-        QStringList slugs;
-        for (bool dropApostrophes : {false, true})
-        {
-            auto slug = slugify(mangaTitle, dropApostrophes);
-            if (!slug.isEmpty() && !slugs.contains(slug))
-                slugs.append(slug);
-        }
-
-        QString url;
-        for (const auto &slug : std::as_const(slugs))
-        {
-            auto job = downloadAsString(chaptersApiUrl.arg(slug).arg(1).arg(0), 3000);
-
-            if (job->await(3000, false) && job->bufferStr.contains(R"("success":true)"))
-            {
-                url = baseUrl + "manga/" + slug;
-                qDebug() << "Mangakakalot: mapped old url" << mangaUrl << "to" << url;
-                break;
-            }
-
-            // unknown slugs are answered with 400 "Invalid slug", don't cache other errors
-            if (job->httpStatus != 400 && !job->bufferStr.contains(R"("success":false)"))
-                return Err(job->errorString != "" ? job->errorString : QString("Couldn't load the manga."));
-        }
-
-        resolvedLegacyUrls.insert(mangaUrl, url);
-    }
-
-    auto url = resolvedLegacyUrls.value(mangaUrl);
-    if (url.isEmpty())
-        return Err(QString("Couldn't find \"%1\" on the new Mangakakalot site.").arg(mangaTitle));
-
-    return Ok(url);
 }
 
 bool Mangakakalot::updateMangaList(UpdateProgressToken *token)
@@ -223,23 +128,9 @@ bool Mangakakalot::updateMangaList(UpdateProgressToken *token)
     // comes from the sitemaps. they contain no titles: keep the titles of the previous list
     // and of the popular pages and generate the others from the slug
     QHash<QString, QString> knownTitles;
-    QHash<QString, QString> apostropheTitles;
     for (int i = 0; i < mangaList.titles.size() && i < mangaList.urls.size(); i++)
-    {
-        const auto &title = mangaList.titles[i];
-        const auto &url = mangaList.urls[i];
-        if (url.startsWith("manga/"))
-        {
-            knownTitles.insert(url.mid(6), title);
-        }
-        else
-        {
-            // the lists of the old domains have id urls, the slugs are built from the titles
-            knownTitles.insert(slugify(title, false), title);
-            if (title.contains('\''))
-                apostropheTitles.insert(slugify(title, true), title);
-        }
-    }
+        if (mangaList.urls[i].startsWith("manga/"))
+            knownTitles.insert(mangaList.urls[i].mid(6), mangaList.titles[i]);
 
     QStringList orderedSlugs;
     QSet<QString> slugs;
@@ -335,19 +226,14 @@ bool Mangakakalot::updateMangaList(UpdateProgressToken *token)
 
         if (title.isEmpty())
         {
-            // an old title with apostrophes belongs to the slug without them if the dashed one is taken
-            title = apostropheTitles.value(slug);
-            if (title.isEmpty() || usedTitles.contains(title))
-            {
-                // the site appends an id to the slugs of different works with the same name
-                auto idmatch = slug.contains('_') ? idrx.match(slug) : QRegularExpressionMatch();
-                title = titleFromSlug(idmatch.hasMatch() ? idmatch.captured(1) : slug);
-                if (idmatch.hasMatch() && (slugs.contains(idmatch.captured(1)) || usedTitles.contains(title)))
-                    title += " (" + idmatch.captured(2) + ")";
+            // the site appends an id to the slugs of different works with the same name
+            auto idmatch = slug.contains('_') ? idrx.match(slug) : QRegularExpressionMatch();
+            title = titleFromSlug(idmatch.hasMatch() ? idmatch.captured(1) : slug);
+            if (idmatch.hasMatch() && (slugs.contains(idmatch.captured(1)) || usedTitles.contains(title)))
+                title += " (" + idmatch.captured(2) + ")";
 
-                if (usedTitles.contains(title))
-                    title += " (" + slug + ")";
-            }
+            if (usedTitles.contains(title))
+                title += " (" + slug + ")";
             usedTitles.insert(title);
         }
 
@@ -366,16 +252,12 @@ bool Mangakakalot::updateMangaList(UpdateProgressToken *token)
 Result<QSharedPointer<MangaInfo>, QString> Mangakakalot::getMangaInfo(const QString &mangaUrl,
                                                                       const QString &mangaTitle)
 {
-    auto urlR = resolveMangaUrl(mangaUrl, mangaTitle);
-    if (urlR.isErr())
-        return Err(urlR.unwrapErr());
-
     // the chapter list comes from the api: load it in parallel to the manga page
-    auto slug = slugFromUrl(urlR.unwrap());
+    auto slug = slugFromUrl(mangaUrl);
     if (!slug.isEmpty())
         prefetchChapters(slug, downloadChapterList(slug, 0));
 
-    auto res = AbstractMangaSource::getMangaInfo(urlR.unwrap(), mangaTitle);
+    auto res = AbstractMangaSource::getMangaInfo(mangaUrl, mangaTitle);
     prefetchedChapters.remove(slug);
 
     return res;
@@ -401,15 +283,6 @@ QSharedPointer<DownloadStringJob> Mangakakalot::takePrefetchedChapters(const QSt
 
 void Mangakakalot::updateMangaInfoAsync(QSharedPointer<MangaInfo> info, bool updateCover)
 {
-    auto urlR = resolveMangaUrl(info->url, info->title);
-    if (urlR.isErr())
-    {
-        qDebug() << urlR.unwrapErr();
-        return;
-    }
-
-    info->url = urlR.unwrap();
-
     // load the chapter list before the manga page, so updateMangaInfoFinishedLoading doesn't
     // have to wait for it on the ui thread
     auto slug = slugFromUrl(info->url);
@@ -559,44 +432,6 @@ Result<MangaChapterCollection, QString> Mangakakalot::updateMangaInfoFinishedLoa
             break;
     }
 
-    // Page lists from before split pages were joined (see joinSplitPages()) are loaded again once, unless
-    // pages were downloaded already: their files and the reading progress count the pages of the old list.
-    QString joinedMarker = CONF.mangainfodir(name, info->title) + "joinedpages";
-    bool reloadUnjoined = !QFile::exists(joinedMarker);
-
-    for (int c = 0; c < info->chapters.count(); c++)
-    {
-        auto &chapter = info->chapters[c];
-        if (!chapter.pagesLoaded)
-            continue;
-
-        auto pageOnDisk = [&](int p)
-        { return QFile::exists(getImagePath(DownloadImageDescriptor("", info->title, c, p))); };
-
-        // the image urls of chapters from the old domains are dead: only downloaded pages count as
-        // loaded, so the chapters that aren't completely downloaded are loaded again from the new site
-        if (!isMirrorUrl(chapter.chapterUrl))
-        {
-            for (int p = 0; p < chapter.imageUrlList.count(); p++)
-                if (!pageOnDisk(p))
-                    chapter.imageUrlList[p] = "";
-            continue;
-        }
-
-        if (reloadUnjoined && !chapter.pageUrlList.isEmpty() && !pageOnDisk(0))
-        {
-            bool anyOnDisk = false;
-            for (int p = 1; p < chapter.pageUrlList.count() && !anyOnDisk; p++)
-                anyOnDisk = pageOnDisk(p);
-            if (!anyOnDisk)
-                chapter.pagesLoaded = false;
-        }
-    }
-
-    // the marker is written in chaptersMerged(): the new list can still be rejected
-    if (reloadUnjoined)
-        pendingJoinedMarkers.insert(joinedMarker);
-
     MangaChapterCollection newchapters;
     for (int i = chapters.size() - 1; i >= 0; i--)
         newchapters.append(chapters[i]);
@@ -611,11 +446,7 @@ Result<QStringList, QString> Mangakakalot::getPageList(const QString &chapterUrl
     QRegularExpression pathrx(R"lit("([^"]+)")lit");
     QRegularExpression imgrx(R"lit(<img\s+src=['"]([^'"]+)['"])lit");
 
-    auto url = normalizeUrl(chapterUrl);
-    if (!isMirrorUrl(url))
-        return Err(QString("Outdated chapter link, please reload the manga."));
-
-    auto job = downloadAsString(url);
+    auto job = downloadAsString(chapterUrl);
 
     if (!job->await(7000))
         return Err(job->errorString);
