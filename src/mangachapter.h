@@ -1,5 +1,4 @@
-#ifndef MANGACHAPTER_H
-#define MANGACHAPTER_H
+#pragma once
 #include <QtCore>
 
 #include "imagelink.h"
@@ -30,5 +29,3 @@ QDataStream &operator<<(QDataStream &str, const MangaPage &m);
 QDataStream &operator>>(QDataStream &str, MangaPage &m);
 QDataStream &operator<<(QDataStream &str, const MangaChapter &m);
 QDataStream &operator>>(QDataStream &str, MangaChapter &m);
-
-#endif  // MANGACHAPTER_H

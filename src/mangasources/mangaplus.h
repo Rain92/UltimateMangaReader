@@ -1,5 +1,4 @@
-#ifndef MANGAPLUS_H
-#define MANGAPLUS_H
+#pragma once
 
 #include "abstractmangasource.h"
 #include "mangainfo.h"
@@ -42,5 +41,3 @@ private:
     void cleanUpStoredUrls(QSharedPointer<MangaInfo> info);
     void forgetFailedImageUrl(QNetworkReply *reply);
 };
-
-#endif  // MANGAPLUS_H

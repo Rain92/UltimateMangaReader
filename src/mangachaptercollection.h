@@ -1,5 +1,4 @@
-#ifndef MANGACHAPTERCONTAINER_H
-#define MANGACHAPTERCONTAINER_H
+#pragma once
 
 #include "mangachapter.h"
 
@@ -24,5 +23,3 @@ public:
     // The index of the chapter with url, -1 if there is none.
     int findChapter(const QString &url) const;
 };
-
-#endif  // MANGACHAPTERCONTAINER_H

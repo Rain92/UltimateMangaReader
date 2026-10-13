@@ -1,5 +1,4 @@
-#ifndef IMAGEPROCESSINGQT_H
-#define IMAGEPROCESSINGQT_H
+#pragma once
 
 #include <QImage>
 
@@ -13,5 +12,3 @@ QImage rescaleImageQt(const QImage &img, QSize rescaleSize, bool rot90);
 
 QImage processImageQt(const QByteArray &array, const QString &filepath, QSize screenSize,
                       DoublePageMode doublePageMode, bool trim, bool manhwaMode);
-
-#endif  // IMAGEPROCESSINGQT_H

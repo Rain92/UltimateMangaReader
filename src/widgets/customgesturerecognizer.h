@@ -1,5 +1,4 @@
-#ifndef CUSTOMGESTURERECOGNIZER_H
-#define CUSTOMGESTURERECOGNIZER_H
+#pragma once
 
 #include <QElapsedTimer>
 #include <QGesture>
@@ -45,5 +44,3 @@ public:
     QGestureRecognizer::Result recognize(QGesture *state, QObject *watched, QEvent *event) override;
     void reset(QGesture *state) override;
 };
-
-#endif  // CUSTOMGESTURERECOGNIZER_H

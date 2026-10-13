@@ -1,5 +1,4 @@
-#ifndef CLINEEDIT_H
-#define CLINEEDIT_H
+#pragma once
 
 #include <QEvent>
 #include <QLineEdit>
@@ -16,5 +15,3 @@ protected:
     virtual void focusOutEvent(QFocusEvent *e);
     virtual void mousePressEvent(QMouseEvent *e);
 };
-
-#endif  // CLINEEDIT_H

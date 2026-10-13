@@ -1,5 +1,4 @@
-#ifndef MANGACONTROLLER_H
-#define MANGACONTROLLER_H
+#pragma once
 
 #include <QImage>
 
@@ -66,5 +65,3 @@ private:
     QElapsedTimer clock;
     QHash<QString, qint64> failedDownloads;
 };
-
-#endif  // MANGACONTROLLER_H

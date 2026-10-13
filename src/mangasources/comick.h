@@ -1,5 +1,4 @@
-#ifndef COMICK_H
-#define COMICK_H
+#pragma once
 
 #include <QSet>
 
@@ -46,5 +45,3 @@ private:
     Result<MangaChapterCollection, QString> fetchChapters(const QString &slug,
                                                           const MangaChapterCollection &current);
 };
-
-#endif  // COMICK_H

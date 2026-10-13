@@ -1,5 +1,4 @@
-#ifndef FAVORITE_H
-#define FAVORITE_H
+#pragma once
 
 #include "mangainfo.h"
 
@@ -23,5 +22,3 @@ struct Favorite
 QDataStream &operator<<(QDataStream &str, const Favorite &m);
 
 QDataStream &operator>>(QDataStream &str, Favorite &m);
-
-#endif  // FAVORITE_H

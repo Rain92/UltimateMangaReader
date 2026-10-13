@@ -1,5 +1,4 @@
-#ifndef MAINWIDGET_H
-#define MAINWIDGET_H
+#pragma once
 
 #include <QScrollBar>
 #include <QSplashScreen>
@@ -114,5 +113,3 @@ private:
     KoboDeviceDescriptor koboDevice;
 #endif
 };
-
-#endif  // MAINWIDGET_H

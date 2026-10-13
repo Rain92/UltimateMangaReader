@@ -1,5 +1,4 @@
-#ifndef MANGALIST_H
-#define MANGALIST_H
+#pragma once
 
 #include <QDataStream>
 #include <QStringList>
@@ -25,5 +24,3 @@ struct MangaList
 QDataStream &operator<<(QDataStream &str, const MangaList &m);
 
 QDataStream &operator>>(QDataStream &str, MangaList &m);
-
-#endif  // MANGALIST_H

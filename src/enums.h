@@ -1,5 +1,4 @@
-#ifndef ENUMS_H
-#define ENUMS_H
+#pragma once
 
 enum PageTurnDirection
 {
@@ -56,5 +55,3 @@ enum DoublePageMode
     DoublePage90CCW
 
 };
-
-#endif  // ENUMS_H

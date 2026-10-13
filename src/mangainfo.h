@@ -1,5 +1,4 @@
-#ifndef MANGAINFO_H
-#define MANGAINFO_H
+#pragma once
 
 #include "abstractmangasource.h"
 #include "mangachaptercollection.h"
@@ -61,5 +60,3 @@ signals:
     void chaptersMoved();
     void coverLoaded();
 };
-
-#endif  // MANGAINFO_H

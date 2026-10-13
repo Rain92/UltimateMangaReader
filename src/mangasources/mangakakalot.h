@@ -1,5 +1,4 @@
-#ifndef MANGAKAKALOT_H
-#define MANGAKAKALOT_H
+#pragma once
 
 #include <QElapsedTimer>
 #include <QSet>
@@ -58,5 +57,3 @@ private:
     QString normalizeUrl(const QString &url) const;
     QSharedPointer<DownloadStringJob> downloadChapterList(const QString &slug, int offset);
 };
-
-#endif  // MANGAKAKALOT_H

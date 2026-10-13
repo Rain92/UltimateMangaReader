@@ -1,5 +1,4 @@
-#ifndef DOWNLOADFILEJOB_H
-#define DOWNLOADFILEJOB_H
+#pragma once
 
 #include "downloadjobbase.h"
 
@@ -36,5 +35,3 @@ private:
     QFile partFile;
     int retries;
 };
-
-#endif  // DOWNLOADFILEJOB_H

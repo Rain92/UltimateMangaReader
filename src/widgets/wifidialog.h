@@ -1,5 +1,4 @@
-#ifndef WIFIDIALOG_H
-#define WIFIDIALOG_H
+#pragma once
 
 #include <QDialog>
 
@@ -36,5 +35,3 @@ private:
 
     void connectFinished(bool connected);
 };
-
-#endif  // WIFIDIALOG_H

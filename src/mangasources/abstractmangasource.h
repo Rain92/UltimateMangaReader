@@ -1,5 +1,4 @@
-#ifndef ABSTRACTMANGASOURCE_H
-#define ABSTRACTMANGASOURCE_H
+#pragma once
 #include <QApplication>
 #include <QDateTime>
 #include <QImage>
@@ -115,5 +114,3 @@ protected:
                        const QRegularExpression &genresrx, const QRegularExpression &summaryrx,
                        const QRegularExpression &coverrx);
 };
-
-#endif  // ABSTRACTMANGASOURCE_H

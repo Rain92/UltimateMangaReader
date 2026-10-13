@@ -1,5 +1,4 @@
-#ifndef DOWNLOADBUFFERJOB_H
-#define DOWNLOADBUFFERJOB_H
+#pragma once
 
 #include "downloadjobbase.h"
 
@@ -30,5 +29,3 @@ protected:
     virtual void downloadFinished();
     void timeout();
 };
-
-#endif  // DOWNLOADBUFFERJOB_H

@@ -1,5 +1,4 @@
-#ifndef DOWNLOADSTRINGJOB_H
-#define DOWNLOADSTRINGJOB_H
+#pragma once
 
 #include "downloadbufferjob.h"
 
@@ -20,5 +19,3 @@ public:
 protected:
     void downloadFinished() override;
 };
-
-#endif  // DOWNLOADSTRINGJOB_H

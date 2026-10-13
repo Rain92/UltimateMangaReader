@@ -1,5 +1,4 @@
-#ifndef DOWNLOADIMAGEANDRESCALEJOB_H
-#define DOWNLOADIMAGEANDRESCALEJOB_H
+#pragma once
 
 #include <QImage>
 
@@ -48,5 +47,3 @@ private:
     void process(const QByteArray &appendData);
     void processingFinished(quint64 id, const QImage &image);
 };
-
-#endif  // DOWNLOADIMAGEANDRESCALEJOB_H

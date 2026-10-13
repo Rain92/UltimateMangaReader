@@ -1,5 +1,4 @@
-#ifndef MANGAINDEXTRAVERSER_H
-#define MANGAINDEXTRAVERSER_H
+#pragma once
 
 #include "mangaindex.h"
 #include "mangainfo.h"
@@ -25,5 +24,3 @@ public:
         return mangaInfo->chapters[chapter];
     };
 };
-
-#endif  // MANGAINDEXTRAVERSER_H

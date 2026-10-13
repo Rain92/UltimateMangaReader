@@ -1,5 +1,4 @@
-#ifndef CLEARCACHEDIALOG_H
-#define CLEARCACHEDIALOG_H
+#pragma once
 
 #include <QDialog>
 
@@ -39,5 +38,3 @@ private:
     void adjustUI();
     void updateLabel();
 };
-
-#endif  // CLEARCACHEDIALOG_H

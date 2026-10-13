@@ -1,5 +1,4 @@
-#ifndef FAVORITESWIDGET_H
-#define FAVORITESWIDGET_H
+#pragma once
 
 #include <QElapsedTimer>
 #include <QFileInfo>
@@ -78,5 +77,3 @@ private:
 
     QWidget *makeIconTextWidget(const QString &key, const QString &text);
 };
-
-#endif  // FAVORITESWIDGET_H

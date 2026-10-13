@@ -1,5 +1,4 @@
-#ifndef NUMPADWIDGET_H
-#define NUMPADWIDGET_H
+#pragma once
 
 #include <QAbstractButton>
 #include <QIcon>
@@ -28,5 +27,3 @@ public slots:
 private:
     Ui::NumpadWidget *ui;
 };
-
-#endif  // NUMPADWIDGET_H

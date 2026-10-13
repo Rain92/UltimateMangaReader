@@ -1,5 +1,4 @@
-#ifndef MANGAREADERWIDGET_H
-#define MANGAREADERWIDGET_H
+#pragma once
 
 #include <QFuture>
 #include <QGesture>
@@ -103,5 +102,3 @@ private:
     void showMenuBar(bool show);
     void checkMem();
 };
-
-#endif  // MANGAREADERWIDGET_H

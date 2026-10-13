@@ -1,5 +1,4 @@
-#ifndef MANGADEX_H
-#define MANGADEX_H
+#pragma once
 
 #include <QSet>
 #include <algorithm>
@@ -58,5 +57,3 @@ private:
     bool downloadThrottled(const QStringList &urls, UpdateProgressToken *token,
                            const std::function<bool(int, QSharedPointer<DownloadStringJob>)> &handler);
 };
-
-#endif  // MANGADEX_H

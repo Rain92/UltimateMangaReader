@@ -1,5 +1,4 @@
-#ifndef MANGAINFOWIDGET_H
-#define MANGAINFOWIDGET_H
+#pragma once
 
 #include <QIcon>
 #include <QWidget>
@@ -55,5 +54,3 @@ private:
 
     void updateInfos();
 };
-
-#endif  // MANGAINFOWIDGET_H

@@ -1,5 +1,4 @@
-#ifndef IMAGELINK_H
-#define IMAGELINK_H
+#pragma once
 
 #include <QStringList>
 
@@ -38,5 +37,3 @@ inline QDataStream &operator>>(QDataStream &str, ImageLink &m)
 {
     return str >> m.url >> m.xorKey >> m.appendUrl >> m.headers;
 }
-
-#endif  // IMAGELINK_H

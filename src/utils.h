@@ -1,5 +1,4 @@
-#ifndef UTILS_H
-#define UTILS_H
+#pragma once
 
 #include <QEventLoop>
 #include <QRegularExpression>
@@ -68,5 +67,3 @@ void setIdleThreadPriority(bool idle);
 void decryptXorInplace(QByteArray& data, const QByteArray& key);
 
 QByteArray hexstr2array(const QString& str);
-
-#endif  // UTILS_H

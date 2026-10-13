@@ -1,5 +1,4 @@
-#ifndef ERRORMESSAGEWIDGET_H
-#define ERRORMESSAGEWIDGET_H
+#pragma once
 
 #include <QTimer>
 #include <QWidget>
@@ -30,5 +29,3 @@ private:
     QTimer hideTimer;
     int timeout;
 };
-
-#endif  // ERRORMESSAGEWIDGET_H

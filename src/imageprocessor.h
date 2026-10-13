@@ -1,5 +1,4 @@
-#ifndef IMAGEPROCESSOR_H
-#define IMAGEPROCESSOR_H
+#pragma once
 
 #include <QAtomicInt>
 #include <QByteArray>
@@ -66,5 +65,3 @@ private:
     quint64 nextId;
     QAtomicInt pending;
 };
-
-#endif  // IMAGEPROCESSOR_H

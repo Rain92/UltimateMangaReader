@@ -1,5 +1,4 @@
-#ifndef STATICSETTINGS_H
-#define STATICSETTINGS_H
+#pragma once
 
 #include "utils.h"
 
@@ -72,5 +71,3 @@ private:
         mangaListDir = cacheDir + "mangalists/";
     };
 };
-
-#endif  // STATICSETTINGS_H

@@ -1,5 +1,4 @@
-#ifndef JSON_H
-#define JSON_H
+#pragma once
 
 #include <stdexcept>
 
@@ -19,5 +18,3 @@ struct JsonError : std::runtime_error
 #define RAPIDJSON_ASSERT(x) ((x) ? (void)0 : throw JsonError())
 
 #include "thirdparty/rapidjson.h"
-
-#endif  // JSON_H

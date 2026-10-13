@@ -1,5 +1,4 @@
-#ifndef BATTERYICON_H
-#define BATTERYICON_H
+#pragma once
 
 #include <QLabel>
 #include <QPair>
@@ -28,5 +27,3 @@ private:
 
     QPair<int, bool> getBatteryState();
 };
-
-#endif  // BATTERYICON_H

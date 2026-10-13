@@ -1,5 +1,4 @@
-#ifndef NETWORKMANAGER_H
-#define NETWORKMANAGER_H
+#pragma once
 
 #include <QFuture>
 #include <QNetworkReply>
@@ -147,5 +146,3 @@ private:
     QString fixUrl(const QString &url) const;
     void releaseFileDownload(const QString &localPath);
 };
-
-#endif  // NETWORKMANAGER_H

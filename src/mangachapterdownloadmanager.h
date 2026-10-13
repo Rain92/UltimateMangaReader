@@ -1,5 +1,4 @@
-#ifndef MANGACHAPTERDOWNLOADMANAGER_H
-#define MANGACHAPTERDOWNLOADMANAGER_H
+#pragma once
 
 #include <QQueue>
 
@@ -59,5 +58,3 @@ private:
     void recordFailedChapters();
     int failedChapterCount() const;
 };
-
-#endif  // MANGACHAPTERDOWNLOADMANAGER_H

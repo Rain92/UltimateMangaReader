@@ -1,5 +1,4 @@
-#ifndef STANDBYMANAGER_H
-#define STANDBYMANAGER_H
+#pragma once
 
 #include <QObject>
 #include <QTimer>
@@ -60,5 +59,3 @@ private:
     void idleTimeout();
     bool enterStandby(int wakeAfterSeconds);
 };
-
-#endif  // STANDBYMANAGER_H

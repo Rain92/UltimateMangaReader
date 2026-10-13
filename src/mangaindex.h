@@ -1,5 +1,4 @@
-#ifndef MANGAINDEX_H
-#define MANGAINDEX_H
+#pragma once
 
 #include "mangachaptercollection.h"
 
@@ -18,5 +17,3 @@ public:
 
 QDataStream &operator<<(QDataStream &str, const MangaIndex &m);
 QDataStream &operator>>(QDataStream &str, MangaIndex &m);
-
-#endif  // MANGAINDEX_H

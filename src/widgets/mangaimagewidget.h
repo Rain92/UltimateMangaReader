@@ -1,5 +1,4 @@
-#ifndef MANGAIMAGEWIDGET_H
-#define MANGAIMAGEWIDGET_H
+#pragma once
 
 #include <QFrame>
 #include <QImage>
@@ -33,5 +32,3 @@ private:
     QSharedPointer<QImage> image;
     QSharedPointer<QImage> errorImage;
 };
-
-#endif  // MANGAIMAGEWIDGET_H

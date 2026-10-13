@@ -1,5 +1,4 @@
-#ifndef MANGATOWN_H
-#define MANGATOWN_H
+#pragma once
 
 #include "abstractmangasource.h"
 #include "mangainfo.h"
@@ -36,5 +35,3 @@ private:
 
     QString licensedMessage(const QString &buffer);
 };
-
-#endif  // MANGATOWN_H

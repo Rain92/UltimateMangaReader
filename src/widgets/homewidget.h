@@ -1,5 +1,4 @@
-#ifndef HOMEWIDGET_H
-#define HOMEWIDGET_H
+#pragma once
 
 #include <QProgressDialog>
 #include <QScrollBar>
@@ -52,5 +51,3 @@ private:
     QList<QStandardItem *> listViewItemfromMangaSource(AbstractMangaSource *source);
     void updateMangaSourceSelection(int row);
 };
-
-#endif  // HOMEWIDGET_H

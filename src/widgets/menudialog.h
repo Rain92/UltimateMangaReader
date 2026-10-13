@@ -1,5 +1,4 @@
-#ifndef MENUDIALOG_H
-#define MENUDIALOG_H
+#pragma once
 
 #include <QDialog>
 
@@ -39,5 +38,3 @@ private slots:
 private:
     Ui::MenuDialog *ui;
 };
-
-#endif  // MENUDIALOG_H

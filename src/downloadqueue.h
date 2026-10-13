@@ -1,5 +1,4 @@
-#ifndef DOWNLOADQUEUE_H
-#define DOWNLOADQUEUE_H
+#pragma once
 
 #include "networkmanager.h"
 
@@ -74,5 +73,3 @@ private:
     void startSingle();
     void downloadFinished(QSharedPointer<DownloadJobBase> job, bool success);
 };
-
-#endif  // DOWNLOADQUEUE_H

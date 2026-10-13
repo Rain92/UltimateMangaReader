@@ -1,5 +1,4 @@
-#ifndef DOWNLOADSTATUSDIALOG_H
-#define DOWNLOADSTATUSDIALOG_H
+#pragma once
 
 #include <QDialog>
 #include <QMessageBox>
@@ -47,5 +46,3 @@ private:
     int imageDownloadErrors;
     bool cancelled;
 };
-
-#endif  // DOWNLOADSTATUSDIALOG_H

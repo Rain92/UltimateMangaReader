@@ -1,5 +1,4 @@
-#ifndef DOWNLOADJOBBASE_H
-#define DOWNLOADJOBBASE_H
+#pragma once
 
 #include <QtNetwork>
 
@@ -85,5 +84,3 @@ private:
 
 // Calls lambda (on the job's thread) when the job completes, the job is kept until it finished.
 void executeOnJobCompletion(QSharedPointer<DownloadJobBase> job, std::function<void()> lambda);
-
-#endif  // DOWNLOADJOBBASE_H

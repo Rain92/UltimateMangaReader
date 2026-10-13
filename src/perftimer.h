@@ -1,5 +1,4 @@
-#ifndef PERFTIMER_H
-#define PERFTIMER_H
+#pragma once
 
 #include <QDebug>
 #include <QElapsedTimer>
@@ -69,5 +68,3 @@ inline void startStallWatchdog(QObject *parent, int thresholdMs = 150)
                      });
     timer->start(intervalMs);
 }
-
-#endif  // PERFTIMER_H

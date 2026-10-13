@@ -1,5 +1,4 @@
-#ifndef WIDGETUTILS_H
-#define WIDGETUTILS_H
+#pragma once
 
 #include <QAbstractScrollArea>
 
@@ -11,5 +10,3 @@ void activateScroller(QAbstractScrollArea* pArea);
 // Thread safe.
 qreal windowPixelRatio();
 void setWindowPixelRatio(qreal ratio);
-
-#endif  // WIDGETUTILS_H

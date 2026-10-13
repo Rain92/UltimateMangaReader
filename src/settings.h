@@ -1,5 +1,4 @@
-#ifndef SETTINGS_H
-#define SETTINGS_H
+#pragma once
 
 #include <QDataStream>
 #include <QFile>
@@ -46,5 +45,3 @@ private:
 QDataStream &operator<<(QDataStream &str, const Settings &m);
 
 QDataStream &operator>>(QDataStream &str, Settings &m);
-
-#endif  // SETTINGS_H

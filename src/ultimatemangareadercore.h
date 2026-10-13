@@ -1,5 +1,4 @@
-#ifndef ULTIMATEMANGAREADERCORE_H
-#define ULTIMATEMANGAREADERCORE_H
+#pragma once
 
 #include <QObject>
 
@@ -81,5 +80,3 @@ private:
     void resumedFromStandby();
     void setupDirectories();
 };
-
-#endif  // ULTIMATEMANGAREADERCORE_H

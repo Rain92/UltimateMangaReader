@@ -1,5 +1,4 @@
-#ifndef SIZES_H
-#define SIZES_H
+#pragma once
 
 #define SIZES DPIAwareSizes::get()
 class DPIAwareSizes
@@ -47,5 +46,3 @@ public:
     const float readerPageSideThreshold = 0.4;
     const float readerBottomMenuThreshold = 0.1;
 };
-
-#endif  // SIZES_H

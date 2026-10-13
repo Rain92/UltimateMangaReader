@@ -1,5 +1,4 @@
-#ifndef SCREENSAVERDIALOG_H
-#define SCREENSAVERDIALOG_H
+#pragma once
 
 #include <QDialog>
 #include <QDir>
@@ -30,5 +29,3 @@ protected:
 private:
     Ui::ScreensaverDialog *ui;
 };
-
-#endif  // SCREENSAVERDIALOG_H

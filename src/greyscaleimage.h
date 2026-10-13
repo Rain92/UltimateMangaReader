@@ -1,5 +1,4 @@
-#ifndef GREYSCALEIMAGE_H
-#define GREYSCALEIMAGE_H
+#pragma once
 
 #include <QByteArray>
 #include <QImage>
@@ -63,5 +62,3 @@ public:
 
     QImage toQImage() const;
 };
-
-#endif  // GREYSCALEIMAGE_H

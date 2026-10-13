@@ -1,5 +1,4 @@
-#ifndef UPDATEMANGALISTSDIALOG_H
-#define UPDATEMANGALISTSDIALOG_H
+#pragma once
 
 #include <QCheckBox>
 #include <QDialog>
@@ -45,5 +44,3 @@ private:
     void updateProgress();
     void updateError(const QString &message);
 };
-
-#endif  // UPDATEMANGALISTSDIALOG_H

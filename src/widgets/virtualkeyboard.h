@@ -1,5 +1,4 @@
-#ifndef VIRTUALKEYBOARD_H
-#define VIRTUALKEYBOARD_H
+#pragma once
 
 #include <QEvent>
 #include <QSvgRenderer>
@@ -62,5 +61,3 @@ private:
     void onCapsLock();
     void onAutoRepeat(bool first);
 };
-
-#endif  // VIRTUALKEYBOARD_H

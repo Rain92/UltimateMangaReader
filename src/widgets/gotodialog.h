@@ -1,5 +1,4 @@
-#ifndef GOTODIALOG_H
-#define GOTODIALOG_H
+#pragma once
 
 #include <QDialog>
 #include <QResizeEvent>
@@ -42,5 +41,3 @@ private slots:
 private:
     Ui::GotoDialog *ui;
 };
-
-#endif  // GOTODIALOG_H

@@ -1,5 +1,4 @@
-#ifndef HTTPHEADER_H
-#define HTTPHEADER_H
+#pragma once
 
 #include <QByteArray>
 #include <QDataStream>
@@ -21,5 +20,3 @@ inline QDataStream &operator>>(QDataStream &str, HttpHeader &m)
 {
     return str >> m.name >> m.value;
 }
-
-#endif  // HTTPHEADER_H

@@ -1,5 +1,4 @@
-#ifndef DOWNLOADMANGACHAPTERSDIALOG_H
-#define DOWNLOADMANGACHAPTERSDIALOG_H
+#pragma once
 
 #include <mangainfo.h>
 
@@ -38,5 +37,3 @@ private:
 
     QSharedPointer<MangaInfo> mangaInfo;
 };
-
-#endif  // DOWNLOADMANGACHAPTERSDIALOG_H

@@ -1,5 +1,4 @@
-#ifndef IMAGEPROCESSINGNATIVE_H
-#define IMAGEPROCESSINGNATIVE_H
+#pragma once
 
 #include <QImage>
 
@@ -19,5 +18,3 @@ QImage processStitchedImageN(const QByteArray &top, const QByteArray &bottom, co
 // Rotates, trims, rescales and saves an image decoded by Qt (any format) with the native pipeline.
 QImage processDecodedImage(const QImage &decoded, const QString &filepath, QSize screenSize,
                            DoublePageMode doublePageMode, bool trim, bool manhwaMode);
-
-#endif  // IMAGEPROCESSINGNATIVE_H

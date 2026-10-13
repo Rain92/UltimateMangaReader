@@ -1,5 +1,4 @@
-#ifndef READINGSTATEMANAGER_H
-#define READINGSTATEMANAGER_H
+#pragma once
 
 #include <QElapsedTimer>
 #include <QString>
@@ -55,5 +54,3 @@ private:
     QSharedPointer<MangaInfo> loadInfo(const Favorite &fav);
     int indexOf(const Favorite &fav) const;
 };
-
-#endif  // READINGSTATEMANAGER_H

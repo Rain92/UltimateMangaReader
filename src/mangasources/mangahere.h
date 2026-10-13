@@ -1,5 +1,4 @@
-#ifndef MANGAHERE_H
-#define MANGAHERE_H
+#pragma once
 
 #include "abstractmangasource.h"
 #include "mangainfo.h"
@@ -32,5 +31,3 @@ private:
 
     Result<QStringList, QString> getPageListDesktop(const QString &chapterUrl, int timeout);
 };
-
-#endif  // MANGAHERE_H

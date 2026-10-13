@@ -1,5 +1,4 @@
-#ifndef CACHEFILE_H
-#define CACHEFILE_H
+#pragma once
 
 #include <QDataStream>
 
@@ -19,5 +18,3 @@ void writeCacheFileHeader(QDataStream &out, CacheFile type);
 // Whether the stream has the header of type in the current version, the status of the stream is an error if
 // not.
 bool readCacheFileHeader(QDataStream &in, CacheFile type);
-
-#endif  // CACHEFILE_H

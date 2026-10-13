@@ -1,5 +1,4 @@
-#ifndef ABOUTINFO_H
-#define ABOUTINFO_H
+#pragma once
 
 const auto aboutString =
     "Version 2.12.0"
@@ -9,5 +8,3 @@ const auto aboutString =
     "github.com/Rain92/UltimateMangaReader"
     "\n"
     "Andreas Schaarschmidt";
-
-#endif  // ABOUTINFO_H

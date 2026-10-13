@@ -1,5 +1,4 @@
-#ifndef SUSPENDMANAGER_H
-#define SUSPENDMANAGER_H
+#pragma once
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -31,5 +30,3 @@ private:
 
     bool suspendInternal();
 };
-
-#endif  // SUSPENDMANAGER_H

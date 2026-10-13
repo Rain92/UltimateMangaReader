@@ -1,5 +1,4 @@
-#ifndef IMAGEROTATE_H
-#define IMAGEROTATE_H
+#pragma once
 
 #include <QByteArray>
 
@@ -9,5 +8,3 @@
 
 // Rotates an 8 bit grayscale image by 90, 180 or 270 degrees clockwise.
 QByteArray rotateBuffer(const QByteArray &buffer, int width, int height, int rotation);
-
-#endif  // IMAGEROTATE_H

@@ -1,5 +1,4 @@
-#ifndef UPDATEPROGRESSTOKEN_H
-#define UPDATEPROGRESSTOKEN_H
+#pragma once
 
 #include <QHash>
 #include <QMap>
@@ -40,5 +39,3 @@ signals:
 private:
     QHash<QString, std::any> resumeStates;
 };
-
-#endif  // UPDATEPROGRESSTOKEN_H

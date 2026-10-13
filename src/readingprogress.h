@@ -1,5 +1,4 @@
-#ifndef READINGPROGRESS_H
-#define READINGPROGRESS_H
+#pragma once
 
 #include "mangaindex.h"
 #include "staticsettings.h"
@@ -29,5 +28,3 @@ public:
 
 QDataStream& operator<<(QDataStream& str, const ReadingProgress& m);
 QDataStream& operator>>(QDataStream& str, ReadingProgress& m);
-
-#endif  // READINGPROGRESS_H
