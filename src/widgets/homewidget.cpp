@@ -95,6 +95,17 @@ void HomeWidget::currentMangaSourceChanged(AbstractMangaSource *source)
     if (currentMangaSource)
         currentMangaSource->loadMangaList();
 
+    showMangaList();
+}
+
+void HomeWidget::mangaListChanged(AbstractMangaSource *source)
+{
+    if (source == currentMangaSource)
+        showMangaList();
+}
+
+void HomeWidget::showMangaList()
+{
     // the results of the previous source (or list)
     filteredMangaUrls.clear();
     filteredMangaTitles.clear();

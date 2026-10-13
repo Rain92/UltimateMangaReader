@@ -24,6 +24,8 @@ public:
     ~HomeWidget();
 
     void currentMangaSourceChanged(AbstractMangaSource *source);
+    // e.g. updated: the list is shown again if it is the one of the current source
+    void mangaListChanged(AbstractMangaSource *source);
     void updateSourcesList(const QList<AbstractMangaSource *> &sources);
 
 signals:
@@ -45,6 +47,7 @@ private:
     QStringList filteredMangaUrls;
     bool filteractive;
 
+    void showMangaList();
     void refreshMangaListView();
     void adjustUI();
 

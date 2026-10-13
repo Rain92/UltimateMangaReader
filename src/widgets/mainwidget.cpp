@@ -49,8 +49,8 @@ MainWidget::MainWidget(QWidget *parent)
                              core->clearDownloadCache(static_cast<ClearDownloadCacheLevel>(l));
                      });
 
-    QObject::connect(updateMangaListsDialog, &UpdateMangaListsDialog::updateClicked, core,
-                     &UltimateMangaReaderCore::updateMangaLists);
+    QObject::connect(updateMangaListsDialog, &UpdateMangaListsDialog::updateClicked, core->mangaListUpdater,
+                     &MangaListUpdater::updateMangaLists);
 
     QObject::connect(downloadMangaChaptersDialog, &DownloadMangaChaptersDialog::downloadConfirmed, this,
                      [this](auto m, auto f, auto t)
@@ -108,7 +108,7 @@ MainWidget::MainWidget(QWidget *parent)
 
     QObject::connect(core, &UltimateMangaReaderCore::timeTick, this, &MainWidget::timerTick);
 
-    QObject::connect(core, &UltimateMangaReaderCore::activeMangaSourcesChanged, ui->homeWidget,
+    QObject::connect(core->sources, &SourceRegistry::activeSourcesChanged, ui->homeWidget,
                      &HomeWidget::updateSourcesList);
 
     QObject::connect(core, &UltimateMangaReaderCore::downloadCacheCleared, this,
@@ -152,13 +152,20 @@ MainWidget::MainWidget(QWidget *parent)
 
     // HomeWidget
     QObject::connect(ui->homeWidget, &HomeWidget::mangaSourceClicked, core,
-                     &UltimateMangaReaderCore::setCurrentMangaSource);
+                     [this](AbstractMangaSource *source)
+                     {
+                         core->sources->setCurrent(source);
+                         core->activity();
+                     });
 
     QObject::connect(ui->homeWidget, &HomeWidget::mangaClicked, core,
                      &UltimateMangaReaderCore::setCurrentManga);
 
-    QObject::connect(core, &UltimateMangaReaderCore::currentMangaSourceChanged, ui->homeWidget,
+    QObject::connect(core->sources, &SourceRegistry::currentSourceChanged, ui->homeWidget,
                      &HomeWidget::currentMangaSourceChanged);
+
+    QObject::connect(core->mangaListUpdater, &MangaListUpdater::mangaListChanged, ui->homeWidget,
+                     &HomeWidget::mangaListChanged);
 
     // MangaInfoWidget
     QObject::connect(ui->mangaInfoWidget, &MangaInfoWidget::toggleFavoriteClicked, this,
@@ -232,8 +239,8 @@ MainWidget::MainWidget(QWidget *parent)
     QObject::connect(settingsDialog, &SettingsDialog::activeMangasChanged, core,
                      &UltimateMangaReaderCore::updateActiveSources);
 
-    QObject::connect(settingsDialog, &SettingsDialog::mangaOrderMethodChanged, core,
-                     &UltimateMangaReaderCore::sortMangaLists);
+    QObject::connect(settingsDialog, &SettingsDialog::mangaOrderMethodChanged, core->mangaListUpdater,
+                     &MangaListUpdater::sortMangaLists);
 
     QObject::connect(settingsDialog, &SettingsDialog::ditheringMethodChanged, this,
                      &MainWidget::updateDitheringMode);

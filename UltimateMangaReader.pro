@@ -87,6 +87,7 @@ HEADERS += \
     src/mangaindextraverser.h \
     src/mangainfo.h \
     src/mangalist.h \
+    src/mangalistupdater.h \
     src/mangasources/abstractmangasource.h \
     src/mangasources/comick.h \
     src/mangasources/json.h \
@@ -100,6 +101,7 @@ HEADERS += \
     src/perftimer.h \
     src/readingprogress.h \
     src/settings.h \
+    src/sourceregistry.h \
     src/sizes.h \
     src/stacktrace.h \
     src/staticsettings.h \
@@ -160,6 +162,7 @@ SOURCES += \
     src/mangaindextraverser.cpp \
     src/mangainfo.cpp \
     src/mangalist.cpp \
+    src/mangalistupdater.cpp \
     src/mangasources/abstractmangasource.cpp \
     src/mangasources/comick.cpp \
     src/mangasources/mangadex.cpp \
@@ -171,6 +174,7 @@ SOURCES += \
     src/networkmanager.cpp \
     src/readingprogress.cpp \
     src/settings.cpp \
+    src/sourceregistry.cpp \
     src/stacktrace.cpp \
     src/standbymanager.cpp \
     src/suspendmanager.cpp \

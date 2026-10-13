@@ -5,13 +5,9 @@
 #include "favoritesmanager.h"
 #include "mangachapterdownloadmanager.h"
 #include "mangacontroller.h"
-#include "mangadex.h"
-#include "mangahere.h"
-#include "mangakakalot.h"
-#include "mangaplus.h"
-#include "mangatown.h"
-#include "comick.h"
+#include "mangalistupdater.h"
 #include "settings.h"
+#include "sourceregistry.h"
 #include "standbymanager.h"
 #include "suspendmanager.h"
 #include "utils.h"
@@ -22,13 +18,8 @@ class UltimateMangaReaderCore : public QObject
 public:
     explicit UltimateMangaReaderCore(QObject *parent = nullptr);
 
-    QList<QSharedPointer<AbstractMangaSource>> mangaSources;
-
-    QMap<QString, AbstractMangaSource *> activeMangaSources;
-
-    AbstractMangaSource *currentMangaSource;
-
     NetworkManager *networkManager;
+    SourceRegistry *sources;
     MangaController *mangaController;
     FavoritesManager *favoritesManager;
     MangaChapterDownloadManager *mangaChapterDownloadManager;
@@ -37,26 +28,20 @@ public:
     Settings settings;
 
     StandbyManager *standbyManager;
+    MangaListUpdater *mangaListUpdater;
 
 public:
-    void setCurrentMangaSource(AbstractMangaSource *mangaSource);
+    // Opens a manga of the list of the current source.
     void setCurrentManga(const QString &mangaUrl, const QString &mangatitle);
 
     void clearDownloadCache(ClearDownloadCacheLevel level);
     void updateActiveSources();
-
-    void updateMangaLists(QSharedPointer<UpdateProgressToken> progressToken);
-    void sortMangaLists();
 
     void enableTimers(bool enabled);
 
     void activity();
 
 signals:
-    void currentMangaSourceChanged(AbstractMangaSource *source);
-
-    void activeMangaSourcesChanged(const QList<AbstractMangaSource *> &sources);
-
     void downloadCacheCleared(ClearDownloadCacheLevel level);
 
     void error(const QString &error);
@@ -69,7 +54,6 @@ private:
     QTimer autoSuspendTimer;
     qint64 autoSuspendStart;
     int currentDay;
-    bool updatingMangaLists;
     // counts the opened mangas: loading one can take a download, another one may be opened meanwhile
     int mangaRequests;
 
