@@ -34,11 +34,11 @@ public:
     virtual ~MangaDex() = default;
 
     bool updateMangaList(UpdateProgressToken *token) override;
-    Result<QSharedPointer<MangaInfo>, QString> getMangaInfo(const QString &mangaUrl,
-                                                            const QString &mangaTitle) override;
+    // the manga list has the urls of the mangas, the info also needs its authors and the cover
+    QString mangaInfoRequestUrl(const QString &mangaUrl) const override;
     Result<MangaChapterCollection, QString> updateMangaInfoFinishedLoading(
         QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info) override;
-    Result<QStringList, QString> getPageList(const QString &chapterUrl) override;
+    Result<QList<ImageLink>, QString> getPageList(const QString &chapterUrl) override;
 
 private:
     QString apiUrl;
@@ -50,7 +50,6 @@ private:
     QElapsedTimer atHomeClock;
     qint64 atHomeSchedule;
 
-    QString mangaRequestUrl(const QString &mangaUrl) const;
     Result<MangaChapterCollection, QString> getChapters(const QString &mangaId, bool resetOnNewVolume,
                                                         const QSet<QString> &loadedChapters);
 

@@ -9,7 +9,7 @@
 
 static QString favoriteKey(const Favorite &fav)
 {
-    return fav.hostname + '/' + fav.title;
+    return fav.hostname + '/' + fav.mangaUrl;
 }
 
 // Runs on a worker thread.
@@ -171,7 +171,7 @@ static QString statusText(const QSharedPointer<MangaInfo> &info)
 
 static QString progressText(const Favorite &fav)
 {
-    ReadingProgress progress(fav.hostname, fav.title);
+    ReadingProgress progress(fav.hostname, fav.mangaUrl);
 
     return "Chapter: " + QString::number(progress.index.chapter + 1) +
            "\nPage: " + QString::number(progress.index.page + 1);

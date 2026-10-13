@@ -13,8 +13,8 @@ struct ComickUpdateState
     QSet<QString> urls;
     bool searched = false;
     QSet<int> sitemapsDone;
-    // the titles of the list before the update by url: the cached infos and the reading progress are found by
-    // title, it mustn't change (titles from the sitemaps are made from the slugs, the search has the real ones)
+    // the titles of the list before the update by url: the sitemaps have no titles (only slugs), the ones the
+    // search found before are kept
     QHash<QString, QString> knownTitles;
     bool knownTitlesLoaded = false;
 };
@@ -31,8 +31,8 @@ public:
     bool updateMangaList(UpdateProgressToken *token) override;
     Result<MangaChapterCollection, QString> updateMangaInfoFinishedLoading(
         QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info) override;
-    Result<QStringList, QString> getPageList(const QString &chapterUrl) override;
-    Result<QString, QString> getImageUrl(const QString &pageUrl) override;
+    Result<QList<ImageLink>, QString> getPageList(const QString &chapterUrl) override;
+    Result<ImageLink, QString> getImageLink(const ImageLink &page) override;
 
 private:
     QString apiUrl;

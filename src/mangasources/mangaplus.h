@@ -12,21 +12,18 @@ public:
 
     bool updateMangaList(UpdateProgressToken *token) override;
 
-    Result<QSharedPointer<MangaInfo>, QString> getMangaInfo(const QString &mangaUrl,
-                                                            const QString &mangaTitle) override;
     void updateMangaInfoAsync(QSharedPointer<MangaInfo> info, bool updateCover = true) override;
 
     Result<MangaChapterCollection, QString> updateMangaInfoFinishedLoading(
         QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info) override;
-    Result<QStringList, QString> getPageList(const QString &chapterUrl) override;
-    Result<QString, QString> getImageUrl(const QString &pageUrl) override;
-    HttpHeaders requestHeaders(const QString &url) const override;
+    Result<QList<ImageLink>, QString> getPageList(const QString &chapterUrl) override;
+    Result<ImageLink, QString> getImageLink(const ImageLink &page) override;
 
 private:
     struct RefreshedPageList
     {
         qint64 time = 0;
-        QStringList imageUrls;
+        QList<ImageLink> images;
     };
 
     QString mangalistUrl;
@@ -34,17 +31,15 @@ private:
     QString titleDetailUrl;
     QString pagesUrl;
 
-    QSet<QString> viewTokens;
+    QSet<QByteArray> viewTokens;
     QHash<QString, RefreshedPageList> refreshedPageLists;
     // the refreshes that wait for their page list, by chapter
     QHash<QString, int> runningRefreshes;
 
-    QList<QWeakPointer<MangaInfo>> openedInfos;
     QObject replyContext;
 
-    bool isUsableImageUrl(const QString &url) const;
+    bool isUsableImage(const ImageLink &image) const;
     void cleanUpStoredUrls(QSharedPointer<MangaInfo> info);
-    void trackInfo(QSharedPointer<MangaInfo> info);
     void forgetFailedImageUrl(QNetworkReply *reply);
 };
 

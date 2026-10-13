@@ -14,6 +14,7 @@
 #include "downloadfilejob.h"
 #include "downloadimageandrescalejob.h"
 #include "downloadstringjob.h"
+#include "imagelink.h"
 #include "imageprocessor.h"
 #include "settings.h"
 
@@ -72,10 +73,9 @@ public:
     // A download into a file that is running already is reused.
     QSharedPointer<DownloadFileJob> downloadAsFile(const QString &url, const QString &localPath,
                                                    const HttpHeaders &headers = {});
-    // Downloads a page and saves it processed for the screen. url: url|xor:<hex key>|append:<url of the rest
-    // of the page>. A download into the same file that is running already is reused.
-    QSharedPointer<DownloadFileJob> downloadAsScaledImage(const QString &url, const QString &localPath,
-                                                          const HttpHeaders &headers = {});
+    // Downloads a page and saves it processed for the screen, with the headers of image. A download into the
+    // same file that is running already is reused.
+    QSharedPointer<DownloadFileJob> downloadAsScaledImage(const ImageLink &image, const QString &localPath);
 
     void setDownloadSettings(const QSize &size, Settings *settings);
 

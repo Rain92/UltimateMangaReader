@@ -3,6 +3,7 @@
 
 #include "mangainfo.h"
 
+// A favorite is identified by its source (hostname) and url, the title is shown.
 struct Favorite
 {
     QString hostname;

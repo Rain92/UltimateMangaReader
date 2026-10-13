@@ -3,7 +3,6 @@
 
 #include <QQueue>
 
-#include "downloadimagedescriptor.h"
 #include "downloadqueue.h"
 #include "mangainfo.h"
 #include "networkmanager.h"

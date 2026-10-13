@@ -25,7 +25,7 @@ DownloadQueue::DownloadQueue(NetworkManager* networkManager, const QList<QString
       cancelled(false)
 {
     for (const auto& url : urls)
-        jobDescriptorQueue.append(FileDownloadDescriptor(url, ""));
+        jobDescriptorQueue.append(FileDownloadDescriptor({url, {}, {}, {}}, ""));
 }
 
 DownloadQueue::DownloadQueue(NetworkManager* networkManager, const QList<FileDownloadDescriptor>& urlAndPaths,
@@ -68,10 +68,10 @@ void DownloadQueue::startSingle()
     QSharedPointer<DownloadJobBase> job;
 
     if (type == DownloadTypeString)
-        job = networkManager->downloadAsString(descriptor.url, individualTimeout,
-                                               headersFor ? headersFor(descriptor.url) : HttpHeaders());
+        job = networkManager->downloadAsString(descriptor.image.url, individualTimeout,
+                                               headersFor ? headersFor(descriptor.image.url) : HttpHeaders());
     else  // if (type == DownloadTypeScaledImage)
-        job = networkManager->downloadAsScaledImage(descriptor.url, descriptor.path, descriptor.headers);
+        job = networkManager->downloadAsScaledImage(descriptor.image, descriptor.path);
 
     // a job that is done already (e.g. the same file was downloaded before) still signals, that may have
     // happened before the connections

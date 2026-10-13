@@ -1,5 +1,7 @@
 #include "ultimatemangareadercore.h"
 
+#include <QSaveFile>
+
 UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
     : QObject(parent),
       mangaSources(),
@@ -196,6 +198,25 @@ void UltimateMangaReaderCore::setupDirectories()
     if (!QDir(CONF.cacheDir).exists())
         QDir().mkpath(CONF.cacheDir);
 
+    // The cache of another version of the app is laid out differently, its mangas (infos, pages, reading
+    // progress) are dropped. The files in the cache directory itself and the manga lists check their format.
+    QFile versionFile(CONF.cacheDir + "cacheversion");
+    int layoutVersion = versionFile.open(QIODevice::ReadOnly) ? versionFile.readAll().trimmed().toInt() : 0;
+    versionFile.close();
+    if (layoutVersion != CONF.cacheLayoutVersion)
+    {
+        qDebug() << "Dropping the cache of layout version" << layoutVersion;
+        QDir cache(CONF.cacheDir);
+        for (const auto &dir : cache.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::Hidden))
+            if (dir.fileName() != "mangalists")
+                removeDir(dir.absoluteFilePath());
+
+        QSaveFile file(versionFile.fileName());
+        if (!file.open(QIODevice::WriteOnly) || file.write(QByteArray::number(CONF.cacheLayoutVersion)) < 0 ||
+            !file.commit())
+            qDebug() << "Couldn't write" << file.fileName();
+    }
+
     if (!QDir(CONF.mangaListDir).exists())
         QDir().mkpath(CONF.mangaListDir);
 
@@ -293,7 +314,6 @@ void UltimateMangaReaderCore::updateMangaLists(QSharedPointer<UpdateProgressToke
 
         // only the updated lists, writing all of them takes a while on the device
         ms->mangaList.filter();
-        ms->makeTitlesUnique();
         ms->mangaList.sortBy(settings.mangaOrder);
         // the list on the home screen indexes into it (a cancelled update can go on for a while)
         if (ms == currentMangaSource)

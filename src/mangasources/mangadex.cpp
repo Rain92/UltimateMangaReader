@@ -315,9 +315,7 @@ static MangaChapterCollection buildChapterList(QVector<DexChapter> &chapters, bo
     MangaChapterCollection newchapters;
     for (const auto &ch : std::as_const(selected))
     {
-        MangaChapter mangaChapter(ch.title, ch.id);
-        mangaChapter.chapterNumber = ch.number;
-        newchapters.append(mangaChapter);
+        newchapters.append(MangaChapter(ch.title, ch.id));
     }
 
     return newchapters;
@@ -610,7 +608,7 @@ bool MangaDex::updateMangaList(UpdateProgressToken *token)
     return true;
 }
 
-QString MangaDex::mangaRequestUrl(const QString &mangaUrl) const
+QString MangaDex::mangaInfoRequestUrl(const QString &mangaUrl) const
 {
     auto match = uuidrx.match(mangaUrl);
     if (!match.hasMatch())
@@ -618,12 +616,6 @@ QString MangaDex::mangaRequestUrl(const QString &mangaUrl) const
 
     return apiUrl + "/manga/" + match.captured() +
            "?includes[]=author&includes[]=artist&includes[]=cover_art";
-}
-
-Result<QSharedPointer<MangaInfo>, QString> MangaDex::getMangaInfo(const QString &mangaUrl,
-                                                                  const QString &mangaTitle)
-{
-    return AbstractMangaSource::getMangaInfo(mangaRequestUrl(mangaUrl), mangaTitle);
 }
 
 Result<MangaChapterCollection, QString> MangaDex::updateMangaInfoFinishedLoading(
@@ -807,7 +799,7 @@ Result<MangaChapterCollection, QString> MangaDex::getChapters(const QString &man
     return Ok(buildChapterList(chapters, resetOnNewVolume));
 }
 
-Result<QStringList, QString> MangaDex::getPageList(const QString &chapterUrl)
+Result<QList<ImageLink>, QString> MangaDex::getPageList(const QString &chapterUrl)
 {
     // the at-home endpoint allows 40 requests per minute: allow 8 at once, then one every 2 s
     // (38 per minute at most), so even during a bulk download a chapter is never delayed for long
@@ -885,5 +877,5 @@ Result<QStringList, QString> MangaDex::getPageList(const QString &chapterUrl)
         return Err(QString("Couldn't parse page list."));
     }
 
-    return Ok(imageUrls);
+    return Ok(ImageLink::fromUrls(imageUrls));
 }

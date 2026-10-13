@@ -2,6 +2,7 @@
 
 #include <QSaveFile>
 
+#include "cachefile.h"
 #include "staticsettings.h"
 
 Settings::Settings() : timer()
@@ -40,8 +41,8 @@ void Settings::deserialize()
         return;
 
     QDataStream in(&file);
-    in.setVersion(CONF.dataStreamVersion);
-    in >> *this;
+    if (readCacheFileHeader(in, CacheFile::Settings))
+        in >> *this;
 
     if (in.status() != QDataStream::Ok)
     {
@@ -63,7 +64,7 @@ void Settings::serialize()
         return;
 
     QDataStream out(&file);
-    out.setVersion(CONF.dataStreamVersion);
+    writeCacheFileHeader(out, CacheFile::Settings);
     out << *this;
     if (out.status() != QDataStream::Ok || !file.commit())
         qDebug() << "Couldn't save the settings";
@@ -83,12 +84,7 @@ QDataStream &operator>>(QDataStream &str, Settings &m)
     m.enabledMangaSources.clear();
     str >> m.lightValue >> m.comflightValue >> m.hideErrorMessages >> m.tabAdvance >> m.swipeAdvance >>
         m.buttonAdvance >> m.mangaOrder >> m.doublePageMode >> m.trimPages >> m.manhwaMode >>
-        m.enabledMangaSources >> m.ditheringMode;
-
-    // added later, older settings files end before it
-    m.standbyWhenIdle = false;
-    if (!str.atEnd())
-        str >> m.standbyWhenIdle;
+        m.enabledMangaSources >> m.ditheringMode >> m.standbyWhenIdle;
 
     return str;
 }

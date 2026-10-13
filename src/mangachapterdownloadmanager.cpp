@@ -97,13 +97,7 @@ void MangaChapterDownloadManager::processNextJob()
 
     // The page lists and image urls are loaded with event loops, an update of the chapters can move or remove
     // them meanwhile: they are looked up by url after every download.
-    auto chapterIndex = [&mangaInfo](const QString &url)
-    {
-        for (int c = 0; c < mangaInfo->chapters.count(); c++)
-            if (mangaInfo->chapters[c].chapterUrl == url)
-                return c;
-        return -1;
-    };
+    auto chapterIndex = [&mangaInfo](const QString &url) { return mangaInfo->chapters.findChapter(url); };
 
     emit downloadStart(mangaInfo->title);
 
@@ -151,17 +145,17 @@ void MangaChapterDownloadManager::processNextJob()
         for (int p = 0; !cancelled(); p++)
         {
             int c = chapterIndex(url);
-            if (c < 0 || !mangaInfo->chapters[c].pagesLoaded || p >= mangaInfo->chapters[c].pageUrlList.count())
+            if (c < 0 || !mangaInfo->chapters[c].pagesLoaded || p >= mangaInfo->chapters[c].pages.count())
                 break;
 
-            if (mangaInfo->chapters[c].imageUrlList[p] == "")
+            if (mangaInfo->chapters[c].pages[p].image.isEmpty())
             {
-                const QString pageUrl = mangaInfo->chapters[c].pageUrlList[p];
-                auto res = mangaInfo->mangaSource->getImageUrl(pageUrl);
+                const ImageLink link = mangaInfo->chapters[c].pages[p].link;
+                auto res = mangaInfo->mangaSource->getImageLink(link);
 
                 c = chapterIndex(url);
-                if (c < 0 || p >= mangaInfo->chapters[c].pageUrlList.count() ||
-                    mangaInfo->chapters[c].pageUrlList[p] != pageUrl)
+                if (c < 0 || p >= mangaInfo->chapters[c].pages.count() ||
+                    mangaInfo->chapters[c].pages[p].link.url != link.url)
                     break;
 
                 if (!res.isOk())
@@ -175,22 +169,19 @@ void MangaChapterDownloadManager::processNextJob()
                 }
                 else
                 {
-                    mangaInfo->chapters[c].imageUrlList[p] = res.unwrap();
+                    mangaInfo->chapters[c].pages[p].image = res.unwrap();
                 }
             }
 
-            const QString imageUrl = mangaInfo->chapters[c].imageUrlList[p];
-
-            if (imageUrl != "")
+            const auto &page = mangaInfo->chapters[c].pages[p];
+            if (!page.image.isEmpty())
             {
-                if (imageUrl != mangaInfo->chapters[c].pageUrlList[p])
+                // the pages of the site were resolved to their images
+                if (page.image.url != page.link.url)
                     emit downloadPagesProgress(i + 1, chapterUrls.count(), pagesErrors);
 
-                DownloadImageDescriptor imageinfo(imageUrl, mangaInfo->title, c, p);
-                auto path = mangaInfo->mangaSource->getImagePath(imageinfo);
-
-                imageDescriptors.append(
-                    FileDownloadDescriptor(imageUrl, path, mangaInfo->mangaSource->requestHeaders(imageUrl)));
+                auto path = mangaInfo->pagePath(url, p);
+                imageDescriptors.append(mangaInfo->mangaSource->imageDownload(page.image, path));
                 currentImagePaths.append({url, path});
             }
         }

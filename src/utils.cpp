@@ -33,34 +33,9 @@ QList<QRegularExpressionMatch> getAllRxMatches(const QRegularExpression& rx, con
     return rxlist;
 }
 
-QString makePathLegal(QString filename)
+QString urlHash(const QString& url, int length)
 {
-    // without a regular expression: it's applied to every title of a manga list after updates
-    QString ret;
-    ret.reserve(filename.size() + 1);
-    for (QChar c : std::as_const(filename))
-    {
-        switch (c.unicode())
-        {
-            case '/':
-            case ':':
-            case '*':
-            case '"':
-            case '<':
-            case '>':
-            case '|':
-            case '?':
-                break;
-            case ' ':
-                ret.append('-');
-                break;
-            default:
-                ret.append(c);
-        }
-    }
-    if (ret.endsWith('.'))
-        ret.append("_");
-    return ret;
+    return QCryptographicHash::hash(url.toUtf8(), QCryptographicHash::Sha1).toHex().left(length);
 }
 
 PageTurnDirection conditionalReverse(PageTurnDirection dir, bool condition)
@@ -96,31 +71,23 @@ qint64 dirSize(const QString& path)
 
 bool removeDir(const QString& path, const QString& ignore)
 {
+    // links are removed, not followed
+    if (ignore.isEmpty())
+        return QDir(path).removeRecursively();
+
     bool result = true;
     QDir dir(path);
-
-    if (dir.exists())
+    for (const auto& info :
+         dir.entryInfoList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden | QDir::AllDirs | QDir::Files))
     {
-        for (const auto& info : dir.entryInfoList(
-                 QDir::NoDotAndDotDot | QDir::System | QDir::Hidden | QDir::AllDirs | QDir::Files,
-                 QDir::DirsFirst))
-        {
-            if (info.isDir())
-            {
-                result = removeDir(info.absoluteFilePath(), ignore);
-            }
-            else
-            {
-                if (ignore == "" || !info.absoluteFilePath().endsWith(ignore))
-                    result = QFile::remove(info.absoluteFilePath());
-            }
-
-            if (!result)
-            {
-                return result;
-            }
-        }
+        if (info.isDir() && !info.isSymLink())
+            result = removeDir(info.absoluteFilePath(), ignore) && result;
+        else if (!info.fileName().endsWith(ignore))
+            result = QFile::remove(info.absoluteFilePath()) && result;
     }
+    // it stays when it keeps files
+    dir.rmdir(dir.absolutePath());
+
     return result;
 }
 

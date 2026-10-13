@@ -44,8 +44,6 @@ public:
     QDialog *gotoDialog() const { return gotodialog; }
 
     void clearCache();
-    // forgets the cached pages, the one on the screen stays
-    void clearImageCache();
 
 signals:
     void changeView(WidgetTab page);

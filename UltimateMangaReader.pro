@@ -62,10 +62,10 @@ FORMS += \
 
 HEADERS += \
     src/aboutinfo.h \
+    src/cachefile.h \
     src/downloadbufferjob.h \
     src/downloadfilejob.h \
     src/downloadimageandrescalejob.h \
-    src/downloadimagedescriptor.h \
     src/downloadjobbase.h \
     src/downloadqueue.h \
     src/downloadstringjob.h \
@@ -77,6 +77,8 @@ HEADERS += \
     src/imageprocessingqt.h \
     src/imageprocessor.h \
     src/imagerotate.h \
+    src/httpheader.h \
+    src/imagelink.h \
     src/mangachapter.h \
     src/mangachaptercollection.h \
     src/mangachapterdownloadmanager.h \
@@ -149,6 +151,7 @@ SOURCES += \
     src/imageprocessor.cpp \
     src/imagerotate.cpp \
     src/main.cpp \
+    src/cachefile.cpp \
     src/mangachapter.cpp \
     src/mangachaptercollection.cpp \
     src/mangachapterdownloadmanager.cpp \

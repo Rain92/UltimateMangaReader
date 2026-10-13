@@ -273,39 +273,25 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsFile(const QString &ur
     return startFileDownload(new DownloadFileJob(networkManager, urlf, localPath, headers));
 }
 
-QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const QString &url,
-                                                                      const QString &localPath,
-                                                                      const HttpHeaders &headers)
+QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const ImageLink &image,
+                                                                      const QString &localPath)
 {
     if (auto job = runningFileDownload(localPath))
         return job;
 
-    // url|xor:<hex key>|append:<url of the rest of the page>
-    auto parts = url.split('|');
-    QString urlf = fixUrl(parts.takeFirst());
+    QString urlf = fixUrl(image.url);
     EncryptionDescriptor ed;
-    QString appendUrl;
-    for (const auto &part : std::as_const(parts))
+    if (!image.xorKey.isEmpty())
     {
-        if (part.startsWith("xor:"))
-        {
-            ed.type = XorEncryption;
-            ed.key = hexstr2array(part.mid(4));
-        }
-        else if (part.startsWith("append:"))
-        {
-            appendUrl = fixUrl(part.mid(7));
-        }
-        else
-        {
-            qDebug() << "Error: Unsupported image url option:" << part;
-        }
+        ed.type = XorEncryption;
+        ed.key = image.xorKey;
     }
+    QString appendUrl = image.appendUrl.isEmpty() ? QString() : fixUrl(image.appendUrl);
 
     qDebug() << "Downloading as image:" << urlf;
 
     auto sjob = new DownloadScaledImageJob(networkManager, imageProcessor, urlf, localPath, imageRescaleSize,
-                                           settings, headers, ed, appendUrl);
+                                           settings, image.headers, ed, appendUrl);
     auto job = startFileDownload(sjob);
 
     // the processed page goes to the reader's cache, the job is kept until it finished (even if the caller

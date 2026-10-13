@@ -29,7 +29,7 @@ public:
     void updateMangaInfoAsync(QSharedPointer<MangaInfo> info, bool updateCover = true) override;
     Result<MangaChapterCollection, QString> updateMangaInfoFinishedLoading(
         QSharedPointer<DownloadStringJob> job, QSharedPointer<MangaInfo> info) override;
-    Result<QStringList, QString> getPageList(const QString &chapterUrl) override;
+    Result<QList<ImageLink>, QString> getPageList(const QString &chapterUrl) override;
     QString coverFallbackUrl(const QString &coverUrl) override;
 
     // Which images of a chapter belong together (see joinSplitPages()): the indices of the pages' images, the
@@ -54,7 +54,7 @@ private:
     QSet<QString> imageHosts;
 
     void addImageHost(const QString &host);
-    Result<QStringList, QString> joinSplitPages(const QStringList &imageUrls);
+    Result<QList<ImageLink>, QString> joinSplitPages(const QStringList &imageUrls);
     QString normalizeUrl(const QString &url) const;
     QSharedPointer<DownloadStringJob> downloadChapterList(const QString &slug, int offset);
 };

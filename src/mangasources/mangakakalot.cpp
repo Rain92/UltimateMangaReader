@@ -125,8 +125,8 @@ bool Mangakakalot::updateMangaList(UpdateProgressToken *token)
     token->sendProgress(5);
 
     // the paginated manga lists are rate limited to ~20 requests per minute, so the catalogue
-    // comes from the sitemaps. they contain no titles: keep the titles of the previous list
-    // and of the popular pages and generate the others from the slug
+    // comes from the sitemaps. they contain no titles: the ones of the popular pages and of the
+    // previous list are taken, the others are made from the slug
     QHash<QString, QString> knownTitles;
     for (int i = 0; i < mangaList.titles.size() && i < mangaList.urls.size(); i++)
         if (mangaList.urls[i].startsWith("manga/"))
@@ -162,7 +162,7 @@ bool Mangakakalot::updateMangaList(UpdateProgressToken *token)
 
     for (const auto &[slug, title] : std::as_const(state.popular))
     {
-        if (!title.isEmpty() && !knownTitles.contains(slug))
+        if (!title.isEmpty())
             knownTitles.insert(slug, title);
         addSlug(slug);
     }
@@ -200,41 +200,21 @@ bool Mangakakalot::updateMangaList(UpdateProgressToken *token)
         for (const auto &slug : state.sitemapSlugs.value(url))
             addSlug(slug);
 
-    // titles are the key of the manga cache and of the favorites, so every entry needs a unique
-    // title that stays the same on the next update: known titles are assigned first. the site has
-    // duplicate entries of some works ("x-s-y" / "xs-y", "x--y" / "x-y", "slow-start" / "slow-startt")
-    // with different chapters, all of them are kept
-    QStringList titles;
-    QSet<QString> usedTitles;
-    for (const auto &slug : std::as_const(orderedSlugs))
-    {
-        auto title = knownTitles.value(slug);
-        if (usedTitles.contains(title))
-            title.clear();
-        else if (!title.isEmpty())
-            usedTitles.insert(title);
-        titles.append(title);
-    }
-
+    // the site has duplicate entries of some works ("x-s-y" / "xs-y", "x--y" / "x-y", "slow-start" /
+    // "slow-startt") with different chapters, all of them are kept
     MangaList mangas;
     mangas.absoluteUrls = false;
 
-    for (int i = 0; i < orderedSlugs.size(); i++)
+    for (const auto &slug : std::as_const(orderedSlugs))
     {
-        const auto &slug = orderedSlugs[i];
-        auto title = titles[i];
-
+        auto title = knownTitles.value(slug);
         if (title.isEmpty())
         {
             // the site appends an id to the slugs of different works with the same name
             auto idmatch = slug.contains('_') ? idrx.match(slug) : QRegularExpressionMatch();
             title = titleFromSlug(idmatch.hasMatch() ? idmatch.captured(1) : slug);
-            if (idmatch.hasMatch() && (slugs.contains(idmatch.captured(1)) || usedTitles.contains(title)))
+            if (idmatch.hasMatch() && slugs.contains(idmatch.captured(1)))
                 title += " (" + idmatch.captured(2) + ")";
-
-            if (usedTitles.contains(title))
-                title += " (" + slug + ")";
-            usedTitles.insert(title);
         }
 
         mangas.append(title, "manga/" + slug);
@@ -397,21 +377,17 @@ Result<MangaChapterCollection, QString> Mangakakalot::updateMangaInfoFinishedLoa
                     continue;
                 chapterUrls.insert(url);
 
-                QString number;
-                if (ch.HasMember("chapter_num") && ch["chapter_num"].IsNumber())
-                    number = QString::number(ch["chapter_num"].GetDouble());
-
                 QString title;
                 if (ch.HasMember("chapter_name") && ch["chapter_name"].IsString())
                     title = QString::fromUtf8(ch["chapter_name"].GetString()).simplified();
                 if (title.contains('&'))
                     title = htmlToPlainText(title);
+                if (title.isEmpty() && ch.HasMember("chapter_num") && ch["chapter_num"].IsNumber())
+                    title = "Chapter " + QString::number(ch["chapter_num"].GetDouble());
                 if (title.isEmpty())
-                    title = "Chapter " + number;
+                    title = "Chapter";
 
-                MangaChapter chapter(title, url);
-                chapter.chapterNumber = number;
-                chapters.append(chapter);
+                chapters.append(MangaChapter(title, url));
             }
 
             offset += chapterArray.Size();
@@ -439,7 +415,7 @@ Result<MangaChapterCollection, QString> Mangakakalot::updateMangaInfoFinishedLoa
     return Ok(newchapters);
 }
 
-Result<QStringList, QString> Mangakakalot::getPageList(const QString &chapterUrl)
+Result<QList<ImageLink>, QString> Mangakakalot::getPageList(const QString &chapterUrl)
 {
     QRegularExpression cdnrx(R"lit(cdns\s*=\s*\[\s*"([^"]+)")lit");
     QRegularExpression imagesrx(R"lit(chapterImages\s*=\s*\[([^\]]*)\])lit");
@@ -490,9 +466,9 @@ Result<QStringList, QString> Mangakakalot::getPageList(const QString &chapterUrl
 
 // The site cuts images taller than 1500 px into pieces of 1500 px and the rest: a page of 1100x1565 becomes
 // 1100x1500 and 1100x65, which would be a page of its own showing a thin line. The parts of a page are
-// joined again ("<piece url>|append:<rest url>", the image job stitches them), the pieces of long strips
-// (manhwa) stay pages of their own.
-Result<QStringList, QString> Mangakakalot::joinSplitPages(const QStringList &imageUrls)
+// joined again (the image job stitches the appendUrl below the page), the pieces of long strips (manhwa) stay
+// pages of their own.
+Result<QList<ImageLink>, QString> Mangakakalot::joinSplitPages(const QStringList &imageUrls)
 {
     QElapsedTimer timer;
     timer.start();
@@ -513,10 +489,14 @@ Result<QStringList, QString> Mangakakalot::joinSplitPages(const QStringList &ima
             return Err(QString("The pages of the chapter couldn't be checked, the connection is too slow."));
     }
 
-    QStringList pages;
-    for (const auto &page : pairSplitImages(sizes))
-        pages.append(page.second < 0 ? imageUrls[page.first]
-                                     : imageUrls[page.first] + "|append:" + imageUrls[page.second]);
+    QList<ImageLink> pages;
+    for (const auto &[piece, rest] : pairSplitImages(sizes))
+    {
+        auto page = ImageLink::fromUrl(imageUrls[piece]);
+        if (rest >= 0)
+            page.appendUrl = imageUrls[rest];
+        pages.append(page);
+    }
 
     int unknown = std::count_if(sizes.begin(), sizes.end(), [](const QSize &s) { return !s.isValid(); });
     qDebug() << "Page sizes probed in" << timer.elapsed() << "ms:" << imageUrls.size() << "images," << unknown

@@ -133,9 +133,6 @@ MainWidget::MainWidget(QWidget *parent)
                          ui->mangaReaderWidget->clearCache();
                      });
 
-    QObject::connect(core->mangaController, &MangaController::pagesMoved, ui->mangaReaderWidget,
-                     &MangaReaderWidget::clearImageCache);
-
     QObject::connect(core->mangaController, &MangaController::completedImagePreloadSignal,
                      ui->mangaReaderWidget, &MangaReaderWidget::prefetchImage);
 
@@ -227,7 +224,7 @@ MainWidget::MainWidget(QWidget *parent)
                      [this](const QString &path, QSharedPointer<QImage> img)
                      {
                          auto manga = core->mangaController->currentManga;
-                         if (manga && path.startsWith(CONF.mangaimagesdir(manga->hostname, manga->title)))
+                         if (manga && path.startsWith(CONF.mangaimagesdir(manga->hostname, manga->url)))
                              ui->mangaReaderWidget->addImageToCache(path, img);
                      });
 

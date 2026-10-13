@@ -9,15 +9,12 @@ enum DownloadType
     DownloadTypeScaledImage
 };
 
+// See AbstractMangaSource::imageDownload().
 struct FileDownloadDescriptor
 {
-    FileDownloadDescriptor(const QString &url, const QString &path, const HttpHeaders &headers = {})
-        : url(url), path(path), headers(headers)
-    {
-    }
-    QString url;
+    FileDownloadDescriptor(const ImageLink &image, const QString &path) : image(image), path(path) {}
+    ImageLink image;
     QString path;
-    HttpHeaders headers;
 };
 
 // Runs downloads, a few at a time.

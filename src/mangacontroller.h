@@ -3,7 +3,6 @@
 
 #include <QImage>
 
-#include "downloadimagedescriptor.h"
 #include "downloadqueue.h"
 #include "enums.h"
 #include "mangachapter.h"
@@ -29,7 +28,7 @@ public:
     void setCurrentIndex(const MangaIndex &index);
     void advanceMangaPage(PageTurnDirection direction);
 
-    Result<QString, QString> getImageUrl(QSharedPointer<MangaInfo> manga, MangaIndex index);
+    Result<ImageLink, QString> getImageLink(QSharedPointer<MangaInfo> manga, MangaIndex index);
 
     void preloadNeighbours();
     void preloadImage(QSharedPointer<MangaInfo> manga, const MangaIndex &index);
@@ -45,15 +44,13 @@ signals:
     void currentImageChanged(const QString &imagePath);
     // a page next to the current one is on disk (downloaded by a preload, or already before)
     void completedImagePreloadSignal(const QString &path);
-    // the downloaded pages of the current manga moved to other chapters: cached ones are stale
-    void pagesMoved();
     void activity();
 
 private:
     void completedImagePreload(const QString &, const QString &path);
     Result<void, QString> assurePagesLoaded();
     void currentIndexChangedInternal(bool preload);
-    void chaptersMoved(QList<QPair<int, int>> moveMap);
+    void chaptersMoved();
     void updateCurrentImage();
     void preloadNeighboursOnce();
     void deserializeProgress();

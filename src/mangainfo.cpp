@@ -2,6 +2,7 @@
 
 #include <QSaveFile>
 
+#include "cachefile.h"
 #include "perftimer.h"
 
 MangaInfo::MangaInfo(AbstractMangaSource *mangasource)
@@ -20,11 +21,11 @@ QSharedPointer<MangaInfo> MangaInfo::deserialize(AbstractMangaSource *mangasourc
     auto mi = QSharedPointer<MangaInfo>(new MangaInfo(mangasource));
 
     QDataStream in(&file);
-    in.setVersion(CONF.dataStreamVersion);
-    in >> mi->hostname >> mi->title >> mi->url >> mi->author >> mi->artist >> mi->releaseYear >> mi->status >>
-        mi->genres >> mi->summary >> mi->coverUrl >> mi->coverPath >> mi->chapters;
+    if (readCacheFileHeader(in, CacheFile::MangaInfo))
+        in >> mi->hostname >> mi->title >> mi->url >> mi->author >> mi->artist >> mi->releaseYear >> mi->status >>
+            mi->genres >> mi->summary >> mi->coverUrl >> mi->coverPath >> mi->chapters;
 
-    if (in.status() != QDataStream::Ok)
+    if (in.status() != QDataStream::Ok || mi->url.isEmpty())
     {
         qDebug() << "Couldn't read" << path;
         return {};
@@ -38,58 +39,45 @@ QSharedPointer<MangaInfo> MangaInfo::deserialize(AbstractMangaSource *mangasourc
 void MangaInfo::serialize()
 {
     // an info that never loaded would end up in the root of the cache
-    if (hostname.isEmpty() || title.isEmpty())
+    if (hostname.isEmpty() || url.isEmpty())
         return;
 
     PerfTimer perf("serialize info");
-    QSaveFile file(CONF.mangainfodir(hostname, title) + "mangainfo.dat");
+    QDir().mkpath(directory());
+    QSaveFile file(directory() + "mangainfo.dat");
     if (!file.open(QIODevice::WriteOnly))
         return;
 
     QDataStream out(&file);
-    out.setVersion(CONF.dataStreamVersion);
+    writeCacheFileHeader(out, CacheFile::MangaInfo);
     out << hostname << title << url << author << artist << releaseYear << status << genres << summary
         << coverUrl << CONF.relativeCachePath(coverPath) << chapters;
     if (out.status() != QDataStream::Ok || !file.commit())
         qDebug() << "Couldn't save the info of" << title;
 }
 
-void MangaInfo::updateCompeted(bool updated, const QList<QPair<int, int> > &moveMap)
+void MangaInfo::updateCompleted(const MangaChapterCollection::MergeResult &merge)
 {
-    if (updated)
-        this->updated = true;
+    if (merge.newChapters)
+        updated = true;
 
-    ReadingProgress progress(hostname, title);
-    progress.numChapters = chapters.count();
-
-    if (!moveMap.empty())
+    if (merge.chaptersMoved)
     {
-        for (const auto &[i1, i2] : moveMap)
+        // the favorites show the index of the chapter
+        ReadingProgress progress;
+        if (progress.deserialize(hostname, url) && progress.locate(chapters))
         {
-            if (progress.index.chapter == i1)
-            {
-                if (i2 >= 0)
-                    progress.index.chapter = i2;
-                else
-                {
-                    progress.index.chapter = qMin(qMax(progress.index.chapter, 0), chapters.count() - 1);
-                    progress.index.page = 0;
-                }
-                qDebug() << "Reading index changed for" << title << ":" << i1 << "->"
-                         << progress.index.chapter;
-                break;
-            }
+            qDebug() << "Reading index changed for" << title << "to" << progress.index.chapter;
+            progress.serialize(hostname, url);
         }
-        progress.serialize(hostname, title);
-        emit chaptersMoved(moveMap);
+        emit chaptersMoved();
     }
 
-    emit updatedSignal(updated || !moveMap.empty());
+    emit updatedSignal(merge.newChapters);
 }
 
 void MangaInfo::takeOverDetails(const MangaInfo &other)
 {
-    url = other.url;
     author = other.author;
     artist = other.artist;
     releaseYear = other.releaseYear;
@@ -104,6 +92,24 @@ void MangaInfo::takeOverDetails(const MangaInfo &other)
 void MangaInfo::sendCoverLoaded()
 {
     emit coverLoaded();
+}
+
+QString MangaInfo::directory() const
+{
+    return CONF.mangainfodir(hostname, url);
+}
+
+QString MangaInfo::pagePath(const QString &chapterUrl, int page) const
+{
+    return CONF.mangaimagesdir(hostname, url) + CONF.pagefilename(chapterUrl, page);
+}
+
+QString MangaInfo::pagePath(int chapter, int page) const
+{
+    if (chapter < 0 || chapter >= chapters.count())
+        return {};
+
+    return pagePath(chapters[chapter].chapterUrl, page);
 }
 
 QString MangaInfo::coverThumbnailPath() const

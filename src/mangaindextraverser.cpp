@@ -10,7 +10,7 @@ Result<bool, QString> MangaIndexTraverser::increment()
     if (chapter < 0 || chapter >= mangaInfo->chapters.count())
         return Ok(false);
 
-    if (page + 1 < mangaInfo->chapters.at(chapter).pageUrlList.count())
+    if (page + 1 < mangaInfo->chapters.at(chapter).pages.count())
     {
         return setChecked(chapter, page + 1);
     }
@@ -44,7 +44,7 @@ Result<bool, QString> MangaIndexTraverser::decrement()
             mangaInfo->serialize();
         }
 
-        return setChecked(chapter - 1, qMax(0, mangaInfo->chapters.at(chapter - 1).pageUrlList.count() - 1));
+        return setChecked(chapter - 1, qMax(0, mangaInfo->chapters.at(chapter - 1).pages.count() - 1));
     }
     else
     {
@@ -66,7 +66,7 @@ Result<bool, QString> MangaIndexTraverser::setChecked(int chapter, int page)
         mangaInfo->serialize();
     }
 
-    if (page >= mangaInfo->chapters.at(chapter).pageUrlList.count())
+    if (page >= mangaInfo->chapters.at(chapter).pages.count())
         return Ok(false);
 
     this->chapter = chapter;

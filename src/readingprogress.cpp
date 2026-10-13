@@ -2,56 +2,81 @@
 
 #include <QSaveFile>
 
-ReadingProgress::ReadingProgress(const MangaIndex &index, int numChapters, int numPages)
-    : index(index), numChapters(numChapters), numPages(numPages)
+#include "cachefile.h"
+
+ReadingProgress::ReadingProgress() : index(0, 0), chapterUrl(), numChapters(0), numPages(0) {}
+
+ReadingProgress::ReadingProgress(const MangaIndex &index, const QString &chapterUrl, int numChapters,
+                                 int numPages)
+    : index(index), chapterUrl(chapterUrl), numChapters(numChapters), numPages(numPages)
 {
 }
 
-ReadingProgress::ReadingProgress(const QString &hostname, const QString &title)
-    : numChapters(0), numPages(0)
+ReadingProgress::ReadingProgress(const QString &hostname, const QString &mangaUrl) : ReadingProgress()
 {
-    deserialize(hostname, title);
+    deserialize(hostname, mangaUrl);
 }
 
-void ReadingProgress::serialize(const QString &hostname, const QString &title)
+void ReadingProgress::serialize(const QString &hostname, const QString &mangaUrl)
 {
-    QSaveFile file(CONF.mangainfodir(hostname, title) + "progress.dat");
+    QDir().mkpath(CONF.mangainfodir(hostname, mangaUrl));
+    QSaveFile file(CONF.mangainfodir(hostname, mangaUrl) + "progress.dat");
     if (!file.open(QIODevice::WriteOnly))
         return;
 
     QDataStream out(&file);
-    out.setVersion(CONF.dataStreamVersion);
+    writeCacheFileHeader(out, CacheFile::ReadingProgress);
     out << *this;
     if (out.status() != QDataStream::Ok || !file.commit())
-        qDebug() << "Couldn't save the reading progress of" << title;
+        qDebug() << "Couldn't save the reading progress of" << mangaUrl;
 }
 
-bool ReadingProgress::deserialize(const QString &hostname, const QString &title)
+bool ReadingProgress::deserialize(const QString &hostname, const QString &mangaUrl)
 {
-    QFile file(CONF.mangainfodir(hostname, title) + "progress.dat");
+    QFile file(CONF.mangainfodir(hostname, mangaUrl) + "progress.dat");
 
     if (!file.open(QIODevice::ReadOnly))
         return false;
 
     QDataStream in(&file);
-    in.setVersion(CONF.dataStreamVersion);
-    in >> *this;
+    if (readCacheFileHeader(in, CacheFile::ReadingProgress))
+        in >> *this;
 
-    if (in.status() != QDataStream::Ok)
+    if (in.status() != QDataStream::Ok || index.chapter < 0 || index.page < 0)
     {
-        qDebug() << "Couldn't read the reading progress of" << title;
-        *this = ReadingProgress(MangaIndex(0, 0), 0, 0);
+        qDebug() << "Couldn't read the reading progress of" << mangaUrl;
+        *this = ReadingProgress();
         return false;
     }
     return true;
 }
 
+bool ReadingProgress::locate(const MangaChapterCollection &chapters)
+{
+    auto old = index;
+    numChapters = chapters.count();
+
+    int chapter = chapters.findChapter(chapterUrl);
+    if (chapter >= 0)
+    {
+        index.chapter = chapter;
+    }
+    else if (!chapters.isEmpty())
+    {
+        index.chapter = qBound(0, index.chapter, static_cast<int>(chapters.count()) - 1);
+        index.page = 0;
+        chapterUrl = chapters[index.chapter].chapterUrl;
+    }
+
+    return index != old;
+}
+
 QDataStream &operator<<(QDataStream &str, const ReadingProgress &m)
 {
-    return str << m.index << m.numChapters << m.numPages;
+    return str << m.index << m.chapterUrl << m.numChapters << m.numPages;
 }
 
 QDataStream &operator>>(QDataStream &str, ReadingProgress &m)
 {
-    return str >> m.index >> m.numChapters >> m.numPages;
+    return str >> m.index >> m.chapterUrl >> m.numChapters >> m.numPages;
 }

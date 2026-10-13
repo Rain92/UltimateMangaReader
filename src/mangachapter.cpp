@@ -1,26 +1,28 @@
 #include "mangachapter.h"
 
-MangaChapter::MangaChapter() : chapterTitle(), chapterUrl(), pagesLoaded(false), pageUrlList(), imageUrlList()
+MangaChapter::MangaChapter() : chapterTitle(), chapterUrl(), pagesLoaded(false), pages() {}
+
+MangaChapter::MangaChapter(const QString &title, const QString &url)
+    : chapterTitle(title), chapterUrl(url), pagesLoaded(false), pages()
 {
 }
 
-MangaChapter::MangaChapter(const QString &title, const QString &url)
-    : chapterTitle(title), chapterUrl(url), pagesLoaded(false), pageUrlList(), imageUrlList()
+QDataStream &operator<<(QDataStream &str, const MangaPage &m)
 {
+    return str << m.link << m.image;
+}
+
+QDataStream &operator>>(QDataStream &str, MangaPage &m)
+{
+    return str >> m.link >> m.image;
 }
 
 QDataStream &operator<<(QDataStream &str, const MangaChapter &m)
 {
-    str << m.chapterTitle << m.chapterUrl << m.pagesLoaded << m.pageUrlList << m.imageUrlList
-        << m.chapterNumber;
-
-    return str;
+    return str << m.chapterTitle << m.chapterUrl << m.pagesLoaded << m.pages;
 }
 
 QDataStream &operator>>(QDataStream &str, MangaChapter &m)
 {
-    str >> m.chapterTitle >> m.chapterUrl >> m.pagesLoaded >> m.pageUrlList >> m.imageUrlList >>
-        m.chapterNumber;
-
-    return str;
+    return str >> m.chapterTitle >> m.chapterUrl >> m.pagesLoaded >> m.pages;
 }

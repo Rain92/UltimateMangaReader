@@ -376,13 +376,6 @@ void MangaReaderWidget::clearCache()
     ui->mangaImageWidget->clearImage();
 }
 
-void MangaReaderWidget::clearImageCache()
-{
-    imgcache.clear();
-    prefetch.reset();
-    prefetchQueue.clear();
-}
-
 void MangaReaderWidget::setSettings(Settings *settings)
 {
     this->settings = settings;

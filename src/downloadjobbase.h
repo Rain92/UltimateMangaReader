@@ -6,12 +6,7 @@
 #include <functional>
 #include <memory>
 
-struct HttpHeader
-{
-    QByteArray name;
-    QByteArray value;
-};
-using HttpHeaders = QList<HttpHeader>;
+#include "httpheader.h"
 
 // A download. Every run (start() or restart()) finishes once, with completed() or downloadError(). Both are
 // emitted from the event loop, never from within a call to the job, and only when the job's network requests

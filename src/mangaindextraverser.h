@@ -24,14 +24,6 @@ public:
     {
         return mangaInfo->chapters[chapter];
     };
-    inline QString &currentPageUrl()
-    {
-        return currentChapter().pageUrlList[page];
-    };
-    inline QString &currentImageUrl()
-    {
-        return currentChapter().imageUrlList[page];
-    };
 };
 
 #endif  // MANGAINDEXTRAVERSER_H

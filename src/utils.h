@@ -11,7 +11,8 @@
 QList<QRegularExpressionMatch> getAllRxMatches(const QRegularExpression& rx, const QString& text,
                                                int spos = 0, int epos = -1);
 
-QString makePathLegal(QString filename);
+// A hex hash of url, as a file name.
+QString urlHash(const QString& url, int length);
 
 // Runs an event loop until object emits one of the signals, is destroyed or timeout ms passed (no limit when
 // timeout <= 0). Returns whether a signal was emitted.
@@ -47,6 +48,7 @@ PageTurnDirection conditionalReverse(PageTurnDirection dir, bool condition);
 
 qint64 dirSize(const QString& path);
 
+// Removes the directory and everything in it, except for the files whose names end with ignore.
 bool removeDir(const QString& path, const QString& ignore = "");
 
 qint64 getCacheSize();

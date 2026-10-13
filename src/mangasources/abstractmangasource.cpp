@@ -1,8 +1,8 @@
 #include "abstractmangasource.h"
 
 #include <QSaveFile>
-#include <QUrlQuery>
 
+#include "cachefile.h"
 #include "imageprocessingnative.h"
 #include "mangainfo.h"
 #include "perftimer.h"
@@ -20,7 +20,7 @@ bool AbstractMangaSource::serializeMangaList()
         return false;
 
     QDataStream out(&file);
-    out.setVersion(CONF.dataStreamVersion);
+    writeCacheFileHeader(out, CacheFile::MangaList);
     out << mangaList;
     return out.status() == QDataStream::Ok && file.commit();
 }
@@ -47,8 +47,8 @@ bool AbstractMangaSource::deserializeMangaList()
         return false;
 
     QDataStream in(&file);
-    in.setVersion(CONF.dataStreamVersion);
-    in >> mangaList;
+    if (readCacheFileHeader(in, CacheFile::MangaList))
+        in >> mangaList;
 
     bool consistent = mangaList.urls.size() == mangaList.titles.size() &&
                       mangaList.popularityRanks.size() == mangaList.titles.size() &&
@@ -63,115 +63,17 @@ bool AbstractMangaSource::deserializeMangaList()
     return true;
 }
 
-// Entries whose titles are the same (or only differ in what makePathLegal() removes, they share the cache
-// directory) are made unique: the one whose info is cached under the title (or else the first one) keeps it,
-// the others get the id of the work in their url appended. E.g. MangaDex has hundreds of titles that several
-// works share.
-void AbstractMangaSource::makeTitlesUnique()
+FileDownloadDescriptor AbstractMangaSource::imageDownload(const ImageLink &image, const QString &path) const
 {
-    QStringList dirs;
-    dirs.reserve(mangaList.size);
-    QHash<QString, QList<int>> entries;
-    for (int i = 0; i < mangaList.size; i++)
-    {
-        dirs.append(makePathLegal(mangaList.titles[i]));
-        entries[dirs[i]].append(i);
-    }
-
-    auto toUrl = [this](const QString &url)
-    { return QUrl(mangaList.absoluteUrls || url.startsWith("http") ? url : baseUrl + url); };
-    // the url of a cached info can have an older domain
-    auto urlKey = [](const QUrl &url)
-    {
-        QString path = url.path();
-        while (path.endsWith('/'))
-            path.chop(1);
-        return url.hasQuery() ? path + '?' + url.query() : path;
-    };
-    // the id of the work in the url (e.g. MangaPlus: ...?title_id=<id>)
-    static const QRegularExpression uuidrx(R"(^[0-9a-f]{8}-[0-9a-f]{4}-)");
-    auto urlId = [](const QUrl &url)
-    {
-        QUrlQuery query(url);
-        if (!query.isEmpty())
-            return query.queryItems().first().second;
-
-        QString path = url.path();
-        while (path.endsWith('/'))
-            path.chop(1);
-        QString id = path.section('/', -1);
-        return uuidrx.match(id).hasMatch() ? id.left(8) : id;
-    };
-    auto titleWithId = [&](int i) { return mangaList.titles[i] + " (" + urlId(toUrl(mangaList.urls[i])) + ")"; };
-    auto cached = [this](const QString &title)
-    { return QFile::exists(CONF.mangainfodir(name, title) + "mangainfo.dat"); };
-
-    QSet<QString> usedDirs(dirs.begin(), dirs.end());
-    int renamed = 0;
-    for (auto it = entries.cbegin(); it != entries.cend(); ++it)
-    {
-        const auto &indices = it.value();
-        if (indices.size() < 2)
-            continue;
-
-        QSharedPointer<MangaInfo> info;
-        for (int i : indices)
-            if (!info)
-                info = liveInfo(mangaList.titles[i]);
-        QString path = CONF.mangasourcedir(name) + it.key() + "/mangainfo.dat";
-        if (!info && QFile::exists(path))
-            info = MangaInfo::deserialize(this, path);
-
-        int owner = -1;
-        if (info)
-            for (int i : indices)
-                if (urlKey(toUrl(mangaList.urls[i])) == urlKey(QUrl(info->url)))
-                    owner = i;
-        // the order of the entries can change with the next update, the ones that were opened keep their title
-        for (int i : indices)
-            if (owner < 0 && !cached(titleWithId(i)))
-                owner = i;
-        if (owner < 0)
-            owner = indices.first();
-
-        for (int i : indices)
-        {
-            if (i == owner)
-                continue;
-
-            QString title = titleWithId(i);
-            for (int n = 2; usedDirs.contains(makePathLegal(title)); n++)
-                title = titleWithId(i) + " " + QString::number(n);
-
-            usedDirs.insert(makePathLegal(title));
-            mangaList.titles[i] = title;
-            renamed++;
-        }
-    }
-
-    if (renamed > 0)
-        qDebug() << name << ": made" << renamed << "titles unique";
+    ImageLink request = image;
+    request.headers = requestHeaders(image.url) + image.headers;
+    return FileDownloadDescriptor(request, path);
 }
 
-QString AbstractMangaSource::getImagePath(const DownloadImageDescriptor &descriptor)
+QSharedPointer<DownloadFileJob> AbstractMangaSource::downloadImage(const ImageLink &image, const QString &path)
 {
-    // save all images as jpg
-    auto filetype = ".jpg";
-
-    QString path = QString("%1%2_%3%4")
-                       .arg(CONF.mangaimagesdir(name, descriptor.title))
-                       .arg(descriptor.chapter)
-                       .arg(descriptor.page)
-                       .arg(filetype);
-
-    return path;
-}
-
-QSharedPointer<DownloadFileJob> AbstractMangaSource::downloadImage(const DownloadImageDescriptor &descriptor)
-{
-    QString path = getImagePath(descriptor);
-
-    return networkManager->downloadAsScaledImage(descriptor.imageUrl, path, requestHeaders(descriptor.imageUrl));
+    auto download = imageDownload(image, path);
+    return networkManager->downloadAsScaledImage(download.image, download.path);
 }
 
 HttpHeaders AbstractMangaSource::requestHeaders(const QString &url) const
@@ -204,11 +106,15 @@ std::function<HttpHeaders(const QString &)> AbstractMangaSource::requestHeadersF
     return [this](const QString &url) { return requestHeaders(url); };
 }
 
-Result<QString, QString> AbstractMangaSource::getImageUrl(const QString &pageurl)
+Result<ImageLink, QString> AbstractMangaSource::getImageLink(const ImageLink &page)
 {
-    // Default implementation:
-    // pageurls are actually already imageurls
-    return Ok(pageurl);
+    // by default the page list has the images
+    return Ok(page);
+}
+
+QString AbstractMangaSource::mangaInfoRequestUrl(const QString &mangaUrl) const
+{
+    return mangaUrl;
 }
 
 Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::loadMangaInfo(const QString &mangaUrl,
@@ -237,16 +143,16 @@ Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::loadMangaInfo(co
     {
         info->takeOverDetails(*infoR.unwrap());
         info->serialize();
-        info->updateCompeted(false, {});
+        info->updateCompleted({});
         downloadCoverAsync(info);
     }
 
     return Ok(info);
 }
 
-QSharedPointer<MangaInfo> AbstractMangaSource::liveInfo(const QString &title)
+QSharedPointer<MangaInfo> AbstractMangaSource::liveInfo(const QString &mangaUrl)
 {
-    auto it = liveInfos.find(title);
+    auto it = liveInfos.find(mangaUrl);
     if (it == liveInfos.end())
         return {};
 
@@ -258,23 +164,23 @@ QSharedPointer<MangaInfo> AbstractMangaSource::liveInfo(const QString &title)
 
 void AbstractMangaSource::registerInfo(const QSharedPointer<MangaInfo> &info)
 {
-    liveInfos.insert(info->title, info.toWeakRef());
+    liveInfos.insert(info->url, info.toWeakRef());
 }
 
 QSharedPointer<MangaInfo> AbstractMangaSource::loadCachedMangaInfo(const QString &mangaUrl,
                                                                   const QString &mangaTitle)
 {
-    QString path(CONF.mangainfodir(name, mangaTitle) + "mangainfo.dat");
+    QString path(CONF.mangainfodir(name, mangaUrl) + "mangainfo.dat");
 
-    auto info = liveInfo(mangaTitle);
+    auto info = liveInfo(mangaUrl);
     if (info)
         return info;
 
     if (QFile::exists(path))
         info = MangaInfo::deserialize(this, path);
 
-    // missing or unreadable
-    if (!info || info->title.isEmpty())
+    // missing, unreadable or of another manga
+    if (!info || info->url != mangaUrl || info->hostname != name)
     {
         info.reset(new MangaInfo(this));
         info->hostname = name;
@@ -289,7 +195,7 @@ QSharedPointer<MangaInfo> AbstractMangaSource::loadCachedMangaInfo(const QString
 Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::getMangaInfo(const QString &mangaUrl,
                                                                              const QString &mangaTitle)
 {
-    auto job = downloadAsString(mangaUrl, mangaInfoTimeout);
+    auto job = downloadAsString(mangaInfoRequestUrl(mangaUrl), mangaInfoTimeout);
 
     auto info = QSharedPointer<MangaInfo>(new MangaInfo(this));
 
@@ -301,12 +207,11 @@ Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::getMangaInfo(con
     if (!job->await(mangaInfoTimeout))
         return Err(job->errorString);
 
-    int oldnumchapters = info->chapters.count();
     auto res = updateMangaInfoFinishedLoading(job, info);
     if (res.isErr())
         return Err(res.unwrapErr());
 
-    auto merged = mergeChapters(info, res.unwrap(), oldnumchapters);
+    auto merged = mergeChapters(info, res.unwrap());
     if (merged.isErr())
         return Err(merged.unwrapErr());
 
@@ -316,8 +221,7 @@ Result<QSharedPointer<MangaInfo>, QString> AbstractMangaSource::getMangaInfo(con
 }
 
 Result<void, QString> AbstractMangaSource::mergeChapters(QSharedPointer<MangaInfo> info,
-                                                         MangaChapterCollection newChapters,
-                                                         int oldnumchapters)
+                                                         const MangaChapterCollection &newChapters)
 {
     // An empty or much shorter list is more likely a broken response (a changed page, a failed request) than
     // the chapters being gone: merging it would delete the downloaded pages of the missing chapters.
@@ -328,29 +232,21 @@ Result<void, QString> AbstractMangaSource::mergeChapters(QSharedPointer<MangaInf
         return Err(QString("Couldn't load the chapter list of %1.").arg(info->title));
     }
 
-    auto moveMapping = info->chapters.mergeChapters(newChapters);
-    if (!moveMapping.empty())
-    {
-        info->updated = true;
-        removeChapterPages(info, moveMapping);
-        reorderChapterPages(info, moveMapping);
-    }
+    auto merge = info->chapters.mergeChapters(newChapters);
 
-    // the first load of an info that was only a placeholder (e.g. a favorite that wasn't cached) brings no
-    // new chapters
-    bool newchapters = oldnumchapters > 0 && info->chapters.count() > oldnumchapters;
-    info->updateCompeted(newchapters, moveMapping);
+    if (merge.chaptersRemoved)
+        removePagesOfRemovedChapters(info);
+
+    info->updateCompleted(merge);
 
     return Ok();
 }
 
 void AbstractMangaSource::updateMangaInfoAsync(QSharedPointer<MangaInfo> info, bool updateCover)
 {
-    int oldnumchapters = info->chapters.count();
+    auto job = downloadAsString(mangaInfoRequestUrl(info->url), mangaInfoTimeout);
 
-    auto job = downloadAsString(info->url, mangaInfoTimeout);
-
-    auto lambda = [oldnumchapters, info, job, updateCover, this]
+    auto lambda = [info, job, updateCover, this]
     {
         // the infos of the favorites are updated whenever they are shown, only write the ones that changed
         auto contents = [&info]()
@@ -367,12 +263,12 @@ void AbstractMangaSource::updateMangaInfoAsync(QSharedPointer<MangaInfo> info, b
         if (res.isErr())
             return;
 
-        if (mergeChapters(info, res.unwrap(), oldnumchapters).isErr())
+        if (mergeChapters(info, res.unwrap()).isErr())
             return;
-    
+
         downloadCoverAsync(info, updateCover);
         // also when there's no file (e.g. the infos were cleared)
-        if (contents() != oldContents || !QFile::exists(CONF.mangainfodir(name, info->title) + "mangainfo.dat"))
+        if (contents() != oldContents || !QFile::exists(info->directory() + "mangainfo.dat"))
             info->serialize();
     };
 
@@ -384,8 +280,8 @@ Result<void, QString> AbstractMangaSource::updatePageList(QSharedPointer<MangaIn
     if (chapter >= info->chapters.count() || chapter < 0)
         return Err(QString("Chapter number out of bounds."));
 
-    if (info->chapters[chapter].pagesLoaded && !info->chapters[chapter].imageUrlList.isEmpty() &&
-        info->chapters[chapter].imageUrlList.first() != "")
+    // expired image links are resolved again by getImageLink()
+    if (info->chapters[chapter].pagesLoaded && !info->chapters[chapter].pages.isEmpty())
         return Ok();
 
     PerfTimer perf("updatePageList");
@@ -396,97 +292,60 @@ Result<void, QString> AbstractMangaSource::updatePageList(QSharedPointer<MangaIn
         return Err(newpagelistR.unwrapErr());
 
     auto newpagelist = newpagelistR.unwrap();
-
-    // the download runs an event loop, an update of the chapters can move them meanwhile
-    if (chapter >= info->chapters.count() || info->chapters[chapter].chapterUrl != chapterUrl)
+    if (newpagelist.isEmpty())
     {
-        chapter = -1;
-        for (int c = 0; c < info->chapters.count() && chapter < 0; c++)
-            if (info->chapters[c].chapterUrl == chapterUrl)
-                chapter = c;
-        if (chapter < 0)
-            return Err(QString("The chapter isn't there anymore."));
-    }
-    auto &ch = info->chapters[chapter];
-
-    ch.pageUrlList = newpagelist;
-
-    if (ch.pageUrlList.count() == 0)
-    {
-        qDebug() << "pageUrls empty" << ch.chapterUrl;
-        ch.pageUrlList.clear();
-        ch.pageUrlList << "";
+        qDebug() << "Page list empty:" << chapterUrl;
         return Err(QString("Can't download chapter: pagelist empty."));
     }
-    ch.imageUrlList = QStringList();
-    for (int i = 0; i < ch.pageUrlList.count(); i++)
-        ch.imageUrlList.append("");
+
+    // the download runs an event loop, an update of the chapters can move them meanwhile
+    chapter = info->chapters.findChapter(chapterUrl);
+    if (chapter < 0)
+        return Err(QString("The chapter isn't there anymore."));
+    auto &ch = info->chapters[chapter];
+
+    // pages that were downloaded before (e.g. the info was loaded again) might be numbered differently
+    removeChapterPages(info, chapterUrl);
+
+    ch.pages.clear();
+    for (const auto &link : std::as_const(newpagelist))
+        ch.pages.append({link, {}});
     ch.pagesLoaded = true;
 
     return Ok();
 }
 
-void AbstractMangaSource::removeChapterPages(QSharedPointer<MangaInfo> info,
-                                             QList<QPair<int, int>> moveMapping)
+// The page files of a chapter start with the hash of its url.
+static QString chapterFilePrefix(const QString &chapterUrl)
 {
-    QSet<int> remidx;
-    for (const auto &[i1, i2] : moveMapping)
-    {
-        if (i2 < 0)
-            remidx.insert(i1);
-    }
-
-    auto imagespath = CONF.mangaimagesdir(info->hostname, info->title);
-    QDir dir(imagespath);
-
-    for (const auto &info : dir.entryInfoList(QDir::NoDotAndDotDot | QDir::Files))
-    {
-        int chidx = info.baseName().split('_').first().toInt();
-
-        if (remidx.contains(chidx))
-            QFile::remove(info.absoluteFilePath());
-    }
+    return CONF.pagefilename(chapterUrl, 0).section('_', 0, 0);
 }
 
-void AbstractMangaSource::reorderChapterPages(QSharedPointer<MangaInfo> info,
-                                              QList<QPair<int, int>> moveMapping)
+static void removePageFiles(QSharedPointer<MangaInfo> info, const std::function<bool(const QString &)> &ofChapter)
 {
-    DownloadImageDescriptor id1("", info->title, 0, 0);
-    DownloadImageDescriptor id2("", info->title, 0, 0);
-    for (const auto &[i1, i2] : moveMapping)
-    {
-        id1.chapter = i1;
-        id2.chapter = i2;
-        if (i2 < 0)
-        {
-        }
-        else
-        {
-            for (int pi = 0; pi < info->chapters[i2].pageUrlList.count(); pi++)
-            {
-                id1.page = pi;
-                id2.page = pi;
-                auto oldpath = getImagePath(id1);
-                auto newpath = getImagePath(id2) + '_';
-                QFile::rename(oldpath, newpath);
-            }
-        }
+    QDir dir(CONF.mangaimagesdir(info->hostname, info->url));
+    for (const auto &file : dir.entryInfoList(QDir::NoDotAndDotDot | QDir::Files))
+        if (ofChapter(file.fileName().section('_', 0, 0)))
+            QFile::remove(file.absoluteFilePath());
+}
 
-        qDebug() << "moving chapter pages:" << i1 << "->" << i2;
-    }
-    for (const auto &[i1, i2] : moveMapping)
-    {
-        if (i2 < 0)
-            continue;
-        id2.chapter = i2;
-        for (int pi = 0; pi < info->chapters[i2].pageUrlList.count(); pi++)
-        {
-            id2.page = pi;
-            auto newpath = getImagePath(id2);
-            auto oldpath = newpath + '_';
-            QFile::rename(oldpath, newpath);
-        }
-    }
+void AbstractMangaSource::removeChapterPages(QSharedPointer<MangaInfo> info, const QString &chapterUrl)
+{
+    // most chapters have none, listing the directory takes a while when it has many pages
+    if (!QFile::exists(info->pagePath(chapterUrl, 0)))
+        return;
+
+    auto prefix = chapterFilePrefix(chapterUrl);
+    removePageFiles(info, [&prefix](const QString &chapter) { return chapter == prefix; });
+}
+
+void AbstractMangaSource::removePagesOfRemovedChapters(QSharedPointer<MangaInfo> info)
+{
+    QSet<QString> prefixes;
+    for (const auto &chapter : std::as_const(info->chapters))
+        prefixes.insert(chapterFilePrefix(chapter.chapterUrl));
+
+    removePageFiles(info, [&prefixes](const QString &chapter) { return !prefixes.contains(chapter); });
 }
 
 QString AbstractMangaSource::defaultCoverPath(QSharedPointer<MangaInfo> mangainfo)
@@ -495,7 +354,7 @@ QString AbstractMangaSource::defaultCoverPath(QSharedPointer<MangaInfo> mangainf
     if (!QStringList({"jpg", "jpeg", "png", "webp", "gif"}).contains(filetype))
         filetype = "jpg";
 
-    return CONF.mangainfodir(name, mangainfo->title) + "cover." + filetype;
+    return mangainfo->directory() + "cover." + filetype;
 }
 
 void AbstractMangaSource::downloadCoverAsync(QSharedPointer<MangaInfo> mangainfo, bool updateCover)

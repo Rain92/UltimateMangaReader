@@ -27,7 +27,7 @@ bool MangaController::setCurrentManga(QSharedPointer<MangaInfo> mangaInfo)
 {
     cancelAllPreloads();
 
-    if (currentManga.get())
+    if (currentManga)
         QObject::disconnect(currentManga.get(), &MangaInfo::chaptersMoved, this,
                             &MangaController::chaptersMoved);
 
@@ -53,13 +53,9 @@ bool MangaController::setCurrentManga(QSharedPointer<MangaInfo> mangaInfo)
     return res.isOk();
 }
 
-void MangaController::chaptersMoved(QList<QPair<int, int>>)
+void MangaController::chaptersMoved()
 {
-    // the files of the pages were moved with their chapters, running preloads still write to the old places
-    cancelAllPreloads();
-    emit pagesMoved();
-
-    // the reading progress was moved along, the chapter might have fewer pages now
+    // the reading progress has the url of the chapter, it is found again
     deserializeProgress();
     auto res = assurePagesLoaded();
     if (res.isOk())
@@ -76,13 +72,7 @@ Result<void, QString> MangaController::assurePagesLoaded()
     if (currentIndex.chapter >= currentManga->chapters.count() || currentIndex.chapter < 0)
         currentIndex.chapter = qMax(0, currentManga->chapters.count() - 1);
 
-    auto &chapter = currentIndex.currentChapter();
-    bool pageOnDisk = chapter.pagesLoaded && currentIndex.page < chapter.imageUrlList.count() &&
-                      QFile::exists(currentManga->mangaSource->getImagePath(DownloadImageDescriptor(
-                          "", currentManga->title, currentIndex.chapter, currentIndex.page)));
-
-    if (!pageOnDisk && (!chapter.pagesLoaded || currentIndex.page >= chapter.imageUrlList.count() ||
-                        chapter.imageUrlList[currentIndex.page] == ""))
+    if (!currentIndex.currentChapter().pagesLoaded)
     {
         auto res = currentManga->mangaSource->updatePageList(currentManga, currentIndex.chapter);
 
@@ -95,7 +85,7 @@ Result<void, QString> MangaController::assurePagesLoaded()
     if (currentIndex.chapter >= currentManga->chapters.count() || currentIndex.chapter < 0)
         return Err(QString("Chapter number out of bounds."));
 
-    if (currentIndex.page >= currentIndex.currentChapter().pageUrlList.count())
+    if (currentIndex.page >= currentIndex.currentChapter().pages.count())
         currentIndex.page = 0;
 
     return Ok();
@@ -112,50 +102,52 @@ void MangaController::setCurrentIndex(const MangaIndex &index)
 
 // The page list and the image url can need downloads with event loops: page turns, chapter updates and another
 // manga can come in between, so nothing is taken by reference and the slots are checked again before writing.
-Result<QString, QString> MangaController::getImageUrl(QSharedPointer<MangaInfo> manga, MangaIndex index)
+Result<ImageLink, QString> MangaController::getImageLink(QSharedPointer<MangaInfo> manga, MangaIndex index)
 {
     if (index.chapter < 0 || index.chapter >= manga->chapters.count())
         return Err(QString("Chapter number out of bounds."));
 
+    const QString chapterUrl = manga->chapters[index.chapter].chapterUrl;
     if (!manga->chapters[index.chapter].pagesLoaded)
     {
         manga->mangaSource->updatePageList(manga, index.chapter);
         manga->serialize();
     }
 
-    auto pageUrl = [&manga, &index]() -> QString
+    auto page = [&manga, &index, &chapterUrl]() -> MangaPage *
     {
         if (index.chapter >= manga->chapters.count())
-            return {};
-        const auto &chapter = manga->chapters[index.chapter];
-        if (index.page >= chapter.pageUrlList.count() || index.page >= chapter.imageUrlList.count())
-            return {};
-        return chapter.pageUrlList[index.page];
+            return nullptr;
+        auto &chapter = manga->chapters[index.chapter];
+        if (chapter.chapterUrl != chapterUrl || index.page < 0 || index.page >= chapter.pages.count())
+            return nullptr;
+        return &chapter.pages[index.page];
     };
 
-    QString page = pageUrl();
-    if (page.isEmpty())
+    if (!page())
         return Err(QString("Page index out of bounds."));
 
-    QString imageUrl = manga->chapters[index.chapter].imageUrlList[index.page];
-    if (imageUrl.isEmpty())
+    ImageLink image = page()->image;
+    if (image.isEmpty())
     {
-        auto res = manga->mangaSource->getImageUrl(page);
+        const ImageLink link = page()->link;
+        auto res = manga->mangaSource->getImageLink(link);
         if (!res.isOk())
             return Err(res.unwrapErr());
-        imageUrl = res.unwrap();
+        image = res.unwrap();
 
-        if (pageUrl() == page)
-            manga->chapters[index.chapter].imageUrlList[index.page] = imageUrl;
+        if (page() && page()->link.url == link.url)
+            page()->image = image;
     }
 
-    return Ok(imageUrl);
+    return Ok(image);
 }
 
 void MangaController::currentIndexChangedInternal(bool preload)
 {
-    emit currentIndexChanged(
-        {currentIndex, static_cast<int>(currentManga->chapters.count()), static_cast<int>(currentIndex.currentChapter().pageUrlList.count())});
+    const auto &chapter = currentIndex.currentChapter();
+    emit currentIndexChanged({currentIndex, chapter.chapterUrl, static_cast<int>(currentManga->chapters.count()),
+                              static_cast<int>(chapter.pages.count())});
 
     updateCurrentImage();
 
@@ -175,31 +167,28 @@ void MangaController::updateCurrentImage()
     { return currentManga == manga && currentIndex.chapter == index.chapter && currentIndex.page == index.page; };
 
     // already downloaded pages don't need an image url (which might need a network request)
-    auto cachedPath =
-        manga->mangaSource->getImagePath(DownloadImageDescriptor("", manga->title, index.chapter, index.page));
-    if (QFile::exists(cachedPath))
+    const QString path = manga->pagePath(index.chapter, index.page);
+    if (QFile::exists(path))
     {
-        emit currentImageChanged(cachedPath);
+        emit currentImageChanged(path);
         return;
     }
 
-    auto imageUrl = getImageUrl(manga, index);
+    auto image = getImageLink(manga, index);
 
     // another page turn came in between, it shows its own page
     if (!isCurrent())
         return;
 
-    if (!imageUrl.isOk())
+    if (!image.isOk())
     {
         emit currentImageChanged("error");
-        emit error(imageUrl.unwrapErr());
+        emit error(image.unwrapErr());
         return;
     }
 
-    auto dd = DownloadImageDescriptor(imageUrl.unwrap(), manga->title, index.chapter, index.page);
-
     // a running preload of the page is reused
-    auto job = manga->mangaSource->downloadImage(dd);
+    auto job = manga->mangaSource->downloadImage(image.unwrap(), path);
 
     if (job->isCompleted)
     {
@@ -282,26 +271,23 @@ void MangaController::advanceMangaPage(PageTurnDirection direction)
 
 void MangaController::preloadImage(QSharedPointer<MangaInfo> manga, const MangaIndex &index)
 {
-    auto cachedPath =
-        manga->mangaSource->getImagePath(DownloadImageDescriptor("", manga->title, index.chapter, index.page));
-    if (QFile::exists(cachedPath))
-    {
-        emit completedImagePreloadSignal(cachedPath);
-        return;
-    }
-
-    auto imageUrl = getImageUrl(manga, index);
-
-    if (!imageUrl.isOk())
-    {
-        emit error(imageUrl.unwrapErr());
-        return;
-    }
-
-    DownloadImageDescriptor imageinfo(imageUrl.unwrap(), manga->title, index.chapter, index.page);
-    auto path = manga->mangaSource->getImagePath(imageinfo);
-
+    const QString path = manga->pagePath(index.chapter, index.page);
     if (QFile::exists(path))
+    {
+        emit completedImagePreloadSignal(path);
+        return;
+    }
+
+    auto image = getImageLink(manga, index);
+
+    if (!image.isOk())
+    {
+        emit error(image.unwrapErr());
+        return;
+    }
+
+    // the chapter can have been moved or removed meanwhile (event loop): its pages go elsewhere
+    if (path != manga->pagePath(index.chapter, index.page) || QFile::exists(path))
         return;
 
     // it shows up when the running download is done, a queued one would start over if it failed
@@ -313,8 +299,7 @@ void MangaController::preloadImage(QSharedPointer<MangaInfo> manga, const MangaI
     if (failed != failedDownloads.constEnd() && clock.elapsed() - failed.value() < skipFailedMs)
         return;
 
-    preloadQueue.appendDownload(
-        FileDownloadDescriptor(imageUrl.unwrap(), path, manga->mangaSource->requestHeaders(imageUrl.unwrap())));
+    preloadQueue.appendDownload(manga->mangaSource->imageDownload(image.unwrap(), path));
 }
 
 void MangaController::preloadPopular()
@@ -389,14 +374,16 @@ void MangaController::completedImagePreload(const QString &, const QString &path
 
 void MangaController::serializeProgress()
 {
-    ReadingProgress c(currentIndex, currentManga->chapters.count(),
-                      currentIndex.currentChapter().pageUrlList.count());
-    c.serialize(currentManga->hostname, currentManga->title);
+    const auto &chapter = currentIndex.currentChapter();
+    ReadingProgress progress(currentIndex, chapter.chapterUrl, currentManga->chapters.count(),
+                             chapter.pages.count());
+    progress.serialize(currentManga->hostname, currentManga->url);
 }
 
 void MangaController::deserializeProgress()
 {
-    ReadingProgress progress(currentManga->hostname, currentManga->title);
+    ReadingProgress progress(currentManga->hostname, currentManga->url);
+    progress.locate(currentManga->chapters);
     currentIndex.chapter = progress.index.chapter;
     currentIndex.page = progress.index.page;
 }

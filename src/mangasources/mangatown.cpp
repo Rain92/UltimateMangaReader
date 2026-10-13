@@ -130,7 +130,7 @@ bool MangaTown::updateMangaList(UpdateProgressToken *token)
             bool hasViews = viewsmatch.hasMatch() && viewsmatch.capturedStart() < epos;
 
             // the html converter is slow and only a few titles have entities. It collapses whitespace like
-            // simplified(), titles are the keys of the cache and must stay the same
+            // simplified()
             auto title = matches[i].captured(2);
             title = title.contains('&') ? htmlToPlainText(title).trimmed() : title.simplified();
 
@@ -277,7 +277,7 @@ Result<MangaChapterCollection, QString> MangaTown::updateMangaInfoFinishedLoadin
     return Ok(newchapters);
 }
 
-Result<QStringList, QString> MangaTown::getPageList(const QString &chapterUrl)
+Result<QList<ImageLink>, QString> MangaTown::getPageList(const QString &chapterUrl)
 {
     QRegularExpression totalpagesrx(R"lit(var total_pages\s*=\s*(\d+))lit");
     QRegularExpression numPagesRx(
@@ -307,7 +307,7 @@ Result<QStringList, QString> MangaTown::getPageList(const QString &chapterUrl)
         imageUrls.append(absoluteImageUrl(match.captured(1)));
 
     if (!imageUrls.isEmpty())
-        return Ok(imageUrls);
+        return Ok(ImageLink::fromUrls(imageUrls));
 
     int numPages = 0;
     auto totalpagesmatch = totalpagesrx.match(job->bufferStr);
@@ -331,13 +331,14 @@ Result<QStringList, QString> MangaTown::getPageList(const QString &chapterUrl)
     for (int i = 1; i <= numPages; i++)
         imageUrls.append(QString("%1%2.html").arg(baseChapterUrl).arg(i));
 
-    return Ok(imageUrls);
+    return Ok(ImageLink::fromUrls(imageUrls));
 }
 
-Result<QString, QString> MangaTown::getImageUrl(const QString &pageUrl)
+Result<ImageLink, QString> MangaTown::getImageLink(const ImageLink &page)
 {
+    const QString &pageUrl = page.url;
     if (!pageUrl.endsWith(".html"))
-        return Ok(pageUrl);
+        return Ok(page);
 
     QRegularExpression imgUrlRx(R"lit(<img src="([^"]*)"[^>]*id="image")lit");
     QRegularExpression anyImgUrlRx(R"lit(<img[^>]*src="([^"]*)")lit");
@@ -356,5 +357,5 @@ Result<QString, QString> MangaTown::getImageUrl(const QString &pageUrl)
     if (!match.hasMatch())
         return Err(QString("Couldn't process pages/images."));
 
-    return Ok(absoluteImageUrl(match.captured(1)));
+    return Ok(ImageLink::fromUrl(absoluteImageUrl(match.captured(1))));
 }

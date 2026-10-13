@@ -320,7 +320,7 @@ Result<MangaChapterCollection, QString> MangaHere::updateMangaInfoFinishedLoadin
     return Ok(newchapters);
 }
 
-Result<QStringList, QString> MangaHere::getPageList(const QString &chapterUrl)
+Result<QList<ImageLink>, QString> MangaHere::getPageList(const QString &chapterUrl)
 {
     QRegularExpression chapterpathrx(R"lit(/manga/(.+/)[^/]*$)lit");
     QRegularExpression imagerx(R"lit(<img class="lazy" data-original="([^"]*)")lit");
@@ -345,12 +345,15 @@ Result<QStringList, QString> MangaHere::getPageList(const QString &chapterUrl)
             auto numpagesmatch = numpagesrx.match(job->bufferStr);
             if (!imageUrls.isEmpty() && numpagesmatch.hasMatch() &&
                 numpagesmatch.captured(1).toInt() == imageUrls.count())
-                return Ok(imageUrls);
+                return Ok(ImageLink::fromUrls(imageUrls));
         }
         qDebug() << "MangaHere: mobile reader unavailable:" << job->errorString;
     }
 
-    return getPageListDesktop(chapterUrl, qMax(4000, 8000 - int(timer.elapsed())));
+    auto desktopR = getPageListDesktop(chapterUrl, qMax(4000, 8000 - int(timer.elapsed())));
+    if (desktopR.isErr())
+        return Err(desktopR.unwrapErr());
+    return Ok(ImageLink::fromUrls(desktopR.unwrap()));
 }
 
 Result<QStringList, QString> MangaHere::getPageListDesktop(const QString &chapterUrl, int timeout)
@@ -434,10 +437,11 @@ Result<QStringList, QString> MangaHere::getPageListDesktop(const QString &chapte
     return Ok(pageUrls);
 }
 
-Result<QString, QString> MangaHere::getImageUrl(const QString &pageUrl)
+Result<ImageLink, QString> MangaHere::getImageLink(const ImageLink &page)
 {
+    const QString &pageUrl = page.url;
     if (!pageUrl.contains("/chapterfun.ashx"))
-        return Ok(pageUrl);
+        return Ok(page);
 
     QRegularExpression pixrx(R"lit(var pix="([^"]*)")lit");
     QRegularExpression pvaluerx(R"lit(var pvalue=\["([^"]*)")lit");
@@ -467,7 +471,7 @@ Result<QString, QString> MangaHere::getImageUrl(const QString &pageUrl)
         if (!pixmatch.hasMatch() || !pvaluematch.hasMatch())
             break;
 
-        return Ok(normalizeUrl(pixmatch.captured(1) + pvaluematch.captured(1)));
+        return Ok(ImageLink::fromUrl(normalizeUrl(pixmatch.captured(1) + pvaluematch.captured(1))));
     }
 
     return Err(QString("Couldn't process pages/images."));

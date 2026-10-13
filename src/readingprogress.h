@@ -1,4 +1,3 @@
-
 #ifndef READINGPROGRESS_H
 #define READINGPROGRESS_H
 
@@ -9,15 +8,23 @@ class ReadingProgress
 {
 public:
     MangaIndex index;
+    // the chapter of the index: the chapters can change (see locate())
+    QString chapterUrl;
     int numChapters;
     int numPages;
 
-    ReadingProgress(const MangaIndex& index, int numChapters, int numPages);
-    ReadingProgress(const QString& hostname, const QString& title);
+    ReadingProgress();
+    ReadingProgress(const MangaIndex& index, const QString& chapterUrl, int numChapters, int numPages);
+    // The progress of the manga, the start if there is none.
+    ReadingProgress(const QString& hostname, const QString& mangaUrl);
 
-    void serialize(const QString& hostname, const QString& title);
+    void serialize(const QString& hostname, const QString& mangaUrl);
 
-    bool deserialize(const QString& hostname, const QString& title);
+    bool deserialize(const QString& hostname, const QString& mangaUrl);
+
+    // Finds the chapter by its url after the chapters changed. When it's gone (or there was no progress yet)
+    // the start of the chapter at its index is taken. Returns whether the index changed.
+    bool locate(const MangaChapterCollection& chapters);
 };
 
 QDataStream& operator<<(QDataStream& str, const ReadingProgress& m);

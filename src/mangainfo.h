@@ -2,7 +2,6 @@
 #define MANGAINFO_H
 
 #include "abstractmangasource.h"
-#include "downloadimagedescriptor.h"
 #include "mangachaptercollection.h"
 #include "readingprogress.h"
 #include "staticsettings.h"
@@ -19,7 +18,9 @@ public:
     static QSharedPointer<MangaInfo> deserialize(AbstractMangaSource *mangaSource, const QString &path);
 
     void serialize();
+    // for display
     QString title;
+    // the identity of the manga (with hostname, the source): the url of its entry in the manga list
     QString url;
 
     QString author;
@@ -39,16 +40,25 @@ public:
 
     MangaChapterCollection chapters;
 
-    void updateCompeted(bool updated, const QList<QPair<int, int>> &moveMap);
-    // Takes over everything an info download gets (not the identity: source and title).
+    // After the chapters were merged.
+    void updateCompleted(const MangaChapterCollection::MergeResult &merge);
+    // Takes over everything an info download gets (not the identity: source and url, and the title).
     void takeOverDetails(const MangaInfo &other);
     QString coverThumbnailPath() const;
+
+    // The directory of the manga in the cache.
+    QString directory() const;
+    // The file of a downloaded page.
+    QString pagePath(const QString &chapterUrl, int page) const;
+    // Empty when there's no such chapter.
+    QString pagePath(int chapter, int page) const;
 
     void sendCoverLoaded();
 
 signals:
     void updatedSignal(bool newchapters);
-    void chaptersMoved(QList<QPair<int, int>> moveMap);
+    // the chapters that were there before have other indices now (or are gone)
+    void chaptersMoved();
     void coverLoaded();
 };
 

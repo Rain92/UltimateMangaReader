@@ -6,8 +6,8 @@
 #include <QRegularExpression>
 #include <QTextDocument>
 
-#include "downloadimagedescriptor.h"
 #include "downloadqueue.h"
+#include "imagelink.h"
 #include "mangachaptercollection.h"
 #include "mangalist.h"
 #include "networkmanager.h"
@@ -37,9 +37,13 @@ public:
 
     virtual Result<QSharedPointer<MangaInfo>, QString> getMangaInfo(const QString &mangaUrl,
                                                                     const QString &mangaTitle);
+    // The url the info of a manga is downloaded from (by default its url).
+    virtual QString mangaInfoRequestUrl(const QString &mangaUrl) const;
 
-    virtual Result<QStringList, QString> getPageList(const QString &chapterUrl) = 0;
-    virtual Result<QString, QString> getImageUrl(const QString &pageUrl);
+    // The pages of a chapter: their images, or pages of the site that getImageLink() resolves.
+    virtual Result<QList<ImageLink>, QString> getPageList(const QString &chapterUrl) = 0;
+    // The image of a page of the page list (also again, when the one it resolved to before expired).
+    virtual Result<ImageLink, QString> getImageLink(const ImageLink &page);
 
     Result<QSharedPointer<MangaInfo>, QString> loadMangaInfo(const QString &mangaUrl,
                                                              const QString &mangatitle, bool update = true);
@@ -48,9 +52,6 @@ public:
 
     bool serializeMangaList();
     bool deserializeMangaList();
-    // Titles are the key of the info cache, the favorites and the reading progress: every entry of an updated
-    // list needs its own title, one that stays the same with later updates.
-    void makeTitlesUnique();
     // Loads the list from its file the first time it is needed: the lists of all sources have tens of MB
     // (seconds to read on the device, more in memory) and most sessions don't need them.
     void loadMangaList();
@@ -58,12 +59,13 @@ public:
     // the order of the list setting: a list that was saved in another one is sorted when it's loaded
     MangaOrderMethod listOrder = OrderByPopularity;
 
-    QString getImagePath(const DownloadImageDescriptor &descriptor);
+    // The download of an image to path (a page of a manga, see MangaInfo::pagePath()), with the headers of the
+    // source.
+    FileDownloadDescriptor imageDownload(const ImageLink &image, const QString &path) const;
+    QSharedPointer<DownloadFileJob> downloadImage(const ImageLink &image, const QString &path);
 
-    QSharedPointer<DownloadFileJob> downloadImage(const DownloadImageDescriptor &descriptor);
-
-    // The headers of the source's requests to url (by default the header rules for its host).
-    virtual HttpHeaders requestHeaders(const QString &url) const;
+    // The headers of the source's requests to url: the header rules for its host.
+    HttpHeaders requestHeaders(const QString &url) const;
 
     QString htmlToPlainText(const QString &str);
 
@@ -94,16 +96,16 @@ protected:
     // for a DownloadQueue
     std::function<HttpHeaders(const QString &)> requestHeadersFunction() const;
 
-    // Merges the chapters an update loaded into the info (moves or removes the downloaded pages accordingly).
-    Result<void, QString> mergeChapters(QSharedPointer<MangaInfo> info, MangaChapterCollection newChapters,
-                                        int oldnumchapters);
-    void removeChapterPages(QSharedPointer<MangaInfo> info, QList<QPair<int, int>> moveMapping);
-    void reorderChapterPages(QSharedPointer<MangaInfo> info, QList<QPair<int, int>> moveMapping);
+    // Merges the chapters an update loaded into the info (removes the downloaded pages of the chapters that are
+    // gone).
+    Result<void, QString> mergeChapters(QSharedPointer<MangaInfo> info, const MangaChapterCollection &newChapters);
+    void removeChapterPages(QSharedPointer<MangaInfo> info, const QString &chapterUrl);
+    void removePagesOfRemovedChapters(QSharedPointer<MangaInfo> info);
 
-    // The infos in use, by title (like their files): every part of the app gets the same object for a manga.
+    // The infos in use, by url (like their files): every part of the app gets the same object for a manga.
     // Two copies would both apply a chapter update to the pages and the reading progress.
     QHash<QString, QWeakPointer<MangaInfo>> liveInfos;
-    QSharedPointer<MangaInfo> liveInfo(const QString &title);
+    QSharedPointer<MangaInfo> liveInfo(const QString &mangaUrl);
     void registerInfo(const QSharedPointer<MangaInfo> &info);
 
     QString defaultCoverPath(QSharedPointer<MangaInfo> mangainfo);

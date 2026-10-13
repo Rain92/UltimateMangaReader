@@ -58,15 +58,6 @@ struct Upload
     // whole volumes are uploaded without a chapter number
     bool isVolume() const { return hasVolume && (chap.isEmpty() || chap == "0"); }
 };
-
-enum class Numbering
-{
-    Chapter,
-    // whole volumes by their volume number
-    Volume,
-    // the chapter numbers start again in every volume
-    VolumeAndChapter
-};
 }  // namespace
 
 static void cacheWarmUpAttempt(QSharedPointer<CacheWarmUp> warmUp)
@@ -172,12 +163,6 @@ static QString joinNames(const GenericValue<UTF8<>> &jsonobject, const char *mem
     return names.join(", ");
 }
 
-static QString padChapterNumber(const QString &number, int places = 4)
-{
-    int digits = int(number.section('.', 0, 0).length());
-    return QString(qMax(0, places - digits), '0') + number;
-}
-
 // e.g. "31.2.5" is sorted as 31.2
 static double parseNumber(const QString &number)
 {
@@ -243,23 +228,18 @@ static QString chapterPath(const QString &slug, const Upload &upload)
              upload.lang.isEmpty() ? "en" : upload.lang);
 }
 
-static MangaChapter makeChapter(const QString &slug, const Upload &upload,
-                                Numbering numbering = Numbering::Chapter)
+// byVolume: the chapter numbers start again in every volume
+static MangaChapter makeChapter(const QString &slug, const Upload &upload, bool byVolume = false)
 {
-    bool byVolume = numbering == Numbering::VolumeAndChapter;
     QString name;
-    QString number = padChapterNumber(upload.chap.isEmpty() ? QString("0") : upload.chap);
 
     if (upload.hasVolume && (upload.chap.isEmpty() || (upload.chap == "0" && !byVolume)))
     {
         name = "Vol. " + upload.vol;
-        if (numbering != Numbering::Chapter)
-            number = padChapterNumber(upload.vol);
     }
     else if (byVolume && upload.hasVolume)
     {
         name = "Vol. " + upload.vol + " Ch. " + upload.chap;
-        number = padChapterNumber(upload.vol) + "-" + number;
     }
     else if (upload.chap.isEmpty())
     {
@@ -273,9 +253,7 @@ static MangaChapter makeChapter(const QString &slug, const Upload &upload,
     if (!upload.title.isEmpty() && name != upload.title)
         name += ": " + upload.title;
 
-    MangaChapter chapter(name, chapterPath(slug, upload));
-    chapter.chapterNumber = number;
-    return chapter;
+    return MangaChapter(name, chapterPath(slug, upload));
 }
 
 // keeps one upload per key: the one of the current chapters, else the first one
@@ -357,13 +335,12 @@ static MangaChapterCollection chaptersByVolume(const QString &slug, const QList<
 
         // a whole volume, or the prologue of a volume
         bool wholeVolume = upload.isVolume() && !numberedVolumes.contains(upload.volume);
-        chapters.append(
-            makeChapter(slug, upload, wholeVolume ? Numbering::Volume : Numbering::VolumeAndChapter));
+        chapters.append(makeChapter(slug, upload, !wholeVolume));
     }
 
     for (const auto &upload : std::as_const(withoutVolume))
         if (upload.number > volumeChapters || (upload.number < 1 && !volumeNumbers.contains(upload.number)))
-            chapters.append(makeChapter(slug, upload, Numbering::VolumeAndChapter));
+            chapters.append(makeChapter(slug, upload, true));
 
     return chapters;
 }
@@ -687,8 +664,8 @@ bool Comick::fetchSearch(const QString &order, int pages, ComickUpdateState &sta
 
                 urls.insert(url);
                 if (title.isEmpty())
-                    title = titleFromSlug(slug);
-                mangas.append(state.knownTitles.value(url, title), url);
+                    title = state.knownTitles.value(url, titleFromSlug(slug));
+                mangas.append(title, url);
             }
 
             cursor = getStringSafe(doc, "next_cursor");
@@ -1037,7 +1014,7 @@ Result<MangaChapterCollection, QString> Comick::fetchChapters(const QString &slu
         }
 
         for (const auto &volume : std::as_const(volumes))
-            chapters.append(makeChapter(slug, volume, Numbering::Volume));
+            chapters.append(makeChapter(slug, volume));
 
         return Ok(chapters);
     }
@@ -1070,13 +1047,13 @@ Result<MangaChapterCollection, QString> Comick::fetchChapters(const QString &slu
             while (pos < result.size() && !(result[pos].number > 0 && result[pos].knownVolume > it.key()))
                 pos++;
             result.insert(pos, it.value());
-            chapters.insert(pos, makeChapter(slug, it.value(), Numbering::Volume));
+            chapters.insert(pos, makeChapter(slug, it.value()));
         }
 
     return Ok(chapters);
 }
 
-Result<QStringList, QString> Comick::getPageList(const QString &chapterUrl)
+Result<QList<ImageLink>, QString> Comick::getPageList(const QString &chapterUrl)
 {
     auto job = downloadAsString(apiUrl + "/comics/" + chapterUrl, 8000);
 
@@ -1114,11 +1091,12 @@ Result<QStringList, QString> Comick::getPageList(const QString &chapterUrl)
     for (int i = 0; i + 1 < imageUrls.size(); i++)
         nextPages.insert(imageUrls[i], imageUrls[i + 1]);
 
-    return Ok(imageUrls);
+    return Ok(ImageLink::fromUrls(imageUrls));
 }
 
-Result<QString, QString> Comick::getImageUrl(const QString &pageUrl)
+Result<ImageLink, QString> Comick::getImageLink(const ImageLink &page)
 {
+    const QString &pageUrl = page.url;
     auto networkAccessManager = networkManager->networkAccessManager();
 
     // the following pages are usually requested next
@@ -1148,5 +1126,5 @@ Result<QString, QString> Comick::getImageUrl(const QString &pageUrl)
         }
     }
 
-    return Ok(pageUrl);
+    return Ok(page);
 }

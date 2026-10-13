@@ -2,6 +2,7 @@
 
 #include <QSaveFile>
 
+#include "cachefile.h"
 #include "mangainfo.h"
 
 FavoritesManager::FavoritesManager(const QMap<QString, AbstractMangaSource *> &mangasources,
@@ -38,17 +39,19 @@ void FavoritesManager::deserialize()
         return;
 
     QDataStream in(&file);
-    in.setVersion(CONF.dataStreamVersion);
-    in >> favorites;
+    bool current = readCacheFileHeader(in, CacheFile::Favorites);
+    if (current)
+        in >> favorites;
     file.close();
 
-    // a damaged file would be overwritten with the empty list by the next save, it's kept aside
-    if (in.status() != QDataStream::Ok)
+    // the file would be overwritten with the empty list by the next save, it's kept aside
+    if (!current || in.status() != QDataStream::Ok)
     {
-        qDebug() << "Couldn't read the favorites, keeping the file as favorites.dat.damaged";
+        auto kept = file.fileName() + (current ? ".damaged" : ".old");
+        qDebug() << "Couldn't read the favorites, keeping the file as" << kept;
         favorites.clear();
-        QFile::remove(file.fileName() + ".damaged");
-        QFile::rename(file.fileName(), file.fileName() + ".damaged");
+        QFile::remove(kept);
+        QFile::rename(file.fileName(), kept);
     }
 }
 
@@ -60,7 +63,7 @@ void FavoritesManager::serialize()
         return;
 
     QDataStream out(&file);
-    out.setVersion(CONF.dataStreamVersion);
+    writeCacheFileHeader(out, CacheFile::Favorites);
     out << favorites;
     if (out.status() != QDataStream::Ok || !file.commit())
         qDebug() << "Couldn't save the favorites";
@@ -69,7 +72,7 @@ void FavoritesManager::serialize()
 bool FavoritesManager::isFavorite(QSharedPointer<MangaInfo> info)
 {
     for (const Favorite &f : std::as_const(favorites))
-        if (f.hostname == info->hostname && f.title == info->title)
+        if (f.hostname == info->hostname && f.mangaUrl == info->url)
             return true;
 
     return false;
@@ -79,7 +82,7 @@ bool FavoritesManager::toggleFavorite(QSharedPointer<MangaInfo> info)
 {
     for (int i = 0; i < favorites.length(); i++)
     {
-        if (favorites[i].hostname == info->hostname && favorites[i].title == info->title)
+        if (favorites[i].hostname == info->hostname && favorites[i].mangaUrl == info->url)
         {
             favorites.removeAt(i);
             // the infos are only there once the favorites were shown
@@ -176,7 +179,7 @@ QSharedPointer<MangaInfo> FavoritesManager::requireInfo(int i)
 int FavoritesManager::indexOf(const Favorite &fav) const
 {
     for (int i = 0; i < favorites.size(); i++)
-        if (favorites[i].hostname == fav.hostname && favorites[i].title == fav.title)
+        if (favorites[i].hostname == fav.hostname && favorites[i].mangaUrl == fav.mangaUrl)
             return i;
 
     return -1;
@@ -205,7 +208,7 @@ void FavoritesManager::updateInfos()
             continue;
 
         // also the ones without chapters (e.g. all of them removed at the source)
-        auto &lastUpdate = lastUpdates[info->hostname + '/' + info->title];
+        auto &lastUpdate = lastUpdates[info->hostname + '/' + info->url];
         if (lastUpdate.isValid() && lastUpdate.elapsed() < minUpdateIntervalMs)
             continue;
         lastUpdate.start();
@@ -260,7 +263,7 @@ void FavoritesManager::clearInvalidFavorites()
 
         if (!valid)
         {
-            qDebug() << "Removing invalid favorite:" << fav.hostname << fav.title;
+            qDebug() << "Removing invalid favorite:" << fav.hostname << fav.title << fav.mangaUrl;
             favorites.removeAt(i);
             favoriteinfos.removeAt(i);
         }

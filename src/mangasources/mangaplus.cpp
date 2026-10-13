@@ -214,27 +214,25 @@ qint64 urlExpiry(const QString &url)
     return match.hasMatch() ? match.captured(1).toLongLong() : std::numeric_limits<qint64>::max();
 }
 
-QString urlViewToken(const QString &url)
-{
-    static const QRegularExpression tokenrx(R"lit(#vwt=([^|]+))lit");
+// the image host only accepts the view token of the fetch the image urls came from
+const QByteArray viewTokenHeader = "Plus-Vw-Token";
 
-    auto match = tokenrx.match(url);
-    return match.hasMatch() ? match.captured(1) : QString();
+QByteArray viewToken(const ImageLink &image)
+{
+    for (const auto &header : image.headers)
+        if (header.name == viewTokenHeader)
+            return header.value;
+
+    return {};
 }
 
-// the part of a page url that is sent to the image host
-QString requestUrl(const QString &pageUrl)
+ImageLink findImage(const QList<ImageLink> &images, const QString &fileName)
 {
-    return pageUrl.section('|', 0, 0).section('#', 0, 0);
-}
+    for (const auto &image : images)
+        if (image.url.contains(fileName))
+            return image;
 
-QString findImageUrl(const QStringList &imageUrls, const QString &fileName)
-{
-    for (const auto &url : imageUrls)
-        if (url.contains(fileName))
-            return url;
-
-    return QString();
+    return {};
 }
 
 }  // namespace
@@ -261,28 +259,15 @@ MangaPlus::MangaPlus(NetworkManager *dm) : AbstractMangaSource(dm)
                      [this](QNetworkReply *reply) { forgetFailedImageUrl(reply); });
 }
 
-HttpHeaders MangaPlus::requestHeaders(const QString &url) const
-{
-    auto headers = AbstractMangaSource::requestHeaders(url);
-
-    // the image host only accepts the view token of the fetch the image urls came from, it is kept in the
-    // fragment of their urls (which isn't sent to the server)
-    auto viewToken = urlViewToken(url);
-    if (!viewToken.isEmpty())
-        headers.append({"Plus-Vw-Token", viewToken.toLatin1()});
-
-    return headers;
-}
-
 // image urls expire one to two hours after they were loaded (at the start of the hour after next) and their
 // view token is only sent in the session that loaded them
-bool MangaPlus::isUsableImageUrl(const QString &url) const
+bool MangaPlus::isUsableImage(const ImageLink &image) const
 {
     // the download manager resolves the urls of all chapters before it downloads the images
     const qint64 margin = 600;
 
-    auto token = urlViewToken(url);
-    return urlExpiry(url) > QDateTime::currentSecsSinceEpoch() + margin &&
+    auto token = viewToken(image);
+    return urlExpiry(image.url) > QDateTime::currentSecsSinceEpoch() + margin &&
            (token.isEmpty() || viewTokens.contains(token));
 }
 
@@ -291,30 +276,15 @@ bool MangaPlus::isUsableImageUrl(const QString &url) const
 // connection
 void MangaPlus::cleanUpStoredUrls(QSharedPointer<MangaInfo> info)
 {
-    for (int c = 0; c < info->chapters.count(); c++)
+    for (auto &chapter : info->chapters)
     {
-        auto &chapter = info->chapters[c];
-
-        for (int p = 0; p < chapter.imageUrlList.count(); p++)
+        for (int p = 0; p < chapter.pages.count(); p++)
         {
-            auto &imageUrl = chapter.imageUrlList[p];
-            if (imageUrl != "" && !isUsableImageUrl(imageUrl) &&
-                !QFile::exists(getImagePath(DownloadImageDescriptor("", info->title, c, p))))
-                imageUrl = "";
+            auto &image = chapter.pages[p].image;
+            if (!image.isEmpty() && !isUsableImage(image) && !QFile::exists(info->pagePath(chapter.chapterUrl, p)))
+                image = {};
         }
     }
-}
-
-void MangaPlus::trackInfo(QSharedPointer<MangaInfo> info)
-{
-    openedInfos.erase(std::remove_if(openedInfos.begin(), openedInfos.end(),
-                                     [&info](const QWeakPointer<MangaInfo> &weakInfo)
-                                     {
-                                         auto trackedInfo = weakInfo.toStrongRef();
-                                         return !trackedInfo || trackedInfo == info;
-                                     }),
-                      openedInfos.end());
-    openedInfos.append(info);
 }
 
 // the core keeps a resolved image url until its page is downloaded, even after the url expired. a url that
@@ -327,16 +297,16 @@ void MangaPlus::forgetFailedImageUrl(QNetworkReply *reply)
 
     auto failedUrl = reply->url().toString(QUrl::RemoveFragment);
 
-    for (const auto &weakInfo : std::as_const(openedInfos))
+    for (const auto &weakInfo : std::as_const(liveInfos))
     {
         auto info = weakInfo.toStrongRef();
         if (!info)
             continue;
 
-        for (int c = 0; c < info->chapters.count(); c++)
-            for (int p = 0; p < info->chapters.at(c).imageUrlList.count(); p++)
-                if (requestUrl(info->chapters.at(c).imageUrlList.at(p)) == failedUrl)
-                    info->chapters[c].imageUrlList[p] = "";
+        for (auto &chapter : info->chapters)
+            for (auto &page : chapter.pages)
+                if (page.image.url == failedUrl)
+                    page.image = {};
     }
 }
 
@@ -457,21 +427,9 @@ bool MangaPlus::updateMangaList(UpdateProgressToken *token)
     return true;
 }
 
-Result<QSharedPointer<MangaInfo>, QString> MangaPlus::getMangaInfo(const QString &mangaUrl,
-                                                                   const QString &mangaTitle)
-{
-    auto infoR = AbstractMangaSource::getMangaInfo(mangaUrl, mangaTitle);
-
-    if (infoR.isOk())
-        trackInfo(infoR.unwrap());
-
-    return infoR;
-}
-
 // called for every stored info before it is used (opened from the manga list or shown in the favorites)
 void MangaPlus::updateMangaInfoAsync(QSharedPointer<MangaInfo> info, bool updateCover)
 {
-    trackInfo(info);
     cleanUpStoredUrls(info);
 
     AbstractMangaSource::updateMangaInfoAsync(info, updateCover);
@@ -587,7 +545,7 @@ Result<MangaChapterCollection, QString> MangaPlus::updateMangaInfoFinishedLoadin
     return Ok(newchapters);
 }
 
-Result<QStringList, QString> MangaPlus::getPageList(const QString &chapterUrl)
+Result<QList<ImageLink>, QString> MangaPlus::getPageList(const QString &chapterUrl)
 {
     // the chapter urls are relative to the api
     auto url = chapterUrl.startsWith("http") ? chapterUrl : baseUrl + chapterUrl;
@@ -615,40 +573,36 @@ Result<QStringList, QString> MangaPlus::getPageList(const QString &chapterUrl)
     //    }
     auto viewer = successR.unwrap().getMessage(10);
 
-    // the image host only accepts the view token of the fetch the image urls came from, it is kept in the url
-    // fragment (not sent to the server), see requestHeaders()
-    auto viewToken = viewer.getString(19);
-    QString fragment;
-    if (!viewToken.isEmpty())
-    {
-        fragment = "#vwt=" + viewToken;
-        viewTokens.insert(viewToken);
-    }
+    auto token = viewer.getString(19).toLatin1();
+    if (!token.isEmpty())
+        viewTokens.insert(token);
 
-    QStringList imageUrls;
+    QList<ImageLink> images;
     for (const auto &page : viewer.getMessages(1))
     {
         auto mangaPage = page.getMessage(1);
-        auto imageUrl = mangaPage.getString(1);
-        if (imageUrl.isEmpty())
+        auto image = ImageLink::fromUrl(mangaPage.getString(1));
+        if (image.isEmpty())
             continue;
 
-        auto key = mangaPage.getString(5);
-        imageUrls.append(imageUrl + fragment + (key.isEmpty() ? QString() : "|xor:" + key));
+        image.xorKey = hexstr2array(mangaPage.getString(5));
+        if (!token.isEmpty())
+            image.headers.append({viewTokenHeader, token});
+        images.append(image);
     }
 
-    return Ok(imageUrls);
+    return Ok(images);
 }
 
-// page urls are the image urls of the page list. expired ones and the ones loaded in an earlier session are
-// replaced by the urls of a fresh page list of their chapter
-Result<QString, QString> MangaPlus::getImageUrl(const QString &pageUrl)
+// the pages of the page list are its images. expired ones and the ones loaded in an earlier session are
+// replaced by the images of a fresh page list of their chapter
+Result<ImageLink, QString> MangaPlus::getImageLink(const ImageLink &page)
 {
-    QRegularExpression pagerx(R"lit(/chapter/(\d+)/manga_page/(?:[^/?#|]*/)*([^/?#|]+)\?)lit");
+    static const QRegularExpression pagerx(R"lit(/chapter/(\d+)/manga_page/(?:[^/?#]*/)*([^/?#]+)\?)lit");
 
-    auto match = pagerx.match(pageUrl);
-    if (!match.hasMatch() || isUsableImageUrl(pageUrl))
-        return Ok(pageUrl);
+    auto match = pagerx.match(page.url);
+    if (!match.hasMatch() || isUsableImage(page))
+        return Ok(page);
 
     auto chapterId = match.captured(1);
     auto fileName = "/" + match.captured(2) + "?";
@@ -657,13 +611,13 @@ Result<QString, QString> MangaPlus::getImageUrl(const QString &pageUrl)
         refreshedPageLists.clear();
 
     const auto refreshed = refreshedPageLists.value(chapterId);
-    auto url = findImageUrl(refreshed.imageUrls, fileName);
+    auto image = findImage(refreshed.images, fileName);
 
     // At most one request per chapter and minute: neither a failing network nor a wrong device clock
     // may cause a request (and a timeout) per page. Pages that are needed while the request runs (in an
     // event loop, it can't be waited for) make their own one.
     auto now = QDateTime::currentSecsSinceEpoch();
-    if ((url.isEmpty() || !isUsableImageUrl(url)) &&
+    if ((image.isEmpty() || !isUsableImage(image)) &&
         (now - refreshed.time >= 60 || runningRefreshes.value(chapterId) > 0))
     {
         refreshedPageLists[chapterId].time = now;
@@ -678,11 +632,11 @@ Result<QString, QString> MangaPlus::getImageUrl(const QString &pageUrl)
 
         // the hash can have changed meanwhile, nothing refers into it across the download
         refreshedPageLists[chapterId] = {now, pagesR.unwrap()};
-        url = findImageUrl(refreshedPageLists[chapterId].imageUrls, fileName);
+        image = findImage(refreshedPageLists[chapterId].images, fileName);
     }
 
-    if (url.isEmpty())
+    if (image.isEmpty())
         return Err(QString("Couldn't refresh the expired page url."));
 
-    return Ok(url);
+    return Ok(image);
 }
