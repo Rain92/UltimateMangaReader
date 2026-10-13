@@ -1,7 +1,5 @@
 
 kobo {
-    DEFINES  += KOBO
-
     # the platform plugin's source (koboplatformfunctions.h), by default next to the app's,
     # e.g. qmake KOBO_PLATFORM_PLUGIN_PATH=/path/to/qt5-kobo-platform-plugin
     isEmpty(KOBO_PLATFORM_PLUGIN_PATH): KOBO_PLATFORM_PLUGIN_PATH = $$PWD/../qt5-kobo-platform-plugin
@@ -14,15 +12,17 @@ kobo {
     # clock_gettime lives in librt in the Kobo toolchain's glibc 2.15
     LIBS += -lrt
 
+    SOURCES += src/device_kobo.cpp
+
     target.path = /mnt/onboard/.adds/UltimateMangaReader
     INSTALLS += target
 }
 else { # default is desktop
-    DEFINES  += DESKTOP
-
     # the native image pipeline uses the tj3 api of libjpeg-turbo 3.0+
     CONFIG += link_pkgconfig
     PKGCONFIG += libturbojpeg libpng libwebp
+
+    SOURCES += src/device_desktop.cpp
 }
 
 QT    += core gui widgets network svg concurrent
@@ -63,6 +63,7 @@ FORMS += \
 HEADERS += \
     src/aboutinfo.h \
     src/cachefile.h \
+    src/device.h \
     src/downloadbufferjob.h \
     src/downloadfilejob.h \
     src/downloadimageandrescalejob.h \

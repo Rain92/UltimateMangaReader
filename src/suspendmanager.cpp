@@ -1,29 +1,6 @@
 #include "suspendmanager.h"
 
-#include <errno.h>
-#include <fcntl.h>
-#include <string.h>
-#include <unistd.h>
-
-#ifdef KOBO
-// Writes value to a sysfs file, logs why if that failed.
-static bool writeSysfsFile(const char *path, const char *value)
-{
-    int fd = open(path, O_RDWR);
-    if (fd < 0)
-    {
-        qDebug() << "Could not open" << path << ":" << strerror(errno);
-        return false;
-    }
-
-    ssize_t length = strlen(value);
-    bool ok = write(fd, value, length) == length;
-    if (!ok)
-        qDebug() << "Could not write to" << path << ":" << strerror(errno);
-    close(fd);
-    return ok;
-}
-#endif
+#include "device.h"
 
 SuspendManager::SuspendManager(NetworkManager *networkManager, QObject *parent)
     : QObject(parent), sleeping(false), networkManager(networkManager), timer()
@@ -55,17 +32,9 @@ bool SuspendManager::suspendInternal()
     // also when it isn't connected: the WiFi might be on without a connection
     networkManager->disconnectWifi();
 
-#ifdef KOBO
-    if (!writeSysfsFile("/sys/power/state-extended", "1\n"))
-        return false;
-
-    QThread::sleep(2);
-    QProcess::execute("sync", {});
-
     // returns when the device woke up again. If it fails (e.g. EBUSY while USB is connected) the timer tries again.
-    if (!writeSysfsFile("/sys/power/state", "mem\n"))
+    if (!Device::get().suspend())
         return false;
-#endif
 
     sleeping = true;
 
@@ -76,12 +45,7 @@ bool SuspendManager::resume()
 {
     qDebug() << QTime::currentTime().toString("hh:mm:ss") << "Waking up...";
 
-#ifdef KOBO
-    // the app wakes up also if these fail
-    writeSysfsFile("/sys/power/state-extended", "0\n");
-    QThread::msleep(100);
-    writeSysfsFile("/sys/devices/virtual/input/input1/neocmd", "a\n");
-#endif
+    Device::get().resumed();
 
     timer.stop();
     sleeping = false;

@@ -2,12 +2,9 @@
 
 #include <QtConcurrent>
 
+#include "device.h"
 #include "greyscaleimage.h"
 #include "utils.h"
-
-#ifdef KOBO
-#include "koboplatformfunctions.h"
-#endif
 
 NetworkManager::NetworkManager(QObject *parent)
     : QObject(parent),
@@ -29,27 +26,26 @@ NetworkManager::NetworkManager(QObject *parent)
     connect(&wifiThread, &QThread::finished, wifiWorker, &QObject::deleteLater);
     wifiThread.start();
 
-#ifdef KOBO
-    // the certificates are deployed with Qt (the launcher sets QTPATH)
-    QString sslCertPath = QLibraryInfo::path(QLibraryInfo::PrefixPath) + "/lib/ssl_certs";
-    if (qEnvironmentVariableIsSet("QTPATH"))
-        sslCertPath = qEnvironmentVariable("QTPATH") + "/lib/ssl_certs";
-
-    // only while the cpu is idle: the start of the app would wait for it otherwise (single core)
-    QThread *guiThread = QThread::currentThread();
-    certificates = QtConcurrent::run(
-        [sslCertPath, guiThread]()
-        {
-            // waiting for a task that didn't start yet runs it on the waiting thread
-            bool background = QThread::currentThread() != guiThread;
-            if (background)
-                setIdleThreadPriority(true);
-            auto list = loadCertificates(sslCertPath);
-            if (background)
-                setIdleThreadPriority(false);
-            return list;
-        });
-#endif
+    // the certificates of the device (without: the ones of the system), loaded only while the cpu is idle: the
+    // start of the app would wait for it otherwise (single core)
+    QString sslCertPath = Device::get().caCertificatesPath();
+    certificatesApplied = sslCertPath.isEmpty();
+    if (!sslCertPath.isEmpty())
+    {
+        QThread *guiThread = QThread::currentThread();
+        certificates = QtConcurrent::run(
+            [sslCertPath, guiThread]()
+            {
+                // waiting for a task that didn't start yet runs it on the waiting thread
+                bool background = QThread::currentThread() != guiThread;
+                if (background)
+                    setIdleThreadPriority(true);
+                auto list = loadCertificates(sslCertPath);
+                if (background)
+                    setIdleThreadPriority(false);
+                return list;
+            });
+    }
 }
 
 NetworkManager::~NetworkManager()
@@ -89,7 +85,6 @@ bool NetworkManager::isConnectingWifi() const
 
 bool NetworkManager::connectWifi()
 {
-#ifdef KOBO
     if (QNetworkProxy::applicationProxy().type() != QNetworkProxy::NoProxy)
     {
         QNetworkProxy proxy;
@@ -101,10 +96,9 @@ bool NetworkManager::connectWifi()
                  << QNetworkProxy::applicationProxy().port()
                  << " type:" << QNetworkProxy::applicationProxy().type();
     }
-#endif
+
     if (!checkInternetConnection())
     {
-#ifdef KOBO
         qDebug() << "Connecting to Wifi...";
         QElapsedTimer t;
         t.start();
@@ -115,12 +109,11 @@ bool NetworkManager::connectWifi()
         {
             if (attempt > 0)
                 qDebug() << "Connecting to Wifi again...";
-            KoboPlatformFunctions::enableWiFiConnection();
+            Device::get().enableWifi();
             checkInternetConnection();
         }
         qDebug() << "Connected" << (connected ? "successfully" : "unsuccessfully") << "in" << t.elapsed()
                  << "ms.";
-#endif
     }
     else
     {
@@ -141,12 +134,10 @@ bool NetworkManager::disconnectWifi()
             if (!connected && !wifiEnabled)
                 return;
 
-#ifdef KOBO
             QElapsedTimer t;
             t.start();
-            KoboPlatformFunctions::disableWiFiConnection();
+            Device::get().disableWifi();
             qDebug() << "Disconnected in" << t.elapsed() << "ms.";
-#endif
 
             wifiEnabled = false;
             if (connected.exchange(false))
@@ -160,12 +151,8 @@ bool NetworkManager::disconnectWifi()
 bool NetworkManager::checkInternetConnection()
 {
     bool oldstatus = connected;
-#ifdef KOBO
     qDebug() << "Checking internet connection...";
-    connected = KoboPlatformFunctions::testInternetConnection(2);
-#else
-    connected = true;
-#endif
+    connected = Device::get().testInternetConnection(2);
     if (oldstatus != connected)
         emit connectionStatusChanged(connected);
 
@@ -361,7 +348,6 @@ QList<QSslCertificate> NetworkManager::loadCertificates(const QString &certsPath
 
 void NetworkManager::ensureCertificates()
 {
-#ifdef KOBO
     if (certificatesApplied)
         return;
     certificatesApplied = true;
@@ -376,7 +362,6 @@ void NetworkManager::ensureCertificates()
         qDebug() << "Couldn't load SSL certificates";
 
     QSslConfiguration::setDefaultConfiguration(sslConfig);
-#endif
 }
 
 QList<QSize> NetworkManager::probeImageSizes(const QStringList &urls, int timeout, QList<int> *timedOut,

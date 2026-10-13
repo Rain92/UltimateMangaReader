@@ -3,11 +3,8 @@
 #include <QMouseEvent>
 #include <QPainter>
 
+#include "device.h"
 #include "perftimer.h"
-
-#ifdef KOBO
-#include "koboplatformfunctions.h"
-#endif
 
 MangaImageWidget::MangaImageWidget(QWidget *parent)
     : QFrame(parent),
@@ -65,10 +62,8 @@ void MangaImageWidget::mousePressEvent(QMouseEvent *event)
 void MangaImageWidget::mouseReleaseEvent(QMouseEvent *event)
 {
     lastY = event->pos().y();
-#ifdef KOBO
-    KoboPlatformFunctions::setFullScreenRefreshMode(WaveForm_GC16);
+    Device::get().setFastRefresh(false);
     this->update();
-#endif
 }
 
 void MangaImageWidget::mouseMoveEvent(QMouseEvent *event)
@@ -76,9 +71,7 @@ void MangaImageWidget::mouseMoveEvent(QMouseEvent *event)
     int deltay = lastY - event->pos().y();
     lastY = event->pos().y();
     setVOffset(vOffset + 2 * deltay);
-#ifdef KOBO
-    KoboPlatformFunctions::setFullScreenRefreshMode(WaveForm_A2);
-#endif
+    Device::get().setFastRefresh(true);
 }
 
 void MangaImageWidget::paintEvent(QPaintEvent *)

@@ -2,9 +2,7 @@
 
 #include <QPainter>
 
-#ifdef KOBO
-#include "koboplatformfunctions.h"
-#endif
+#include "device.h"
 
 BatteryIcon::BatteryIcon(QWidget *parent)
     : QLabel(parent),
@@ -24,10 +22,7 @@ BatteryIcon::BatteryIcon(QWidget *parent)
 
 void BatteryIcon::mousePressEvent(QMouseEvent *)
 {
-    int level = 100;
-#ifdef KOBO
-    level = KoboPlatformFunctions::getBatteryLevel();
-#endif
+    int level = Device::get().batteryLevel();
     tooltipLabel->setText(QString::number(level) + "%");
     tooltipLabel->move(this->mapToParent(QPoint(-10, this->width() / 2 + 6)));
     tooltipLabel->adjustSize();
@@ -76,10 +71,5 @@ void BatteryIcon::updateIcon()
 
 QPair<int, bool> BatteryIcon::getBatteryState()
 {
-#ifdef KOBO
-    return QPair<int, bool>(KoboPlatformFunctions::getBatteryLevel(),
-                            KoboPlatformFunctions::isBatteryCharging());
-#else
-    return QPair<int, bool>(100, false);
-#endif
+    return QPair<int, bool>(Device::get().batteryLevel(), Device::get().isCharging());
 }

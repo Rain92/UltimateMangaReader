@@ -1,5 +1,7 @@
 #include "mainwidget.h"
 
+#include "device.h"
+
 #include "ui_mainwidget.h"
 #include "widgetutils.h"
 
@@ -272,10 +274,9 @@ void MainWidget::adjustUI()
 
     ui->labelTitle->setStyleSheet("font-size: 16pt");
 
-#ifdef KOBO
-    koboDevice = KoboPlatformFunctions::getKoboDeviceDescriptor();
-    this->resize(koboDevice.width, koboDevice.height);
-#endif
+    QSize screen = Device::get().screenSize();
+    if (screen.isValid())
+        this->resize(screen);
 }
 
 void MainWidget::showEvent(QShowEvent *event)
@@ -327,7 +328,7 @@ bool MainWidget::event(QEvent *event)
 
 bool MainWidget::buttonReleaseEvent(QKeyEvent *event)
 {
-    if (event->key() == POWERBUTTON)
+    if (event->key() == Device::get().powerKey())
     {
         qDebug() << "Powerkey release";
         powerButtonTimer->stop();
@@ -337,7 +338,7 @@ bool MainWidget::buttonReleaseEvent(QKeyEvent *event)
         else
             core->suspendManager->resume();
     }
-    else if (event->key() == SLEEPCOVERBUTTON)
+    else if (event->key() == Device::get().sleepCoverKey())
     {
         qDebug() << "Sleepcover opened";
         core->suspendManager->resume();
@@ -354,14 +355,14 @@ bool MainWidget::buttonPressEvent(QKeyEvent *event)
     if (event->isAutoRepeat())
         return true;
 
-    if (event->key() == POWERBUTTON)
+    if (event->key() == Device::get().powerKey())
     {
         qDebug() << "Powerkey press";
         powerButtonTimer->start(2000);
 
         return true;
     }
-    else if (event->key() == SLEEPCOVERBUTTON)
+    else if (event->key() == Device::get().sleepCoverKey())
     {
         qDebug() << "Sleepcover closed";
         core->suspendManager->suspend();
@@ -374,11 +375,9 @@ bool MainWidget::buttonPressEvent(QKeyEvent *event)
 
 void MainWidget::timerTick()
 {
-#ifdef KOBO
     // low battery guard
-    if (KoboPlatformFunctions::getBatteryLevel() < 10 && !KoboPlatformFunctions::isBatteryCharging())
+    if (Device::get().batteryLevel() < 10 && !Device::get().isCharging())
         close();
-#endif
 
     ui->batteryIcon->updateIcon();
     ui->mangaReaderWidget->updateMenuBar();
@@ -415,57 +414,39 @@ void MainWidget::setupVirtualKeyboard()
 
 void MainWidget::enableVirtualKeyboard(bool enabled)
 {
-#ifdef KOBO
-    if (enabled)
+    if (enabled && Device::get().needsVirtualKeyboard())
         virtualKeyboard->show();
     else
         virtualKeyboard->hide();
-#else
-    Q_UNUSED(enabled)
-#endif
 }
 
 void MainWidget::disableFrontLight()
 {
-#ifdef KOBO
-    KoboPlatformFunctions::setFrontlightLevel(0, 0);
-#endif
+    Device::get().frontlightOff();
 }
 
 void MainWidget::updateDitheringMode()
 {
-#ifdef KOBO
-    if (core->settings.ditheringMode == NoDithering)
-        KoboPlatformFunctions::enableDithering(false, false);
-    else
-        KoboPlatformFunctions::enableDithering(true, false);
-#endif
+    Device::get().setDithering(core->settings.ditheringMode != NoDithering);
 }
 
 void MainWidget::setupFrontLight()
 {
     setFrontLight(core->settings.lightValue, core->settings.comflightValue);
 
-#ifdef KOBO
-    ui->mangaReaderWidget->setFrontLightPanelState(
-        koboDevice.frontlightSettings.frontlightMin, koboDevice.frontlightSettings.frontlightMax,
-        core->settings.lightValue, koboDevice.frontlightSettings.naturalLightMin,
-        koboDevice.frontlightSettings.naturalLightMax, core->settings.comflightValue);
-#endif
+    auto frontlight = Device::get().frontlight();
+    ui->mangaReaderWidget->setFrontLightPanelState(frontlight.min, frontlight.max, core->settings.lightValue,
+                                                   frontlight.naturalMin, frontlight.naturalMax,
+                                                   core->settings.comflightValue);
 }
 
 void MainWidget::setFrontLight(int light, int comflight)
 {
-#ifdef KOBO
-    if (!koboDevice.frontlightSettings.hasFrontLight)
+    if (!Device::get().frontlight().available)
         return;
 
-    // only the hardware takes the inverted value, the settings keep the slider's (it flipped with every call)
-    int hardwareComflight = koboDevice.frontlightSettings.naturalLightInverted
-                                ? koboDevice.frontlightSettings.naturalLightMax - comflight
-                                : comflight;
-    KoboPlatformFunctions::setFrontlightLevel(light, hardwareComflight);
-#endif
+    // the settings keep the slider's value (the device inverts it if its hardware needs that)
+    Device::get().setFrontlight(light, comflight);
 
     if (core->settings.lightValue != light || core->settings.comflightValue != comflight)
     {
@@ -514,11 +495,9 @@ void MainWidget::updatePageSize()
 {
     setWindowPixelRatio(devicePixelRatioF());
 
-#ifdef KOBO
-    core->networkManager->setDownloadSettings({koboDevice.width, koboDevice.height}, &core->settings);
-#else
-    core->networkManager->setDownloadSettings(this->size() * devicePixelRatioF(), &core->settings);
-#endif
+    QSize screen = Device::get().screenSize();
+    core->networkManager->setDownloadSettings(screen.isValid() ? screen : this->size() * devicePixelRatioF(),
+                                              &core->settings);
 }
 
 void MainWidget::setWidgetTab(WidgetTab tab)

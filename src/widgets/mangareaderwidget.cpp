@@ -2,6 +2,7 @@
 
 #include <QtConcurrent>
 
+#include "device.h"
 #include "imageprocessingnative.h"
 #include "perftimer.h"
 #include "ui_mangareaderwidget.h"
@@ -40,9 +41,9 @@ MangaReaderWidget::MangaReaderWidget(QWidget *parent)
             [this]()
             { ui->horizontalSliderComfLight->setValue(ui->horizontalSliderComfLight->value() - 1); });
 
-#ifdef DESKTOP
-    QGestureRecognizer::registerRecognizer(new TapGestureRecognizer());
-#endif
+    // taps with the mouse
+    if (!Device::get().hasTouchScreen())
+        QGestureRecognizer::registerRecognizer(new TapGestureRecognizer());
 
     QGestureRecognizer::registerRecognizer(new SwipeGestureRecognizer());
     grabGesture(Qt::GestureType::TapGesture);

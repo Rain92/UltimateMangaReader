@@ -1,38 +1,17 @@
 #include "standbymanager.h"
 
-#include <errno.h>
-#include <fcntl.h>
-#include <string.h>
 #include <time.h>
-#include <unistd.h>
 
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QDebug>
 #include <QEvent>
-#include <QFile>
 
+#include "device.h"
 #include "mangachapterdownloadmanager.h"
 #include "networkmanager.h"
 #include "staticsettings.h"
 #include "suspendmanager.h"
-
-#ifdef KOBO
-static const char *powerStatePath = "/sys/power/state";
-static const char *wakeAlarmPath = "/sys/class/rtc/rtc0/wakealarm";
-
-// Writing "standby" to /sys/power/state only returns after the device woke up again.
-static bool writeSysfs(const char *path, const QByteArray &value, int *error = nullptr)
-{
-    int fd = open(path, O_WRONLY);
-    bool ok = fd >= 0 && write(fd, value.constData(), value.size()) == value.size();
-    if (error)
-        *error = ok ? 0 : errno;
-    if (fd >= 0)
-        close(fd);
-    return ok;
-}
-#endif
 
 static qint64 clockMs(clockid_t clock)
 {
@@ -65,12 +44,9 @@ StandbyManager::StandbyManager(Settings *settings, SuspendManager *suspendManage
       maxSleepSeconds(0),
       idleTimer()
 {
-#ifdef KOBO
-    QFile states(powerStatePath);
-    supported = states.open(QIODevice::ReadOnly) && states.readAll().contains("standby");
+    supported = Device::get().standbySupported();
     if (!supported)
-        qDebug() << "Standby isn't supported by this kernel";
-#endif
+        qDebug() << "Standby isn't supported here";
 
     // UMR_STANDBY_WAKE_SECONDS=<n> wakes the device at least every n seconds (for testing over ssh, where the
     // screen can't be tapped to wake it up)
@@ -166,31 +142,26 @@ void StandbyManager::idleTimeout()
 
 bool StandbyManager::enterStandby(int wakeAfterSeconds)
 {
-#ifdef KOBO
-    writeSysfs(wakeAlarmPath, "0");
-    if (wakeAfterSeconds > 0 && !writeSysfs(wakeAlarmPath, "+" + QByteArray::number(wakeAfterSeconds)))
+    auto &device = Device::get();
+    if (!device.setWakeAlarm(wakeAfterSeconds))
         qDebug() << "Standby: couldn't set the wake alarm";
 
     const qint64 boot = bootTimeMs();
     const qint64 mono = clockMs(CLOCK_MONOTONIC);
-    int error = 0;
-    bool ok = writeSysfs(powerStatePath, "standby", &error);
+    QString error;
+    bool ok = device.standby(&error);
     const qint64 transitionMs = clockMs(CLOCK_MONOTONIC) - mono;
     const qint64 asleepMs = bootTimeMs() - boot - transitionMs;
 
-    writeSysfs(wakeAlarmPath, "0");
+    device.setWakeAlarm(0);
 
     if (!ok)
     {
-        qDebug() << "Standby failed:" << strerror(error);
+        qDebug() << "Standby failed:" << error;
         return false;
     }
 
     qDebug() << "Standby: slept" << asleepMs << "ms, suspend + resume took" << transitionMs << "ms";
     emit resumed(asleepMs);
     return true;
-#else
-    Q_UNUSED(wakeAfterSeconds)
-    return false;
-#endif
 }
