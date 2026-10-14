@@ -17,6 +17,8 @@ struct DownloadRequest
     bool headOnly = false;
     // the download with all its attempts fails after this (ms), 0: no limit
     int timeout = 6000;
+    // fail on TLS errors (by default they are ignored, see DownloadJobBase::prepareReply())
+    bool verifyTls = false;
     // an attempt that transfers nothing for this long fails (ms), 0: no limit
     int transferTimeout = 0;
     // Only the start of the body (of a successful response): the download completes when it has this many
@@ -70,9 +72,9 @@ public:
     // The download goes on after maxWait (others may wait for it too). Returns whether it completed.
     bool await(int maxWait = 0);
 
-    // Counts reply as active until it finished or got destroyed, and ignores its TLS errors (the sources'
-    // hosts often have broken certificate chains, the device's clock can be wrong).
-    static void prepareReply(QNetworkReply *reply);
+    // Counts reply as active until it finished or got destroyed, and ignores its TLS errors unless verifyTls
+    // (the sources' hosts often have broken certificate chains, the device's clock can be wrong).
+    static void prepareReply(QNetworkReply *reply, bool verifyTls = false);
     // Number of prepared network replies that are still running.
     static int activeReplies();
     // Counts as one more active reply until the returned handle is released (e.g. while waiting to retry: the

@@ -145,6 +145,25 @@ bool FavoritesManager::toggleFavorite(QSharedPointer<MangaInfo> info)
     return true;
 }
 
+int FavoritesManager::countOf(const QString &sourceName) const
+{
+    return int(std::count_if(entries.cbegin(), entries.cend(),
+                             [&sourceName](const Entry &entry) { return entry.favorite.sourceName == sourceName; }));
+}
+
+void FavoritesManager::removeFavoritesOf(const QString &sourceName)
+{
+    bool removed = false;
+    for (int i = int(entries.size()) - 1; i >= 0; i--)
+        if (entries[i].favorite.sourceName == sourceName)
+        {
+            removeAt(i);
+            removed = true;
+        }
+    if (removed)
+        serialize();
+}
+
 void FavoritesManager::removeAt(int i)
 {
     entries.removeAt(i);

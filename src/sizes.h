@@ -42,6 +42,7 @@ public:
 
     const int downloadStatusDialogWidth = mmToPx(80);
     const int downloadStatusDialogHeight = mmToPx(60);
+    const int sourceUpdateDialogWidth = mmToPx(80);
 
     const float readerPageSideThreshold = 0.4;
     const float readerBottomMenuThreshold = 0.1;

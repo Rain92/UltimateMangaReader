@@ -115,7 +115,7 @@ QNetworkReply *DownloadJobBase::send(const QString &url)
         networkRequest.setTransferTimeout(request.transferTimeout);
 
     auto reply = request.headOnly ? networkManager->head(networkRequest) : networkManager->get(networkRequest);
-    prepareReply(reply);
+    prepareReply(reply, request.verifyTls);
     return reply;
 }
 
@@ -272,7 +272,7 @@ bool DownloadJobBase::isTransientError(QNetworkReply *reply) const
     }
 }
 
-void DownloadJobBase::prepareReply(QNetworkReply *reply)
+void DownloadJobBase::prepareReply(QNetworkReply *reply, bool verifyTls)
 {
     if (!reply)
         return;
@@ -290,11 +290,12 @@ void DownloadJobBase::prepareReply(QNetworkReply *reply)
     QObject::connect(reply, &QObject::destroyed, release);
 
     QObject::connect(reply, &QNetworkReply::sslErrors, reply,
-                     [reply](const QList<QSslError> &errors)
+                     [reply, verifyTls](const QList<QSslError> &errors)
                      {
                          for (const QSslError &error : errors)
                              qDebug() << "SSL Error" << reply->url().host() << error.errorString();
-                         reply->ignoreSslErrors();
+                         if (!verifyTls)
+                             reply->ignoreSslErrors();
                      });
 }
 

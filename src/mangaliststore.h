@@ -16,6 +16,8 @@ public:
     bool isLoaded(const QString &source) const;
     // Writes the list into its file.
     bool save(const QString &source);
+    // Forgets the list and deletes its file (e.g. of a source that isn't there anymore).
+    void remove(const QString &source);
     // Reads the list again from its file (empty if there is none).
     bool reload(const QString &source);
 

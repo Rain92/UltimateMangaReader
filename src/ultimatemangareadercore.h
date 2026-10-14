@@ -10,6 +10,7 @@
 #include "mangarepository.h"
 #include "settings.h"
 #include "sourceregistry.h"
+#include "sourceupdater.h"
 #include "standbymanager.h"
 #include "suspendmanager.h"
 #include "utils.h"
@@ -21,6 +22,8 @@ public:
     explicit UltimateMangaReaderCore(QObject *parent = nullptr);
 
     NetworkManager *networkManager;
+    // before the sources: they are loaded from its directory
+    SourceUpdater *sourceUpdater;
     SourceRegistry *sources;
     MangaRepository *repository;
     MangaListStore mangaLists;
@@ -40,6 +43,10 @@ public:
     void setCurrentManga(const QString &mangaUrl, const QString &mangatitle);
 
     void clearDownloadCache(ClearDownloadCacheLevel level);
+
+    // Installs the update of the sources (see SourceUpdater::check()) and replaces the sources with the new ones.
+    // The removed sources lose their favorites and cache, unless keepFavorites and they have favorites.
+    Task<Result<>> updateSources(SourceUpdater::Changes changes, bool keepFavorites);
 
     void enableTimers(bool enabled);
 

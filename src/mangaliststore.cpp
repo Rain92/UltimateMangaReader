@@ -26,6 +26,12 @@ MangaList &MangaListStore::list(const QString &source)
     return lists[source];
 }
 
+void MangaListStore::remove(const QString &source)
+{
+    lists.erase(source);
+    QFile::remove(listPath(source));
+}
+
 bool MangaListStore::isLoaded(const QString &source) const
 {
     return lists.contains(source);

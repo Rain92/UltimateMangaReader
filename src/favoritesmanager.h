@@ -45,6 +45,10 @@ public:
     bool toggleFavorite(QSharedPointer<MangaInfo> info);
 
     void moveFavoriteToFront(int i);
+    // The number of favorites of the source.
+    int countOf(const QString &sourceName) const;
+    // Removes the favorites of the source (e.g. one that isn't there anymore).
+    void removeFavoritesOf(const QString &sourceName);
     // Updates the infos from the sites in the background (new chapters). The ones that fail are reported
     // together (error()).
     void updateInfos();

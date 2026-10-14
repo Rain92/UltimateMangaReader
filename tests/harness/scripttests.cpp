@@ -13,6 +13,7 @@
 #include "settings.h"
 #include "sourceindex.h"
 #include "sourceregistry.h"
+#include "sourceupdater.h"
 #include "updateprogresstoken.h"
 
 // An engine with the libraries that ran code, null if that failed.
@@ -578,6 +579,96 @@ list:
         check("a value of the wrong kind", message == "invalid.yaml: pages.timeout: a number is expected");
         message = invalid("pages:\n  count: 'x'\n");
         check("a missing key", message == "invalid.yaml: pages.page: missing (the url of a page, with {n})");
+    }
+
+    // --- updates of the sources (SourceUpdater, with a repository of files)
+
+    {
+        QTemporaryDir updateDir;
+        auto base = updateDir.path();
+        auto bundled = base + "/bundled", repo = base + "/repo", installed = base + "/cache/sources";
+        QDir().mkpath(bundled);
+        QDir().mkpath(repo);
+        auto functions =
+            QByteArray("function fetchMangaList() end function fetchMangaInfo() end function fetchPageList() end");
+        auto nameOf = [](const QString &id) { return id.left(1).toUpper() + id.mid(1); };
+        // the sources (id, version, script) with common.lua and their index
+        auto writeSet = [&](const QString &dir, const QList<std::tuple<QString, int, QByteArray>> &sources)
+        {
+            QFile::remove(dir + "/common.lua");
+            QFile::copy(sourcesDir + "/common.lua", dir + "/common.lua");
+            SourceIndex index;
+            index.libraries.append({"common", {}, 1, 1, {{"common.lua", SourceIndex::fileHash(dir + "/common.lua")}}});
+            for (const auto &[id, version, script] : sources)
+            {
+                writeSource(dir, id, QString("name: %1\nbaseUrl: x\n").arg(nameOf(id)).toUtf8(), script);
+                index.sources.append({id, nameOf(id), version, 1,
+                                      {{id + ".yaml", SourceIndex::fileHash(dir + "/" + id + ".yaml")},
+                                       {id + ".lua", SourceIndex::fileHash(dir + "/" + id + ".lua")}}});
+            }
+            writeFile(dir + "/index.yaml", index.toYaml());
+        };
+        auto installedVersions = [&installed]()
+        {
+            QStringList versions;
+            for (const auto &entry : SourceIndex::read(installed).value_or(SourceIndex()).sources)
+                versions.append(QString("%1 %2").arg(entry.id).arg(entry.version));
+            return versions.join(", ");
+        };
+        auto readText = [](const QString &path)
+        {
+            QFile file(path);
+            return file.open(QIODevice::ReadOnly) ? QString::fromUtf8(file.readAll()) : QString();
+        };
+
+        writeSet(bundled, {{"alpha", 1, functions + " -- v1"}, {"gamma", 1, functions}});
+        SourceUpdater updater(&nm, bundled, installed, QUrl::fromLocalFile(repo).toString() + "/");
+        auto dir = updater.installBundled();
+        check("the bundled sources are installed the first time",
+              dir == installed && installedVersions() == "alpha 1, gamma 1" &&
+                  QFile::exists(installed + "/bundled.yaml"));
+
+        writeSet(repo, {{"alpha", 2, functions + " -- v2"}, {"beta", 1, functions}});
+        auto changes = updater.check().wait();
+        check("the changes of the repository",
+              changes && changes->updated == QStringList{"Alpha"} && changes->added == QStringList{"Beta"} &&
+                  changes->removed == QStringList{"Gamma"} &&
+                  changes->summary() == "Alpha updated, Beta new, Gamma removed");
+        if (!changes)
+            out << "  " << changes.error().message << "\n";
+
+        auto updated = updater.install(changes.value_or(SourceUpdater::Changes())).wait();
+        QStringList names;
+        for (const auto &updatedSource : updated.value_or(QList<QSharedPointer<MangaSourceBase>>()))
+            names.append(updatedSource->name);
+        check("an update is installed and its sources loaded",
+              updated && names == QStringList({"Alpha", "Beta"}) && installedVersions() == "alpha 2, beta 1" &&
+                  readText(installed + "/alpha.lua").endsWith("v2") && !QFile::exists(installed + "/gamma.yaml"));
+        if (!updated)
+            out << "  " << updated.error().message << "\n";
+        auto again = updater.check().wait();
+        check("then there are no changes", again && again->isEmpty());
+
+        writeSet(repo, {{"alpha", 2, functions + " -- v2"}, {"beta", 2, "function ("}});
+        auto broken = updater.install(updater.check().wait().value_or(SourceUpdater::Changes())).wait();
+        check("an update whose sources don't load isn't installed",
+              !broken && broken.error().message.contains("beta.lua:1:") && installedVersions() == "alpha 2, beta 1");
+        writeSet(repo, {{"alpha", 2, functions + " -- v2"}, {"beta", 2, functions + " -- v2"}});
+        writeFile(repo + "/beta.lua", functions + " -- changed");
+        auto tampered = updater.install(updater.check().wait().value_or(SourceUpdater::Changes())).wait();
+        check("a file that isn't the one of the index isn't installed",
+              !tampered && tampered.error().message.contains("isn't the file of the index") &&
+                  installedVersions() == "alpha 2, beta 1");
+
+        writeSet(bundled, {{"alpha", 3, functions + " -- v3"}, {"gamma", 1, functions}, {"delta", 1, functions}});
+        updater.installBundled();
+        check("an update of the app brings its newer and new sources, not the removed ones",
+              installedVersions() == "alpha 3, beta 1, delta 1" && readText(installed + "/alpha.lua").endsWith("v3"));
+        out << "  " << installedVersions() << "\n";
+
+        SourceUpdater unreachable(&nm, bundled, installed, QUrl::fromLocalFile(base + "/none").toString() + "/");
+        auto failed = unreachable.check().wait();
+        check("a repository that isn't there", !failed);
     }
 
     // --- loading

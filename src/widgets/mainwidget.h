@@ -17,6 +17,7 @@
 #include "networkmanager.h"
 #include "screensaverdialog.h"
 #include "settingsdialog.h"
+#include "sourceupdatedialog.h"
 #include "ultimatemangareadercore.h"
 #include "updatemangalistsdialog.h"
 #include "virtualkeyboard.h"
@@ -78,6 +79,11 @@ private:
     void onSuspend();
     void onResume();
 
+    // Asks the repository for updates of the sources, once (again after a network error), when the app is online.
+    Task<> checkSourceUpdates();
+    // Asks whether to install the update that was found, when nothing else is shown (not while reading).
+    void offerSourceUpdate();
+
     Ui::MainWidget *ui;
 
     UltimateMangaReaderCore *core;
@@ -97,6 +103,10 @@ private:
     ScreensaverDialog *screensaverDialog;
     DownloadMangaChaptersDialog *downloadMangaChaptersDialog;
     DownloadStatusDialog *downloadStatusDialog;
+    SourceUpdateDialog *sourceUpdateDialog;
+
+    bool sourceUpdatesChecked;
+    std::optional<SourceUpdater::Changes> pendingSourceUpdate;
 
     QIcon wifiIcons[2];
 };

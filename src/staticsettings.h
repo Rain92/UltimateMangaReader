@@ -7,7 +7,9 @@
 //   /cache/mangalists/ -> <source>_mangalist.dat
 //   /cache/<source>/<hash of the manga url>/ -> mangainfo.dat progress.dat cover.<type> cover_scaled.<type>
 //   /cache/<source>/<hash of the manga url>/images/ -> <hash of the chapter url>_<page>.jpg
-//   /sources/ -> index.yaml <source>.yaml <source>.lua <source>.png common.lua (the sources, see sources/README.md)
+//   /cache/sources/ -> the installed sources: index.yaml <source>.yaml <source>.lua <source>.png common.lua (see
+//                      sources/README.md), bundled.yaml (the index of the bundled ones they got)
+//   /sources/ -> the bundled sources, the same files
 
 #define CONF StaticSettings::get()
 
@@ -23,7 +25,12 @@ public:
     QString cacheDir;
     QString mangaListDir;
     QString screensaverDir;
+    // the bundled sources (next to the app)
     QString sourcesDir;
+    // the installed sources: the bundled ones and the updates from the repository (see SourceUpdater)
+    QString installedSourcesDir;
+    // the repository of the sources: the directory of its index.yaml
+    QString sourcesRepositoryUrl;
     const int imageCacheSize = 7;
     const int parallelDownloadsLow = 4;
     const int parallelDownloadsMid = 6;
@@ -72,5 +79,9 @@ private:
         screensaverDir = QCoreApplication::applicationDirPath() + "/screensavers/";
         sourcesDir = QCoreApplication::applicationDirPath() + "/sources/";
         mangaListDir = cacheDir + "mangalists/";
+        installedSourcesDir = cacheDir + "sources/";
+        // e.g. a directory on a local server for a test
+        sourcesRepositoryUrl = qEnvironmentVariable(
+            "UMR_SOURCES_REPOSITORY", "https://raw.githubusercontent.com/Rain92/UltimateMangaReader/master/sources/");
     };
 };

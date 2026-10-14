@@ -12,7 +12,9 @@ MainWidget::MainWidget(QWidget *parent)
       lastTab(MangaInfoTab),
       virtualKeyboard(new VirtualKeyboard(this)),
       errorMessageWidget(new ErrorMessageWidget(this)),
-      powerButtonTimer(new QTimer(this))
+      powerButtonTimer(new QTimer(this)),
+      sourceUpdatesChecked(false),
+      pendingSourceUpdate()
 {
     ui->setupUi(this);
     adjustUI();
@@ -31,13 +33,15 @@ MainWidget::MainWidget(QWidget *parent)
     downloadMangaChaptersDialog = new DownloadMangaChaptersDialog(this);
     downloadStatusDialog = new DownloadStatusDialog(this);
     aboutDialog = new AboutDialog(this);
+    sourceUpdateDialog = new SourceUpdateDialog(this);
 
     // the hardware keys (power button, sleep cover) go to the open dialog, from where they reach the main widget
     for (QDialog *dialog : {static_cast<QDialog *>(updateMangaListsDialog), static_cast<QDialog *>(wifiDialog),
                             static_cast<QDialog *>(downloadMangaChaptersDialog),
                             static_cast<QDialog *>(downloadStatusDialog), static_cast<QDialog *>(menuDialog),
                             static_cast<QDialog *>(settingsDialog), static_cast<QDialog *>(clearCacheDialog),
-                            static_cast<QDialog *>(aboutDialog), ui->mangaReaderWidget->gotoDialog()})
+                            static_cast<QDialog *>(aboutDialog), static_cast<QDialog *>(sourceUpdateDialog),
+                            ui->mangaReaderWidget->gotoDialog()})
         dialog->installEventFilter(this);
 
     QObject::connect(menuDialog, &MenuDialog::finished, this,
@@ -84,6 +88,16 @@ MainWidget::MainWidget(QWidget *parent)
                          auto icon = connected ? wifiIcons[1] : wifiIcons[0];
                          ui->toolButtonWifiIcon->setIcon(icon);
                      });
+
+    // the updates of the sources, when the app is online (the first connect, or soon after the start)
+    QObject::connect(core->networkManager, &NetworkManager::connectionStatusChanged, this,
+                     [this](bool connected)
+                     {
+                         if (connected)
+                             checkSourceUpdates();
+                     });
+    if (core->networkManager->connected)
+        QTimer::singleShot(3000, this, [this]() { checkSourceUpdates(); });
 
     // MangaChapterDownloadManager
     QObject::connect(core->mangaChapterDownloadManager, &MangaChapterDownloadManager::error, this,
@@ -536,6 +550,68 @@ void MainWidget::setWidgetTab(WidgetTab tab)
     QWidget *w = ui->stackedWidget->currentWidget();
     if (w)
         w->setFocus();
+
+    // an update of the sources that was found while reading
+    if (pendingSourceUpdate)
+        QTimer::singleShot(0, this, &MainWidget::offerSourceUpdate);
+}
+
+Task<> MainWidget::checkSourceUpdates()
+{
+    if (std::exchange(sourceUpdatesChecked, true))
+        co_return;
+
+    auto changes = co_await core->sourceUpdater->check();
+    if (!changes)
+    {
+        qDebug() << "Couldn't check for updates of the sources:" << changes.error().message;
+        // the next connect tries again
+        if (changes.error().code == Error::Network || changes.error().code == Error::Timeout)
+            sourceUpdatesChecked = false;
+        co_return;
+    }
+    if (changes->isEmpty())
+        co_return;
+
+    pendingSourceUpdate = *changes;
+    offerSourceUpdate();
+}
+
+void MainWidget::offerSourceUpdate()
+{
+    if (!pendingSourceUpdate || ui->stackedWidget->currentIndex() == MangaReaderTab ||
+        QApplication::activeModalWidget() || QApplication::activePopupWidget())
+        return;
+    auto changes = *std::exchange(pendingSourceUpdate, std::nullopt);
+
+    if (!sourceUpdateDialog->ask("Source updates", changes.summary() + ".\n\nUpdate the sources now?", "Update",
+                                 "Later"))
+        return;
+
+    // the favorites of the removed sources stay (without the source) if the user wants
+    QStringList withFavorites;
+    int favorites = 0;
+    for (const auto &name : std::as_const(changes.removed))
+        if (int count = core->favoritesManager->countOf(name))
+        {
+            withFavorites.append(name);
+            favorites += count;
+        }
+    bool keepFavorites = true;
+    if (favorites > 0)
+        keepFavorites = sourceUpdateDialog->ask(
+            "Removed sources",
+            QString("%1 %2 removed from the repository. Keep %3 favorite%4 (without the source)?")
+                .arg(withFavorites.join(", "), withFavorites.size() == 1 ? "was" : "were")
+                .arg(favorites)
+                .arg(favorites == 1 ? "" : "s"),
+            "Keep", "Remove");
+
+    sourceUpdateDialog->showBusy("Source updates", "Updating the sources...");
+    auto result = core->updateSources(changes, keepFavorites).wait();
+    sourceUpdateDialog->finish();
+    if (!result)
+        showErrorMessage("Couldn't update the sources: " + result.error().message);
 }
 
 void MainWidget::readerGoBack()

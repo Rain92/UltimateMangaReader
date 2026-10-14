@@ -52,6 +52,7 @@ HEADERS += \
     $$PWD/sourceindex.h \
     $$PWD/sourcelistmodel.h \
     $$PWD/sourceregistry.h \
+    $$PWD/sourceupdater.h \
     $$PWD/stacktrace.h \
     $$PWD/standbymanager.h \
     $$PWD/staticsettings.h \
@@ -100,6 +101,7 @@ SOURCES += \
     $$PWD/sourceindex.cpp \
     $$PWD/sourcelistmodel.cpp \
     $$PWD/sourceregistry.cpp \
+    $$PWD/sourceupdater.cpp \
     $$PWD/stacktrace.cpp \
     $$PWD/standbymanager.cpp \
     $$PWD/suspendmanager.cpp \
