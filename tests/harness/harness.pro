@@ -11,6 +11,7 @@ include(../../src/core.pri)
 
 SOURCES += \
     ../../src/device_desktop.cpp \
+    bench.cpp \
     capture.cpp \
     fixtures.cpp \
     flowtests.cpp \

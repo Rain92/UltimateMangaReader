@@ -38,6 +38,7 @@ harness [--cache <dir>] [--record <dir> | --replay <dir>] [--sources <dir>] <com
   capture <source> <picks file>
   list <source>
   pick <source>                    # updates the list, prints mangas for a picks file
+  bench <source> <picks file> [rounds] [image rounds]   # the time of reading, best with --replay
   download <source> <title> <url> [chapters]   # the download manager, against the sites
   flow <source> <title> <url>      # reading, favorites and a chapter download through the core
   listflow <source>                # list updates and a cancelled one through the core
@@ -47,6 +48,13 @@ harness [--cache <dir>] [--record <dir> | --replay <dir>] [--sources <dir>] <com
 Without `--record` or `--replay` the harness asks the sites. `--sources` adds the scripts of the sources in the directory, every command then uses them instead of the built-in sources of the same names (e.g. `--sources ../UltimateMangaReader-Qt/sources flow MangaTown ...`).
 
 The harness also builds for the Kobo (`qmake harness.pro CONFIG+=kobo CONFIG+=release`), to time the replays there. It needs the offscreen platform plugin (`QT_QPA_PLATFORM_PLUGIN_PATH`) and the recorded responses next to it.
+
+`bench` times what reading asks of a source, for the mangas of a picks file: opening a manga (its info), opening a chapter (its page list), resolving a page and downloading and processing its image. It prints the median of each. With `--replay` the responses come without waiting, so the times are those of the app alone, e.g. to compare a script with the built-in source:
+
+```
+./harness --replay ../UltimateMangaReader-Qt/tests/fixtures/MangaTown bench MangaTown ../UltimateMangaReader-Qt/tests/picks/MangaTown.txt
+./harness --replay ../UltimateMangaReader-Qt/tests/fixtures/MangaTown --sources ../UltimateMangaReader-Qt/sources bench MangaTown ../UltimateMangaReader-Qt/tests/picks/MangaTown.txt
+```
 
 `flow` and `listflow` drive `UltimateMangaReaderCore` the way the GUI does. They only run against the sites and check each step, with no golden output. Run them after changes to the core, for example with the first line of a picks file:
 

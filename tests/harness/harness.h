@@ -23,5 +23,9 @@ int flowTests(const QString &source, const QString &title, const QString &url);
 // Updates the manga list, cancels an update and updates it again, through the core like the gui.
 int listFlowTests(const QString &source);
 int storageTests(const QString &server);
+// The time of what reading asks of the source for the mangas of the picks file (info, page lists, resolved pages,
+// images): the median of rounds, of imageRounds for the images.
+int benchReading(MangaRepository &repository, MangaSourceBase *source, const QString &picksFile, int rounds,
+                 int imageRounds);
 // The Lua engine, its libraries and the sources of scripts, against tests/harness/testserver.py.
 int scriptTests(const QString &server);

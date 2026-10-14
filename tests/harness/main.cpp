@@ -23,6 +23,7 @@ static int usage()
            "  list <source>                   the update of the manga list\n"
            "  pick <source>                   updates the list, prints mangas for a picks file\n"
            "  download <source> <title> <url> [chapters]   the chapter downloads (download manager)\n"
+           "  bench <source> <picks file> [rounds] [image rounds]   the time of reading (info, pages, images)\n"
            "  flow <source> <title> <url>     reading, favorites and downloads through the core like the gui\n"
            "  listflow <source>               list updates (and a cancelled one) through the core like the gui\n"
            "  jobs <port>                     the download jobs, against testserver.py\n"
@@ -180,6 +181,9 @@ int main(int argc, char **argv)
 
         if (command == "capture" && args.size() == 2)
             failures = captureMangas(repository, source, arg(1));
+        else if (command == "bench" && args.size() >= 2)
+            failures = benchReading(repository, source, arg(1), args.size() > 2 ? arg(2).toInt() : 10,
+                                    args.size() > 3 ? arg(3).toInt() : 3);
         else if (command == "list")
             failures = captureList(source);
         else if (command == "pick")
