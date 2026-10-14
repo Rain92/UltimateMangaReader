@@ -34,17 +34,22 @@ QList<QSharedPointer<MangaSourceBase>> SourceRegistry::loadDirectory(NetworkMana
     QStringList libraries;
     for (const auto &library : std::as_const(index->libraries))
     {
-        if (library.api > LuaSource::apiLevel)
-            report(QString("The library %1 needs a newer app.").arg(library.id));
+        // not an error: it waits for its update to the version of the app
+        if (!library.isCompatible())
+            qWarning().noquote() << QString("The library %1 is version %2, this app runs %3.x.")
+                                        .arg(library.id, library.version.toString())
+                                        .arg(LuaSource::majorVersion);
         else
             libraries.append(library.files);
     }
 
     for (const auto &entry : std::as_const(index->sources))
     {
-        if (entry.api > LuaSource::apiLevel)
+        if (!entry.isCompatible())
         {
-            report(QString("The source %1 needs a newer app.").arg(entry.name));
+            qWarning().noquote() << QString("The source %1 is version %2, this app runs %3.x.")
+                                        .arg(entry.name, entry.version.toString())
+                                        .arg(LuaSource::majorVersion);
             continue;
         }
         auto loaded = LuaSource::load(networkManager, directory, entry.id, libraries);

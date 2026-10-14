@@ -37,5 +37,5 @@ int benchReading(MangaRepository &repository, MangaSourceBase *source, const QSt
 // directory of sources (sources/) for its libraries.
 int scriptTests(const QString &server, const QString &sourcesDir);
 // Checks the index of the directory of sources (index.yaml): it lists all files of the directory, the files it lists
-// are there, and its sources load with the names it has for them.
+// are there, the entries are for the major version of the app, and its sources load with the names it has for them.
 int checkIndex(NetworkManager *networkManager, const QString &directory);

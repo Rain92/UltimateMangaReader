@@ -4,9 +4,31 @@
 #include <QFile>
 #include <QRegularExpression>
 
+#include "luasource.h"
 #include "yamlreader.h"
 
+QString SourceIndex::Version::toString() const
+{
+    return QString("%1.%2").arg(major).arg(minor);
+}
+
+std::optional<SourceIndex::Version> SourceIndex::Version::parse(const QString &text)
+{
+    static const QRegularExpression rx(R"(^(\d{1,4})\.(\d{1,6})$)");
+    auto match = rx.match(text);
+    if (!match.hasMatch())
+        return std::nullopt;
+    return Version{match.captured(1).toInt(), match.captured(2).toInt()};
+}
+
+bool SourceIndex::Entry::isCompatible() const
+{
+    return version.major == LuaSource::majorVersion;
+}
+
 // ids: the ones of the index so far (they are unique, the files of the entries are named after them)
+using Version = SourceIndex::Version;
+
 static Result<QList<SourceIndex::Entry>> readEntries(const QVariant &value, const QString &path, bool isSource,
                                                      QStringList &ids)
 {
@@ -24,15 +46,15 @@ static Result<QList<SourceIndex::Entry>> readEntries(const QVariant &value, cons
         SourceIndex::Entry entry;
         entry.id = map.value("id").toString();
         entry.name = map.value("name").toString();
-        entry.version = map.value("version").toInt();
-        entry.api = map.value("api", 1).toInt();
         if (!idrx.match(entry.id).hasMatch())
             return Err(Error::Parse, QString("%1: invalid id \"%2\".").arg(path, entry.id));
         if (ids.contains(entry.id))
             return Err(Error::Parse, QString("%1: %2 is there twice.").arg(path, entry.id));
         ids.append(entry.id);
-        if (entry.version < 1)
-            return Err(Error::Parse, QString("%1: %2 has no version.").arg(path, entry.id));
+        auto version = Version::parse(map.value("version").toString());
+        if (!version)
+            return Err(Error::Parse, QString("%1: %2 has no version (major.minor).").arg(path, entry.id));
+        entry.version = *version;
         if (isSource && entry.name.isEmpty())
             return Err(Error::Parse, QString("%1: %2 has no name.").arg(path, entry.id));
 
@@ -103,9 +125,7 @@ QByteArray SourceIndex::toYaml() const
             yaml += QString("  - id: %1\n").arg(entry.id);
             if (isSource)
                 yaml += QString("    name: %1\n").arg(quoted(entry.name));
-            yaml += QString("    version: %1\n").arg(entry.version);
-            if (entry.api != 1)
-                yaml += QString("    api: %1\n").arg(entry.api);
+            yaml += QString("    version: %1\n").arg(entry.version.toString());
             if (isSource)
                 yaml += QString("    files: [%1]\n").arg(entry.files.join(", "));
         }

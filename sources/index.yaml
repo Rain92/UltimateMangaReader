@@ -1,10 +1,11 @@
-# The sources and the libraries of their scripts, see README.md. Count up the version of an entry with every change
-# of its files: the app installs an entry when the repository has a newer version of it.
+# The sources and the libraries of their scripts, see README.md. Count up the minor version of an entry with every
+# change of its files: the app installs an entry when the repository has a newer version of it. The major version is
+# the one of the app (LuaSource::majorVersion).
 libraries:
   - id: common
-    version: 1
+    version: 1.0
 sources:
   - id: mangatown
     name: MangaTown
-    version: 1
+    version: 1.0
     files: [mangatown.yaml, mangatown.lua, mangatown.png]

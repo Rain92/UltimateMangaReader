@@ -28,8 +28,10 @@ int checkIndex(NetworkManager *networkManager, const QString &directory)
     for (const auto &entries : {index->libraries, index->sources})
         for (const auto &entry : entries)
         {
-            if (entry.api > LuaSource::apiLevel)
-                fail(QString("%1 needs the api %2, the app has %3.").arg(entry.id).arg(entry.api).arg(LuaSource::apiLevel));
+            if (!entry.isCompatible())
+                fail(QString("%1 is version %2, the app runs %3.x.")
+                         .arg(entry.id, entry.version.toString())
+                         .arg(LuaSource::majorVersion));
             for (const auto &file : entry.files)
             {
                 listed.append(file);
@@ -52,7 +54,7 @@ int checkIndex(NetworkManager *networkManager, const QString &directory)
         else if ((*loaded)->name != entry.name)
             fail(QString("%1 is %2 in the index, but %3 in %1.yaml.").arg(entry.id, entry.name, (*loaded)->name));
         else
-            out << entry.id << ": " << entry.name << " version " << entry.version << "\n";
+            out << entry.id << ": " << entry.name << " version " << entry.version.toString() << "\n";
     }
 
     if (failures == 0)

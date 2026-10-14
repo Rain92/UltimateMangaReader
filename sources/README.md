@@ -5,8 +5,8 @@ logo (`<id>.png`). `common.lua` is shared: it runs the definitions and has helpe
 lists the sources and the libraries with their versions; the app compares it with the index of the repository to
 find updates (see "The index" below).
 
-After a change, count up the version of the source in the index, then check the index (all sources load) and
-compare with the C++ source (the reference, see `tests/README.md`):
+After a change, count up the minor version of the source in the index, then check the index (all sources load)
+and compare with the C++ source (the reference, see `tests/README.md`):
 
     tests/run.sh index MangaTown-lua
 
@@ -140,19 +140,23 @@ into the app as a library function).
 ```yaml
 libraries:                              # run before the scripts, in this order
   - id: common                          # the file is <id>.lua
-    version: 1
+    version: 1.0
 sources:                                # in the order the app shows them
   - id: mangatown                       # the base name of its files
     name: MangaTown                     # the name of its definition (shown in the update prompt)
-    version: 2
-    api: 2                              # optional, see below
+    version: 1.3
     files: [mangatown.yaml, mangatown.lua, mangatown.png]
 ```
 
-The app installs an entry when the repository has a newer `version` of it, with all of its files. So the version
-must go up with every change of the files, else the apps keep the old ones. A source that the repository doesn't
-have anymore is removed from the app (after asking).
+The `version` is `major.minor`, compared number by number (1.10 is newer than 1.9):
 
-`api` is the level of the script interface the entry needs (`LuaSource::apiLevel` of the app, 1 if it is left
-out). It goes up when the app gets something new for the scripts (e.g. a library function) that a source starts to
-use: then an older app keeps the version it has (instead of failing to load the new one), until it is updated.
+- The **minor** version goes up with every change of the files. The app installs an entry when the repository has
+  a newer version of it, with all of its files, so without a new version the apps keep the old files.
+- The **major** version is the one of the app that runs the entry (`LuaSource::majorVersion`). An app only runs and
+  installs the entries of its major version: the repository's entries of another major version are left alone (not
+  installed, and not removed). So a breaking change of the app counts its major version up, and its bundled sources
+  go to 2.0: until the repository has the 2.x versions, the new app gets no updates, and once it has them, the older
+  apps keep the 1.x versions they have. A new app replaces the installed sources of an older major version with its
+  bundled ones; the ones it doesn't bundle wait (not shown) for their update in the repository.
+
+A source that the repository doesn't have anymore is removed from the app (after asking).

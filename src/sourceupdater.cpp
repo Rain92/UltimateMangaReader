@@ -94,12 +94,13 @@ QString SourceUpdater::installBundled()
     {
         for (const auto &entry : from)
         {
-            if (entry.api > LuaSource::apiLevel)
+            if (!entry.isCompatible())
                 continue;
             auto it = std::find_if(into.begin(), into.end(), [&entry](const Entry &e) { return e.id == entry.id; });
             if (it != into.end())
             {
-                if (entry.version > it->version)
+                // also instead of a newer one for another version of the app
+                if (!it->isCompatible() || entry.version > it->version)
                 {
                     *it = entry;
                     fromBundled.insert(entry.id, bundledDir);
@@ -202,8 +203,8 @@ Task<Result<SourceUpdater::Changes>> SourceUpdater::check(const QString &reposit
         co_return Err(remote.error());
     auto installed = SourceIndex::read(installedDir).value_or(SourceIndex());
 
-    // the entries of the repository (or the installed ones if they are newer, or the app is too old for the
-    // repository's), without the installed ones the repository doesn't have
+    // the entries of the repository (or the installed ones if they are as new, or if the repository's are for
+    // another version of the app), without the installed ones the repository doesn't have
     Changes changes;
     changes.repositoryUrl = repositoryUrl;
     auto compare = [&changes](const QList<Entry> &remoteEntries, const QList<Entry> &installedEntries,
@@ -212,7 +213,7 @@ Task<Result<SourceUpdater::Changes>> SourceUpdater::check(const QString &reposit
         for (const auto &entry : remoteEntries)
         {
             auto current = find(installedEntries, entry.id);
-            if (entry.api > LuaSource::apiLevel || (current && current->version >= entry.version))
+            if (!entry.isCompatible() || (current && current->isCompatible() && current->version >= entry.version))
             {
                 if (current)
                     into.append(*current);
