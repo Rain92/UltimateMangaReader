@@ -485,7 +485,27 @@ list:
 
         // the helpers of common.lua, checked when the script is loaded
         writeSource(path, "helpers", "name: Helpers\nbaseUrl: x", stubs + R"lua(
-function fetchMangaList() end
+function fetchMangaList(update)
+    -- a long loop that reports its progress
+    local start = clock()
+    while clock() - start < 120 do
+        update.progress(50)
+    end
+    update.progress(100)
+    return {titles = {update.knownTitle("/a") or "none", update.knownTitle("/c") or "none"}, urls = {"/a", "/c"}}
+end
+-- the sizes of images of the server (base: its url), as the url of a page
+function fetchPageList(base)
+    local sizes = common.imageSizes({base .. "/image/1x1", base .. "/image/2x3", base .. "/missing"}, 5000)
+    local text = {}
+    for i, size in ipairs(sizes) do
+        text[i] = size and size[1] .. "x" .. size[2] or "none"
+    end
+    return {"https://sizes/" .. table.concat(text, ",")}
+end
+local width, height = image.size("\137PNG\r\n\26\n\0\0\0\13IHDR\0\0\0\5\0\0\0\7")
+assert(width == 5 and height == 7, "image.size of a png")
+assert(image.size("not an image") == nil, "image.size of something else")
 local packed = [=[eval(function(p,a,c,k,e,d){e=function(c){return c};return p}('0 1=\'2\';x 01 3',4,4,'var|pix|//a.b/c.jpg|'.split('|'),0,{}))]=]
 local unpacked = common.unpackJs(packed)
 assert(unpacked == "var pix='//a.b/c.jpg';x 01 3", "unpackJs: " .. tostring(unpacked))
@@ -494,9 +514,29 @@ assert(common.title("A  <B> &amp; C ") == "A <B> & C", "title: " .. common.title
 assert(common.title(" A\tB ") == "A B", "title without html")
 )lua");
         auto helpers = LuaSource::load(&nm, path, "helpers", {"common.lua"});
-        check("the helpers: unpackJs (escapes, words that aren't numbers or keywords), title", helpers.has_value());
+        check("the helpers: unpackJs (escapes, words that aren't numbers or keywords), title, image.size",
+              helpers.has_value());
         if (!helpers)
             out << "  " << helpers.error().message << "\n";
+        else
+        {
+            MangaList current;
+            current.titles = {"Known"};
+            current.urls = {"/a"};
+            current.size = 1;
+            UpdateProgressToken token;
+            token.currentSourceName = "Helpers";
+            int progressMeanwhile = -1;
+            QTimer::singleShot(0, [&] { progressMeanwhile = token.sourcesProgress.value("Helpers", -1); });
+            auto update = (*helpers)->fetchMangaList(&token, current).wait();
+            check("a list update knows the titles of the last list",
+                  update.list.titles == QStringList({"Known", "none"}));
+            check("the progress of a long loop lets the event loop go on", progressMeanwhile == 50);
+            auto sizes = (*helpers)->fetchPageList(server).wait();
+            check("the sizes of images from the starts of their files (none for a missing one)",
+                  urls(sizes) == "https://sizes/1x1,2x3,none");
+            out << "  " << (sizes ? urls(sizes) : sizes.error().message) << "\n";
+        }
 
         auto loadedSite = LuaSource::load(&nm, path, "site", {"common.lua"});
         check("a definition is loaded", loadedSite.has_value());
@@ -538,7 +578,7 @@ assert(common.title(" A\tB ") == "A B", "title without html")
                 chapters.append(chapter.chapterTitle + " " + chapter.chapterUrl.mid(server.size()));
             check("the fields of the info: names without placeholders, genres, removed parts and kept lines, the "
                   "cover url",
-                  info && info->author == "A & B" && info->genres == "Action Drama" &&
+                  info && info->author == "A & B" && info->genres == "Action, Drama" &&
                       info->summary == "Text more\nSecond line" && info->coverUrl == "https://example.com/cover.jpg");
             check("the chapters: oldest first, each once, the hook's titles, resolved urls",
                   chapters == QStringList({"Ch 1 /site/ch/1", "Ch 2 /site/ch/2", "Ch 3: Finale /site/ch/3"}));

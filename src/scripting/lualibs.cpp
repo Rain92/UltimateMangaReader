@@ -7,6 +7,7 @@
 #include <QRegularExpression>
 #include <QTextDocument>
 
+#include "greyscaleimage.h"
 #include "lauxlib.h"
 #include "luaengine.h"
 
@@ -523,6 +524,21 @@ static int htmlGenres(lua_State *L)
     return 1;
 }
 
+// --- image
+
+// image.size(data): the width and height of the image whose file starts with data, nil if they aren't in it
+static int imageSize(lua_State *L)
+{
+    size_t length;
+    auto data = luaL_checklstring(L, 1, &length);
+    QSize size;
+    if (!readImageSize(QByteArray::fromRawData(data, qsizetype(length)), size))
+        return 0;
+    lua_pushinteger(L, size.width());
+    lua_pushinteger(L, size.height());
+    return 2;
+}
+
 // --- json
 
 // deeper json fails (the conversion is recursive)
@@ -618,6 +634,10 @@ void openLibraries(lua_State *L)
     lua_pushlightuserdata(L, nullptr);
     lua_setfield(L, -2, "null");
     lua_setglobal(L, "json");
+
+    static const luaL_Reg imageFunctions[] = {{"size", imageSize}, {nullptr, nullptr}};
+    luaL_newlib(L, imageFunctions);
+    lua_setglobal(L, "image");
 
     lua_register(L, "raise", raiseError);
 }

@@ -151,6 +151,42 @@ function common.unpackJs(packed)
     end))
 end
 
+-- The response of a request (http.start), waited for in steps to notice a cancel of the list update.
+function common.waitFor(request, update)
+    while true do
+        local response = request:wait(500)
+        if update.cancelled() then
+            raise("cancelled", "Download cancelled")
+        end
+        if response then
+            return response
+        end
+    end
+end
+
+-- The sizes of the images ({width, height}, false if unknown) from the starts of their files, loaded at the same
+-- time for at most timeout ms, and the indices of the ones that didn't answer in time.
+function common.imageSizes(urls, timeout)
+    local requests = {}
+    for i, url in ipairs(urls) do
+        -- servers that ignore the range send everything, the start is enough
+        requests[i] = http.start(url, {timeout = timeout, retries = 0, maxBytes = 4096,
+                                       headers = {Range = "bytes=0-4095"}})
+    end
+    local sizes, timedOut = {}, {}
+    for i, request in ipairs(requests) do
+        local ok, response = pcall(request.wait, request)
+        local width, height
+        if ok then
+            width, height = image.size(response.body)
+        elseif response.code == "timeout" then
+            timedOut[#timedOut + 1] = i
+        end
+        sizes[i] = width and {width, height} or false
+    end
+    return sizes, timedOut
+end
+
 -- --- the definition: checked and its patterns compiled when the source is loaded
 
 local def = {}
@@ -397,7 +433,7 @@ local conversions = {
     cover = function(value, page) return common.url(page.url, value) end,
     author = function(value, _, field) return common.names(value, field.remove) end,
     artist = function(value, _, field) return common.names(value, field.remove) end,
-    genres = function(value) return html.genres(value) end,
+    genres = function(value, _, field) return common.names(value, field.remove) end,
     popularity = function(value) return tonumber(value) or 0 end,
 }
 -- toText: common.text unless given
@@ -430,8 +466,9 @@ local function fieldValue(section, name, item, page, init, limit)
 end
 
 -- The items of an item list (each, within, fields) in the page: a table per match of each with its fields,
--- searched in its text (from its match to the next one). nil if the start of within isn't there.
-local function findItems(spec, page)
+-- searched in its text (from its match to the next one). nil if the start of within isn't there. progress(done,
+-- count), optional, is called now and then (e.g. update.progress, which lets the GUI go on in a long list).
+local function findItems(spec, page, progress)
     local first, limit = region(spec.within, page)
     if not first then
         return nil
@@ -455,6 +492,9 @@ local function findItems(spec, page)
             item[name] = fieldValue(spec, name, item, page, match.first, itemLimit)
         end
         items[i] = item
+        if progress and i % 500 == 0 then
+            progress(i, #matches)
+        end
     end
     return items
 end
@@ -462,9 +502,9 @@ end
 -- --- the list of the mangas
 
 -- The mangas of a page of the list (spec: an item list) that aren't known yet go into mangas ({titles, urls,
--- popularity}). Returns the number of matches and of the new mangas.
-local function addMangas(spec, page, mangas, known)
-    local items = findItems(spec, page) or {}
+-- popularity}). Returns the number of matches and of the new mangas. progress: see findItems.
+local function addMangas(spec, page, mangas, known, progress)
+    local items = findItems(spec, page, progress) or {}
     local added = 0
     for _, item in ipairs(items) do
         local url, title = item.url, item.title
@@ -642,7 +682,8 @@ local function singleList(spec, update, state)
         mangas.titles[n], mangas.urls[n], mangas.popularity[n] = state.popular.titles[i], mangaUrl, 0
     end
     local popularCount = #mangas.urls
-    local matches = addMangas(spec.mangas, page, mangas, known)
+    local matches = addMangas(spec.mangas, page, mangas, known,
+                              function(done, count) update.progress(80 + 19 * done // count) end)
     log("popular:", popularCount, "matches:", matches)
     if matches == 0 then
         update.clearState()
@@ -726,7 +767,8 @@ function common.fetchMangaInfo(url)
         end
         info.chapters = chapters
     end
-    return info
+    -- the page for a script that wants more of it
+    return info, page
 end
 
 -- --- the pages of a chapter

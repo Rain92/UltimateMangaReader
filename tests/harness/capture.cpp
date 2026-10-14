@@ -171,7 +171,8 @@ int captureList(MangaSourceBase *source, MangaList *result)
     out << "=== list " << source->name << "\n  update: " << status << "\n  entries: " << list.size
         << ", absolute urls " << list.absoluteUrls << "\n";
 
-    // all entries, e.g. to compare two updates
+    // all entries, e.g. to compare two updates. The urls are absolute (the ones the app uses), sources that keep
+    // them relative to different base urls compare equal.
     QFile dump(qEnvironmentVariable("HARNESS_LIST_DUMP"));
     if (!dump.fileName().isEmpty() && !dump.open(QIODevice::WriteOnly))
         qWarning() << "Couldn't write" << dump.fileName();
@@ -179,13 +180,13 @@ int captureList(MangaSourceBase *source, MangaList *result)
     QCryptographicHash hash(QCryptographicHash::Sha1);
     for (int i = 0; i < list.titles.size(); i++)
     {
-        QString entry = list.titles[i] + "\t" + list.urls.value(i) + "\t" +
-                        QString::number(list.popularityRanks.value(i)) + "\n";
+        auto url = list.absoluteUrls ? list.urls.value(i) : source->baseUrl + list.urls.value(i);
+        QString entry = list.titles[i] + "\t" + url + "\t" + QString::number(list.popularityRanks.value(i)) + "\n";
         hash.addData(entry.toUtf8());
         if (dump.isOpen())
             dump.write(entry.toUtf8());
         if (i < 5 || i >= list.titles.size() - 5)
-            out << "  " << i << ": " << list.titles[i] << " | " << list.urls.value(i) << " | rank "
+            out << "  " << i << ": " << list.titles[i] << " | " << url << " | rank "
                 << list.popularityRanks.value(i) << "\n";
     }
     out << "  hash: " << hash.result().toHex().left(16) << "\n";

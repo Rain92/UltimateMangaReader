@@ -1,0 +1,120 @@
+=== Tales of Demons and Gods | https://www.mangatown.com/manga/tales_of_demons_and_gods/
+  title: Tales of Demons and Gods
+  url: https://www.mangatown.com/manga/tales_of_demons_and_gods/
+  author: Mad Snail
+  artist: Mad Snail
+  status: Ongoing
+  year: 
+  genres: Action, Adventure, Comedy, Drama, Fantasy, Harem, Romance
+  summary: In his past life, although too weak to protect his home when it counted, out of grave determination ...
+  coverUrl: https://fmcdn.mangahere.com/store/manga/18607/ocover.jpg?token=4eea2cf9634a1e0332844cbe0d4a07501f8596a8&ttl=1792011600&v=1639127944
+  chapters: 979
+  ch 0: Tales of Demons and Gods 1 | https://www.mangatown.com/manga/tales_of_demons_and_gods/c001/
+  ch 1: Tales of Demons and Gods 2 | https://www.mangatown.com/manga/tales_of_demons_and_gods/c002/
+  ch 2: Tales of Demons and Gods 3 | https://www.mangatown.com/manga/tales_of_demons_and_gods/c003/
+  ch 976: Tales of Demons and Gods 532.5 | https://www.mangatown.com/manga/tales_of_demons_and_gods/c532.5/
+  ch 977: Tales of Demons and Gods 533 | https://www.mangatown.com/manga/tales_of_demons_and_gods/c533/
+  ch 978: Tales of Demons and Gods 533.5 | https://www.mangatown.com/manga/tales_of_demons_and_gods/c533.5/
+  hash: 6cad28088ac92811
+  chapter 0: Tales of Demons and Gods 1 | https://www.mangatown.com/manga/tales_of_demons_and_gods/c001/
+    pages: 13
+    page 0: https://www.mangatown.com/manga/tales_of_demons_and_gods/c001/1.html
+      imageUrl: https://zjcdn.mangahere.org/store/manga/18607/001.0/compressed/msimg002.jpg
+      headers: Referer: https://www.mangatown.com/
+      image: ok 1324x1872
+      pixels: cc27f1f150887990
+    page 1: https://www.mangatown.com/manga/tales_of_demons_and_gods/c001/2.html
+      imageUrl: https://zjcdn.mangahere.org/store/manga/18607/001.0/compressed/msimg003.jpg
+      headers: Referer: https://www.mangatown.com/
+    page 12: https://www.mangatown.com/manga/tales_of_demons_and_gods/c001/13.html
+      imageUrl: https://zjcdn.mangahere.org/store/manga/18607/001.0/compressed/msimg014.jpg
+      headers: Referer: https://www.mangatown.com/
+  chapter 978: Tales of Demons and Gods 533.5 | https://www.mangatown.com/manga/tales_of_demons_and_gods/c533.5/
+    pages: 1
+    page 0: https://zjcdn.mangahere.org/store/manga/18607/533.5/compressed/hp_001.jpg
+      imageUrl: https://zjcdn.mangahere.org/store/manga/18607/533.5/compressed/hp_001.jpg
+      headers: Referer: https://www.mangatown.com/
+=== Shingeki no Kyojin | https://www.mangatown.com/manga/shingeki_no_kyojin/
+  title: Shingeki no Kyojin
+  url: https://www.mangatown.com/manga/shingeki_no_kyojin/
+  author: ISAYAMA Hajime
+  artist: ISAYAMA Hajime
+  status: Completed
+  year: 
+  genres: Action, Drama, Fantasy, Horror, Mature, Mystery, Supernatural, Tragedy
+  summary: Several hundred years ago, humans were nearly exterminated by giants. Giants are typically several s...
+  coverUrl: https://fmcdn.mangahere.com/store/manga/8886/ocover.jpg?token=1dd760ee21527b7b7bb5c497d94aa9d6eaf0c3c0&ttl=1792011600&v=1558497565
+  chapters: 145
+  ch 0: Shingeki no Kyojin: Oneshot | https://www.mangatown.com/manga/shingeki_no_kyojin/c000/
+  ch 1: Shingeki no Kyojin 1: To you in 2000 Years | https://www.mangatown.com/manga/shingeki_no_kyojin/c001/
+  ch 2: Shingeki no Kyojin 2: On that Day | https://www.mangatown.com/manga/shingeki_no_kyojin/c002/
+  ch 142: Shingeki no Kyojin 138 | https://www.mangatown.com/manga/shingeki_no_kyojin/c138/
+  ch 143: Shingeki no Kyojin 139 | https://www.mangatown.com/manga/shingeki_no_kyojin/c139/
+  ch 144: Shingeki no Kyojin 139.5 | https://www.mangatown.com/manga/shingeki_no_kyojin/c139.5/
+  hash: 97602f4d35402ff7
+  chapter 0: Shingeki no Kyojin: Oneshot | https://www.mangatown.com/manga/shingeki_no_kyojin/c000/
+    pages: 71
+    page 0: https://www.mangatown.com/manga/shingeki_no_kyojin/c000/1.html
+      imageUrl: https://zjcdn.mangahere.org/store/manga/8886/000.0/compressed/r000.jpg
+      headers: Referer: https://www.mangatown.com/
+      image: ok 1224x1872
+      pixels: 5a6099506df8d55f
+    page 1: https://www.mangatown.com/manga/shingeki_no_kyojin/c000/2.html
+      imageUrl: https://zjcdn.mangahere.org/store/manga/8886/000.0/compressed/r001.jpg
+      headers: Referer: https://www.mangatown.com/
+    page 70: https://www.mangatown.com/manga/shingeki_no_kyojin/c000/71.html
+      imageUrl: https://zjcdn.mangahere.org/store/manga/8886/000.0/compressed/rrecruts.jpg
+      headers: Referer: https://www.mangatown.com/
+  chapter 144: Shingeki no Kyojin 139.5 | https://www.mangatown.com/manga/shingeki_no_kyojin/c139.5/
+    pages: 7
+    page 0: https://www.mangatown.com/manga/shingeki_no_kyojin/c139.5/1.html
+      imageUrl: https://zjcdn.mangahere.org/store/manga/8886/139.5/compressed/v20210520_111338_455.jpg
+      headers: Referer: https://www.mangatown.com/
+    page 1: https://www.mangatown.com/manga/shingeki_no_kyojin/c139.5/2.html
+      imageUrl: https://zjcdn.mangahere.org/store/manga/8886/139.5/compressed/v20210520_111338_456.jpg
+      headers: Referer: https://www.mangatown.com/
+    page 6: https://www.mangatown.com/manga/shingeki_no_kyojin/c139.5/7.html
+      imageUrl: https://zjcdn.mangahere.org/store/manga/8886/139.5/compressed/v20210520_111338_461.jpg
+      headers: Referer: https://www.mangatown.com/
+=== Death March kara Hajimaru Isekai Kyousoukyoku | https://www.mangatown.com/manga/death_march_kara_hajimaru_isekai_kyousoukyoku/
+  title: Death March kara Hajimaru Isekai Kyousoukyoku
+  url: https://www.mangatown.com/manga/death_march_kara_hajimaru_isekai_kyousoukyoku/
+  author: AINANA Hiro
+  artist: AYA Megumu
+  status: Ongoing
+  year: 
+  genres: Adventure, Fantasy, Harem
+  summary: 29-year-old programmer Suzuki Ichirou finds himself transported into a fantasy RPG. Within the game,...
+  coverUrl: https://fmcdn.mangahere.com/store/manga/18443/ocover.jpg?token=ee231043015991c619b4caf69877ad6d3c5cdedd&ttl=1792011600&v=1646961357
+  chapters: 157
+  ch 0: Death March kara Hajimaru Isekai Kyousoukyoku 1: Level Up | https://www.mangatown.com/manga/death_march_kara_hajimaru_isekai_kyousoukyoku/c001/
+  ch 1: Death March kara Hajimaru Isekai Kyousoukyoku 2: Seyrlyu City | https://www.mangatown.com/manga/death_march_kara_hajimaru_isekai_kyousoukyoku/c002/
+  ch 2: Death March kara Hajimaru Isekai Kyousoukyoku 3: Strolling around the city | https://www.mangatown.com/manga/death_march_kara_hajimaru_isekai_kyousoukyoku/c003/
+  ch 154: Death March kara Hajimaru Isekai Kyousoukyoku 136 | https://www.mangatown.com/manga/death_march_kara_hajimaru_isekai_kyousoukyoku/c136/
+  ch 155: Death March kara Hajimaru Isekai Kyousoukyoku 137 | https://www.mangatown.com/manga/death_march_kara_hajimaru_isekai_kyousoukyoku/c137/
+  ch 156: Death March kara Hajimaru Isekai Kyousoukyoku 138 | https://www.mangatown.com/manga/death_march_kara_hajimaru_isekai_kyousoukyoku/c138/
+  hash: eef20802337b3a31
+  chapter 0: Death March kara Hajimaru Isekai Kyousoukyoku 1: Level Up | https://www.mangatown.com/manga/death_march_kara_hajimaru_isekai_kyousoukyoku/c001/
+    pages: 33
+    page 0: https://www.mangatown.com/manga/death_march_kara_hajimaru_isekai_kyousoukyoku/c001/1.html
+      imageUrl: https://zjcdn.mangahere.org/store/manga/18443/001.0/compressed/b001_copy.jpg
+      headers: Referer: https://www.mangatown.com/
+      image: ok 1300x1872
+      pixels: 751850675c382ee7
+    page 1: https://www.mangatown.com/manga/death_march_kara_hajimaru_isekai_kyousoukyoku/c001/2.html
+      imageUrl: https://zjcdn.mangahere.org/store/manga/18443/001.0/compressed/b002-003_copy.jpg
+      headers: Referer: https://www.mangatown.com/
+    page 32: https://www.mangatown.com/manga/death_march_kara_hajimaru_isekai_kyousoukyoku/c001/33.html
+      imageUrl: https://zjcdn.mangahere.org/store/manga/18443/001.0/compressed/b036_copy.jpg
+      headers: Referer: https://www.mangatown.com/
+  chapter 156: Death March kara Hajimaru Isekai Kyousoukyoku 138 | https://www.mangatown.com/manga/death_march_kara_hajimaru_isekai_kyousoukyoku/c138/
+    pages: 17
+    page 0: https://www.mangatown.com/manga/death_march_kara_hajimaru_isekai_kyousoukyoku/c138/1.html
+      imageUrl: https://zjcdn.mangahere.org/store/manga/18443/138.0/compressed/bdeath_march_kara_hajimaru_isekai_kyousoukyoku_138_001.jpg
+      headers: Referer: https://www.mangatown.com/
+    page 1: https://www.mangatown.com/manga/death_march_kara_hajimaru_isekai_kyousoukyoku/c138/2.html
+      imageUrl: https://zjcdn.mangahere.org/store/manga/18443/138.0/compressed/bdeath_march_kara_hajimaru_isekai_kyousoukyoku_138_002.jpg
+      headers: Referer: https://www.mangatown.com/
+    page 16: https://www.mangatown.com/manga/death_march_kara_hajimaru_isekai_kyousoukyoku/c138/17.html
+      imageUrl: https://zjcdn.mangahere.org/store/manga/18443/138.0/compressed/bdeath_march_kara_hajimaru_isekai_kyousoukyoku_138_017.jpg
+      headers: Referer: https://www.mangatown.com/

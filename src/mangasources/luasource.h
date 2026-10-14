@@ -14,9 +14,11 @@
 // Then these functions must be there, the ones that the app calls, like the ones of MangaSourceBase. They get and
 // return tables, and fail with raise() (or any Lua error):
 // - fetchMangaList(update): update = {state (a table that a retry after a failure gets again), currentSize (the
-//   titles of the last update), lastProgress, progress(percent), cancelled(), clearState()}. Returns {titles,
-//   urls, absoluteUrls (else relative to baseUrl), popularity (a number per manga, the higher the more popular,
-//   e.g. its views) or ranks (from 1), else the order of the list} and a message if something is missing.
+//   titles of the last update), lastProgress, progress(percent) (lets the GUI go on if the script ran for a while
+//   without waiting, so a long loop should report its progress now and then), cancelled(), clearState(),
+//   knownTitle(url) (the title of the url in the last list, nil if it wasn't there)}. Returns {titles, urls,
+//   absoluteUrls (else relative to baseUrl), popularity (a number per manga, the higher the more popular, e.g. its
+//   views) or ranks (from 1), else the order of the list} and a message if something is missing.
 // - fetchMangaInfo(url, known): known = the chapters the app has, {{title, url}}. Returns {author, artist,
 //   releaseYear, genres, status, summary, cover, coverFallbacks, chapters = {{title, url}} (oldest first)}.
 // - fetchPageList(chapterUrl): the pages, urls or images {url, headers = {name = value}, xorKey, appendUrl,

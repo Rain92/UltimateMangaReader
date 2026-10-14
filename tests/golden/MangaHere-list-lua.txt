@@ -1,14 +1,14 @@
 === list MangaHere
   update: ok
   entries: 39940, absolute urls 0
-  0: Onepunch-Man | /manga/onepunch_man/ | rank 0
-  1: One Piece | /manga/one_piece/ | rank 1
-  2: Tensei Shitara Slime Datta Ken | /manga/tensei_shitara_slime_datta_ken/ | rank 2
-  3: Jujutsu Kaisen | /manga/jujutsu_kaisen/ | rank 3
-  4: Black Clover | /manga/black_clover/ | rank 4
-  39935: 990k Ex-Life Hunter | /manga/990k_ex_life_hunter/ | rank 39935
-  39936: 99 Ways to Become Heroes by Beauty Masters | /manga/99_ways_to_become_heroes_by_beauty_masters/ | rank 39936
-  39937: 90 Days For The Delicacy | /manga/90_days_for_the_delicacy/ | rank 39937
-  39938: 99 Captain | /manga/99_captain/ | rank 39938
-  39939: 9 Dan Girl | /manga/9_dan_girl/ | rank 39939
-  hash: 0d0dcbb86c7752db
+  0: Onepunch-Man | https://www.mangahere.cc/manga/onepunch_man/ | rank 0
+  1: One Piece | https://www.mangahere.cc/manga/one_piece/ | rank 1
+  2: Tensei Shitara Slime Datta Ken | https://www.mangahere.cc/manga/tensei_shitara_slime_datta_ken/ | rank 2
+  3: Jujutsu Kaisen | https://www.mangahere.cc/manga/jujutsu_kaisen/ | rank 3
+  4: Black Clover | https://www.mangahere.cc/manga/black_clover/ | rank 4
+  39935: 990k Ex-Life Hunter | https://www.mangahere.cc/manga/990k_ex_life_hunter/ | rank 39935
+  39936: 99 Ways to Become Heroes by Beauty Masters | https://www.mangahere.cc/manga/99_ways_to_become_heroes_by_beauty_masters/ | rank 39936
+  39937: 90 Days For The Delicacy | https://www.mangahere.cc/manga/90_days_for_the_delicacy/ | rank 39937
+  39938: 99 Captain | https://www.mangahere.cc/manga/99_captain/ | rank 39938
+  39939: 9 Dan Girl | https://www.mangahere.cc/manga/9_dan_girl/ | rank 39939
+  hash: e76d01b8a9769344

@@ -21,7 +21,7 @@ SOURCES="Comick MangaDex MangaHere Mangakakalot MangaPlus MangaTown"
 # Comick ~200 MB of sitemaps)
 LISTS="MangaHere-list Mangakakalot-list MangaPlus-list"
 # the scripts of sources in sources/, against the responses and the golden output of the C++ sources
-SCRIPTS="MangaTown-lua MangaHere-lua MangaHere-list-lua"
+SCRIPTS="MangaTown-lua MangaHere-lua MangaHere-list-lua Mangakakalot-lua Mangakakalot-list-lua"
 
 record=0
 if [ "${1:-}" = record ]; then
@@ -59,7 +59,7 @@ start_server() {
 
 failed=0
 report() {
-    printf '%-20s %s\n' "$1" "$2"
+    printf '%-24s %s\n' "$1" "$2"
     [ "$2" = ok ] || failed=1
 }
 

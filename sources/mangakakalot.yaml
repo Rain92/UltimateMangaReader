@@ -1,0 +1,22 @@
+# Mangakakalot: mangakakalot.com and manganato.com are gone, the mirrors mangakakalot.gg, natomanga.com and
+# nelomanga.net have a Cloudflare challenge in front of every page except the start page.
+name: Mangakakalot
+baseUrl: https://www.mangakakalove.com
+headers:
+  # the image cdns only answer with the Referer of a mirror
+  2xstorage.com: {Referer: 'https://www.mangakakalove.com/'}
+  waitst.com: {Referer: 'https://www.mangakakalove.com/'}
+
+info:
+  timeout: 6000
+  expect: 'data-comic-slug="'
+  author: '(?s)<li>Author\(s\)\s*:(.*?)</li>'
+  status: '<li>Status\s*:([^<]*)</li>'
+  genres: '(?s)<li class="genres">Genres\s*:(.*?)</li>'
+  summary:
+    match: '(?s)<div id="contentBox"[^>]*>(?:\s*<h2>.*?</h2>)?(.*?)</div>'
+    remove: '\[.*?\]'
+    lua: summary
+  cover: ['<div class="manga-info-pic">\s*<img src="([^"]*)"', '<meta property="og:image" content="([^"]*)"']
+
+# the list (sitemaps), the chapters (api) and the pages: mangakakalot.lua

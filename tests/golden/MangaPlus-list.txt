@@ -1,14 +1,14 @@
 === list MangaPlus
   update: ok
   entries: 776, absolute urls 0
-  0: One Piece | api/title_detailV3?title_id=100020&clang=eng | rank 0
-  1: Boruto: Two Blue Vortex | api/title_detailV3?title_id=100269&clang=eng | rank 1
-  2: Dandadan | api/title_detailV3?title_id=100171&clang=eng | rank 2
-  3: SAKAMOTO DAYS | api/title_detailV3?title_id=100127&clang=eng | rank 3
-  4: SPY x FAMILY | api/title_detailV3?title_id=100056&clang=eng | rank 4
-  771: Yugen's All-Ghouls Homeroom | api/title_detailV3?title_id=100094&clang=eng | rank 771
-  772: Yui Kamio Lets Loose | api/title_detailV3?title_id=100055&clang=eng | rank 772
-  773: Yuka's Way of Expressing Love | api/title_detailV3?title_id=100376&clang=eng | rank 773
-  774: ZIPMAN!! | api/title_detailV3?title_id=100076&clang=eng | rank 774
-  775: ○ and × | api/title_detailV3?title_id=100726&clang=eng | rank 775
-  hash: 29e38d5756930eec
+  0: One Piece | https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=100020&clang=eng | rank 0
+  1: Boruto: Two Blue Vortex | https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=100269&clang=eng | rank 1
+  2: Dandadan | https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=100171&clang=eng | rank 2
+  3: SAKAMOTO DAYS | https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=100127&clang=eng | rank 3
+  4: SPY x FAMILY | https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=100056&clang=eng | rank 4
+  771: Yugen's All-Ghouls Homeroom | https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=100094&clang=eng | rank 771
+  772: Yui Kamio Lets Loose | https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=100055&clang=eng | rank 772
+  773: Yuka's Way of Expressing Love | https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=100376&clang=eng | rank 773
+  774: ZIPMAN!! | https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=100076&clang=eng | rank 774
+  775: ○ and × | https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=100726&clang=eng | rank 775
+  hash: 3f099045e77e8e13

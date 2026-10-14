@@ -13,6 +13,7 @@
 // - text: trim, simplify (whitespace like QString).
 // - html: text (the plain text of html), genres.
 // - json: decode (into tables; null is json.null).
+// - image: size (the width and height of an image from the start of its file, JPEG, PNG or WebP).
 // - raise(code, message [, status]): fails with an error of the app (code: "failed", "network", "timeout",
 //   "cancelled", "http", "parse", "notfound", "storage").
 namespace lua

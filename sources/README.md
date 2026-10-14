@@ -42,8 +42,7 @@ The values are converted by their name:
 | field                          | value                                                                     |
 |--------------------------------|---------------------------------------------------------------------------|
 | `url`, `cover`                 | resolved against the url of the page (`//host/x`, `/x`, `x`), `&amp;` is `&` |
-| `author`, `artist`             | the texts of the links (each once, `remove` from each), else the text     |
-| `genres`                       | the text, with the separators as spaces                                   |
+| `author`, `artist`, `genres`   | the texts of the links (each once, `remove` from each) joined by `, `, else the text |
 | `popularity`                   | a number, the higher the more popular                                     |
 | `title`                        | the text (entities, whitespace collapsed), a `<` is no tag (e.g. in an attribute) |
 | the others (`status`, ...)     | the text of the html (entities, tags and whitespace like a browser)       |
@@ -133,10 +132,18 @@ and change what they return.
 
 Helpers in `common.lua`: `common.text(html)`, `common.title(text)`, `common.url(base, url)`,
 `common.names(html, remove)`, `common.fill(template, values)`, `common.find(patterns, page, init, limit)`,
-`common.unpackJs(script)` (the script of a packed `eval(function(p,a,c,k,e,d){...})`).
+`common.unpackJs(script)` (the script of a packed `eval(function(p,a,c,k,e,d){...})`), `common.imageSizes(urls,
+timeout)` (from the starts of the files), `common.waitFor(request, update)` (a request of a list update, which
+fails when the update is cancelled). `common.fetchMangaInfo(url)` also returns the page (`url`, `body`), for a
+script that wants more of it.
 
 Keep the scripts short: what more than one source needs belongs into `common.lua` (or, for work on large data,
 into the app as a library function).
+
+A script runs in the GUI thread: while it runs, the GUI waits. It lets the GUI go on when it waits (`http.get`,
+`request:wait`, `sleep`), and in a list update `update.progress(percent)` does too if the script ran for a while.
+So a long loop of a list update (over tens of thousands of mangas) reports its progress every few hundred items. A
+script that runs for 10 s without waiting is stopped (on a Kobo, scripts run about 30 times slower than on a PC).
 
 ## The index
 

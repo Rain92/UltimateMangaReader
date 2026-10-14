@@ -72,6 +72,8 @@ LuaEngine::~LuaEngine()
 void LuaEngine::collectGarbage()
 {
     lua_gc(L, LUA_GCCOLLECT);
+    // the objects with finalizers (e.g. the requests, and the responses they keep) are freed by the next one
+    lua_gc(L, LUA_GCCOLLECT);
 #ifdef __GLIBC__
     // the many small allocations of the scripts stay in the heap otherwise
     malloc_trim(0);

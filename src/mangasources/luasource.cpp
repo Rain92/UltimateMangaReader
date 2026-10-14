@@ -199,10 +199,14 @@ static int logMessage(lua_State *L)
 
 // --- list updates
 
-// update.progress(p), update.cancelled() of fetchMangaList(update), for as long as the update runs
+// update.progress(p), update.cancelled(), ... of fetchMangaList(update), for as long as the update runs
 struct UpdateHandle
 {
     QPointer<UpdateProgressToken> token;
+    // the last list, and its titles by the absolute urls (made at the first lookup)
+    MangaList current;
+    QString baseUrl;
+    QHash<QString, QString> knownTitles;
 };
 static const char *updateHandleType = "umr.UpdateHandle";
 
@@ -217,6 +221,12 @@ static UpdateProgressToken *tokenOf(lua_State *L)
 static int updateProgress(lua_State *L)
 {
     tokenOf(L)->sendProgress(int(luaL_checkinteger(L, 1)));
+    // e.g. a long loop over the mangas, the GUI goes on meanwhile
+    if (lua_isyieldable(L) && LuaEngine::shouldYield(L))
+    {
+        LuaEngine::wait(L, {nullptr, 0});
+        return lua_yield(L, 0);
+    }
     return 0;
 }
 
@@ -230,6 +240,26 @@ static int updateClearState(lua_State *L)
 {
     tokenOf(L)->clearResumeState();
     return 0;
+}
+
+static int updateKnownTitle(lua_State *L)
+{
+    tokenOf(L);
+    auto handle = static_cast<UpdateHandle *>(lua_touserdata(L, lua_upvalueindex(1)));
+    auto absolute = [handle](const QString &url) { return url.startsWith("http") ? url : handle->baseUrl + url; };
+    if (handle->knownTitles.isEmpty())
+    {
+        const auto &current = handle->current;
+        handle->knownTitles.reserve(current.size);
+        for (int i = 0; i < current.titles.size() && i < current.urls.size(); i++)
+            handle->knownTitles.insert(current.absoluteUrls ? current.urls[i] : handle->baseUrl + current.urls[i],
+                                       current.titles[i]);
+    }
+    auto title = handle->knownTitles.value(absolute(toQString(L, 1)));
+    if (title.isEmpty())
+        return 0;
+    push(L, title);
+    return 1;
 }
 
 // The table a list update keeps for a retry (UpdateProgressToken::resumeState()), in the registry of the script.
@@ -519,8 +549,8 @@ Task<MangaListUpdate> LuaSource::fetchMangaList(UpdateProgressToken *token, Mang
     auto &state = token->resumeState<LuaUpdateState>();
     auto engine = this->engine;
 
-    auto pushArgs = [&state, token, engine, &current](lua_State *L) {
-        lua_createtable(L, 0, 6);
+    auto pushArgs = [this, &state, token, engine, &current](lua_State *L) {
+        lua_createtable(L, 0, 7);
 
         if (!state.table)
         {
@@ -536,11 +566,11 @@ Task<MangaListUpdate> LuaSource::fetchMangaList(UpdateProgressToken *token, Mang
         lua_setfield(L, -2, "lastProgress");
 
         auto handle = static_cast<UpdateHandle *>(lua_newuserdatauv(L, sizeof(UpdateHandle), 0));
-        new (handle) UpdateHandle{token};
+        new (handle) UpdateHandle{token, current, baseUrl, {}};
         luaL_setmetatable(L, updateHandleType);
-        for (auto [name, function] : {std::pair{"progress", updateProgress},
-                                      std::pair{"cancelled", updateCancelled},
-                                      std::pair{"clearState", updateClearState}})
+        for (auto [name, function] :
+             {std::pair{"progress", updateProgress}, std::pair{"cancelled", updateCancelled},
+              std::pair{"clearState", updateClearState}, std::pair{"knownTitle", updateKnownTitle}})
         {
             lua_pushvalue(L, -1);
             lua_pushcclosure(L, function, 1);
@@ -596,7 +626,10 @@ Task<MangaListUpdate> LuaSource::fetchMangaList(UpdateProgressToken *token, Mang
     QElapsedTimer timer;
     timer.start();
     auto result = co_await engine->call<MangaListUpdate>("fetchMangaList", pushArgs, convert);
-    // the list (the pages, all of its mangas) is garbage now
+    // the list (the pages, all of its mangas) is garbage now, and so is the state of an update that didn't fail
+    // (the updater would drop it a bit later)
+    if (result && result->status != MangaListUpdate::Failed)
+        token->clearResumeState();
     engine->collectGarbage();
     qDebug() << name << "list update:" << timer.elapsed() << "ms, script memory" << engine->memoryInUse() / 1024
              << "KB after it, at most" << engine->memoryPeak() / 1024 << "KB";
