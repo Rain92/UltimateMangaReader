@@ -51,7 +51,7 @@ public:
     struct Wait
     {
         QSharedPointer<DownloadJobBase> job;
-        // ms, if there's no job
+        // ms without a job, else the longest wait for the job (0: until it's finished)
         int pause = 0;
     };
     static void wait(lua_State *thread, Wait wait);

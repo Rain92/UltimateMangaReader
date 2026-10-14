@@ -11,6 +11,7 @@
 #include "luasource.h"
 #include "networkmanager.h"
 #include "settings.h"
+#include "sourceindex.h"
 #include "sourceregistry.h"
 #include "updateprogresstoken.h"
 
@@ -74,9 +75,13 @@ function captures()
     local whole = re.compile("b+"):match("abbc")
     local none = re.compile("a"):find("abc", 10)
     local limited = re.compile("a"):match("abc", 1, 0)
+    local crossing = re.compile("cd"):match("abcd", 1, 4)
+    local named = re.compile("(?<key>\\w)=(\\w)"):all("a=1 b=2")
+    local groups = re.compile("(?<one>x)(y)(?<two>z)"):groups()
     return table.concat({a, b, table.concat(words, "+"), whole,
                          re.compile([[(\d+)]]):replace("a1b22", [[<\1>]]),
-                         tostring(none), tostring(limited), re.compile("A", "i"):match("xa")}, "|")
+                         tostring(none), tostring(limited), re.compile("A", "i"):match("xa"), tostring(crossing),
+                         named[2].key .. named[2][2], groups.one .. groups.two}, "|")
 end
 
 function libraries()
@@ -198,15 +203,21 @@ function fetchMangaList(update)
 end
 )lua";
 
-static bool writeSource(const QString &dir, const QByteArray &manifest, const QByteArray &script)
+static bool writeFile(const QString &path, const QByteArray &content)
 {
-    QDir().mkpath(dir);
-    QFile manifestFile(dir + "/manifest.json"), scriptFile(dir + "/source.lua");
-    return manifestFile.open(QIODevice::WriteOnly) && manifestFile.write(manifest) == manifest.size() &&
-           scriptFile.open(QIODevice::WriteOnly) && scriptFile.write(script) == script.size();
+    QFile file(path);
+    return file.open(QIODevice::WriteOnly) && file.write(content) == content.size();
 }
 
-int scriptTests(const QString &server)
+// <id>.yaml and <id>.lua (if there is a script) in dir
+static bool writeSource(const QString &dir, const QString &id, const QByteArray &definition,
+                        const QByteArray &script = {})
+{
+    return writeFile(dir + "/" + id + ".yaml", definition) &&
+           (script.isNull() || writeFile(dir + "/" + id + ".lua", script));
+}
+
+int scriptTests(const QString &server, const QString &sourcesDir)
 {
     int failures = 0;
     auto check = [&](const char *what, bool ok)
@@ -241,7 +252,8 @@ int scriptTests(const QString &server)
         show(positions);
 
         auto captures = callText(*engine, "captures");
-        check("captures, gmatch, replace, init and limit", captures && *captures == "|b|b+cd|bb|a<1>b<22>|nil|nil|a");
+        check("captures, gmatch, replace, init and limit (the text ends before it), named groups",
+              captures && *captures == "|b|b+cd|bb|a<1>b<22>|nil|nil|a|nil|b2|13");
         show(captures);
 
         auto libraries = callText(*engine, "libraries");
@@ -298,18 +310,19 @@ int scriptTests(const QString &server)
     Settings settings;
     nm.setDownloadSettings(QSize(1404, 1872), &settings);
     QTemporaryDir dir;
-    auto manifest = QString(R"({"name": "Script", "baseUrl": "%1"})").arg(server).toUtf8();
-    writeSource(dir.path() + "/Script", manifest, sourceCode);
+    auto definition = QString("name: Script\nbaseUrl: %1\nheaders:\n  127.0.0.1: {X-Rule: ruled}\n").arg(server);
+    writeSource(dir.path(), "script", definition.toUtf8(), sourceCode);
 
-    auto loaded = LuaSource::load(&nm, dir.path() + "/Script", {96 * 1024 * 1024, 300});
-    check("a source is loaded from its directory", loaded.has_value());
+    auto loaded = LuaSource::load(&nm, dir.path(), "script", {}, {96 * 1024 * 1024, 300});
+    check("a source is loaded from its definition and script", loaded.has_value());
     if (!loaded)
     {
         out << "  " << loaded.error().message << "\n";
         return failures;
     }
     auto source = *loaded;
-    check("the manifest names the source", source->name == "Script" && source->baseUrl == server);
+    check("the definition names the source", source->name == "Script" && source->baseUrl == server &&
+                                                 source->id == "script" && source->iconPath.isEmpty());
 
     auto pages = [&](const QString &test) { return source->fetchPageList(test).wait(); };
     auto urls = [](const Result<QList<ImageLink>> &result)
@@ -338,7 +351,8 @@ int scriptTests(const QString &server)
         auto timeout = pages("timeout");
         check("the timeout of a request", !timeout && timeout.error().code == Error::Timeout);
     }
-    check("the headers of a request", urls(pages("headers")).contains("X-Test: yes"));
+    check("the headers of a request and of the definition",
+          urls(pages("headers")).contains("X-Test: yes") && urls(pages("headers")).contains("X-Rule: ruled"));
     {
         int ticks = 0;
         QTimer timer;
@@ -398,32 +412,249 @@ int scriptTests(const QString &server)
         check("the script sees the cancel", cancelled.error.code == Error::Cancelled);
     }
 
+    // --- definitions (common.lua of the sources directory)
+
+    if (sourcesDir.isEmpty())
+    {
+        check("the definitions need --sources (for common.lua)", false);
+        return failures;
+    }
+    {
+        QTemporaryDir defDir;
+        auto path = defDir.path();
+        QFile::copy(sourcesDir + "/common.lua", path + "/common.lua");
+        auto site = QString(R"yaml(name: Site
+baseUrl: %1
+list:
+  url: /site/dir/{page}
+  pageSize: 2
+  estimatedPages: 4
+  mangas:
+    each: '<a class="m" href="(?<url>[^"]*)" title="(?<title>[^"]*)">'
+    popularity: 'Views: (\d+)'
+info:
+  expect: 'class="info"'
+  notFound: '<p class="msg">([^<]*)</p>'
+  author: {match: '<b>Author:</b>(.*?)</li>', remove: '^\[.*\]$'}
+  genres: '<b>Genres:</b>(.*?)</li>'
+  summary: {match: '<p class="sum">(.*?)</p>', remove: '\[.*?\]'}
+  cover: '<div class="info"><img src="([^"]*)"'
+  chapters:
+    within: ['<ul class="chapters">', '</ul>']
+    each: '<a href="(?<url>[^"]*)">(?<title>[^<]*)</a>'
+    title: {lua: chapterTitle}
+    order: newestFirst
+pages:
+  expect: '<div id="viewer"'
+  images:
+    within: ['<div id="viewer"', '<div class="end">|\z']
+    each: '<img src="(?<url>[^"]*)" class="strip"'
+  count: ['var none = (\d+)', 'var total = (\d+)']
+  page: '{chapter}/{n}.html'
+image:
+  when: '\.html$'
+  within: ['<div id="viewer"']
+  url: ['<img src="([^"]*)" id="image"', '<img src="([^"]*)"']
+)yaml")
+                        .arg(server);
+        writeSource(path, "site", site.toUtf8(), R"lua(
+local spanrx = re.compile([[<span>([^<]*)</span>]])
+function chapterTitle(chapter)
+    local span = spanrx:match(chapter.text)
+    return span and chapter.title .. ": " .. span or chapter.title
+end
+)lua");
+        auto stubs = QByteArray("function fetchMangaInfo() end function fetchPageList() end");
+        writeSource(path, "single", QString(R"yaml(name: Single
+baseUrl: %1
+list:
+  url: /site/all
+  complete: '<footer>'
+  mangas:
+    each: '<li><a href="(?<url>[^"]*)">(?<title>[^<]*)</a>'
+  popular:
+    url: /site/popular/{page}
+    pages: 3
+    mangas:
+      each: '<b><a href="(?<url>[^"]*)">(?<title>[^<]*)</a>'
+)yaml")
+                                            .arg(server)
+                                            .toUtf8(),
+                    stubs);
+
+        auto loadedSite = LuaSource::load(&nm, path, "site", {"common.lua"});
+        check("a definition is loaded", loadedSite.has_value());
+        if (!loadedSite)
+        {
+            out << "  " << loadedSite.error().message << "\n";
+            return failures + 1;
+        }
+        auto siteSource = *loadedSite;
+
+        {
+            UpdateProgressToken token;
+            token.currentSourceName = siteSource->name;
+            auto update = siteSource->fetchMangaList(&token, {}).wait();
+            QStringList ranked(update.list.size);
+            for (int i = 0; i < update.list.size; i++)
+                ranked[update.list.popularityRanks.value(i)] = update.list.titles[i];
+            check("a paged list: until a page brings nothing new, relative urls, ranked by popularity",
+                  update.status == MangaListUpdate::Complete && update.list.size == 7 &&
+                      update.list.urls.value(0) == "/site/manga/1" && !update.list.absoluteUrls &&
+                      ranked.first() == "Manga 7" && ranked.last() == "Manga 1");
+            out << "  " << update.error.message << " " << update.list.titles.join(",") << "\n";
+        }
+        {
+            auto single = LuaSource::load(&nm, path, "single", {"common.lua"});
+            UpdateProgressToken token;
+            token.currentSourceName = "Single";
+            auto update = single ? (*single)->fetchMangaList(&token, {}).wait() : MangaListUpdate();
+            check("a list on one page (cut off once), the popular pages first, each manga once",
+                  update.status == MangaListUpdate::Complete &&
+                      update.list.titles == QStringList({"Manga 3", "Manga 5", "Manga 1", "Manga 2", "Manga 4"}) &&
+                      update.list.popularityRanks == QList<int>({0, 1, 2, 3, 4}));
+            out << "  " << update.error.message << " " << update.list.titles.join(",") << "\n";
+        }
+        {
+            auto info = siteSource->fetchMangaInfo(server + "/site/manga/1", {}).wait();
+            QStringList chapters;
+            for (const auto &chapter : info.value_or(MangaDetails()).chapters)
+                chapters.append(chapter.chapterTitle + " " + chapter.chapterUrl.mid(server.size()));
+            check("the fields of the info: names without placeholders, genres, removed parts, the cover url",
+                  info && info->author == "A & B" && info->genres == "Action Drama" &&
+                      info->summary == "Text more" && info->coverUrl == "https://example.com/cover.jpg");
+            check("the chapters: oldest first, each once, the hook's titles, resolved urls",
+                  chapters == QStringList({"Ch 1 /site/ch/1", "Ch 2 /site/ch/2", "Ch 3: Finale /site/ch/3"}));
+            out << "  " << (info ? info->author + " | " + info->summary + " | " + chapters.join(", ")
+                                 : info.error().message)
+                << "\n";
+
+            auto gone = siteSource->fetchMangaInfo(server + "/site/manga/gone", {}).wait();
+            check("no chapter list and the notFound message: not found",
+                  !gone && gone.error().code == Error::NotFound && gone.error().message == "It has been licensed");
+            auto wrong = siteSource->fetchMangaInfo(server + "/site/ch/1", {}).wait();
+            check("a page that isn't what's expected", !wrong && wrong.error().code == Error::Parse);
+        }
+        {
+            auto strip = siteSource->fetchPageList(server + "/site/ch/3").wait();
+            check("the images of a long strip, within the part of the page",
+                  urls(strip) == server + "/image/1x1|" + server + "/image/2x2");
+            auto paged = siteSource->fetchPageList(server + "/site/ch/1").wait();
+            check("else the pages of the site, from the first count above 0",
+                  urls(paged) == server + "/site/ch/1/1.html|" + server + "/site/ch/1/2.html");
+            QStringList images;
+            for (const auto &page : paged.value_or(QList<ImageLink>()))
+            {
+                auto image = siteSource->resolveImage(page).wait();
+                images.append(image ? image->url.mid(server.size()) : image.error().message);
+            }
+            auto direct = siteSource->resolveImage(ImageLink::fromUrl(server + "/image/1x1")).wait();
+            check("the images of the pages: the first pattern that matches, within the part of the page",
+                  images == QStringList({"/image/1x1", "/image/2x2"}) && direct &&
+                      direct->url == server + "/image/1x1");
+            out << "  " << images.join(", ") << "\n";
+        }
+
+        // checked when loaded
+        auto invalid = [&](const QByteArray &definition, const QByteArray &script = {}) -> QString
+        {
+            writeSource(path, "invalid", "name: Invalid\nbaseUrl: x\n" + definition,
+                        script + " function fetchMangaList() end function fetchMangaInfo() end"
+                                 " function fetchPageList() end");
+            auto loaded = LuaSource::load(&nm, path, "invalid", {"common.lua"});
+            return loaded ? QString() : loaded.error().message;
+        };
+        auto message = invalid("info:\n  autor: 'x'\n");
+        check("an unknown key", message == "invalid.yaml: info.autor: unknown key");
+        out << "  " << message << "\n";
+        message = invalid("info:\n  author: '(x'\n");
+        check("an invalid regex", message.startsWith("invalid.yaml: info.author: invalid regex"));
+        out << "  " << message << "\n";
+        message = invalid("list:\n  url: /\n  mangas:\n    each: '(?<name>x)'\n");
+        check("a group that isn't a field", message.contains("list.mangas.each: the group name isn't a field"));
+        message = invalid("info:\n  chapters:\n    each: 'x'\n    title: {lua: titleOf}\n");
+        check("a hook that isn't there", message.contains("info.chapters.title.lua: invalid.lua has no function titleOf"));
+        message = invalid("pages:\n  timeout: soon\n  count: 'x'\n  page: '{n}'\n");
+        check("a value of the wrong kind", message == "invalid.yaml: pages.timeout: a number is expected");
+        message = invalid("pages:\n  count: 'x'\n");
+        check("a missing key", message == "invalid.yaml: pages.page: missing (the url of a page, with {n})");
+    }
+
     // --- loading
 
     {
-        writeSource(dir.path() + "/Unnamed", "{}", "");
-        writeSource(dir.path() + "/Broken", R"({"name": "Broken"})", "function (");
-        writeSource(dir.path() + "/MangaTown", R"({"name": "MangaTown"})", "");
-        QDir().mkpath(dir.path() + "/Empty");
+        QTemporaryDir loadDir;
+        auto path = loadDir.path();
+        auto functions = QByteArray("function fetchMangaList() end function fetchMangaInfo() end "
+                                    "function fetchPageList() end");
+        writeSource(path, "unnamed", "{}");
+        writeSource(path, "broken", "name: Broken\nbaseUrl: x", "function (");
+        writeSource(path, "invalid", "name: Invalid\nbaseUrl: x\nname: Twice\n");
+        writeSource(path, "incomplete", "name: Incomplete\nbaseUrl: x", "function fetchMangaList() end");
+        writeSource(path, "mangatown", "name: MangaTown\nbaseUrl: x", functions);
+        writeSource(path, "future", "name: Future\nbaseUrl: x", functions);
+        writeSource(path, "other", "name: Other\nbaseUrl: x\ncookies:\n  example.com: {a: b}", functions);
+        writeFile(path + "/other.png", "not a png");
+        writeFile(path + "/lib.lua", "library = 'loaded'");
+        writeSource(path, "uses", "name: Uses\nbaseUrl: x", functions + " assert(library == 'loaded')");
 
-        auto unnamed = LuaSource::load(&nm, dir.path() + "/Unnamed");
-        check("a source needs a name", !unnamed && unnamed.error().message.contains("has no name"));
-        auto broken = LuaSource::load(&nm, dir.path() + "/Broken");
+        auto unnamed = LuaSource::load(&nm, path, "unnamed");
+        check("a source needs a name and a base url",
+              !unnamed && unnamed.error().message.contains("name and baseUrl are required"));
+        auto broken = LuaSource::load(&nm, path, "broken");
         check("a script that doesn't compile isn't loaded",
-              !broken && broken.error().message.contains("Broken/source.lua:1:"));
-        auto empty = LuaSource::load(&nm, dir.path() + "/Empty");
-        check("a source needs a manifest", !empty && empty.error().message.contains("manifest.json"));
+              !broken && broken.error().message.contains("broken.lua:1:"));
+        auto invalid = LuaSource::load(&nm, path, "invalid");
+        check("a definition with a key twice isn't loaded",
+              !invalid && invalid.error().message.contains("invalid.yaml:3:"));
+        if (!invalid)
+            out << "  " << invalid.error().message << "\n";
+        QByteArray bomb = "name: Bomb\nbaseUrl: x\na0: &a0 [x, x, x, x, x, x, x, x, x, x]\n";
+        for (int i = 1; i <= 6; i++)
+            bomb += QString("a%1: &a%1 [%2]\n").arg(i).arg(QString("*a%1, ").arg(i - 1).repeated(10)).toUtf8();
+        writeSource(path, "bomb", bomb);
+        auto exploded = LuaSource::load(&nm, path, "bomb");
+        check("a definition that aliases make huge isn't read",
+              !exploded && exploded.error().message.contains("too large"));
+        auto missing = LuaSource::load(&nm, path, "missing");
+        check("a source needs a definition", !missing && missing.error().message.contains("missing.yaml"));
+        auto incomplete = LuaSource::load(&nm, path, "incomplete");
+        check("a source needs the functions of the app",
+              !incomplete && incomplete.error().message.contains("no fetchMangaInfo"));
+        auto uses = LuaSource::load(&nm, path, "uses", {"lib.lua"});
+        check("the libraries run before the script", uses.has_value());
 
-        QStringList errors, builtInNames;
-        auto builtIn = SourceRegistry::builtInSources(&nm);
-        for (const auto &builtInSource : builtIn)
-            builtInNames.append(builtInSource->name);
-        SourceRegistry registry(&settings, SourceRegistry::withScriptSources(builtIn, &nm, dir.path(), &errors));
-        check("a script replaces the built-in source of its name, in its place",
+        SourceIndex index;
+        for (const auto &id : {"broken", "mangatown", "future", "other", "uses"})
+            index.sources.append({id, id, 1, QString(id) == "future" ? LuaSource::apiLevel + 1 : 1, {}});
+        index.libraries.append({"lib", {}, 1, 1, {{"lib.lua", ""}}});
+        writeFile(path + "/index.yaml", index.toYaml());
+        auto reread = SourceIndex::read(path);
+        check("the index is read back", reread && reread->sources.size() == 5 && reread->libraries.size() == 1 &&
+                                            reread->sources[2].api == LuaSource::apiLevel + 1 &&
+                                            reread->libraries[0].files.contains("lib.lua"));
+
+        QStringList errors, referenceNames;
+        auto sources = harnessSources(&nm, path, &errors);
+        for (const auto &reference : harnessSources(&nm, {}))
+            referenceNames.append(reference->name);
+        SourceRegistry registry(&settings, sources);
+        check("a script replaces the C++ source of its name, in its place",
               dynamic_cast<LuaSource *>(registry.source("MangaTown").get()) != nullptr &&
-                  registry.names().indexOf("MangaTown") == builtInNames.indexOf("MangaTown"));
-        check("the other scripts are added", registry.names().endsWith("Script"));
-        check("the ones that can't be loaded are left out", errors.size() == 3 && !registry.names().contains("Broken"));
+                  registry.names().indexOf("MangaTown") == referenceNames.indexOf("MangaTown"));
+        check("the other scripts are added in the order of the index", registry.names().mid(registry.names().size() - 2) == QStringList({"Other", "Uses"}));
+        check("the ones that can't be loaded or need a newer app are left out",
+              errors.size() == 2 && !registry.names().contains("Broken") && !registry.names().contains("Future"));
+        check("the logo of a source is its png", registry.source("Other")->iconPath == path + "/other.png");
+
+        int changes = 0;
+        QObject::connect(&registry, &SourceRegistry::sourcesChanged, [&changes]() { changes++; });
+        registry.setCurrent("Other");
+        registry.setSources(SourceRegistry::loadDirectory(&nm, path));
+        check("the sources can be replaced", changes == 1 && registry.names() == QStringList({"MangaTown", "Other", "Uses"}) &&
+                                                 registry.current() == "Other");
+        registry.setSources({});
+        check("the current source goes when it isn't there anymore", registry.current().isEmpty());
     }
 
     return failures;

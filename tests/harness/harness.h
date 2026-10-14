@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QSharedPointer>
+#include <QStringList>
 #include <QTextStream>
 
 class MangaRepository;
@@ -10,6 +11,11 @@ struct MangaList;
 
 // the output that is compared (the log of the app goes to stderr)
 extern QTextStream out;
+
+// The C++ sources (the reference, they aren't in the app), with the scripts of the directory of sources (if any)
+// instead of the ones of the same name. The scripts that can't be loaded go to errors.
+QList<QSharedPointer<MangaSourceBase>> harnessSources(NetworkManager *networkManager, const QString &sourcesDir,
+                                                      QStringList *errors = nullptr);
 
 // What the source makes of the mangas in the picks file (title<TAB>url per line): the info, the chapters, the
 // page lists, image links and the first image. Returns the number of failures.
@@ -27,5 +33,10 @@ int storageTests(const QString &server);
 // images): the median of rounds, of imageRounds for the images.
 int benchReading(MangaRepository &repository, MangaSourceBase *source, const QString &picksFile, int rounds,
                  int imageRounds);
-// The Lua engine, its libraries and the sources of scripts, against tests/harness/testserver.py.
-int scriptTests(const QString &server);
+// The Lua engine, its libraries and the sources of scripts, against tests/harness/testserver.py. sourcesDir: the
+// directory of sources (sources/) for its libraries.
+int scriptTests(const QString &server, const QString &sourcesDir);
+// Writes the index of the directory of sources (index.yaml): each <id>.yaml is a source (with <id>.lua and <id>.png
+// if they are there), each other .lua file a library. The version of an entry goes up when its files changed. All
+// sources must load. check: only says whether the index is up to date.
+int writeIndex(NetworkManager *networkManager, const QString &directory, bool check);

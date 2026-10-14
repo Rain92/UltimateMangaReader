@@ -157,7 +157,7 @@ Task<Result<int>> LuaEngine::resume(lua_State *thread, int nargs)
         nargs = 0;
         auto wait = waits.take(thread);
         if (wait.job)
-            co_await wait.job;
+            co_await waitFor(wait.job, wait.pause);
         else
             co_await delay(wait.pause);
     }

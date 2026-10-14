@@ -1,0 +1,17 @@
+# The sources and the libraries of their scripts, see README.md. Written by `harness index`: change
+# the files, then run it.
+libraries:
+  - id: common
+    version: 1
+    api: 1
+    files:
+      common.lua: 2130ecd4778c527815024fb3069b27a30b54825c3a41149725b79df7e9726841
+sources:
+  - id: mangatown
+    name: 'MangaTown'
+    version: 1
+    api: 1
+    files:
+      mangatown.lua: 6b6b667526abe3cdccdb58ba388e04a6154043df1b16a482df98bf82cf1d877b
+      mangatown.png: ce22087eabf6f7ad1fbf27f1320f2a3d7cefd014e92ae820556ef2cfb660fd39
+      mangatown.yaml: 215e976ca5986b0c355a404ccada48bd6cd3125212d3a6b5a1d29b292943282f

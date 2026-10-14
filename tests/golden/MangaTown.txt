@@ -15,6 +15,7 @@
   ch 976: Tales of Demons and Gods 532.5 | https://www.mangatown.com/manga/tales_of_demons_and_gods/c532.5/
   ch 977: Tales of Demons and Gods 533 | https://www.mangatown.com/manga/tales_of_demons_and_gods/c533/
   ch 978: Tales of Demons and Gods 533.5 | https://www.mangatown.com/manga/tales_of_demons_and_gods/c533.5/
+  hash: 6cad28088ac92811
   chapter 0: Tales of Demons and Gods 1 | https://www.mangatown.com/manga/tales_of_demons_and_gods/c001/
     pages: 13
     page 0: https://www.mangatown.com/manga/tales_of_demons_and_gods/c001/1.html
@@ -50,6 +51,7 @@
   ch 142: Shingeki no Kyojin 138 | https://www.mangatown.com/manga/shingeki_no_kyojin/c138/
   ch 143: Shingeki no Kyojin 139 | https://www.mangatown.com/manga/shingeki_no_kyojin/c139/
   ch 144: Shingeki no Kyojin 139.5 | https://www.mangatown.com/manga/shingeki_no_kyojin/c139.5/
+  hash: 97602f4d35402ff7
   chapter 0: Shingeki no Kyojin: Oneshot | https://www.mangatown.com/manga/shingeki_no_kyojin/c000/
     pages: 71
     page 0: https://www.mangatown.com/manga/shingeki_no_kyojin/c000/1.html
@@ -91,6 +93,7 @@
   ch 154: Death March kara Hajimaru Isekai Kyousoukyoku 136 | https://www.mangatown.com/manga/death_march_kara_hajimaru_isekai_kyousoukyoku/c136/
   ch 155: Death March kara Hajimaru Isekai Kyousoukyoku 137 | https://www.mangatown.com/manga/death_march_kara_hajimaru_isekai_kyousoukyoku/c137/
   ch 156: Death March kara Hajimaru Isekai Kyousoukyoku 138 | https://www.mangatown.com/manga/death_march_kara_hajimaru_isekai_kyousoukyoku/c138/
+  hash: eef20802337b3a31
   chapter 0: Death March kara Hajimaru Isekai Kyousoukyoku 1: Level Up | https://www.mangatown.com/manga/death_march_kara_hajimaru_isekai_kyousoukyoku/c001/
     pages: 33
     page 0: https://www.mangatown.com/manga/death_march_kara_hajimaru_isekai_kyousoukyoku/c001/1.html

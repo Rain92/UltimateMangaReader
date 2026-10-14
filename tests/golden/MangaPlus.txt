@@ -15,6 +15,7 @@
   ch 3: Chapter 1193: Still Practicing | api/manga_viewer_v3?chapter_id=1030380&split=yes&img_quality=super_high&clang=eng
   ch 4: Chapter 1194: All Things Are In Flux | api/manga_viewer_v3?chapter_id=1030381&split=yes&img_quality=super_high&clang=eng
   ch 5: Chapter 1195: Weakness | api/manga_viewer_v3?chapter_id=1030615&split=yes&img_quality=super_high&clang=eng
+  hash: df175e127fc0c68e
   chapter 0: Chapter 1: Romance Dawn | api/manga_viewer_v3?chapter_id=1000486&split=yes&img_quality=super_high&clang=eng
     pages: 53
     page 0: https://jumpg-assets3.tokyo-cdn.com/secure/title/100020/chapter/1000486/manga_page/super_high/1.jpg?hash=crUbgyfzawWILwxz69skKw&expires=1791932400#vwt=b2a2f805ea16eba633d9c270eb1bf697|xor:9fc7d58a868172d276677675ff6a8cb59457ae83d47523f779735c1acd7d76049f0eea3a6395308350d5853c81af23cd1e2d2fe356bb3bfded280fcbc76a05f9
@@ -56,6 +57,7 @@
   ch 3: Report 4: Ura's Groupies | api/manga_viewer_v3?chapter_id=1030347&split=yes&img_quality=super_high&clang=eng
   ch 4: Report 5: Ura's Hero | api/manga_viewer_v3?chapter_id=1030847&split=yes&img_quality=super_high&clang=eng
   ch 5: Report 6: Ura's Club Rush | api/manga_viewer_v3?chapter_id=1030848&split=yes&img_quality=super_high&clang=eng
+  hash: 90925ead6dd54e98
   chapter 0: Report 1: Ura's School Commute | api/manga_viewer_v3?chapter_id=1030344&split=yes&img_quality=super_high&clang=eng
     pages: 55
     page 0: https://jumpg-assets3.tokyo-cdn.com/secure/title/100816/chapter/1030344/manga_page/super_high/1.jpg?hash=5EKGOD0qpuDvjwrIbMt2PA&expires=1791932400#vwt=18a1d27365c71cd3ce1af8bcd3cb99f8|xor:d9990b9f51fb0f241b776030dd10c184a9732fbbc4e6d74dc111a3ee5ae47f61dfecdd58fa056e33d3a4c01a5fc3e6725c885df18f7976b159fb2e9b07d39caa
@@ -97,6 +99,7 @@
   ch 9: Chapter 42: The Truth About the Apartment | api/manga_viewer_v3?chapter_id=1030500&split=yes&img_quality=super_high&clang=eng
   ch 10: Chapter 43: Risky’s True Identity | api/manga_viewer_v3?chapter_id=1030501&split=yes&img_quality=super_high&clang=eng
   ch 11: Chapter 44: The Goal | api/manga_viewer_v3?chapter_id=1030777&split=yes&img_quality=super_high&clang=eng
+  hash: 6921e8489375b291
   chapter 0: Chapter 1: The Landlord is Born | api/manga_viewer_v3?chapter_id=1024123&split=yes&img_quality=super_high&clang=eng
     pages: 63
     page 0: https://jumpg-assets3.tokyo-cdn.com/secure/title/100453/chapter/1024123/manga_page/super_high/1.jpg?hash=NHoJAxNg8_3T1pcPoSsAvQ&expires=1791932400#vwt=f9fec9c6be6384aba261c9c30396e702|xor:820da2ae9e7b233352b2e84a5ad4563c1728c341e17f325439d4a19a4bd098a12df9a91b1eccb285fd9e475e98c6ec3b7b07d598b101631b3e869c57d88b5022

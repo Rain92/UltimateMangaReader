@@ -130,6 +130,7 @@ int storageTests(const QString &server)
 
     {
         UltimateMangaReaderCore core;
+        core.sources->setSources(harnessSources(core.networkManager, CONF.sourcesDir));
         check(!QFile::exists(cache + "MangaTown/Old-Title"), "old manga directory dropped");
         check(QFile::exists(cache + "mangalists/MangaTown_mangalist.dat"), "manga lists kept");
         check(readFile(cache + "cacheversion").trimmed() == QByteArray::number(CONF.cacheLayoutVersion),
@@ -201,6 +202,7 @@ int storageTests(const QString &server)
     touch(cache + "MangaTown/0123456789abcdef/keep");
     {
         UltimateMangaReaderCore core;
+        core.sources->setSources(harnessSources(core.networkManager, CONF.sourcesDir));
         check(QFile::exists(cache + "MangaTown/0123456789abcdef/keep"), "cache of the current layout kept");
         check(core.settings.standbyWhenIdle, "settings round trip");
     }

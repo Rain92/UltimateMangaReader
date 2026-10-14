@@ -26,6 +26,53 @@ void push(lua_State *L, const QString &string)
     lua_pushlstring(L, utf8.constData(), size_t(utf8.size()));
 }
 
+void pushVariant(lua_State *L, const QVariant &value)
+{
+    luaL_checkstack(L, 3, "too deeply nested");
+    switch (value.typeId())
+    {
+        case QMetaType::QVariantMap:
+        {
+            auto map = value.toMap();
+            lua_createtable(L, 0, int(map.size()));
+            for (auto it = map.cbegin(); it != map.cend(); ++it)
+            {
+                push(L, it.key());
+                pushVariant(L, it.value());
+                lua_rawset(L, -3);
+            }
+            break;
+        }
+        case QMetaType::QVariantList:
+        {
+            auto list = value.toList();
+            lua_createtable(L, int(list.size()), 0);
+            lua_Integer i = 0;
+            for (const auto &item : std::as_const(list))
+            {
+                pushVariant(L, item);
+                lua_rawseti(L, -2, ++i);
+            }
+            break;
+        }
+        case QMetaType::Bool:
+            lua_pushboolean(L, value.toBool());
+            break;
+        case QMetaType::LongLong:
+        case QMetaType::Int:
+            lua_pushinteger(L, value.toLongLong());
+            break;
+        case QMetaType::Double:
+            lua_pushnumber(L, value.toDouble());
+            break;
+        default:
+            if (value.isValid())
+                push(L, value.toString());
+            else
+                lua_pushnil(L);
+    }
+}
+
 void pushError(lua_State *L, const Error &error)
 {
     lua_createtable(L, 0, 3);
@@ -147,6 +194,8 @@ struct Text
 struct Regex
 {
     QRegularExpression rx;
+    // by the number of the group, empty for the unnamed ones
+    QStringList names;
 };
 
 static const char *textType = "umr.Text";
@@ -202,12 +251,14 @@ static qsizetype startPosition(lua_State *L, int index, Subject &subject)
     return position > subject.string->size() ? -1 : position;
 }
 
-// Matches must start before limit (a position from 1), without a limit (nil) anywhere.
-static qsizetype limitPosition(lua_State *L, int index, Subject &subject)
+// The subject ends before limit (a position from 1): the matches lie before it. Without a limit (nil) it's all of
+// it.
+static QStringView limitedView(lua_State *L, int index, Subject &subject)
 {
+    QStringView view(*subject.string);
     if (lua_isnoneornil(L, index))
-        return -1;
-    return subject.map->toUtf16(qsizetype(qMax<lua_Integer>(luaL_checkinteger(L, index) - 1, 0)));
+        return view;
+    return view.left(subject.map->toUtf16(qsizetype(qMax<lua_Integer>(luaL_checkinteger(L, index) - 1, 0))));
 }
 
 // The groups of the match, or the whole match without groups.
@@ -232,12 +283,12 @@ static int regexMatch(lua_State *L)
     auto regex = checkRegex(L);
     Subject subject(L, 2);
     qsizetype start = startPosition(L, 3, subject);
-    qsizetype limit = limitPosition(L, 4, subject);
-    if (start < 0)
+    auto view = limitedView(L, 4, subject);
+    if (start < 0 || start > view.size())
         return 0;
 
-    auto match = regex->rx.match(*subject.string, start);
-    if (!match.hasMatch() || (limit >= 0 && match.capturedStart() >= limit))
+    auto match = regex->rx.matchView(view, start);
+    if (!match.hasMatch())
         return 0;
     return pushCaptures(L, match);
 }
@@ -248,43 +299,45 @@ static int regexFind(lua_State *L)
     auto regex = checkRegex(L);
     Subject subject(L, 2);
     qsizetype start = startPosition(L, 3, subject);
-    qsizetype limit = limitPosition(L, 4, subject);
-    if (start < 0)
+    auto view = limitedView(L, 4, subject);
+    if (start < 0 || start > view.size())
         return 0;
 
-    auto match = regex->rx.match(*subject.string, start);
-    if (!match.hasMatch() || (limit >= 0 && match.capturedStart() >= limit))
+    auto match = regex->rx.matchView(view, start);
+    if (!match.hasMatch())
         return 0;
     lua_pushinteger(L, subject.map->toUtf8(match.capturedStart()) + 1);
     lua_pushinteger(L, subject.map->toUtf8(match.capturedEnd()));
     return 2 + pushCaptures(L, match);
 }
 
-// rx:all(s [, init [, limit]]): all matches, each a table with the groups at 1.. (the whole match at 0) and
-// first, last (its bytes)
+// rx:all(s [, init [, limit]]): all matches, each a table with the groups at 1.. (the whole match at 0), the named
+// groups by their names, and first, last (its bytes)
 static int regexAll(lua_State *L)
 {
     auto regex = checkRegex(L);
     Subject subject(L, 2);
     qsizetype start = startPosition(L, 3, subject);
-    qsizetype limit = limitPosition(L, 4, subject);
+    auto view = limitedView(L, 4, subject);
     lua_newtable(L);
-    if (start < 0)
+    if (start < 0 || start > view.size())
         return 1;
 
     int groups = regex->rx.captureCount();
     lua_Integer n = 0;
-    auto it = regex->rx.globalMatch(*subject.string, start);
+    auto it = regex->rx.globalMatchView(view, start);
     while (it.hasNext())
     {
         auto match = it.next();
-        if (limit >= 0 && match.capturedStart() >= limit)
-            break;
-
         lua_createtable(L, groups + 1, 2);
         for (int i = 0; i <= groups; i++)
         {
             push(L, match.captured(i));
+            if (i > 0 && !regex->names[i].isEmpty())
+            {
+                lua_pushvalue(L, -1);
+                lua_setfield(L, -3, regex->names[i].toUtf8().constData());
+            }
             lua_rawseti(L, -2, i);
         }
         lua_pushinteger(L, subject.map->toUtf8(match.capturedStart()) + 1);
@@ -296,12 +349,11 @@ static int regexAll(lua_State *L)
     return 1;
 }
 
-// the state of rx:gmatch(): the regex, the subject and the iterator (upvalues)
+// the state of rx:gmatch(): the subject and the iterator over it
 struct GlobalMatch
 {
     QString subject;
     QRegularExpressionMatchIterator it;
-    qsizetype limit;
 };
 static const char *globalMatchType = "umr.GlobalMatch";
 
@@ -310,13 +362,7 @@ static int globalMatchNext(lua_State *L)
     auto state = static_cast<GlobalMatch *>(lua_touserdata(L, lua_upvalueindex(1)));
     if (!state->it.hasNext())
         return 0;
-    auto match = state->it.next();
-    if (state->limit >= 0 && match.capturedStart() >= state->limit)
-    {
-        state->it = {};
-        return 0;
-    }
-    return pushCaptures(L, match);
+    return pushCaptures(L, state->it.next());
 }
 
 // rx:gmatch(s [, init [, limit]]): an iterator over the captures of the matches, like string.gmatch()
@@ -325,14 +371,28 @@ static int regexGmatch(lua_State *L)
     auto regex = checkRegex(L);
     Subject subject(L, 2);
     qsizetype start = startPosition(L, 3, subject);
-    qsizetype limit = limitPosition(L, 4, subject);
+    auto size = limitedView(L, 4, subject).size();
 
     auto state = static_cast<GlobalMatch *>(lua_newuserdatauv(L, sizeof(GlobalMatch), 0));
-    new (state) GlobalMatch{*subject.string, {}, limit};
+    new (state) GlobalMatch{*subject.string, {}};
     luaL_setmetatable(L, globalMatchType);
-    if (start >= 0)
-        state->it = regex->rx.globalMatch(state->subject, start);
+    if (start >= 0 && start <= size)
+        state->it = regex->rx.globalMatchView(QStringView(state->subject).left(size), start);
     lua_pushcclosure(L, globalMatchNext, 1);
+    return 1;
+}
+
+// rx:groups(): the named groups, {name = number}
+static int regexGroups(lua_State *L)
+{
+    auto regex = checkRegex(L);
+    lua_newtable(L);
+    for (int i = 1; i < regex->names.size(); i++)
+        if (!regex->names[i].isEmpty())
+        {
+            lua_pushinteger(L, i);
+            lua_setfield(L, -2, regex->names[i].toUtf8().constData());
+        }
     return 1;
 }
 
@@ -373,7 +433,7 @@ static int reCompile(lua_State *L)
     rx.optimize();
 
     auto regex = static_cast<Regex *>(lua_newuserdatauv(L, sizeof(Regex), 0));
-    new (regex) Regex{rx};
+    new (regex) Regex{rx, rx.namedCaptureGroups()};
     luaL_setmetatable(L, regexType);
     return 1;
 }
@@ -399,7 +459,8 @@ static void openRe(lua_State *L)
     lua_pushcfunction(L, collect<Regex>);
     lua_setfield(L, -2, "__gc");
     static const luaL_Reg regexMethods[] = {{"match", regexMatch}, {"find", regexFind},     {"all", regexAll},
-                                            {"gmatch", regexGmatch}, {"replace", regexReplace}, {nullptr, nullptr}};
+                                            {"gmatch", regexGmatch}, {"replace", regexReplace}, {"groups", regexGroups},
+                                            {nullptr, nullptr}};
     luaL_newlib(L, regexMethods);
     lua_setfield(L, -2, "__index");
     lua_pop(L, 1);

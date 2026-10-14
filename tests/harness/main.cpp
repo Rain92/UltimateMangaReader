@@ -3,18 +3,49 @@
 #include <QDir>
 #include <QTemporaryDir>
 
+#include "comick.h"
 #include "fixtures.h"
 #include "harness.h"
 #include "mangachapterdownloadmanager.h"
+#include "mangadex.h"
+#include "mangahere.h"
 #include "mangainfo.h"
+#include "mangakakalot.h"
+#include "mangaplus.h"
 #include "mangarepository.h"
 #include "mangasourcebase.h"
+#include "mangatown.h"
 #include "networkmanager.h"
 #include "settings.h"
 #include "sourceregistry.h"
 #include "staticsettings.h"
 
 QTextStream out(stdout);
+
+QList<QSharedPointer<MangaSourceBase>> harnessSources(NetworkManager *networkManager, const QString &sourcesDir,
+                                                      QStringList *errors)
+{
+    QList<QSharedPointer<MangaSourceBase>> sources = {
+        QSharedPointer<MangaSourceBase>(new MangaDex(networkManager)),
+        QSharedPointer<MangaSourceBase>(new Mangakakalot(networkManager)),
+        QSharedPointer<MangaSourceBase>(new MangaTown(networkManager)),
+        QSharedPointer<MangaSourceBase>(new MangaHere(networkManager)),
+        QSharedPointer<MangaSourceBase>(new Comick(networkManager)),
+        QSharedPointer<MangaSourceBase>(new MangaPlus(networkManager))};
+    if (sourcesDir.isEmpty())
+        return sources;
+
+    for (const auto &script : SourceRegistry::loadDirectory(networkManager, sourcesDir, errors))
+    {
+        auto same = std::find_if(sources.begin(), sources.end(),
+                                 [&script](const auto &source) { return source->name == script->name; });
+        if (same != sources.end())
+            *same = script;
+        else
+            sources.append(script);
+    }
+    return sources;
+}
 
 static int usage()
 {
@@ -28,10 +59,12 @@ static int usage()
            "  listflow <source>               list updates (and a cancelled one) through the core like the gui\n"
            "  jobs <port>                     the download jobs, against testserver.py\n"
            "  storage <port>                  the storage of the app, against testserver.py\n"
-           "  scripts <port>                  the scripts of sources (Lua), against testserver.py\n"
+           "  scripts <port>                  the scripts of sources (Lua), against testserver.py (with --sources)\n"
+           "  index <dir> [--check]           writes the index of a directory of sources (index.yaml)\n"
            "--record writes the responses of the sites into the directory, --replay answers the requests from\n"
-           "there. The cache is a temporary directory unless --cache is given. --sources adds the scripts of\n"
-           "sources in the directory (they replace the built-in ones of the same name).\n";
+           "there. The cache is a temporary directory unless --cache is given. The sources are the C++ ones\n"
+           "(the reference), --sources adds the scripts of a directory of sources (sources/, they replace\n"
+           "the C++ ones of the same name).\n";
     return 2;
 }
 
@@ -93,6 +126,8 @@ static int download(NetworkManager &nm, MangaRepository &repository, MangaSource
 int main(int argc, char **argv)
 {
     qputenv("QT_QPA_PLATFORM", "offscreen");
+    // the log goes to stderr (the output/*.log of run.sh), not to the journal
+    qputenv("QT_FORCE_STDERR_LOGGING", "1");
     QApplication app(argc, argv);
 
     QStringList args = app.arguments().mid(1);
@@ -140,6 +175,11 @@ int main(int argc, char **argv)
     {
         failures = listFlowTests(arg(0));
     }
+    else if (command == "index" && !args.isEmpty())
+    {
+        NetworkManager nm;
+        failures = writeIndex(&nm, QDir(arg(0)).absolutePath(), arg(1) == "--check");
+    }
     else if (command == "jobs" || command == "storage" || command == "scripts")
     {
         if (args.isEmpty())
@@ -151,7 +191,7 @@ int main(int argc, char **argv)
         }
         else if (command == "scripts")
         {
-            failures = scriptTests(server);
+            failures = scriptTests(server, sourcesDir);
         }
         else
         {
@@ -167,8 +207,7 @@ int main(int argc, char **argv)
         Settings settings;
         nm.setDownloadSettings(QSize(1404, 1872), &settings);
         QStringList errors;
-        SourceRegistry sources(&settings, SourceRegistry::withScriptSources(SourceRegistry::builtInSources(&nm), &nm,
-                                                                            sourcesDir, &errors));
+        SourceRegistry sources(&settings, harnessSources(&nm, sourcesDir, &errors));
         if (!errors.isEmpty())
             return 2;
         MangaRepository repository(&nm, &sources);

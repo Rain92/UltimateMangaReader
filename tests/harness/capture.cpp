@@ -136,11 +136,18 @@ int captureMangas(MangaRepository &repository, MangaSourceBase *source, const QS
             << "\n  genres: " << info.genres << "\n  summary: " << shorten(info.summary)
             << "\n  coverUrl: " << info.coverUrl << "\n  chapters: " << info.chapters.size() << "\n";
 
+        // all of the summary and the chapters
+        QCryptographicHash hash(QCryptographicHash::Sha1);
+        hash.addData(info.summary.toUtf8());
         int n = info.chapters.size();
         for (int c = 0; c < n; c++)
+        {
+            hash.addData(("\n" + info.chapters[c].chapterTitle + "\t" + info.chapters[c].chapterUrl).toUtf8());
             if (c < 3 || c >= n - 3)
                 out << "  ch " << c << ": " << info.chapters[c].chapterTitle << " | "
                     << info.chapters[c].chapterUrl << "\n";
+        }
+        out << "  hash: " << hash.result().toHex().left(16) << "\n";
         if (n > 0)
             failures += capturePages(repository, source, url, info.chapters, 0, true);
         if (n > 1)

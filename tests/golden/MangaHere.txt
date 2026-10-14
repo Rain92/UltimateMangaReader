@@ -15,6 +15,7 @@
   ch 416: Ch.236 | https://www.mangahere.cc/manga/onepunch_man/c236/1.html
   ch 417: Ch.237 | https://www.mangahere.cc/manga/onepunch_man/c237/1.html
   ch 418: Ch.238 | https://www.mangahere.cc/manga/onepunch_man/c238/1.html
+  hash: f401bd9330a68a5d
   chapter 0: Ch.001 - One Punch | https://www.mangahere.cc/manga/onepunch_man/c001/1.html
     pages: 19
     page 0: https://www.mangahere.cc/manga/onepunch_man/c001/chapterfun.ashx?cid=192638&page=1&key=47b034da6becf3d4
@@ -56,6 +57,7 @@
   ch 115: Ch.110 | https://www.mangahere.cc/manga/goblin_slayer/c110/1.html
   ch 116: Ch.111 | https://www.mangahere.cc/manga/goblin_slayer/c111/1.html
   ch 117: Ch.112 | https://www.mangahere.cc/manga/goblin_slayer/c112/1.html
+  hash: 1186c08ccf019edc
   chapter 0: Ch.001 | https://www.mangahere.cc/manga/goblin_slayer/c001/1.html
     pages: 50
     page 0: https://zjcdn.mangahere.org/store/manga/22705/001.0/compressed/l001.jpg?token=d5eec318589d5ebed43d639b1896c859741a457e&ttl=1792004400
@@ -97,6 +99,7 @@
   ch 325: Ch.324 | https://www.mangahere.cc/manga/parallel_paradise/c324/1.html
   ch 326: Ch.325 | https://www.mangahere.cc/manga/parallel_paradise/c325/1.html
   ch 327: Ch.326 | https://www.mangahere.cc/manga/parallel_paradise/c326/1.html
+  hash: df0a3a6c63d9570c
   chapter 0: Ch.001 | https://www.mangahere.cc/manga/parallel_paradise/c001/1.html
     pages: 38
     page 0: https://zjcdn.mangahere.org/store/manga/26739/001.0/compressed/r001.jpg?token=27cc1b8d3deb37ef2f4e81ef6f3448ce15607d16&ttl=1792004400

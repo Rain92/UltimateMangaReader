@@ -2,10 +2,52 @@
 # then 200), /flaky400/<id> (400 once, then 200), /retryafter/<s>/<id> (429 with Retry-After: <s> once, then 200),
 # /redirect -> /final, /file/<name> (some bytes), /image/<w>x<h> (a png), /xorimage/<w>x<h>/<hexkey> (the png
 # xor-encrypted), /lastheaders (the headers of the last image request), /headers (the headers of this request).
-# HEAD requests get the headers of the GET answer.
+# HEAD requests get the headers of the GET answer. /site/... is a small manga site for the definitions of sources
+# (see site()).
 import http.server, struct, sys, time, zlib
 flaky = set()
 lastheaders = ['']
+
+def site(path):
+    """The pages of a manga site: a paged directory (/site/dir/<n>: 2 mangas on pages 1-3, 1 on page 4, then
+    none), the whole list (/site/all, cut off the first time) with popular pages (/site/popular/<n>, 1 and 2), the
+    info of manga 1 and of a licensed one (gone), a chapter with a long strip (ch/3) and chapters with pages."""
+    if path.startswith('/dir/'):
+        n = int(path.split('/')[2])
+        ids = {1: [1, 2], 2: [3, 4], 3: [5, 6], 4: [7]}.get(n, [])
+        return 200, ''.join(f'<a class="m" href="/site/manga/{i}" title="Manga {i}"><img></a> Views: {i * 10}<br>'
+                            for i in ids)
+    if path == '/all':
+        mangas = ''.join(f'<li><a href="/site/manga/{i}">Manga  {i}</a></li>' for i in [1, 2, 3, 4, 5, 2])
+        if path not in flaky:
+            flaky.add(path)
+            return 200, mangas[:40]
+        return 200, mangas + '<footer>'
+    if path.startswith('/popular/'):
+        n = int(path.split('/')[2])
+        if n > 2:
+            return 404, ''
+        return 200, f'<b><a href="/site/manga/{2 * n + 1}">Manga {2 * n + 1}</a></b>'
+    if path == '/manga/1':
+        return 200, ('<div class="info"><img src="//example.com/cover.jpg"></div>'
+                     '<li><b>Author:</b><a href="/a">A &amp; B</a>, <a href="/b">[Add]</a>, <a href="/c">A &amp; B</a></li>'
+                     '<li><b>Genres:</b><a>Action</a>, <a>Drama</a></li>'
+                     '<p class="sum">Text [junk]more</p>'
+                     '<ul class="chapters"><li><a href="/site/ch/3">Ch 3</a> <span>Finale</span></li>'
+                     '<li><a href="/site/ch/2">Ch 2</a></li><li><a href="/site/ch/2">Ch 2 again</a></li>'
+                     '<li><a href="../ch/1">Ch  1</a></li></ul><p class="msg">not this</p>')
+    if path == '/manga/gone':
+        return 200, '<div class="info"></div><p class="msg">It has been licensed</p>'
+    if path == '/ch/3':
+        return 200, ('<div id="viewer"><img src="/image/1x1" class="strip"><img src="/image/2x2" class="strip">'
+                     '</div><div class="end"><img src="/image/3x3" class="strip">')
+    if path.startswith('/ch/') and path.endswith('.html'):
+        page = int(path.split('/')[-1][:-5])
+        image = '<img src="/image/1x1" id="image">' if page == 1 else '<img src="/image/2x2">'
+        return 200, f'<img src="/logo.png"><div id="viewer">{image}</div>'
+    if path.startswith('/ch/'):
+        return 200, '<div id="viewer"></div><script>var none = 0; var total = 2;</script>'
+    return 404, ''
 
 def png(w, h):
     raw = b''.join(b'\x00' + bytes((x * 7 + y * 3) % 256 for x in range(w)) for y in range(h))
@@ -59,6 +101,9 @@ class H(http.server.BaseHTTPRequestHandler):
             self.send(200, lastheaders[0].encode())
         elif p == '/headers':
             self.send(200, '\n'.join(f'{k}: {v}' for k, v in self.headers.items()).encode())
+        elif p.startswith('/site/'):
+            code, body = site(p[5:])
+            self.send(code, body.encode())
         else:
             self.send(404)
     do_HEAD = do_GET

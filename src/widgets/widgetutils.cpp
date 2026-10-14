@@ -41,11 +41,11 @@ void activateScroller(QAbstractScrollArea* pArea)
     }
 }
 
-QIcon sourceLogo(const QString &name, int size)
+QIcon sourceLogo(const QString &name, const QString &iconPath, int size)
 {
-    QString path = ":/images/mangahostlogos/" + name.toLower() + ".png";
-    if (QFile::exists(path))
-        return QIcon(QPixmap(path));
+    QPixmap logo;
+    if (!iconPath.isEmpty() && logo.load(iconPath))
+        return QIcon(logo);
 
     QPixmap pixmap(size, size);
     pixmap.fill(Qt::white);

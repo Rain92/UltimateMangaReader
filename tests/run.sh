@@ -2,13 +2,15 @@
 # Builds the test harness and runs the tests, see tests/README.md.
 #   tests/run.sh                  all tests
 #   tests/run.sh NAME...          some of them: a source (MangaDex), the update of its list (MangaHere-list),
-#                                 the script of a source in sources/ (MangaTown-lua), jobs, storage, scripts
+#                                 the script of a source in sources/ (MangaTown-lua), jobs, storage, scripts,
+#                                 index (sources/index.yaml is up to date)
 #   tests/run.sh record [NAME...] records the responses of the sites again and the golden output with them
 # QMAKE (default qmake6) and BUILD_DIR (default ../build-UltimateMangaReader-tests next to the repository)
 # can be set in the environment.
 set -u
 
 TESTS=$(cd "$(dirname "$0")" && pwd)
+SOURCES_DIR=$(dirname "$TESTS")/sources
 BUILD=${BUILD_DIR:-$(dirname "$(dirname "$TESTS")")/build-UltimateMangaReader-tests}
 QMAKE=${QMAKE:-qmake6}
 PORT=${TEST_SERVER_PORT:-8780}
@@ -17,7 +19,7 @@ SOURCES="Comick MangaDex MangaHere Mangakakalot MangaPlus MangaTown"
 # the list updates of the other sources take too many requests (MangaDex ~700 pages, MangaTown ~800 pages,
 # Comick ~200 MB of sitemaps)
 LISTS="MangaHere-list Mangakakalot-list MangaPlus-list"
-# the scripts of sources in sources/, against the responses and the golden output of the built-in sources
+# the scripts of sources in sources/, against the responses and the golden output of the C++ sources
 SCRIPTS="MangaTown-lua"
 
 record=0
@@ -28,7 +30,7 @@ fi
 names=("$@")
 if [ ${#names[@]} -eq 0 ]; then
     names=($SOURCES $LISTS)
-    [ $record = 0 ] && names+=($SCRIPTS jobs storage scripts)
+    [ $record = 0 ] && names+=($SCRIPTS jobs storage scripts index)
 fi
 
 mkdir -p "$BUILD" && cd "$BUILD" || exit 2
@@ -94,16 +96,21 @@ for name in "${names[@]}"; do
         jobs | storage | scripts)
             [ $record = 1 ] && continue
             start_server
-            ./harness "$name" "$PORT" > "output/$name.txt" 2> "output/$name.log"
+            ./harness --sources "$SOURCES_DIR" "$name" "$PORT" > "output/$name.txt" 2> "output/$name.log"
             status=$?
             [ $status = 0 ] && report "$name" ok || report "$name" "FAILED, see $BUILD/output/$name.txt"
+            ;;
+        index)
+            [ $record = 1 ] && continue
+            ./harness index "$SOURCES_DIR" --check > "output/$name.txt" 2> "output/$name.log"
+            [ $? = 0 ] && report "$name" ok || report "$name" "FAILED, see $BUILD/output/$name.txt"
             ;;
         *-list)
             source_test "$name" list "${name%-list}"
             ;;
         *-lua)
             [ $record = 1 ] && continue
-            source_test "$name" --sources "$(dirname "$TESTS")/sources" capture "${name%-lua}" \
+            source_test "$name" --sources "$SOURCES_DIR" capture "${name%-lua}" \
                 "$TESTS/picks/${name%-lua}.txt"
             ;;
         *)

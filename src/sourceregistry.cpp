@@ -2,13 +2,8 @@
 
 #include <QDir>
 
-#include "comick.h"
 #include "luasource.h"
-#include "mangadex.h"
-#include "mangahere.h"
-#include "mangakakalot.h"
-#include "mangaplus.h"
-#include "mangatown.h"
+#include "sourceindex.h"
 
 SourceRegistry::SourceRegistry(Settings *settings, QList<QSharedPointer<MangaSourceBase>> sources,
                                QObject *parent)
@@ -16,45 +11,59 @@ SourceRegistry::SourceRegistry(Settings *settings, QList<QSharedPointer<MangaSou
 {
 }
 
-QList<QSharedPointer<MangaSourceBase>> SourceRegistry::builtInSources(NetworkManager *networkManager)
+QList<QSharedPointer<MangaSourceBase>> SourceRegistry::loadDirectory(NetworkManager *networkManager,
+                                                                     const QString &directory, QStringList *errors)
 {
-    return {QSharedPointer<MangaSourceBase>(new MangaDex(networkManager)),
-            QSharedPointer<MangaSourceBase>(new Mangakakalot(networkManager)),
-            QSharedPointer<MangaSourceBase>(new MangaTown(networkManager)),
-            QSharedPointer<MangaSourceBase>(new MangaHere(networkManager)),
-            QSharedPointer<MangaSourceBase>(new Comick(networkManager)),
-            QSharedPointer<MangaSourceBase>(new MangaPlus(networkManager))};
-}
-
-QList<QSharedPointer<MangaSourceBase>> SourceRegistry::withScriptSources(QList<QSharedPointer<MangaSourceBase>> sources,
-                                                                         NetworkManager *networkManager,
-                                                                         const QString &directory, QStringList *errors)
-{
+    QList<QSharedPointer<MangaSourceBase>> sources;
     if (directory.isEmpty())
         return sources;
-
-    for (const auto &entry : QDir(directory).entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name))
+    auto report = [errors](const QString &message)
     {
-        auto loaded = LuaSource::load(networkManager, entry.absoluteFilePath());
-        if (!loaded)
+        qWarning().noquote() << message;
+        if (errors)
+            errors->append(message);
+    };
+
+    auto index = SourceIndex::read(directory);
+    if (!index)
+    {
+        report(index.error().message);
+        return sources;
+    }
+
+    QStringList libraries;
+    for (const auto &library : std::as_const(index->libraries))
+    {
+        if (library.api > LuaSource::apiLevel)
+            report(QString("The library %1 needs a newer app.").arg(library.id));
+        else
+            libraries.append(library.files.keys());
+    }
+
+    for (const auto &entry : std::as_const(index->sources))
+    {
+        if (entry.api > LuaSource::apiLevel)
         {
-            auto message = QString("Couldn't load the source in %1: %2")
-                               .arg(entry.absoluteFilePath(), loaded.error().message);
-            qWarning().noquote() << message;
-            if (errors)
-                errors->append(message);
+            report(QString("The source %1 needs a newer app.").arg(entry.name));
             continue;
         }
-
-        auto script = *loaded;
-        auto same = std::find_if(sources.begin(), sources.end(),
-                                 [&script](const auto &source) { return source->name == script->name; });
-        if (same != sources.end())
-            *same = script;
-        else
-            sources.append(script);
+        auto loaded = LuaSource::load(networkManager, directory, entry.id, libraries);
+        if (!loaded)
+        {
+            report(QString("Couldn't load the source %1: %2").arg(entry.name, loaded.error().message));
+            continue;
+        }
+        sources.append(*loaded);
     }
     return sources;
+}
+
+void SourceRegistry::setSources(QList<QSharedPointer<MangaSourceBase>> newSources)
+{
+    sources = std::move(newSources);
+    emit sourcesChanged();
+    if (!currentName.isEmpty() && !source(currentName))
+        setCurrent({});
 }
 
 QStringList SourceRegistry::names() const

@@ -7,7 +7,7 @@
 //   /cache/mangalists/ -> <source>_mangalist.dat
 //   /cache/<source>/<hash of the manga url>/ -> mangainfo.dat progress.dat cover.<type> cover_scaled.<type>
 //   /cache/<source>/<hash of the manga url>/images/ -> <hash of the chapter url>_<page>.jpg
-//   /sources/<source>/ -> manifest.json source.lua (the scripts of sources, see LuaSource)
+//   /sources/ -> index.yaml <source>.yaml <source>.lua <source>.png common.lua (the sources, see sources/README.md)
 
 #define CONF StaticSettings::get()
 

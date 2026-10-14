@@ -9,6 +9,7 @@
   summary: 10 years ago, after “the Gate” that connected the real world with the monster world opened, some of ...
   coverUrl: https://uploads.mangadex.org/covers/32d76d19-8a05-4db0-9fc2-e0b0648fe9d0/e90bdc47-c8b9-4df7-b2c0-17641b645ee1.jpg.512.jpg
   chapters: 0
+  hash: c21b581097ea21fd
 === Chainsaw Man | https://api.mangadex.org/manga/a77742b1-befd-49a4-bff5-1ad4e6b0ef7b
   title: Chainsaw Man
   url: https://api.mangadex.org/manga/a77742b1-befd-49a4-bff5-1ad4e6b0ef7b
@@ -26,6 +27,7 @@
   ch 94: Ch. 95 Chainsawman vs The Devil of Domination | bf3dd196-c301-40c9-9338-109159c4fa41
   ch 95: Ch. 96 This Flavor | 7259bb55-bb83-4dd8-ac7e-f9c4d7472ce6
   ch 96: Ch. 97 Love, Love, Chainsaw. | 77fc6e02-a381-411d-ace6-4c00deacadb4
+  hash: 1698f293f5116cce
   chapter 0: Ch. 1 A Dog and a Chainsaw | 73af4d8d-1532-4a72-b1b9-8f4e5cd295c9
     pages: 53
     page 0: https://uploads.mangadex.org/data-saver/d828fa5fffd26b264ad400b3b0fdffe8/A1-bf40bc4a7040ee983de15871349aef33f5314d96134e99c5d017384ff7ee316e.jpg
@@ -67,6 +69,7 @@
   ch 166: Ch. 140 Kouhai and Income 4 | a8cd3264-65e6-4c54-947d-c7df5159cf3a
   ch 167: Ch. 141 Kouhai And Income 5 | ed32838a-5850-4b68-93de-ec25d1357483
   ch 168: Ch. 142 | 9731e8a5-05d4-46bd-8f4d-34907c9b5ad5
+  hash: e677d35b067f9011
   chapter 0: Ch. 1.1 A Kouhai and A Senpai Who Wants To Be Left Alone | 20412a3f-6305-4c49-aad1-6c3303d183cd
     pages: 5
     page 0: https://uploads.mangadex.org/data-saver/82f4ec47e0e81859fb7d0de331c715b0/F1-b57285f6cb713df4252949ce5ce1f751e12974349e6bca5f8eebcc19c157deee.jpg

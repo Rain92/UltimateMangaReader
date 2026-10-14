@@ -64,6 +64,8 @@ public:
     QString name;
     // the urls of a manga list without absolute urls are relative to it
     QString baseUrl;
+    // its logo, an image file (empty: none)
+    QString iconPath;
 
     // All mangas of the source. current: the list of the last update (e.g. for the titles an update doesn't
     // get again). The token takes the progress (0 to 100) and says when the update is cancelled (it fails with

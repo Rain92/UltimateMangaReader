@@ -9,12 +9,30 @@ CONFIG -= app_bundle
 
 include(../../src/core.pri)
 
+# the C++ sources, the reference for the scripts (not in the app)
+HEADERS += \
+    ../../src/mangasources/comick.h \
+    ../../src/mangasources/mangadex.h \
+    ../../src/mangasources/mangahere.h \
+    ../../src/mangasources/mangakakalot.h \
+    ../../src/mangasources/mangaplus.h \
+    ../../src/mangasources/mangatown.h \
+
+SOURCES += \
+    ../../src/mangasources/comick.cpp \
+    ../../src/mangasources/mangadex.cpp \
+    ../../src/mangasources/mangahere.cpp \
+    ../../src/mangasources/mangakakalot.cpp \
+    ../../src/mangasources/mangaplus.cpp \
+    ../../src/mangasources/mangatown.cpp \
+
 SOURCES += \
     ../../src/device_desktop.cpp \
     bench.cpp \
     capture.cpp \
     fixtures.cpp \
     flowtests.cpp \
+    indextool.cpp \
     jobtests.cpp \
     main.cpp \
     scripttests.cpp \

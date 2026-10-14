@@ -1,9 +1,6 @@
 #include "luasource.h"
 
 #include <QDir>
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
 #include <QPointer>
 #include <algorithm>
 #include <numeric>
@@ -11,6 +8,7 @@
 #include "lualibs.h"
 #include "staticsettings.h"
 #include "updateprogresstoken.h"
+#include "yamlreader.h"
 
 using lua::push;
 using lua::rawField;
@@ -109,15 +107,19 @@ static int pushResponse(lua_State *L, int index)
 
 static int requestWaited(lua_State *L, int, lua_KContext index)
 {
+    // a wait with a limit that ended first
+    auto request = static_cast<Request *>(lua_touserdata(L, int(index)));
+    if (request->job && !request->job->isFinished())
+        return 0;
     return pushResponse(L, int(index));
 }
 
-// Waits for the request at index (yields until it's finished).
-static int waitFor(lua_State *L, int index)
+// Waits for the request at index (yields until it's finished, or for at most maxWait ms if it is > 0).
+static int waitFor(lua_State *L, int index, int maxWait = 0)
 {
     auto request = static_cast<Request *>(lua_touserdata(L, index));
     if (request->job && !request->job->isFinished())
-        LuaEngine::wait(L, {request->job, 0});
+        LuaEngine::wait(L, {request->job, maxWait});
     else if (LuaEngine::shouldYield(L))
         // e.g. the pages of a list update that were downloaded meanwhile, the GUI goes on between them
         LuaEngine::wait(L, {nullptr, 0});
@@ -144,8 +146,9 @@ static int httpGet(lua_State *L)
 static int requestWait(lua_State *L)
 {
     luaL_checkudata(L, 1, requestType);
+    int maxWait = int(luaL_optinteger(L, 2, 0));
     lua_settop(L, 1);
-    return waitFor(L, 1);
+    return waitFor(L, 1, maxWait);
 }
 
 static int requestFailed(lua_State *L)
@@ -368,35 +371,64 @@ LuaSource::LuaSource(NetworkManager *networkManager, LuaLimits limits)
     engine->host = this;
 }
 
+// headers, cookies: {domain: {name: value}}
+static Result<QList<std::pair<QString, HttpHeader>>> domainValues(const QVariantMap &definition, const QString &key,
+                                                                  const QString &file)
+{
+    QList<std::pair<QString, HttpHeader>> values;
+    if (!definition.contains(key))
+        return values;
+    if (definition[key].typeId() != QMetaType::QVariantMap)
+        return Err(Error::Parse, QString("%1: %2: a mapping of domains is expected.").arg(file, key));
+    auto domains = definition[key].toMap();
+    for (auto domain = domains.cbegin(); domain != domains.cend(); ++domain)
+    {
+        if (domain.value().typeId() != QMetaType::QVariantMap)
+            return Err(Error::Parse,
+                       QString("%1: %2.%3: a mapping of names and values is expected.").arg(file, key, domain.key()));
+        auto map = domain.value().toMap();
+        for (auto it = map.cbegin(); it != map.cend(); ++it)
+            values.append({domain.key(), HttpHeader{it.key().toUtf8(), it.value().toString().toUtf8()}});
+    }
+    return values;
+}
+
 Result<QSharedPointer<LuaSource>> LuaSource::load(NetworkManager *networkManager, const QString &directory,
-                                                  LuaLimits limits)
+                                                  const QString &id, const QStringList &libraries, LuaLimits limits)
 {
     QDir dir(directory);
-    QFile manifestFile(dir.filePath("manifest.json"));
-    if (!manifestFile.open(QIODevice::ReadOnly))
-        return Err(Error::Storage, QString("Couldn't read %1.").arg(manifestFile.fileName()));
-    QJsonParseError parseError;
-    auto manifest = QJsonDocument::fromJson(manifestFile.readAll(), &parseError).object();
-    if (parseError.error != QJsonParseError::NoError)
-        return Err(Error::Parse, QString("%1: %2").arg(manifestFile.fileName(), parseError.errorString()));
-
-    QFile scriptFile(dir.filePath("source.lua"));
-    if (!scriptFile.open(QIODevice::ReadOnly))
-        return Err(Error::Storage, QString("Couldn't read %1.").arg(scriptFile.fileName()));
+    auto definitionName = id + ".yaml";
+    QFile definitionFile(dir.filePath(definitionName));
+    if (!definitionFile.open(QIODevice::ReadOnly))
+        return Err(Error::Storage, QString("Couldn't read %1.").arg(definitionFile.fileName()));
+    auto read = readYaml(definitionFile.readAll(), definitionName);
+    if (!read)
+        return Err(read.error());
+    if (read->typeId() != QMetaType::QVariantMap)
+        return Err(Error::Parse, QString("%1: a mapping is expected.").arg(definitionName));
+    auto definition = read->toMap();
 
     QSharedPointer<LuaSource> source(new LuaSource(networkManager, limits));
-    source->name = manifest["name"].toString();
-    source->baseUrl = manifest["baseUrl"].toString();
-    if (source->name.isEmpty())
-        return Err(Error::Parse, QString("%1 has no name.").arg(manifestFile.fileName()));
-    for (const auto &rule : manifest["headers"].toArray())
-    {
-        auto object = rule.toObject();
-        source->headerRules.add(object["domain"].toString(), object["name"].toString().toUtf8(),
-                                object["value"].toString().toUtf8());
-    }
+    source->id = id;
+    source->name = definition.value("name").toString();
+    source->baseUrl = definition.value("baseUrl").toString();
+    if (source->name.isEmpty() || source->baseUrl.isEmpty())
+        return Err(Error::Parse, QString("%1: name and baseUrl are required.").arg(definitionName));
+    if (dir.exists(id + ".png"))
+        source->iconPath = dir.filePath(id + ".png");
 
-    auto opened = LuaEngine::protect(source->engine->state(), 0, [&source](lua_State *L) {
+    auto headers = domainValues(definition, "headers", definitionName);
+    if (!headers)
+        return Err(headers.error());
+    for (const auto &[domain, header] : *headers)
+        source->headerRules.add(domain, header.name, header.value);
+    auto cookies = domainValues(definition, "cookies", definitionName);
+    if (!cookies)
+        return Err(cookies.error());
+    for (const auto &[domain, cookie] : *cookies)
+        networkManager->addCookie("." + domain, cookie.name, cookie.value);
+
+    auto opened = LuaEngine::protect(source->engine->state(), 0, [&source, &definition](lua_State *L) {
         lua::openLibraries(L);
 
         luaL_newmetatable(L, requestType);
@@ -422,21 +454,50 @@ Result<QSharedPointer<LuaSource>> LuaSource::load(NetworkManager *networkManager
         lua_register(L, "sleep", sleepFor);
         lua_register(L, "log", logMessage);
 
-        lua_createtable(L, 0, 2);
+        lua_createtable(L, 0, 4);
+        push(L, source->id);
+        lua_setfield(L, -2, "id");
         push(L, source->name);
         lua_setfield(L, -2, "name");
         push(L, source->baseUrl);
         lua_setfield(L, -2, "baseUrl");
+        lua::pushVariant(L, definition);
+        lua_setfield(L, -2, "definition");
         lua_setglobal(L, "source");
     });
     if (!opened)
         return Err(opened.error());
 
-    auto loaded = source->engine->run(scriptFile.readAll(), source->name + "/source.lua");
-    if (!loaded)
-        return Err(loaded.error());
+    // the libraries, then the script of the source
+    auto scripts = libraries;
+    if (dir.exists(id + ".lua"))
+        scripts.append(id + ".lua");
+    for (const auto &script : std::as_const(scripts))
+    {
+        QFile file(dir.filePath(script));
+        if (!file.open(QIODevice::ReadOnly))
+            return Err(Error::Storage, QString("Couldn't read %1.").arg(file.fileName()));
+        auto loaded = source->engine->run(file.readAll(), script);
+        if (!loaded)
+            return Err(loaded.error());
+    }
 
     auto L = source->engine->state();
+    auto prepared = LuaEngine::protect(L, 0, [](lua_State *state) {
+        if (lua_getglobal(state, "prepare") == LUA_TFUNCTION)
+            lua_call(state, 0, 0);
+        else
+            lua_pop(state, 1);
+        for (auto function : {"fetchMangaList", "fetchMangaInfo", "fetchPageList"})
+        {
+            if (lua_getglobal(state, function) != LUA_TFUNCTION)
+                luaL_error(state, "The source has no %s.", function);
+            lua_pop(state, 1);
+        }
+    });
+    if (!prepared)
+        return Err(prepared.error());
+
     source->hasResolveImage = lua_getglobal(L, "resolveImage") == LUA_TFUNCTION;
     lua_pop(L, 1);
 

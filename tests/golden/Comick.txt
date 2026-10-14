@@ -15,6 +15,7 @@
   ch 245: Ch. 224: The Dinner | 00-the-beginning-after-the-end-1/cxuzyflG-chapter-224-en
   ch 246: Ch. 225: A Major Shift | 00-the-beginning-after-the-end-1/Md8oN6bf-chapter-225-en
   ch 247: Ch. 225.5: End of Season Announcement | 00-the-beginning-after-the-end-1/SYgYVZds-chapter-225.5-en
+  hash: f00eb2ccf27d9628
   chapter 0: Ch. 1 | 00-the-beginning-after-the-end-1/r5bcQ_C5-chapter-1-en
     pages: 50
     page 0: https://cdn1.comicknew.pictures/00-the-beginning-after-the-end-1/0_1.0/en/ae440ae5/0.webp
@@ -50,6 +51,7 @@
   ch 67: Ch. 68 | quick-teleporting-genius-from-magic-school/5UInjyWh-chapter-68-en
   ch 68: Ch. 69 | quick-teleporting-genius-from-magic-school/zTefdayi-chapter-69-en
   ch 69: Ch. 70 | quick-teleporting-genius-from-magic-school/IEarvLRk-chapter-70-en
+  hash: d1d3a32cfa15356f
   chapter 0: Ch. 1 | quick-teleporting-genius-from-magic-school/Iu7f2UE-chapter-1-en
     pages: 149
     page 0: https://cdn1.comicknew.pictures/quick-teleporting-genius-from-magic-school/0_1/en/6f2081b8/0.webp
@@ -91,6 +93,7 @@
   ch 30: Ch. 27 | 00-the-hero-took-everything-from-me-so-i-partied-with-the-hero-s-mother/1miiFwLg-chapter-27-en
   ch 31: Ch. 28 | 00-the-hero-took-everything-from-me-so-i-partied-with-the-hero-s-mother/rv74Jx1M-chapter-28-en
   ch 32: Ch. 29 | 00-the-hero-took-everything-from-me-so-i-partied-with-the-hero-s-mother/vQOukvRE-chapter-29-en
+  hash: a76b669283dcb143
   chapter 0: Ch. 1 | 00-the-hero-took-everything-from-me-so-i-partied-with-the-hero-s-mother/8nmjW-chapter-1-en
     pages: 48
     page 0: https://cdn1.comicknew.pictures/00-the-hero-took-everything-from-me-so-i-partied-with-the-hero-s-mother/1_1.0/en/ff3277f7/0.webp
