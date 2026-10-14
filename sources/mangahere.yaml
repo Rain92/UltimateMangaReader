@@ -1,0 +1,47 @@
+# MangaHere: the html pages of the site. The images (zjcdn.mangahere.org) and the covers (fmcdn.mangahere.com) are
+# hotlink protected, and chapterfun.ashx answers empty without a Referer. fanfox.net is the same site.
+name: MangaHere
+baseUrl: https://www.mangahere.cc
+headers:
+  mangahere.cc: {Referer: 'https://www.mangahere.cc/'}
+  mangahere.org: {Referer: 'https://www.mangahere.cc/'}
+  mangahere.com: {Referer: 'https://www.mangahere.cc/'}
+  fanfox.net: {Referer: 'https://fanfox.net/'}
+  mangafox.me: {Referer: 'https://fanfox.net/'}
+cookies:
+  mangahere.cc: {isAdult: '1'}
+  fanfox.net: {isAdult: '1'}
+
+list:
+  # the whole catalogue on one page (~1 MB gzipped), occasionally cut off
+  url: /mangalist/
+  timeout: 180000
+  complete: '<div class="footer-bar">'
+  mangas:
+    each: '<p class="browse-new-block-content"><a href="(?<url>/manga/[^"]*)" title="(?<title>[^"]*)">'
+  # the directory (560+ pages) is ordered by popularity
+  popular:
+    url: /directory/{page}.htm
+    pages: 10
+    mangas:
+      each: '<a href="(?<url>/manga/[^"]*)" title="(?<title>[^"]*)"><img class="manga-list-1-cover"'
+
+info:
+  timeout: 5000
+  expect: 'class="detail-info"'
+  complete: '<div class="footer-bar">'
+  # blocked titles and the ones without chapters have a message instead of the chapter list
+  notFound: '(?s)<p class="detail-block-content">(.*?)</p>'
+  author:
+    match: '<p class="detail-info-right-say">\s*Author:(.*?)</p>'
+    remove: '^\[.*\]$'                   # placeholders like [Add]
+  status: '<span class="detail-info-right-title-tip">([^<]*)<'
+  genres: '(?s)<p class="detail-info-right-tag-list">(.*?)</p>'
+  summary: {match: '(?s)<p[^>]*class="fullcontent">(.*?)</p>', lines: true}
+  cover: '<img class="detail-info-cover-img" src="([^"]*)"'
+  chapters:
+    within: ['<div id="chapterlist">', 'class="detail-main-list-more"|<div class="footer-bar">']
+    each: '<a href="(?<url>/manga/[^"]*)"[^>]*>\s*<div class="detail-main-list-main">\s*<p class="title3">(?<title>[^<]*)</p>'
+    order: newestFirst
+
+# the pages and their images: mangahere.lua

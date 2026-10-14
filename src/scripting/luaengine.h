@@ -40,6 +40,9 @@ public:
     // what the script has allocated now and at most (bytes)
     size_t memoryInUse() const { return memoryUsed; }
     size_t memoryPeak() const { return memoryMax; }
+    // Frees the garbage at once (e.g. of a large call, it would wait for the next calls), and gives the freed memory
+    // back to the system. Not while a script runs.
+    void collectGarbage();
 
     // e.g. the source of the script, for its host functions
     void *host = nullptr;

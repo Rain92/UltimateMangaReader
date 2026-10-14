@@ -1,6 +1,9 @@
 #include "luaengine.h"
 
 #include <QDebug>
+#ifdef __GLIBC__
+#include <malloc.h>
+#endif
 
 #include "lualib.h"
 
@@ -64,6 +67,15 @@ LuaEngine::LuaEngine(LuaLimits limits) : limits(limits)
 LuaEngine::~LuaEngine()
 {
     lua_close(L);
+}
+
+void LuaEngine::collectGarbage()
+{
+    lua_gc(L, LUA_GCCOLLECT);
+#ifdef __GLIBC__
+    // the many small allocations of the scripts stay in the heap otherwise
+    malloc_trim(0);
+#endif
 }
 
 LuaEngine *LuaEngine::of(lua_State *L)

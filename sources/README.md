@@ -33,10 +33,11 @@ image: ...                              # the image of a page of the site (if th
 is written `''`). `(?s)` at the start lets `.` match line breaks too. The value of a pattern is its first group,
 or the whole match without groups. A list of patterns means: the first one that matches.
 
-**Fields** are values on a page: a pattern (or a list of them), or `{match: pattern, remove: pattern, lua:
-function}`. `remove` removes what it matches from the value. `lua` names a function of the script that makes the
-value: it gets the item (the fields so far, `text`: the html of the item) and the page (`url`, `body`) and returns
-the value. The values are converted by their name:
+**Fields** are values on a page: a pattern (or a list of them), or `{match: pattern, remove: pattern, lines:
+true, lua: function}`. `remove` removes what it matches from the value. `lines: true` keeps the line breaks of the
+html (of a text that has them instead of `<br>`). `lua` names a function of the script that makes the value: it
+gets the item (the fields so far, `text`: the html of the item) and the page (`url`, `body`) and returns the value.
+The values are converted by their name:
 
 | field                          | value                                                                     |
 |--------------------------------|---------------------------------------------------------------------------|
@@ -44,7 +45,8 @@ the value. The values are converted by their name:
 | `author`, `artist`             | the texts of the links (each once, `remove` from each), else the text     |
 | `genres`                       | the text, with the separators as spaces                                   |
 | `popularity`                   | a number, the higher the more popular                                     |
-| the others (`title`, `status`, ...) | the text of the html (entities, tags and whitespace like a browser) |
+| `title`                        | the text (entities, whitespace collapsed), a `<` is no tag (e.g. in an attribute) |
+| the others (`status`, ...)     | the text of the html (entities, tags and whitespace like a browser)       |
 
 **Item lists** (`mangas`, `chapters`, `images`) are the repeated parts of a page: an item for each match of
 `each`. Its named groups (`(?<url>...)`) are fields of the item, the other fields are searched in the text of the
@@ -129,8 +131,9 @@ known)`, `fetchPageList(chapterUrl)`, `resolveImage(page)`. What they get and re
 `src/scripting/lualibs.h`. A script can also call the ones of the definition (`common.fetchMangaInfo(url)`, ...)
 and change what they return.
 
-Helpers in `common.lua`: `common.text(html)`, `common.url(base, url)`, `common.names(html, remove)`,
-`common.fill(template, values)`, `common.find(patterns, page, init, limit)`.
+Helpers in `common.lua`: `common.text(html)`, `common.title(text)`, `common.url(base, url)`,
+`common.names(html, remove)`, `common.fill(template, values)`, `common.find(patterns, page, init, limit)`,
+`common.unpackJs(script)` (the script of a packed `eval(function(p,a,c,k,e,d){...})`).
 
 Keep the scripts short: what more than one source needs belongs into `common.lua` (or, for work on large data,
 into the app as a library function).

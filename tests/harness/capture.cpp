@@ -171,12 +171,19 @@ int captureList(MangaSourceBase *source, MangaList *result)
     out << "=== list " << source->name << "\n  update: " << status << "\n  entries: " << list.size
         << ", absolute urls " << list.absoluteUrls << "\n";
 
+    // all entries, e.g. to compare two updates
+    QFile dump(qEnvironmentVariable("HARNESS_LIST_DUMP"));
+    if (!dump.fileName().isEmpty() && !dump.open(QIODevice::WriteOnly))
+        qWarning() << "Couldn't write" << dump.fileName();
+
     QCryptographicHash hash(QCryptographicHash::Sha1);
     for (int i = 0; i < list.titles.size(); i++)
     {
         QString entry = list.titles[i] + "\t" + list.urls.value(i) + "\t" +
                         QString::number(list.popularityRanks.value(i)) + "\n";
         hash.addData(entry.toUtf8());
+        if (dump.isOpen())
+            dump.write(entry.toUtf8());
         if (i < 5 || i >= list.titles.size() - 5)
             out << "  " << i << ": " << list.titles[i] << " | " << list.urls.value(i) << " | rank "
                 << list.popularityRanks.value(i) << "\n";

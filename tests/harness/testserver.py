@@ -15,8 +15,9 @@ def site(path):
     if path.startswith('/dir/'):
         n = int(path.split('/')[2])
         ids = {1: [1, 2], 2: [3, 4], 3: [5, 6], 4: [7]}.get(n, [])
-        return 200, ''.join(f'<a class="m" href="/site/manga/{i}" title="Manga {i}"><img></a> Views: {i * 10}<br>'
-                            for i in ids)
+        # a title with a < (no tag in an attribute)
+        return 200, ''.join(f'<a class="m" href="/site/manga/{i}" title="Manga {i}{" <Special>" if i == 7 else ""}">'
+                            f'<img></a> Views: {i * 10}<br>' for i in ids)
     if path == '/all':
         mangas = ''.join(f'<li><a href="/site/manga/{i}">Manga  {i}</a></li>' for i in [1, 2, 3, 4, 5, 2])
         if path not in flaky:
@@ -32,7 +33,7 @@ def site(path):
         return 200, ('<div class="info"><img src="//example.com/cover.jpg"></div>'
                      '<li><b>Author:</b><a href="/a">A &amp; B</a>, <a href="/b">[Add]</a>, <a href="/c">A &amp; B</a></li>'
                      '<li><b>Genres:</b><a>Action</a>, <a>Drama</a></li>'
-                     '<p class="sum">Text [junk]more</p>'
+                     '<p class="sum">Text [junk]more\r\nSecond line</p>'
                      '<ul class="chapters"><li><a href="/site/ch/3">Ch 3</a> <span>Finale</span></li>'
                      '<li><a href="/site/ch/2">Ch 2</a></li><li><a href="/site/ch/2">Ch 2 again</a></li>'
                      '<li><a href="../ch/1">Ch  1</a></li></ul><p class="msg">not this</p>')

@@ -3,6 +3,7 @@
 #include <QDir>
 #include <QPointer>
 #include <algorithm>
+#include <chrono>
 #include <numeric>
 
 #include "lualibs.h"
@@ -173,6 +174,13 @@ static int sleepFor(lua_State *L)
 {
     LuaEngine::wait(L, {nullptr, int(luaL_checkinteger(L, 1))});
     return lua_yield(L, 0);
+}
+
+static int clockMs(lua_State *L)
+{
+    auto now = std::chrono::steady_clock::now().time_since_epoch();
+    lua_pushinteger(L, std::chrono::duration_cast<std::chrono::milliseconds>(now).count());
+    return 1;
 }
 
 static int logMessage(lua_State *L)
@@ -452,6 +460,7 @@ Result<QSharedPointer<LuaSource>> LuaSource::load(NetworkManager *networkManager
         lua_setglobal(L, "http");
 
         lua_register(L, "sleep", sleepFor);
+        lua_register(L, "clock", clockMs);
         lua_register(L, "log", logMessage);
 
         lua_createtable(L, 0, 4);
@@ -587,8 +596,10 @@ Task<MangaListUpdate> LuaSource::fetchMangaList(UpdateProgressToken *token, Mang
     QElapsedTimer timer;
     timer.start();
     auto result = co_await engine->call<MangaListUpdate>("fetchMangaList", pushArgs, convert);
+    // the list (the pages, all of its mangas) is garbage now
+    engine->collectGarbage();
     qDebug() << name << "list update:" << timer.elapsed() << "ms, script memory" << engine->memoryInUse() / 1024
-             << "KB, at most" << engine->memoryPeak() / 1024 << "KB";
+             << "KB after it, at most" << engine->memoryPeak() / 1024 << "KB";
     co_return result ? *result : MangaListUpdate::failed(result.error());
 }
 

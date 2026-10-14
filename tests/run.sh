@@ -2,7 +2,8 @@
 # Builds the test harness and runs the tests, see tests/README.md.
 #   tests/run.sh                  all tests
 #   tests/run.sh NAME...          some of them: a source (MangaDex), the update of its list (MangaHere-list),
-#                                 the script of a source in sources/ (MangaTown-lua), jobs, storage, scripts,
+#                                 the script of a source in sources/ (MangaTown-lua) or its list update
+#                                 (MangaHere-list-lua), jobs, storage, scripts,
 #                                 index (sources/index.yaml lists the sources, they load)
 #   tests/run.sh record [NAME...] records the responses of the sites again and the golden output with them
 # QMAKE (default qmake6) and BUILD_DIR (default ../build-UltimateMangaReader-tests next to the repository)
@@ -20,7 +21,7 @@ SOURCES="Comick MangaDex MangaHere Mangakakalot MangaPlus MangaTown"
 # Comick ~200 MB of sitemaps)
 LISTS="MangaHere-list Mangakakalot-list MangaPlus-list"
 # the scripts of sources in sources/, against the responses and the golden output of the C++ sources
-SCRIPTS="MangaTown-lua"
+SCRIPTS="MangaTown-lua MangaHere-lua MangaHere-list-lua"
 
 record=0
 if [ "${1:-}" = record ]; then
@@ -67,6 +68,8 @@ source_test() {
     local name=$1 base=${1%-lua}
     shift
     local fixtures=$TESTS/fixtures/$base golden=$TESTS/golden/$base.txt
+    # a script that differs from the C++ source on purpose has its own
+    [ -f "$TESTS/golden/$name.txt" ] && golden=$TESTS/golden/$name.txt
     if [ $record = 1 ]; then
         ./harness --record "$fixtures" "$@" > "$golden" 2> "output/$name.log"
         local status=$?
@@ -107,6 +110,10 @@ for name in "${names[@]}"; do
             ;;
         *-list)
             source_test "$name" list "${name%-list}"
+            ;;
+        *-list-lua)
+            [ $record = 1 ] && continue
+            source_test "$name" --sources "$SOURCES_DIR" list "${name%-list-lua}"
             ;;
         *-lua)
             [ $record = 1 ] && continue

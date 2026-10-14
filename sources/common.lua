@@ -15,6 +15,14 @@ function common.text(s)
     return text.simplify(s)
 end
 
+-- The text of a title (e.g. of an attribute): like common.text, but a < in it is no tag.
+function common.title(s)
+    if s:find("[&<]") then
+        return text.trim(html.text((s:gsub("<", "&lt;"))))
+    end
+    return text.simplify(s)
+end
+
 -- The path of url (from the /, with its query) without its . and .. segments.
 local function withoutDots(url)
     local path, rest = url:match("^([^?#]*)(.*)$")
@@ -80,6 +88,69 @@ function common.names(fragment, remove)
     return remove and text.trim(remove:replace(name, "")) or name
 end
 
+local jsDigits = {}
+for i, digit in ipairs({("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"):byte(1, -1)}) do
+    jsDigits[digit] = i - 1
+end
+
+-- The single quoted JavaScript string at pos of s (its quote): its value and the position after it.
+local function jsString(s, pos)
+    if s:sub(pos, pos) ~= "'" then
+        return nil, pos
+    end
+    local parts, i = {}, pos + 1
+    while true do
+        local j = s:find("[\\']", i)
+        if not j then
+            return nil, pos
+        end
+        parts[#parts + 1] = s:sub(i, j - 1)
+        if s:sub(j, j) == "'" then
+            return table.concat(parts), j + 1
+        end
+        parts[#parts + 1] = s:sub(j + 1, j + 1)
+        i = j + 2
+    end
+end
+
+-- The script that packed is the packed form of (eval(function(p,a,c,k,e,d){...}('payload', radix, count,
+-- 'k|e|y|s'.split('|'), 0, {})), nil if it isn't one: the words of the payload are numbers (in radix) of the keywords.
+function common.unpackJs(packed)
+    local start = packed:find("}('", 1, true)
+    if not start then
+        return nil
+    end
+    local payload, pos = jsString(packed, start + 2)
+    local radix, count, keysPos = packed:match("^,%s*(%d+)%s*,%s*(%d+)%s*,%s*()", pos)
+    if not payload or not radix then
+        return nil
+    end
+    radix, count = tonumber(radix), tonumber(count)
+    local keywords = {}
+    for keyword in ((jsString(packed, keysPos)) or ""):gmatch("([^|]*)|?") do
+        keywords[#keywords + 1] = keyword
+    end
+
+    return (payload:gsub("%f[%w_][%w_]+", function(word)
+        if radix == 0 or (#word > 1 and word:sub(1, 1) == "0") then
+            return nil
+        end
+        local value = 0
+        for i = 1, #word do
+            local digit = jsDigits[word:byte(i)]
+            if not digit or digit >= radix then
+                return nil
+            end
+            value = value * radix + digit
+            if value >= count then
+                return nil
+            end
+        end
+        local keyword = keywords[value + 1]
+        return keyword ~= "" and keyword or nil
+    end))
+end
+
 -- --- the definition: checked and its patterns compiled when the source is loaded
 
 local def = {}
@@ -112,7 +183,7 @@ local function compileList(value, path)
     return list
 end
 
--- a field: pattern(s), or {match = pattern(s), remove = pattern, lua = function name}
+-- a field: pattern(s), or {match = pattern(s), remove = pattern, lines = true, lua = function name}
 local function compileField(value, path)
     if type(value) ~= "table" or value[1] then
         return {patterns = compileList(value, path)}
@@ -123,6 +194,11 @@ local function compileField(value, path)
             field.patterns = compileList(v, path .. ".match")
         elseif key == "remove" then
             field.remove = compile(v, path .. ".remove")
+        elseif key == "lines" then
+            if type(v) ~= "boolean" then
+                fail(path .. ".lines", "true or false is expected")
+            end
+            field.lines = v
         elseif key == "lua" then
             if type(v) ~= "string" then
                 fail(path .. ".lua", "the name of a function is expected")
@@ -319,15 +395,21 @@ end
 local conversions = {
     url = function(value, page) return common.url(page.url, value) end,
     cover = function(value, page) return common.url(page.url, value) end,
-    author = function(value, _, remove) return common.names(value, remove) end,
-    artist = function(value, _, remove) return common.names(value, remove) end,
+    author = function(value, _, field) return common.names(value, field.remove) end,
+    artist = function(value, _, field) return common.names(value, field.remove) end,
     genres = function(value) return html.genres(value) end,
     popularity = function(value) return tonumber(value) or 0 end,
 }
-local function textOf(value, _, remove)
-    value = common.text(value)
-    return remove and text.trim(remove:replace(value, "")) or value
+-- toText: common.text unless given
+local function textOf(value, _, field, toText)
+    -- the line breaks of the html (e.g. of a plain text) stay
+    if field.lines then
+        value = value:gsub("\r", ""):gsub("\n", "<br>")
+    end
+    value = (toText or common.text)(value)
+    return field.remove and text.trim(field.remove:replace(value, "")) or value
 end
+conversions.title = function(value, page, field) return textOf(value, page, field, common.title) end
 
 -- The value of the field name of item: of its pattern between init and limit, else of the named group of the
 -- item (item[name], raw), converted, then of its hook.
@@ -338,7 +420,7 @@ local function fieldValue(section, name, item, page, init, limit)
         value = common.find(field.patterns, page, init, limit)
     end
     if value ~= nil then
-        value = (conversions[name] or textOf)(value, page, field.remove)
+        value = (conversions[name] or textOf)(value, page, field)
     end
     if field.lua then
         item[name] = value

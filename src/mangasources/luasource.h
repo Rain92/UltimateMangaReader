@@ -32,7 +32,7 @@
 //   (the same response again when it's called again), with ms nil if the response isn't there after ms.
 //   request:failed(), request:restart() (before the response). http.parallel: how many downloads should run at
 //   the same time.
-// - sleep(ms), log(...)
+// - sleep(ms), log(...), clock() (milliseconds of a monotonic clock, e.g. for the time that attempts may take)
 // - source: {id, name, baseUrl, definition (the YAML as tables)}
 class LuaSource : public MangaSourceBase
 {

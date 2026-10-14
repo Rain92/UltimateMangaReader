@@ -438,7 +438,7 @@ info:
   notFound: '<p class="msg">([^<]*)</p>'
   author: {match: '<b>Author:</b>(.*?)</li>', remove: '^\[.*\]$'}
   genres: '<b>Genres:</b>(.*?)</li>'
-  summary: {match: '<p class="sum">(.*?)</p>', remove: '\[.*?\]'}
+  summary: {match: '(?s)<p class="sum">(.*?)</p>', remove: '\[.*?\]', lines: true}
   cover: '<div class="info"><img src="([^"]*)"'
   chapters:
     within: ['<ul class="chapters">', '</ul>']
@@ -483,6 +483,21 @@ list:
                                             .toUtf8(),
                     stubs);
 
+        // the helpers of common.lua, checked when the script is loaded
+        writeSource(path, "helpers", "name: Helpers\nbaseUrl: x", stubs + R"lua(
+function fetchMangaList() end
+local packed = [=[eval(function(p,a,c,k,e,d){e=function(c){return c};return p}('0 1=\'2\';x 01 3',4,4,'var|pix|//a.b/c.jpg|'.split('|'),0,{}))]=]
+local unpacked = common.unpackJs(packed)
+assert(unpacked == "var pix='//a.b/c.jpg';x 01 3", "unpackJs: " .. tostring(unpacked))
+assert(common.unpackJs("var a = 1") == nil, "unpackJs of a script that isn't packed")
+assert(common.title("A  <B> &amp; C ") == "A <B> & C", "title: " .. common.title("A  <B> &amp; C "))
+assert(common.title(" A\tB ") == "A B", "title without html")
+)lua");
+        auto helpers = LuaSource::load(&nm, path, "helpers", {"common.lua"});
+        check("the helpers: unpackJs (escapes, words that aren't numbers or keywords), title", helpers.has_value());
+        if (!helpers)
+            out << "  " << helpers.error().message << "\n";
+
         auto loadedSite = LuaSource::load(&nm, path, "site", {"common.lua"});
         check("a definition is loaded", loadedSite.has_value());
         if (!loadedSite)
@@ -502,7 +517,7 @@ list:
             check("a paged list: until a page brings nothing new, relative urls, ranked by popularity",
                   update.status == MangaListUpdate::Complete && update.list.size == 7 &&
                       update.list.urls.value(0) == "/site/manga/1" && !update.list.absoluteUrls &&
-                      ranked.first() == "Manga 7" && ranked.last() == "Manga 1");
+                      ranked.first() == "Manga 7 <Special>" && ranked.last() == "Manga 1");
             out << "  " << update.error.message << " " << update.list.titles.join(",") << "\n";
         }
         {
@@ -521,9 +536,10 @@ list:
             QStringList chapters;
             for (const auto &chapter : info.value_or(MangaDetails()).chapters)
                 chapters.append(chapter.chapterTitle + " " + chapter.chapterUrl.mid(server.size()));
-            check("the fields of the info: names without placeholders, genres, removed parts, the cover url",
+            check("the fields of the info: names without placeholders, genres, removed parts and kept lines, the "
+                  "cover url",
                   info && info->author == "A & B" && info->genres == "Action Drama" &&
-                      info->summary == "Text more" && info->coverUrl == "https://example.com/cover.jpg");
+                      info->summary == "Text more\nSecond line" && info->coverUrl == "https://example.com/cover.jpg");
             check("the chapters: oldest first, each once, the hook's titles, resolved urls",
                   chapters == QStringList({"Ch 1 /site/ch/1", "Ch 2 /site/ch/2", "Ch 3: Finale /site/ch/3"}));
             out << "  " << (info ? info->author + " | " + info->summary + " | " + chapters.join(", ")
