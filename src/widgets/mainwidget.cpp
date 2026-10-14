@@ -34,6 +34,7 @@ MainWidget::MainWidget(QWidget *parent)
     downloadStatusDialog = new DownloadStatusDialog(this);
     aboutDialog = new AboutDialog(this);
     sourceUpdateDialog = new SourceUpdateDialog(this);
+    sourceRepositoryDialog = new SourceRepositoryDialog(this);
 
     // the hardware keys (power button, sleep cover) go to the open dialog, from where they reach the main widget
     for (QDialog *dialog : {static_cast<QDialog *>(updateMangaListsDialog), static_cast<QDialog *>(wifiDialog),
@@ -41,7 +42,7 @@ MainWidget::MainWidget(QWidget *parent)
                             static_cast<QDialog *>(downloadStatusDialog), static_cast<QDialog *>(menuDialog),
                             static_cast<QDialog *>(settingsDialog), static_cast<QDialog *>(clearCacheDialog),
                             static_cast<QDialog *>(aboutDialog), static_cast<QDialog *>(sourceUpdateDialog),
-                            ui->mangaReaderWidget->gotoDialog()})
+                            static_cast<QDialog *>(sourceRepositoryDialog), ui->mangaReaderWidget->gotoDialog()})
         dialog->installEventFilter(this);
 
     QObject::connect(menuDialog, &MenuDialog::finished, this,
@@ -253,6 +254,10 @@ MainWidget::MainWidget(QWidget *parent)
 
     QObject::connect(settingsDialog, &SettingsDialog::ditheringMethodChanged, this,
                      &MainWidget::updateDitheringMode);
+
+    // after the settings dialog is gone
+    QObject::connect(settingsDialog, &SettingsDialog::sourcesRepositoryEditRequested, this,
+                     &MainWidget::editSourcesRepository, Qt::QueuedConnection);
 
     // SuspendManager
 
@@ -556,15 +561,21 @@ void MainWidget::setWidgetTab(WidgetTab tab)
         QTimer::singleShot(0, this, &MainWidget::offerSourceUpdate);
 }
 
-Task<> MainWidget::checkSourceUpdates()
+Task<> MainWidget::checkSourceUpdates(bool reportErrors)
 {
     if (std::exchange(sourceUpdatesChecked, true))
         co_return;
 
-    auto changes = co_await core->sourceUpdater->check();
+    auto repository = core->settings.sourcesRepositoryUrl();
+    auto changes = co_await core->sourceUpdater->check(repository);
+    // the repository was changed meanwhile, its own check counts
+    if (repository != core->settings.sourcesRepositoryUrl())
+        co_return;
     if (!changes)
     {
         qDebug() << "Couldn't check for updates of the sources:" << changes.error().message;
+        if (reportErrors)
+            showErrorMessage("Couldn't read the sources repository: " + changes.error().message);
         // the next connect tries again
         if (changes.error().code == Error::Network || changes.error().code == Error::Timeout)
             sourceUpdatesChecked = false;
@@ -575,6 +586,21 @@ Task<> MainWidget::checkSourceUpdates()
 
     pendingSourceUpdate = *changes;
     offerSourceUpdate();
+}
+
+void MainWidget::editSourcesRepository()
+{
+    auto repository = sourceRepositoryDialog->ask(core->settings.sourcesRepository, CONF.defaultSourcesRepository);
+    if (!repository || *repository == core->settings.sourcesRepository)
+        return;
+    core->settings.sourcesRepository = *repository;
+    core->settings.serialize();
+
+    // the sources of the other repository (now, or at the next connect)
+    sourceUpdatesChecked = false;
+    pendingSourceUpdate.reset();
+    if (core->networkManager->connected)
+        checkSourceUpdates(true);
 }
 
 void MainWidget::offerSourceUpdate()

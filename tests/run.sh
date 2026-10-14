@@ -3,7 +3,7 @@
 #   tests/run.sh                  all tests
 #   tests/run.sh NAME...          some of them: a source (MangaDex), the update of its list (MangaHere-list),
 #                                 the script of a source in sources/ (MangaTown-lua), jobs, storage, scripts,
-#                                 index (sources/index.yaml is up to date)
+#                                 index (sources/index.yaml lists the sources, they load)
 #   tests/run.sh record [NAME...] records the responses of the sites again and the golden output with them
 # QMAKE (default qmake6) and BUILD_DIR (default ../build-UltimateMangaReader-tests next to the repository)
 # can be set in the environment.
@@ -102,7 +102,7 @@ for name in "${names[@]}"; do
             ;;
         index)
             [ $record = 1 ] && continue
-            ./harness index "$SOURCES_DIR" --check > "output/$name.txt" 2> "output/$name.log"
+            ./harness index "$SOURCES_DIR" > "output/$name.txt" 2> "output/$name.log"
             [ $? = 0 ] && report "$name" ok || report "$name" "FAILED, see $BUILD/output/$name.txt"
             ;;
         *-list)

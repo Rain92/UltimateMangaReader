@@ -26,6 +26,12 @@ void Settings::resetToDefaults()
     ditheringMode = SWDithering;
     standbyWhenIdle = false;
     enabledMangaSources.clear();
+    sourcesRepository.clear();
+}
+
+QString Settings::sourcesRepositoryUrl() const
+{
+    return sourcesRepository.isEmpty() ? CONF.defaultSourcesRepository : sourcesRepository;
 }
 
 Settings::~Settings()
@@ -74,7 +80,7 @@ QDataStream &operator<<(QDataStream &str, const Settings &m)
 {
     str << m.lightValue << m.comflightValue << m.hideErrorMessages << m.tabAdvance << m.swipeAdvance
         << m.buttonAdvance << m.mangaOrder << m.doublePageMode << m.trimPages << m.manhwaMode
-        << m.enabledMangaSources << m.ditheringMode << m.standbyWhenIdle;
+        << m.enabledMangaSources << m.ditheringMode << m.standbyWhenIdle << m.sourcesRepository;
 
     return str;
 }
@@ -85,6 +91,10 @@ QDataStream &operator>>(QDataStream &str, Settings &m)
     str >> m.lightValue >> m.comflightValue >> m.hideErrorMessages >> m.tabAdvance >> m.swipeAdvance >>
         m.buttonAdvance >> m.mangaOrder >> m.doublePageMode >> m.trimPages >> m.manhwaMode >>
         m.enabledMangaSources >> m.ditheringMode >> m.standbyWhenIdle;
+    // added later, the settings of before keep the default
+    m.sourcesRepository.clear();
+    if (!str.atEnd())
+        str >> m.sourcesRepository;
 
     return str;
 }

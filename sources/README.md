@@ -3,13 +3,12 @@
 The sources of the app: for each one a definition (`<id>.yaml`), a script if it needs one (`<id>.lua`) and its
 logo (`<id>.png`). `common.lua` is shared: it runs the definitions and has helpers for the scripts. `index.yaml`
 lists the sources and the libraries with their versions; the app compares it with the index of the repository to
-find updates.
+find updates (see "The index" below).
 
-After a change, write the index (it checks that every source loads and counts up the versions of the changed
-ones), then compare with the C++ source (the reference, see `tests/README.md`):
+After a change, count up the version of the source in the index, then check the index (all sources load) and
+compare with the C++ source (the reference, see `tests/README.md`):
 
-    harness index sources
-    tests/run.sh MangaTown-lua
+    tests/run.sh index MangaTown-lua
 
 ## The definition
 
@@ -135,3 +134,25 @@ Helpers in `common.lua`: `common.text(html)`, `common.url(base, url)`, `common.n
 
 Keep the scripts short: what more than one source needs belongs into `common.lua` (or, for work on large data,
 into the app as a library function).
+
+## The index
+
+```yaml
+libraries:                              # run before the scripts, in this order
+  - id: common                          # the file is <id>.lua
+    version: 1
+sources:                                # in the order the app shows them
+  - id: mangatown                       # the base name of its files
+    name: MangaTown                     # the name of its definition (shown in the update prompt)
+    version: 2
+    api: 2                              # optional, see below
+    files: [mangatown.yaml, mangatown.lua, mangatown.png]
+```
+
+The app installs an entry when the repository has a newer `version` of it, with all of its files. So the version
+must go up with every change of the files, else the apps keep the old ones. A source that the repository doesn't
+have anymore is removed from the app (after asking).
+
+`api` is the level of the script interface the entry needs (`LuaSource::apiLevel` of the app, 1 if it is left
+out). It goes up when the app gets something new for the scripts (e.g. a library function) that a source starts to
+use: then an older app keeps the version it has (instead of failing to load the new one), until it is updated.

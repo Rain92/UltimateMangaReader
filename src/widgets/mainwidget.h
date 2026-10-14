@@ -17,6 +17,7 @@
 #include "networkmanager.h"
 #include "screensaverdialog.h"
 #include "settingsdialog.h"
+#include "sourcerepositorydialog.h"
 #include "sourceupdatedialog.h"
 #include "ultimatemangareadercore.h"
 #include "updatemangalistsdialog.h"
@@ -80,7 +81,10 @@ private:
     void onResume();
 
     // Asks the repository for updates of the sources, once (again after a network error), when the app is online.
-    Task<> checkSourceUpdates();
+    // reportErrors: shows why it failed (e.g. after the repository was changed).
+    Task<> checkSourceUpdates(bool reportErrors = false);
+    // Lets the user change the repository of the sources, and checks the new one.
+    void editSourcesRepository();
     // Asks whether to install the update that was found, when nothing else is shown (not while reading).
     void offerSourceUpdate();
 
@@ -104,6 +108,7 @@ private:
     DownloadMangaChaptersDialog *downloadMangaChaptersDialog;
     DownloadStatusDialog *downloadStatusDialog;
     SourceUpdateDialog *sourceUpdateDialog;
+    SourceRepositoryDialog *sourceRepositoryDialog;
 
     bool sourceUpdatesChecked;
     std::optional<SourceUpdater::Changes> pendingSourceUpdate;

@@ -28,9 +28,12 @@ public:
 signals:
     void mangaOrderMethodChanged();
     void ditheringMethodChanged();
+    // the dialog closed for it
+    void sourcesRepositoryEditRequested();
 
 private slots:
     void on_pushButtonOk_clicked();
+    void on_pushButtonSourcesRepository_clicked();
 
 private:
     Ui::SettingsDialog *ui;

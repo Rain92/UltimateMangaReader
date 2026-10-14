@@ -39,6 +39,11 @@ public:
     // by the name of the source, the ones that aren't in it are enabled (see SourceRegistry)
     QMap<QString, bool> enabledMangaSources;
 
+    // the repository of the sources (the directory of its index.yaml), empty: the default one
+    QString sourcesRepository;
+    // the one to use
+    QString sourcesRepositoryUrl() const;
+
 private:
     QTimer timer;
 };

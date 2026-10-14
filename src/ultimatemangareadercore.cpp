@@ -5,8 +5,7 @@
 UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
     : QObject(parent),
       networkManager(new NetworkManager(this)),
-      sourceUpdater(new SourceUpdater(networkManager, CONF.sourcesDir, CONF.installedSourcesDir,
-                                      CONF.sourcesRepositoryUrl, this)),
+      sourceUpdater(new SourceUpdater(networkManager, CONF.sourcesDir, CONF.installedSourcesDir, this)),
       sources(new SourceRegistry(&settings,
                                  SourceRegistry::loadDirectory(networkManager, sourceUpdater->installBundled()),
                                  this)),

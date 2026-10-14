@@ -10,9 +10,9 @@
 // The installed sources (a directory of sources, see SourceIndex) and their updates from the repository.
 //
 // The installed directory gets the bundled sources of the app (at the first start, and the newer ones after an
-// update of the app) and the updates from the repository: the index there is compared with the installed one, the
-// files of the changed entries are downloaded (with verified TLS, checked against the hashes of the index). An
-// update is installed as a whole, and only if all of its sources load.
+// update of the app) and the updates from a repository: the index there is compared with the installed one, the
+// files of the entries with a newer version are downloaded (with verified TLS). An update is installed as a whole,
+// and only if all of its sources load.
 class SourceUpdater : public QObject
 {
     Q_OBJECT
@@ -21,29 +21,31 @@ public:
     // What the repository has that the installed sources don't.
     struct Changes
     {
+        // the repository they are from
+        QString repositoryUrl;
         // the index to install
         SourceIndex index;
         // the names of the sources
         QStringList added, updated, removed;
-        // also the libraries
-        int changedEntries = 0;
+        // the ids of the entries whose files are downloaded (also libraries)
+        QStringList downloads;
+        int removedLibraries = 0;
 
-        bool isEmpty() const { return changedEntries == 0 && removed.isEmpty(); }
+        bool isEmpty() const { return downloads.isEmpty() && removed.isEmpty() && removedLibraries == 0; }
         // e.g. "MangaDex updated, MangaTown removed"
         QString summary() const;
     };
 
-    // repositoryUrl: the directory of the repository's index.yaml (with a / at the end)
     SourceUpdater(NetworkManager *networkManager, const QString &bundledDir, const QString &installedDir,
-                  const QString &repositoryUrl, QObject *parent = nullptr);
+                  QObject *parent = nullptr);
 
     // Installs the bundled sources that are newer than the installed ones (all of them the first time, the ones of
     // an update of the app later). Returns the directory to load the sources from.
     QString installBundled();
 
-    // Compares the index of the repository with the installed one.
-    Task<Result<Changes>> check();
-    // Downloads the changed files and installs the index with them. Returns the loaded sources.
+    // Compares the index of the repository with the installed one. repositoryUrl: the directory of its index.yaml.
+    Task<Result<Changes>> check(const QString &repositoryUrl);
+    // Downloads the files of the changed entries and installs the index with them. Returns the loaded sources.
     Task<Result<QList<QSharedPointer<MangaSourceBase>>>> install(Changes changes);
 
     QString installedDirectory() const { return installedDir; }
@@ -52,11 +54,10 @@ private:
     NetworkManager *networkManager;
     QString bundledDir;
     QString installedDir;
-    QString repositoryUrl;
 
-    // Writes index with its files (each from the first of the directories that has it with the hash of the
-    // index) into the installed directory, through a new directory that replaces it. extraFiles: name → content
-    // (e.g. the bundled index it came from).
-    Result<> writeInstalled(const SourceIndex &index, const QStringList &fromDirs,
+    // Writes index with its files into the installed directory, through a new directory that replaces it.
+    // entryDirs: the directory of the files of an entry (by id), the installed directory for the others.
+    // extraFiles: name → content (e.g. the bundled index it came from).
+    Result<> writeInstalled(const SourceIndex &index, const QHash<QString, QString> &entryDirs,
                             const QMap<QString, QByteArray> &extraFiles);
 };

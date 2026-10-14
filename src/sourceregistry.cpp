@@ -37,7 +37,7 @@ QList<QSharedPointer<MangaSourceBase>> SourceRegistry::loadDirectory(NetworkMana
         if (library.api > LuaSource::apiLevel)
             report(QString("The library %1 needs a newer app.").arg(library.id));
         else
-            libraries.append(library.files.keys());
+            libraries.append(library.files);
     }
 
     for (const auto &entry : std::as_const(index->sources))

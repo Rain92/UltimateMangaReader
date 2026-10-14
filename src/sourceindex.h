@@ -1,17 +1,16 @@
 #pragma once
 
-#include <QMap>
 #include <QStringList>
 
 #include "result.h"
 
 // The index of a directory of sources (index.yaml, see sources/README.md): the sources and the libraries of their
-// scripts, with their versions and files. `harness index` writes it.
+// scripts, with their versions and files.
 struct SourceIndex
 {
     struct Entry
     {
-        // the base name of its files (<id>.yaml, <id>.lua, <id>.png)
+        // the base name of its files (<id>.yaml, <id>.lua, <id>.png; <id>.lua of a library), unique in the index
         QString id;
         // of a source: how the app shows it, it identifies the source in the cache and the favorites
         QString name;
@@ -19,8 +18,8 @@ struct SourceIndex
         int version = 0;
         // the scripting interface of the app that it needs (LuaSource::apiLevel)
         int api = 1;
-        // the file names and their SHA-256 (hex)
-        QMap<QString, QString> files;
+        // the file names
+        QStringList files;
     };
 
     QList<Entry> libraries;
@@ -34,7 +33,4 @@ struct SourceIndex
 
     const Entry *source(const QString &id) const;
     const Entry *library(const QString &id) const;
-
-    // The SHA-256 of a file (hex), empty if it can't be read.
-    static QString fileHash(const QString &path);
 };

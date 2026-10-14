@@ -598,13 +598,11 @@ list:
             QFile::remove(dir + "/common.lua");
             QFile::copy(sourcesDir + "/common.lua", dir + "/common.lua");
             SourceIndex index;
-            index.libraries.append({"common", {}, 1, 1, {{"common.lua", SourceIndex::fileHash(dir + "/common.lua")}}});
+            index.libraries.append({"common", {}, 1, 1, {"common.lua"}});
             for (const auto &[id, version, script] : sources)
             {
                 writeSource(dir, id, QString("name: %1\nbaseUrl: x\n").arg(nameOf(id)).toUtf8(), script);
-                index.sources.append({id, nameOf(id), version, 1,
-                                      {{id + ".yaml", SourceIndex::fileHash(dir + "/" + id + ".yaml")},
-                                       {id + ".lua", SourceIndex::fileHash(dir + "/" + id + ".lua")}}});
+                index.sources.append({id, nameOf(id), version, 1, {id + ".yaml", id + ".lua"}});
             }
             writeFile(dir + "/index.yaml", index.toYaml());
         };
@@ -622,14 +620,15 @@ list:
         };
 
         writeSet(bundled, {{"alpha", 1, functions + " -- v1"}, {"gamma", 1, functions}});
-        SourceUpdater updater(&nm, bundled, installed, QUrl::fromLocalFile(repo).toString() + "/");
+        SourceUpdater updater(&nm, bundled, installed);
+        auto repoUrl = QUrl::fromLocalFile(repo).toString();
         auto dir = updater.installBundled();
         check("the bundled sources are installed the first time",
               dir == installed && installedVersions() == "alpha 1, gamma 1" &&
                   QFile::exists(installed + "/bundled.yaml"));
 
         writeSet(repo, {{"alpha", 2, functions + " -- v2"}, {"beta", 1, functions}});
-        auto changes = updater.check().wait();
+        auto changes = updater.check(repoUrl).wait();
         check("the changes of the repository",
               changes && changes->updated == QStringList{"Alpha"} && changes->added == QStringList{"Beta"} &&
                   changes->removed == QStringList{"Gamma"} &&
@@ -646,28 +645,26 @@ list:
                   readText(installed + "/alpha.lua").endsWith("v2") && !QFile::exists(installed + "/gamma.yaml"));
         if (!updated)
             out << "  " << updated.error().message << "\n";
-        auto again = updater.check().wait();
-        check("then there are no changes", again && again->isEmpty());
+        auto again = updater.check(repoUrl + "/index.yaml").wait();
+        check("then there are no changes (also with the url of the index)", again && again->isEmpty());
 
         writeSet(repo, {{"alpha", 2, functions + " -- v2"}, {"beta", 2, "function ("}});
-        auto broken = updater.install(updater.check().wait().value_or(SourceUpdater::Changes())).wait();
+        auto broken = updater.install(updater.check(repoUrl).wait().value_or(SourceUpdater::Changes())).wait();
         check("an update whose sources don't load isn't installed",
               !broken && broken.error().message.contains("beta.lua:1:") && installedVersions() == "alpha 2, beta 1");
-        writeSet(repo, {{"alpha", 2, functions + " -- v2"}, {"beta", 2, functions + " -- v2"}});
-        writeFile(repo + "/beta.lua", functions + " -- changed");
-        auto tampered = updater.install(updater.check().wait().value_or(SourceUpdater::Changes())).wait();
-        check("a file that isn't the one of the index isn't installed",
-              !tampered && tampered.error().message.contains("isn't the file of the index") &&
-                  installedVersions() == "alpha 2, beta 1");
+        writeSet(repo, {{"alpha", 2, functions + " -- changed"}, {"beta", 2, functions + " -- v2"}});
+        auto newer = updater.install(updater.check(repoUrl).wait().value_or(SourceUpdater::Changes())).wait();
+        check("only the entries with a newer version are downloaded",
+              newer && installedVersions() == "alpha 2, beta 2" && readText(installed + "/alpha.lua").endsWith("v2") &&
+                  readText(installed + "/beta.lua").endsWith("v2"));
 
         writeSet(bundled, {{"alpha", 3, functions + " -- v3"}, {"gamma", 1, functions}, {"delta", 1, functions}});
         updater.installBundled();
         check("an update of the app brings its newer and new sources, not the removed ones",
-              installedVersions() == "alpha 3, beta 1, delta 1" && readText(installed + "/alpha.lua").endsWith("v3"));
+              installedVersions() == "alpha 3, beta 2, delta 1" && readText(installed + "/alpha.lua").endsWith("v3"));
         out << "  " << installedVersions() << "\n";
 
-        SourceUpdater unreachable(&nm, bundled, installed, QUrl::fromLocalFile(base + "/none").toString() + "/");
-        auto failed = unreachable.check().wait();
+        auto failed = updater.check(QUrl::fromLocalFile(base + "/none").toString()).wait();
         check("a repository that isn't there", !failed);
     }
 
@@ -717,13 +714,23 @@ list:
 
         SourceIndex index;
         for (const auto &id : {"broken", "mangatown", "future", "other", "uses"})
-            index.sources.append({id, id, 1, QString(id) == "future" ? LuaSource::apiLevel + 1 : 1, {}});
-        index.libraries.append({"lib", {}, 1, 1, {{"lib.lua", ""}}});
+            index.sources.append({id, id, 1, QString(id) == "future" ? LuaSource::apiLevel + 1 : 1, {id + QString(".yaml")}});
+        index.libraries.append({"lib", {}, 1, 1, {"lib.lua"}});
         writeFile(path + "/index.yaml", index.toYaml());
         auto reread = SourceIndex::read(path);
         check("the index is read back", reread && reread->sources.size() == 5 && reread->libraries.size() == 1 &&
                                             reread->sources[2].api == LuaSource::apiLevel + 1 &&
                                             reread->libraries[0].files.contains("lib.lua"));
+        auto parsed = [](const char *yaml) { return SourceIndex::parse(yaml, "index.yaml").has_value(); };
+        check("an index is read without the api (1) and the file of a library",
+              parsed("libraries: [{id: lib, version: 1}]\nsources:\n  - {id: a, name: A, version: 1, files: [a.yaml]}"));
+        check("an index with an id twice isn't read",
+              !parsed("libraries: [{id: a, version: 1}]\nsources: [{id: a, name: A, version: 1, files: [a.yaml]}]"));
+        check("an index whose source has the file of another one isn't read",
+              !parsed("sources: [{id: a, name: A, version: 1, files: [a.yaml, b.lua]}]"));
+        check("an index whose source has no definition isn't read",
+              !parsed("sources: [{id: a, name: A, version: 1, files: [a.lua]}]"));
+        check("an index whose entry has no version isn't read", !parsed("libraries: [{id: lib}]"));
 
         QStringList errors, referenceNames;
         auto sources = harnessSources(&nm, path, &errors);

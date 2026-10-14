@@ -29,8 +29,8 @@ public:
     QString sourcesDir;
     // the installed sources: the bundled ones and the updates from the repository (see SourceUpdater)
     QString installedSourcesDir;
-    // the repository of the sources: the directory of its index.yaml
-    QString sourcesRepositoryUrl;
+    // the repository of the sources (the directory of its index.yaml), unless the settings have another one
+    QString defaultSourcesRepository;
     const int imageCacheSize = 7;
     const int parallelDownloadsLow = 4;
     const int parallelDownloadsMid = 6;
@@ -80,8 +80,6 @@ private:
         sourcesDir = QCoreApplication::applicationDirPath() + "/sources/";
         mangaListDir = cacheDir + "mangalists/";
         installedSourcesDir = cacheDir + "sources/";
-        // e.g. a directory on a local server for a test
-        sourcesRepositoryUrl = qEnvironmentVariable(
-            "UMR_SOURCES_REPOSITORY", "https://raw.githubusercontent.com/Rain92/UltimateMangaReader/master/sources/");
+        defaultSourcesRepository = "https://raw.githubusercontent.com/Rain92/UltimateMangaReader/master/sources/";
     };
 };

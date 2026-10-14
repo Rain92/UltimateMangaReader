@@ -1,13 +1,14 @@
 #include "sourceindex.h"
 
-#include <QCryptographicHash>
 #include <QDir>
 #include <QFile>
 #include <QRegularExpression>
 
 #include "yamlreader.h"
 
-static Result<QList<SourceIndex::Entry>> readEntries(const QVariant &value, const QString &path, bool isSource)
+// ids: the ones of the index so far (they are unique, the files of the entries are named after them)
+static Result<QList<SourceIndex::Entry>> readEntries(const QVariant &value, const QString &path, bool isSource,
+                                                     QStringList &ids)
 {
     QList<SourceIndex::Entry> entries;
     // missing or empty (null)
@@ -17,7 +18,6 @@ static Result<QList<SourceIndex::Entry>> readEntries(const QVariant &value, cons
         return Err(Error::Parse, path + " is no list.");
 
     static const QRegularExpression idrx(R"(^[a-z0-9_-]+$)");
-    static const QRegularExpression filerx(R"(^[A-Za-z0-9_.-]+$)");
     for (const auto &item : value.toList())
     {
         auto map = item.toMap();
@@ -28,16 +28,30 @@ static Result<QList<SourceIndex::Entry>> readEntries(const QVariant &value, cons
         entry.api = map.value("api", 1).toInt();
         if (!idrx.match(entry.id).hasMatch())
             return Err(Error::Parse, QString("%1: invalid id \"%2\".").arg(path, entry.id));
+        if (ids.contains(entry.id))
+            return Err(Error::Parse, QString("%1: %2 is there twice.").arg(path, entry.id));
+        ids.append(entry.id);
+        if (entry.version < 1)
+            return Err(Error::Parse, QString("%1: %2 has no version.").arg(path, entry.id));
         if (isSource && entry.name.isEmpty())
             return Err(Error::Parse, QString("%1: %2 has no name.").arg(path, entry.id));
 
-        auto files = map.value("files").toMap();
-        for (auto it = files.cbegin(); it != files.cend(); ++it)
+        if (!isSource)
         {
-            // only files next to the index
-            if (!filerx.match(it.key()).hasMatch() || it.key().startsWith('.'))
-                return Err(Error::Parse, QString("%1: invalid file name \"%2\".").arg(path, it.key()));
-            entry.files.insert(it.key(), it.value().toString());
+            entry.files = {entry.id + ".lua"};
+        }
+        else
+        {
+            // only its own files: the definition, a script, a logo
+            for (const auto &file : map.value("files").toList())
+            {
+                auto name = file.toString();
+                if (name != entry.id + ".yaml" && name != entry.id + ".lua" && name != entry.id + ".png")
+                    return Err(Error::Parse, QString("%1: %2 can't have the file \"%3\".").arg(path, entry.id, name));
+                entry.files.append(name);
+            }
+            if (!entry.files.contains(entry.id + ".yaml"))
+                return Err(Error::Parse, QString("%1: %2 has no %2.yaml.").arg(path, entry.id));
         }
         entries.append(entry);
     }
@@ -52,10 +66,11 @@ Result<SourceIndex> SourceIndex::parse(const QByteArray &yaml, const QString &na
     auto map = document->toMap();
 
     SourceIndex index;
-    auto libraries = readEntries(map.value("libraries"), name + ": libraries", false);
+    QStringList ids;
+    auto libraries = readEntries(map.value("libraries"), name + ": libraries", false, ids);
     if (!libraries)
         return Err(libraries.error());
-    auto sources = readEntries(map.value("sources"), name + ": sources", true);
+    auto sources = readEntries(map.value("sources"), name + ": sources", true, ids);
     if (!sources)
         return Err(sources.error());
     index.libraries = *libraries;
@@ -79,8 +94,7 @@ static QString quoted(const QString &s)
 
 QByteArray SourceIndex::toYaml() const
 {
-    QString yaml = "# The sources and the libraries of their scripts, see README.md. Written by `harness index`: change\n"
-                   "# the files, then run it.\n";
+    QString yaml;
     auto writeEntries = [&yaml](const char *key, const QList<Entry> &entries, bool isSource)
     {
         yaml += QString(entries.isEmpty() ? "%1: []\n" : "%1:\n").arg(key);
@@ -89,9 +103,11 @@ QByteArray SourceIndex::toYaml() const
             yaml += QString("  - id: %1\n").arg(entry.id);
             if (isSource)
                 yaml += QString("    name: %1\n").arg(quoted(entry.name));
-            yaml += QString("    version: %1\n    api: %2\n    files:\n").arg(entry.version).arg(entry.api);
-            for (auto it = entry.files.cbegin(); it != entry.files.cend(); ++it)
-                yaml += QString("      %1: %2\n").arg(it.key(), it.value());
+            yaml += QString("    version: %1\n").arg(entry.version);
+            if (entry.api != 1)
+                yaml += QString("    api: %1\n").arg(entry.api);
+            if (isSource)
+                yaml += QString("    files: [%1]\n").arg(entry.files.join(", "));
         }
     };
     writeEntries("libraries", libraries, false);
@@ -113,14 +129,4 @@ const SourceIndex::Entry *SourceIndex::library(const QString &id) const
         if (entry.id == id)
             return &entry;
     return nullptr;
-}
-
-QString SourceIndex::fileHash(const QString &path)
-{
-    QFile file(path);
-    if (!file.open(QIODevice::ReadOnly))
-        return {};
-    QCryptographicHash hash(QCryptographicHash::Sha256);
-    hash.addData(&file);
-    return QString::fromLatin1(hash.result().toHex());
 }

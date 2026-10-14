@@ -1,6 +1,5 @@
 #include "sourceupdater.h"
 
-#include <QCryptographicHash>
 #include <QDir>
 #include <QSaveFile>
 
@@ -33,6 +32,15 @@ static bool writeFile(const QString &path, const QByteArray &content)
     return file.open(QIODevice::WriteOnly) && file.write(content) == content.size() && file.commit();
 }
 
+// The url of the repository's directory, with a / at the end (also from the url of its index.yaml).
+static QString directoryUrl(const QString &repositoryUrl)
+{
+    auto url = repositoryUrl.trimmed();
+    if (url.endsWith("/index.yaml"))
+        url.chop(QString("index.yaml").size());
+    return url.endsWith('/') ? url : url + '/';
+}
+
 QString SourceUpdater::Changes::summary() const
 {
     QStringList parts;
@@ -48,12 +56,11 @@ QString SourceUpdater::Changes::summary() const
 }
 
 SourceUpdater::SourceUpdater(NetworkManager *networkManager, const QString &bundledDir, const QString &installedDir,
-                             const QString &repositoryUrl, QObject *parent)
+                             QObject *parent)
     : QObject(parent),
       networkManager(networkManager),
       bundledDir(QDir::cleanPath(bundledDir)),
-      installedDir(QDir::cleanPath(installedDir)),
-      repositoryUrl(repositoryUrl)
+      installedDir(QDir::cleanPath(installedDir))
 {
 }
 
@@ -82,7 +89,7 @@ QString SourceUpdater::installBundled()
     // repository removed)
     auto previous = SourceIndex::parse(previousYaml, bundledIndexFile).value_or(SourceIndex());
     SourceIndex merged = installed.value_or(SourceIndex());
-    bool changed = !installed;
+    QHash<QString, QString> fromBundled;
     auto merge = [&](QList<Entry> &into, const QList<Entry> &from, const QList<Entry> &previousEntries)
     {
         for (const auto &entry : from)
@@ -95,25 +102,25 @@ QString SourceUpdater::installBundled()
                 if (entry.version > it->version)
                 {
                     *it = entry;
-                    changed = true;
+                    fromBundled.insert(entry.id, bundledDir);
                 }
             }
             else if (!installed || !find(previousEntries, entry.id))
             {
                 into.append(entry);
-                changed = true;
+                fromBundled.insert(entry.id, bundledDir);
             }
         }
     };
     merge(merged.libraries, bundled->libraries, previous.libraries);
     merge(merged.sources, bundled->sources, previous.sources);
 
-    if (!changed)
+    if (installed && fromBundled.isEmpty())
     {
         writeFile(installedDir + "/" + bundledIndexFile, bundledYaml);
         return installedDir;
     }
-    auto written = writeInstalled(merged, {bundledDir, installedDir}, {{bundledIndexFile, bundledYaml}});
+    auto written = writeInstalled(merged, fromBundled, {{bundledIndexFile, bundledYaml}});
     if (!written)
     {
         qWarning().noquote() << "Couldn't install the bundled sources:" << written.error().message;
@@ -124,7 +131,7 @@ QString SourceUpdater::installBundled()
     return installedDir;
 }
 
-Result<> SourceUpdater::writeInstalled(const SourceIndex &index, const QStringList &fromDirs,
+Result<> SourceUpdater::writeInstalled(const SourceIndex &index, const QHash<QString, QString> &entryDirs,
                                        const QMap<QString, QByteArray> &extraFiles)
 {
     auto staging = installedDir + ".new";
@@ -134,24 +141,15 @@ Result<> SourceUpdater::writeInstalled(const SourceIndex &index, const QStringLi
 
     for (const auto &entries : {index.libraries, index.sources})
         for (const auto &entry : entries)
-            for (auto file = entry.files.cbegin(); file != entry.files.cend(); ++file)
-            {
-                bool copied = false;
-                for (const auto &dir : fromDirs)
-                {
-                    auto path = dir + "/" + file.key();
-                    if (SourceIndex::fileHash(path) == file.value())
-                    {
-                        copied = QFile::copy(path, staging + "/" + file.key());
-                        break;
-                    }
-                }
-                if (!copied)
+        {
+            auto dir = entryDirs.value(entry.id, installedDir);
+            for (const auto &file : entry.files)
+                if (!QFile::copy(dir + "/" + file, staging + "/" + file))
                 {
                     removeDir(staging);
-                    return Err(Error::Storage, QString("The file %1 of %2 isn't there.").arg(file.key(), entry.id));
+                    return Err(Error::Storage, QString("The file %1 of %2 isn't there.").arg(file, entry.id));
                 }
-            }
+        }
 
     auto extra = extraFiles;
     if (!extra.contains(bundledIndexFile))
@@ -190,10 +188,10 @@ Result<> SourceUpdater::writeInstalled(const SourceIndex &index, const QStringLi
     return {};
 }
 
-Task<Result<SourceUpdater::Changes>> SourceUpdater::check()
+Task<Result<SourceUpdater::Changes>> SourceUpdater::check(const QString &repositoryUrl)
 {
     DownloadRequest request;
-    request.url = repositoryUrl + "index.yaml";
+    request.url = directoryUrl(repositoryUrl) + "index.yaml";
     request.timeout = 20000;
     request.verifyTls = true;
     auto job = networkManager->download(request);
@@ -207,6 +205,7 @@ Task<Result<SourceUpdater::Changes>> SourceUpdater::check()
     // the entries of the repository (or the installed ones if they are newer, or the app is too old for the
     // repository's), without the installed ones the repository doesn't have
     Changes changes;
+    changes.repositoryUrl = repositoryUrl;
     auto compare = [&changes](const QList<Entry> &remoteEntries, const QList<Entry> &installedEntries,
                               QList<Entry> &into, bool isSource)
     {
@@ -220,7 +219,7 @@ Task<Result<SourceUpdater::Changes>> SourceUpdater::check()
                 continue;
             }
             into.append(entry);
-            changes.changedEntries++;
+            changes.downloads.append(entry.id);
             if (isSource)
                 (current ? changes.updated : changes.added).append(entry.name);
         }
@@ -230,7 +229,7 @@ Task<Result<SourceUpdater::Changes>> SourceUpdater::check()
                 if (isSource)
                     changes.removed.append(entry.name);
                 else
-                    changes.changedEntries++;
+                    changes.removedLibraries++;
             }
     };
     compare(remote->libraries, installed.libraries, changes.index.libraries, false);
@@ -244,36 +243,37 @@ Task<Result<QList<QSharedPointer<MangaSourceBase>>>> SourceUpdater::install(Chan
     removeDir(downloads);
     QDir().mkpath(downloads);
 
-    // the files that aren't installed, all at once
-    QList<std::pair<QString, QString>> files;
+    // the files of the changed entries, all at once
+    QStringList files;
     QList<QSharedPointer<DownloadBufferJob>> jobs;
+    QHash<QString, QString> entryDirs;
     for (const auto &entries : {changes.index.libraries, changes.index.sources})
         for (const auto &entry : entries)
-            for (auto file = entry.files.cbegin(); file != entry.files.cend(); ++file)
-                if (SourceIndex::fileHash(installedDir + "/" + file.key()) != file.value())
+            if (changes.downloads.contains(entry.id))
+            {
+                entryDirs.insert(entry.id, downloads);
+                for (const auto &file : entry.files)
                 {
                     DownloadRequest request;
-                    request.url = repositoryUrl + file.key();
+                    request.url = directoryUrl(changes.repositoryUrl) + file;
                     request.timeout = 30000;
                     request.verifyTls = true;
-                    files.append({file.key(), file.value()});
+                    files.append(file);
                     jobs.append(networkManager->download(request));
                 }
+            }
 
     Result<> result;
     for (int i = 0; i < jobs.size() && result; i++)
     {
         auto job = jobs[i];
-        const auto &[name, hash] = files[i];
         if (!co_await job)
-            result = Err(job->error.code, QString("Couldn't download %1: %2").arg(name, job->error.message));
-        else if (QCryptographicHash::hash(job->buffer, QCryptographicHash::Sha256).toHex() != hash.toLatin1())
-            result = Err(Error::Parse, QString("%1 isn't the file of the index.").arg(name));
-        else if (!writeFile(downloads + "/" + name, job->buffer))
-            result = Err(Error::Storage, QString("Couldn't write %1.").arg(name));
+            result = Err(job->error.code, QString("Couldn't download %1: %2").arg(files[i], job->error.message));
+        else if (!writeFile(downloads + "/" + files[i], job->buffer))
+            result = Err(Error::Storage, QString("Couldn't write %1.").arg(files[i]));
     }
     if (result)
-        result = writeInstalled(changes.index, {downloads, installedDir}, {});
+        result = writeInstalled(changes.index, entryDirs, {});
     removeDir(downloads);
     if (!result)
         co_return Err(result.error());

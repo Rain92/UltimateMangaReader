@@ -36,7 +36,6 @@ int benchReading(MangaRepository &repository, MangaSourceBase *source, const QSt
 // The Lua engine, its libraries and the sources of scripts, against tests/harness/testserver.py. sourcesDir: the
 // directory of sources (sources/) for its libraries.
 int scriptTests(const QString &server, const QString &sourcesDir);
-// Writes the index of the directory of sources (index.yaml): each <id>.yaml is a source (with <id>.lua and <id>.png
-// if they are there), each other .lua file a library. The version of an entry goes up when its files changed. All
-// sources must load. check: only says whether the index is up to date.
-int writeIndex(NetworkManager *networkManager, const QString &directory, bool check);
+// Checks the index of the directory of sources (index.yaml): it lists all files of the directory, the files it lists
+// are there, and its sources load with the names it has for them.
+int checkIndex(NetworkManager *networkManager, const QString &directory);
