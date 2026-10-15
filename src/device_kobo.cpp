@@ -11,6 +11,7 @@
 
 #include "device.h"
 #include "koboplatformfunctions.h"
+#include "stacktrace.h"
 
 // Writes value to a sysfs file. Writing to /sys/power/state only returns after the device woke up again.
 static bool writeSysfs(const char *path, const QByteArray &value, int *error = nullptr)
@@ -34,9 +35,31 @@ static bool writeSysfsLogged(const char *path, const QByteArray &value)
     return ok;
 }
 
+static QByteArray readSysfs(const char *path)
+{
+    QFile file(path);
+    return file.open(QIODevice::ReadOnly) ? file.readAll().trimmed() : QByteArray();
+}
+
 static const char *powerStatePath = "/sys/power/state";
 static const char *powerStateExtendedPath = "/sys/power/state-extended";
 static const char *wakeAlarmPath = "/sys/class/rtc/rtc0/wakealarm";
+static const char *minFrequencyPath = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq";
+
+// The cpu's lowest frequency (with a newline), the minimum of the governor without a boost. The value is kept
+// here for the crash cleanup, which can't allocate.
+static char unboostedMinFrequency[16];
+
+// a boost would outlive the app otherwise (only async signal safe calls in here)
+static void unboostAfterCrash()
+{
+    int fd = open(minFrequencyPath, O_WRONLY);
+    if (fd < 0)
+        return;
+    ssize_t r = write(fd, unboostedMinFrequency, strlen(unboostedMinFrequency));
+    (void)r;
+    close(fd);
+}
 
 // The Kobo through its platform plugin (the platform functions do nothing on another platform).
 class KoboReader : public Device
@@ -71,6 +94,25 @@ public:
         KoboPlatformFunctions::setFrontlightLevel(light, hardwareNaturalLight);
     }
     void frontlightOff() override { KoboPlatformFunctions::setFrontlightLevel(0, 0); }
+
+    // The governor's minimum is raised to the maximum, which switches right away (in the writing thread).
+    void setCpuBoost(bool on) override
+    {
+        static const QByteArray minimum = readSysfs("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_min_freq");
+        static const QByteArray maximum = readSysfs("/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq");
+        if (on == cpuBoosted || minimum.isEmpty() || maximum.isEmpty() ||
+            minimum.size() + 2 > qsizetype(sizeof(unboostedMinFrequency)))
+            return;
+
+        if (on && !unboostedMinFrequency[0])
+        {
+            memcpy(unboostedMinFrequency, (minimum + "\n").constData(), minimum.size() + 2);
+            setCrashCleanup(unboostAfterCrash);
+        }
+
+        if (writeSysfsLogged(minFrequencyPath, (on ? maximum : minimum) + "\n"))
+            cpuBoosted = on;
+    }
 
     int batteryLevel() const override { return KoboPlatformFunctions::getBatteryLevel(); }
     bool isCharging() const override { return KoboPlatformFunctions::isBatteryCharging(); }
@@ -127,6 +169,8 @@ public:
     }
 
 private:
+    bool cpuBoosted = false;
+
     // from the platform plugin, once the application exists
     const KoboDeviceDescriptor &descriptor() const
     {

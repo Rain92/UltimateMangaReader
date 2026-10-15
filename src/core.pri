@@ -10,6 +10,7 @@ include($$PWD/../thirdparty/libyaml/libyaml.pri)
 HEADERS += \
     $$PWD/aboutinfo.h \
     $$PWD/cachefile.h \
+    $$PWD/cpuboost.h \
     $$PWD/device.h \
     $$PWD/downloadbufferjob.h \
     $$PWD/downloadfilejob.h \
@@ -67,6 +68,7 @@ HEADERS += \
 
 SOURCES += \
     $$PWD/cachefile.cpp \
+    $$PWD/cpuboost.cpp \
     $$PWD/downloadbufferjob.cpp \
     $$PWD/downloadfilejob.cpp \
     $$PWD/downloadimageandrescalejob.cpp \

@@ -19,6 +19,7 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
       standbyManager(new StandbyManager(&settings, suspendManager, networkManager,
                                         mangaChapterDownloadManager, this)),
       mangaListUpdater(new MangaListUpdater(sources, &mangaLists, &settings, standbyManager, this)),
+      cpuBoost(new CpuBoost(this)),
       timer(),
       clockAlignTimer(),
       autoSuspendTimer(),

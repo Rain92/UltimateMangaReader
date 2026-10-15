@@ -39,6 +39,11 @@ public:
     virtual void setFrontlight(int light, int naturalLight) = 0;
     virtual void frontlightOff() = 0;
 
+    // --- cpu
+    // While on, the cpu runs at full speed, e.g. from a tap to the page turn it starts. Otherwise the governor
+    // raises the speed once it notices the load (the Kobo's: after up to 50 ms).
+    virtual void setCpuBoost(bool on) = 0;
+
     // --- battery
     virtual int batteryLevel() const = 0;
     virtual bool isCharging() const = 0;

@@ -2,6 +2,7 @@
 
 #include <QObject>
 
+#include "cpuboost.h"
 #include "favoritesmanager.h"
 #include "mangachapterdownloadmanager.h"
 #include "mangacontroller.h"
@@ -37,6 +38,7 @@ public:
 
     StandbyManager *standbyManager;
     MangaListUpdater *mangaListUpdater;
+    CpuBoost *cpuBoost;
 
 public:
     // Opens a manga of the list of the current source.

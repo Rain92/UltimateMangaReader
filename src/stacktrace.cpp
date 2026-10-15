@@ -11,6 +11,8 @@ namespace
 {
 const int catchSignals[] = {SIGSEGV, SIGILL, SIGFPE, SIGABRT, SIGBUS, SIGUSR2};
 
+void (*volatile crashCleanup)() = nullptr;
+
 void writeStderr(const char *str)
 {
     ssize_t r = write(STDERR_FILENO, str, strlen(str));
@@ -20,6 +22,10 @@ void writeStderr(const char *str)
 // only async signal safe functions in here
 void doBacktrace(int signo)
 {
+    // first, the backtrace could crash in a broken app
+    if (auto cleanup = crashCleanup)
+        cleanup();
+
     char number[12];
     int pos = sizeof(number) - 1;
     number[pos] = '\0';
@@ -38,6 +44,11 @@ void doBacktrace(int signo)
     raise(signo);
 }
 }  // namespace
+
+void setCrashCleanup(void (*cleanup)())
+{
+    crashCleanup = cleanup;
+}
 
 bool registerBacktraceHandlers()
 {
