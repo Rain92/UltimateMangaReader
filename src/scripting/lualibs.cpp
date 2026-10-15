@@ -137,7 +137,7 @@ public:
         return pos8;
     }
 
-    // the character that the byte at position belongs to
+    // the character that starts at the byte at position, the next one if position is inside a character
     qsizetype toUtf16(qsizetype position)
     {
         if (ascii)
@@ -152,6 +152,10 @@ public:
         auto data = text->utf16();
         while (pos8 < position && pos16 < text->size())
             pos8 += utf8Length(data[pos16++]);
+        // not between the halves of a surrogate pair (a checkpoint can be there as well)
+        if (pos16 > 0 && pos16 < text->size() && QChar::isLowSurrogate(data[pos16]) &&
+            QChar::isHighSurrogate(data[pos16 - 1]))
+            pos16++;
         return pos16;
     }
 
@@ -199,6 +203,12 @@ struct Regex
 };
 
 static const char *textType = "umr.Text";
+
+// The subjects are valid UTF-16 (QString::fromUtf8() replaces what isn't UTF-8) and the searches start and end at
+// whole characters (PositionMap), so PCRE2 needn't check the subject again for every search: it checked all of it
+// up to the limit, which took most of the time of a search (and the searches of the items of a page together took
+// time quadratic in its size).
+static constexpr auto unchecked = QRegularExpression::DontCheckSubjectStringMatchOption;
 static const char *regexType = "umr.Regex";
 
 template <typename T>
@@ -289,7 +299,7 @@ static int regexMatch(lua_State *L)
     if (start < 0 || start > view.size())
         return 0;
 
-    auto match = regex->rx.matchView(view, start);
+    auto match = regex->rx.matchView(view, start, QRegularExpression::NormalMatch, unchecked);
     if (!match.hasMatch())
         return 0;
     return pushCaptures(L, match);
@@ -305,7 +315,7 @@ static int regexFind(lua_State *L)
     if (start < 0 || start > view.size())
         return 0;
 
-    auto match = regex->rx.matchView(view, start);
+    auto match = regex->rx.matchView(view, start, QRegularExpression::NormalMatch, unchecked);
     if (!match.hasMatch())
         return 0;
     lua_pushinteger(L, subject.map->toUtf8(match.capturedStart()) + 1);
@@ -348,7 +358,7 @@ static int regexAll(lua_State *L)
         return 1;
 
     lua_Integer n = 0;
-    auto it = regex->rx.globalMatchView(view, start);
+    auto it = regex->rx.globalMatchView(view, start, QRegularExpression::NormalMatch, unchecked);
     while (it.hasNext())
     {
         pushMatch(L, it.next(), regex->names, subject.map);
@@ -398,7 +408,8 @@ static int regexMatches(lua_State *L)
         state->map = &state->ownedMap;
     }
     if (start >= 0 && start <= size)
-        state->it = regex->rx.globalMatchView(QStringView(state->subject).left(size), start);
+        state->it = regex->rx.globalMatchView(QStringView(state->subject).left(size), start,
+                                              QRegularExpression::NormalMatch, unchecked);
     // a re.text() stays while the iterator needs its positions
     lua_pushvalue(L, 2);
     lua_pushcclosure(L, matchesNext, 2);
@@ -433,7 +444,8 @@ static int regexGmatch(lua_State *L)
     new (state) GlobalMatch{*subject.string, {}};
     luaL_setmetatable(L, globalMatchType);
     if (start >= 0 && start <= size)
-        state->it = regex->rx.globalMatchView(QStringView(state->subject).left(size), start);
+        state->it = regex->rx.globalMatchView(QStringView(state->subject).left(size), start,
+                                              QRegularExpression::NormalMatch, unchecked);
     lua_pushcclosure(L, globalMatchNext, 1);
     return 1;
 }

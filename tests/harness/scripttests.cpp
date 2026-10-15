@@ -123,6 +123,24 @@ function longPositions()
     return #expected .. " " .. table.concat(plain, " ")
 end
 
+-- searches that start inside a character start at the next one, a surrogate pair isn't split (also where a
+-- checkpoint of the positions lies between its halves: the 128th character of the long text)
+function insideCharacters()
+    local any = re.compile("(?s).")
+    local results = {}
+    local s = "a\u{1f600}b\u{20ac}c"
+    for init = 2, 8 do
+        local first, last, char = any:find(s, init)
+        results[#results + 1] = first .. "-" .. last .. ":" .. #char
+    end
+    local long = re.text(("x"):rep(127) .. "\u{1f600}y")
+    for init = 128, 132 do
+        local first, last = any:find(long, init)
+        results[#results + 1] = first .. "-" .. last
+    end
+    return table.concat(results, ",")
+end
+
 function captures()
     local a, b = re.compile("(a)|(b)"):match("b")
     local words = {}
@@ -345,6 +363,12 @@ int scriptTests(const QString &server, const QString &sourcesDir)
         check("positions of a long text, rx:matches() gives the matches of rx:all()",
               longPositions && *longPositions == "3 1607-1612nee 1813-1818nee");
         show(longPositions);
+
+        auto inside = callText(*engine, "insideCharacters");
+        check("a search that starts inside a character starts at the next one, surrogate pairs aren't split",
+              inside && *inside == "2-5:4,6-6:1,6-6:1,6-6:1,6-6:1,7-9:3,10-10:1,"
+                                   "128-131,132-132,132-132,132-132,132-132");
+        show(inside);
 
         auto captures = callText(*engine, "captures");
         check("captures, gmatch, replace, init and limit (the text ends before it), named groups",
