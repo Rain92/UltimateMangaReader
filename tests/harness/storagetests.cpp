@@ -546,6 +546,25 @@ int storageTests(const QString &server)
     check(headersJob->text().contains("X-Test: abc") && headersJob->text().contains("Referer: https://fake.example/"),
           "image request has the link headers and the source headers");
 
+    {
+        auto path = info->directory() + "test/ready.jpg";
+        QStringList events;
+        auto job = repository.downloadImage("Fake", ImageLink::fromUrl(server + "/image/100x153"), path);
+        auto handedOut = QObject::connect(&nm, &NetworkManager::downloadedImage,
+                                          [&](const QString &p, QSharedPointer<QImage> img)
+                                          {
+                                              if (p == path)
+                                                  events << QString("image %1 %2")
+                                                                .arg(img && !img->isNull())
+                                                                .arg(job->isCompleted);
+                                          });
+        QObject::connect(job.get(), &DownloadJobBase::completed,
+                         [&]() { events << QString("completed %1").arg(QFile::exists(path)); });
+        job->await(10000);
+        QObject::disconnect(handedOut);
+        check(events == QStringList{"image 1 0", "completed 1"}, "the processed page is handed out before it is saved");
+    }
+
     out << (failures == 0 ? "all ok" : QString::number(failures) + " FAILED") << "\n";
     // --- manga list updates
     {

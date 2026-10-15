@@ -44,11 +44,11 @@ static QSize minDecodeSize(QSize jpegSize, QSize screenSize, int rot90, bool tri
     return rot90 != 0 ? target.transposed() : target;
 }
 
-static QImage finishPage(GreyscaleImage &img, int rot90, const QString &filepath, QSize screenSize,
-                         bool trim, bool manhwaMode, PerfTimer &timer);
+static QImage finishPage(GreyscaleImage &img, int rot90, QSize screenSize, bool trim, bool manhwaMode,
+                         PerfTimer &timer);
 
-QImage processImageN(const QByteArray &buffer, const QString &filepath, QSize screenSize,
-                     DoublePageMode doublePageMode, bool trim, bool manhwaMode, bool *decoded)
+QImage processImageN(const QByteArray &buffer, QSize screenSize, DoublePageMode doublePageMode, bool trim,
+                     bool manhwaMode, bool *decoded)
 {
     PerfTimer timer("processImageN");
 
@@ -100,11 +100,11 @@ QImage processImageN(const QByteArray &buffer, const QString &filepath, QSize sc
     if (decoded)
         *decoded = true;
 
-    return finishPage(img, rot90, filepath, screenSize, trim, manhwaMode, timer);
+    return finishPage(img, rot90, screenSize, trim, manhwaMode, timer);
 }
 
-QImage processStitchedImageN(const QByteArray &top, const QByteArray &bottom, const QString &filepath,
-                             QSize screenSize, DoublePageMode doublePageMode, bool trim, bool manhwaMode)
+QImage processStitchedImageN(const QByteArray &top, const QByteArray &bottom, QSize screenSize,
+                             DoublePageMode doublePageMode, bool trim, bool manhwaMode)
 {
     PerfTimer timer("processStitchedImageN");
 
@@ -127,11 +127,11 @@ QImage processStitchedImageN(const QByteArray &top, const QByteArray &bottom, co
     timer.lap("stitch");
 
     int rot90 = calcRotationInfo(img.size(), screenSize, doublePageMode);
-    return finishPage(img, rot90, filepath, screenSize, trim, manhwaMode, timer);
+    return finishPage(img, rot90, screenSize, trim, manhwaMode, timer);
 }
 
-QImage processDecodedImage(const QImage &decoded, const QString &filepath, QSize screenSize,
-                           DoublePageMode doublePageMode, bool trim, bool manhwaMode)
+QImage processDecodedImage(const QImage &decoded, QSize screenSize, DoublePageMode doublePageMode, bool trim,
+                           bool manhwaMode)
 {
     PerfTimer timer("processDecodedImage");
 
@@ -153,12 +153,12 @@ QImage processDecodedImage(const QImage &decoded, const QString &filepath, QSize
 
     GreyscaleImage img(grey.size(), std::move(packed));
     int rot90 = calcRotationInfo(img.size(), screenSize, doublePageMode);
-    return finishPage(img, rot90, filepath, screenSize, trim, manhwaMode, timer);
+    return finishPage(img, rot90, screenSize, trim, manhwaMode, timer);
 }
 
-// Rotates, trims, rescales and saves a decoded page: the part of the pipeline all decoders share.
-static QImage finishPage(GreyscaleImage &img, int rot90, const QString &filepath, QSize screenSize,
-                         bool trim, bool manhwaMode, PerfTimer &timer)
+// Rotates, trims and rescales a decoded page: the part of the pipeline all decoders share.
+static QImage finishPage(GreyscaleImage &img, int rot90, QSize screenSize, bool trim, bool manhwaMode,
+                         PerfTimer &timer)
 {
     if (rot90 != 0)
     {
@@ -197,15 +197,5 @@ static QImage finishPage(GreyscaleImage &img, int rot90, const QString &filepath
 
     QImage retimg = img.resizeToQImage(rescaleSize);
     timer.lap("resize");
-    if (retimg.isNull())
-        return retimg;
-
-    if (filepath != "")
-    {
-        if (!saveQImageAsJpeg(retimg, filepath))
-            return QImage();
-        timer.lap("save");
-    }
-
     return retimg;
 }

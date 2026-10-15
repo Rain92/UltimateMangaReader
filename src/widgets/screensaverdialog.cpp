@@ -42,7 +42,7 @@ void ScreensaverDialog::showRandomScreensaver()
         QFile file(fp);
         if (file.open(QIODevice::ReadOnly))
         {
-            QImage img = processImageN(file.readAll(), "", this->size(), DoublePageNoRotation, false, false);
+            QImage img = processImageN(file.readAll(), this->size(), DoublePageNoRotation, false, false);
             ui->labelImage->setPixmap(QPixmap::fromImage(img));
         }
         else

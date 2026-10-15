@@ -228,27 +228,17 @@ void MangaReaderWidget::showImage(const QString &path)
     if (perfLoggingEnabled())
         qDebug() << "[perf] show page" << QFileInfo(path).fileName();
 
-    if (QFile::exists(path))
+    // a freshly downloaded page is in the cache while it is saved
+    int i = searchCache(path);
+    if (i != -1)
     {
-        int i = searchCache(path);
-
-        if (i != -1)
-        {
-            imgcache.move(i, 0);
-            ui->mangaImageWidget->setImage(imgcache[0].first);
-        }
-        else
-        {
-            if (takePrefetchedImage(path) || loadImageToCache(path))
-            {
-                i = searchCache(path);
-                ui->mangaImageWidget->setImage(imgcache[i].first);
-            }
-            else
-            {
-                ui->mangaImageWidget->showErrorImage();
-            }
-        }
+        imgcache.move(i, 0);
+        ui->mangaImageWidget->setImage(imgcache[0].first);
+    }
+    else if (QFile::exists(path) && (takePrefetchedImage(path) || loadImageToCache(path)))
+    {
+        i = searchCache(path);
+        ui->mangaImageWidget->setImage(imgcache[i].first);
     }
     else
     {

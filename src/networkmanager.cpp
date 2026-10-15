@@ -270,16 +270,12 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const Imag
                                            settings, ed, appendUrl);
     auto job = startFileDownload(sjob);
 
-    // the processed page goes to the reader's cache, the job is kept until it finished (even if the caller
-    // drops it)
+    // the processed page goes to the reader's cache (before it is saved: the reader can show it meanwhile), the
+    // job is kept until it finished (even if the caller drops it)
     auto keepAlive = QSharedPointer<QSharedPointer<DownloadFileJob>>::create(job);
-    connect(sjob, &DownloadJobBase::completed, this,
-            [keepAlive, sjob, this]()
-            {
-                keepAlive->clear();
-                if (sjob->resultImage)
-                    emit downloadedImage(sjob->filepath, sjob->resultImage);
-            });
+    connect(sjob, &DownloadScaledImageJob::imageReady, this,
+            [sjob, this]() { emit downloadedImage(sjob->filepath, sjob->resultImage); });
+    connect(sjob, &DownloadJobBase::completed, this, [keepAlive]() { keepAlive->clear(); });
     connect(sjob, &DownloadJobBase::downloadError, this,
             [keepAlive, url = image.url, this]()
             {
