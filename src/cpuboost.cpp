@@ -5,8 +5,9 @@
 
 #include "device.h"
 
-// after a release: the page turn, its paint and the start of its preloads
-static const int afterReleaseMs = 500;
+// after a release: the page turn (~40 ms boosted) and its paint, the decode of the next page goes on meanwhile; the
+// governor raises the clock itself for the rest (the high clock costs ~22 mW more while idle)
+static const int afterReleaseMs = 200;
 // while pressed, in case the release goes elsewhere (e.g. a popup grabbed it)
 static const int whilePressedMs = 3000;
 
