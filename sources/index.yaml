@@ -3,7 +3,7 @@
 # the one of the app (LuaSource::majorVersion).
 libraries:
   - id: common
-    version: 1.3
+    version: 1.4
 sources:
   - id: mangakakalot
     name: Mangakakalot

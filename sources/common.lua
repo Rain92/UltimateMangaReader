@@ -467,7 +467,8 @@ end
 
 -- The items of an item list (each, within, fields) in the page: a table per match of each with its fields,
 -- searched in its text (from its match to the next one). nil if the start of within isn't there. progress(done,
--- count), optional, is called now and then (e.g. update.progress, which lets the GUI go on in a long list).
+-- count), optional, is called now and then with the bytes of the region done and all of them (e.g. for
+-- update.progress, which lets the GUI go on in a long list).
 local function findItems(spec, page, progress)
     local first, limit = region(spec.within, page)
     if not first then
@@ -478,11 +479,14 @@ local function findItems(spec, page, progress)
         needsText = needsText or field.lua ~= nil
     end
 
-    local matches = spec.each:all(page.subject, first, limit)
+    -- one match after the other (a long list has tens of thousands), the next one is where the item ends
+    local nextMatch = spec.each:matches(page.subject, first, limit)
+    local size = (limit or #page.body + 1) - first
     local items = {}
-    for i, match in ipairs(matches) do
-        local nextMatch = matches[i + 1]
-        local itemLimit = nextMatch and nextMatch.first or limit
+    local match = nextMatch()
+    while match do
+        local following = nextMatch()
+        local itemLimit = following and following.first or limit
         local item = {}
         if needsText then
             item.text = page.body:sub(match.first, itemLimit and itemLimit - 1 or -1)
@@ -491,10 +495,11 @@ local function findItems(spec, page, progress)
             item[name] = match[name]
             item[name] = fieldValue(spec, name, item, page, match.first, itemLimit)
         end
-        items[i] = item
-        if progress and i % 500 == 0 then
-            progress(i, #matches)
+        items[#items + 1] = item
+        if progress and #items % 500 == 0 then
+            progress(match.first - first, size)
         end
+        match = following
     end
     return items
 end

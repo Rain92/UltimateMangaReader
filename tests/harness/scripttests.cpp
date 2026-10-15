@@ -73,6 +73,56 @@ function positions()
                          emoji}, ",")
 end
 
+function longPositions()
+    -- many checkpoints of the positions (every 128 characters), characters of 1 to 4 bytes
+    local s = ("a\u{e4}\u{20ac}\u{1f600}"):rep(100) .. "needle" .. ("\u{fc}"):rep(300) .. "needle" ..
+              ("x\u{20ac}"):rep(50) .. "needle" .. ("\u{1f600}"):rep(70)
+    local rx = re.compile("(?<part>nee)dle")
+    local expected = {}
+    local init = 1
+    while true do
+        local first, last = string.find(s, "needle", init, true)
+        if not first then
+            break
+        end
+        expected[#expected + 1] = {first, last}
+        init = last + 1
+    end
+    -- in a fresh text from the end to the start (the positions counted only as far as needed), then again
+    for _, subject in ipairs({re.text(s), s}) do
+        for round = 1, 2 do
+            for i = #expected, 1, -1 do
+                local first, last = rx:find(subject, expected[i][1])
+                if first ~= expected[i][1] or last ~= expected[i][2] then
+                    return ("find %d: %s %s"):format(i, first, last)
+                end
+            end
+        end
+    end
+    -- the tables of rx:matches() are the ones of rx:all(), also with init and limit
+    local subject = re.text(s)
+    for _, args in ipairs({{1}, {expected[1][1] + 1}, {1, expected[3][1] + 3}, {#s + 1}}) do
+        local all = rx:all(subject, table.unpack(args))
+        local n = 0
+        for match in rx:matches(subject, table.unpack(args)) do
+            n = n + 1
+            local other = all[n]
+            if not other or match.first ~= other.first or match.last ~= other.last or match[0] ~= other[0] or
+                match[1] ~= other[1] or match.part ~= other.part then
+                return "matches " .. table.concat(args, ",") .. ": " .. n
+            end
+        end
+        if n ~= #all then
+            return "matches " .. table.concat(args, ",") .. ": " .. n .. " of " .. #all
+        end
+    end
+    local plain = {}
+    for match in rx:matches(s, expected[2][1]) do
+        plain[#plain + 1] = match.first .. "-" .. match.last .. match.part
+    end
+    return #expected .. " " .. table.concat(plain, " ")
+end
+
 function captures()
     local a, b = re.compile("(a)|(b)"):match("b")
     local words = {}
@@ -290,6 +340,11 @@ int scriptTests(const QString &server, const QString &sourcesDir)
         check("regex positions are those of the UTF-8 bytes",
               positions && *positions == "8,10,19,21,8,19,2,19,21,abc,1,23,25,5");
         show(positions);
+
+        auto longPositions = callText(*engine, "longPositions");
+        check("positions of a long text, rx:matches() gives the matches of rx:all()",
+              longPositions && *longPositions == "3 1607-1612nee 1813-1818nee");
+        show(longPositions);
 
         auto captures = callText(*engine, "captures");
         check("captures, gmatch, replace, init and limit (the text ends before it), named groups",

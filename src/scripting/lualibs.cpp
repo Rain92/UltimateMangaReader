@@ -108,8 +108,9 @@ QString stringField(lua_State *L, int index, const char *name)
 
 // --- re
 
-// The positions of a QString and those of its UTF-8 encoding (what the scripts see), from checkpoints.
-// (Bytes that weren't UTF-8 became U+FFFD, they shift the positions.)
+// The positions of a QString and those of its UTF-8 encoding (what the scripts see), from checkpoints. They are
+// counted up to the positions that are asked for (the searches of a page usually go from its start to its end, and
+// often stop before it). (Bytes that weren't UTF-8 became U+FFFD, they shift the positions.)
 class PositionMap
 {
 public:
@@ -127,8 +128,8 @@ public:
     {
         if (ascii)
             return position;
-        index();
         position = qBound(0, position, text->size());
+        indexTo(position / interval);
         qsizetype pos16 = position / interval * interval, pos8 = checkpoints[position / interval];
         auto data = text->utf16();
         while (pos16 < position)
@@ -141,7 +142,10 @@ public:
     {
         if (ascii)
             return position;
-        index();
+        // the checkpoints up to the first one behind position (or all of them)
+        indexTo(0);
+        while (checkpoints.last() <= position && checkpoints.size() <= text->size() / interval)
+            indexTo(checkpoints.size() + 7);
         // the last checkpoint at or before position
         auto checkpoint = std::upper_bound(checkpoints.cbegin(), checkpoints.cend(), position) - 1;
         qsizetype pos16 = (checkpoint - checkpoints.cbegin()) * interval, pos8 = *checkpoint;
@@ -156,32 +160,27 @@ private:
 
     const QString *text;
     bool ascii;
-    // the UTF-8 positions of every interval-th character
+    // the UTF-8 positions of every interval-th character, from the start up to the ones that were needed
     QList<qsizetype> checkpoints;
 
     // a surrogate pair takes 4 bytes (without branches, so the loops vectorize)
     static int utf8Length(char16_t c) { return 1 + (c >= 0x80) + (c >= 0x800) - ((c & 0xf800) == 0xd800); }
 
-    void index()
+    // the checkpoints up to the one of block (at most the last one, the one at or before the end)
+    void indexTo(qsizetype block)
     {
-        if (!checkpoints.isEmpty())
-            return;
+        if (checkpoints.isEmpty())
+            checkpoints.append(0);
+        block = qMin(block, text->size() / interval);
         auto data = text->utf16();
-        qsizetype size = text->size();
-        checkpoints.resize(size / interval + 1);
-        qsizetype pos8 = 0;
-        for (qsizetype block = 0; block * interval < size; block++)
+        while (checkpoints.size() <= block)
         {
-            checkpoints[block] = pos8;
-            qsizetype end = qMin(size, (block + 1) * interval);
+            qsizetype from = (checkpoints.size() - 1) * interval;
             int length = 0;
-            for (qsizetype pos16 = block * interval; pos16 < end; pos16++)
+            for (qsizetype pos16 = from; pos16 < from + interval; pos16++)
                 length += utf8Length(data[pos16]);
-            pos8 += length;
+            checkpoints.append(checkpoints.last() + length);
         }
-        // the end, when it's at a checkpoint
-        if (size % interval == 0)
-            checkpoints.last() = pos8;
     }
 };
 
@@ -215,7 +214,7 @@ class Subject
 public:
     Subject(lua_State *L, int index)
     {
-        if (auto text = static_cast<Text *>(luaL_testudata(L, index, textType)))
+        if ((text = static_cast<Text *>(luaL_testudata(L, index, textType))))
         {
             string = &text->text;
             map = &text->map;
@@ -231,6 +230,8 @@ public:
 
     const QString *string;
     PositionMap *map;
+    // the re.text() it is, null for a string
+    Text *text = nullptr;
 
 private:
     QString owned;
@@ -312,8 +313,30 @@ static int regexFind(lua_State *L)
     return 2 + pushCaptures(L, match);
 }
 
-// rx:all(s [, init [, limit]]): all matches, each a table with the groups at 1.. (the whole match at 0), the named
-// groups by their names, and first, last (its bytes)
+// A match as a table: the groups at 1.. (the whole match at 0), the named groups by their names (names: by the
+// number of the group), and first, last (its bytes).
+static void pushMatch(lua_State *L, const QRegularExpressionMatch &match, const QStringList &names, PositionMap *map)
+{
+    int groups = match.regularExpression().captureCount();
+    luaL_checkstack(L, 3, "match");
+    lua_createtable(L, groups + 1, 2);
+    for (int i = 0; i <= groups; i++)
+    {
+        push(L, match.captured(i));
+        if (i > 0 && !names[i].isEmpty())
+        {
+            lua_pushvalue(L, -1);
+            lua_setfield(L, -3, names[i].toUtf8().constData());
+        }
+        lua_rawseti(L, -2, i);
+    }
+    lua_pushinteger(L, map->toUtf8(match.capturedStart()) + 1);
+    lua_setfield(L, -2, "first");
+    lua_pushinteger(L, map->toUtf8(match.capturedEnd()));
+    lua_setfield(L, -2, "last");
+}
+
+// rx:all(s [, init [, limit]]): all matches, each a table (see pushMatch())
 static int regexAll(lua_State *L)
 {
     auto regex = checkRegex(L);
@@ -324,29 +347,61 @@ static int regexAll(lua_State *L)
     if (start < 0 || start > view.size())
         return 1;
 
-    int groups = regex->rx.captureCount();
     lua_Integer n = 0;
     auto it = regex->rx.globalMatchView(view, start);
     while (it.hasNext())
     {
-        auto match = it.next();
-        lua_createtable(L, groups + 1, 2);
-        for (int i = 0; i <= groups; i++)
-        {
-            push(L, match.captured(i));
-            if (i > 0 && !regex->names[i].isEmpty())
-            {
-                lua_pushvalue(L, -1);
-                lua_setfield(L, -3, regex->names[i].toUtf8().constData());
-            }
-            lua_rawseti(L, -2, i);
-        }
-        lua_pushinteger(L, subject.map->toUtf8(match.capturedStart()) + 1);
-        lua_setfield(L, -2, "first");
-        lua_pushinteger(L, subject.map->toUtf8(match.capturedEnd()));
-        lua_setfield(L, -2, "last");
+        pushMatch(L, it.next(), regex->names, subject.map);
         lua_rawseti(L, -2, ++n);
     }
+    return 1;
+}
+
+// the state of rx:matches(): the subject, its positions and the iterator over it
+struct Matches
+{
+    QString subject;
+    // of a string (a re.text() has its own)
+    PositionMap ownedMap;
+    PositionMap *map;
+    QStringList names;
+    QRegularExpressionMatchIterator it;
+};
+static const char *matchesType = "umr.Matches";
+
+static int matchesNext(lua_State *L)
+{
+    auto state = static_cast<Matches *>(lua_touserdata(L, lua_upvalueindex(1)));
+    if (!state->it.hasNext())
+        return 0;
+    pushMatch(L, state->it.next(), state->names, state->map);
+    return 1;
+}
+
+// rx:matches(s [, init [, limit]]): an iterator over the matches, the tables of rx:all() one at a time (e.g. for a
+// long list, whose tables needn't be there all at once)
+static int regexMatches(lua_State *L)
+{
+    auto regex = checkRegex(L);
+    Subject subject(L, 2);
+    qsizetype start = startPosition(L, 3, subject);
+    auto size = limitedView(L, 4, subject).size();
+
+    auto state = static_cast<Matches *>(lua_newuserdatauv(L, sizeof(Matches), 0));
+    new (state) Matches{*subject.string, PositionMap(), nullptr, regex->names, {}};
+    luaL_setmetatable(L, matchesType);
+    if (subject.text)
+        state->map = &subject.text->map;
+    else
+    {
+        state->ownedMap.reset(&state->subject, qsizetype(lua_rawlen(L, 2)));
+        state->map = &state->ownedMap;
+    }
+    if (start >= 0 && start <= size)
+        state->it = regex->rx.globalMatchView(QStringView(state->subject).left(size), start);
+    // a re.text() stays while the iterator needs its positions
+    lua_pushvalue(L, 2);
+    lua_pushcclosure(L, matchesNext, 2);
     return 1;
 }
 
@@ -459,9 +514,9 @@ static void openRe(lua_State *L)
     luaL_newmetatable(L, regexType);
     lua_pushcfunction(L, collect<Regex>);
     lua_setfield(L, -2, "__gc");
-    static const luaL_Reg regexMethods[] = {{"match", regexMatch}, {"find", regexFind},     {"all", regexAll},
-                                            {"gmatch", regexGmatch}, {"replace", regexReplace}, {"groups", regexGroups},
-                                            {nullptr, nullptr}};
+    static const luaL_Reg regexMethods[] = {
+        {"match", regexMatch},   {"find", regexFind},       {"all", regexAll},       {"matches", regexMatches},
+        {"gmatch", regexGmatch}, {"replace", regexReplace}, {"groups", regexGroups}, {nullptr, nullptr}};
     luaL_newlib(L, regexMethods);
     lua_setfield(L, -2, "__index");
     lua_pop(L, 1);
@@ -473,6 +528,11 @@ static void openRe(lua_State *L)
 
     luaL_newmetatable(L, globalMatchType);
     lua_pushcfunction(L, collect<GlobalMatch>);
+    lua_setfield(L, -2, "__gc");
+    lua_pop(L, 1);
+
+    luaL_newmetatable(L, matchesType);
+    lua_pushcfunction(L, collect<Matches>);
     lua_setfield(L, -2, "__gc");
     lua_pop(L, 1);
 
