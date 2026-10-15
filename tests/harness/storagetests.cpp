@@ -47,7 +47,9 @@ public:
     Task<Result<MangaDetails>> fetchMangaInfo(QString, MangaChapterCollection) override
     {
         infoCalls++;
-        auto job = download(server + infoPath);
+        DownloadRequest request;
+        request.url = server + infoPath;
+        auto job = download(request);
         if (!co_await job)
             co_return Err(job->error);
         if (!nextError.message.isEmpty())
@@ -175,13 +177,15 @@ int storageTests(const QString &server)
         SourceListModel selection(core.sources, SourceListModel::SelectSources);
         int resets = 0;
         QObject::connect(&selection, &QAbstractItemModel::modelReset, [&]() { resets++; });
+        // (the order of the index)
+        int town = int(core.sources->names().indexOf("MangaTown"));
         check(all.rowCount() == 6 && !all.isChecked("MangaTown") && all.checkedNames().size() == 5 &&
-                  all.index(2).data(Qt::CheckStateRole).toInt() == Qt::Unchecked &&
-                  all.index(2).data().toString() == "MangaTown",
+                  all.index(town).data(Qt::CheckStateRole).toInt() == Qt::Unchecked &&
+                  all.index(town).data().toString() == "MangaTown",
               "all sources, checked are the enabled ones");
         check(selection.rowCount() == 5 && selection.checkedNames() == core.sources->enabledNames(),
               "the enabled sources, all selected");
-        all.setData(all.index(2), Qt::Checked, Qt::CheckStateRole);
+        all.setData(all.index(town), Qt::Checked, Qt::CheckStateRole);
         check(core.sources->isEnabled("MangaTown") && changes == 2 && resets == 1 && selection.rowCount() == 6 &&
                   selection.isChecked("MangaTown"),
               "a check enables the source, the other list follows");

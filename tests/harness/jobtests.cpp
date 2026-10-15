@@ -253,13 +253,6 @@ int jobTests(NetworkManager &nm, const QString &base)
         r.maxBytes = 4096;
         auto job = nm.download(r);
         check("maxBytes: the start of the body", job->await() && job->buffer.size() == 4096);
-
-        auto sizes = nm.probeImageSizes({base + "/image/100x150", base + "/image/40x30", base + "/status/404",
-                                         base + "/delay/2"},
-                                        500, nullptr)
-                         .wait();
-        check("image sizes probed", sizes.sizes == QList<QSize>{{100, 150}, {40, 30}, {}, {}} &&
-                                        sizes.timedOut == QList<int>{3});
     }
 
     // --- Task

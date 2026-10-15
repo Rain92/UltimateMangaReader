@@ -3,18 +3,12 @@
 #include <QDir>
 #include <QTemporaryDir>
 
-#include "comick.h"
 #include "fixtures.h"
 #include "harness.h"
 #include "mangachapterdownloadmanager.h"
-#include "mangadex.h"
-#include "mangahere.h"
 #include "mangainfo.h"
-#include "mangakakalot.h"
-#include "mangaplus.h"
 #include "mangarepository.h"
 #include "mangasourcebase.h"
-#include "mangatown.h"
 #include "networkmanager.h"
 #include "settings.h"
 #include "sourceregistry.h"
@@ -25,26 +19,7 @@ QTextStream out(stdout);
 QList<QSharedPointer<MangaSourceBase>> harnessSources(NetworkManager *networkManager, const QString &sourcesDir,
                                                       QStringList *errors)
 {
-    QList<QSharedPointer<MangaSourceBase>> sources = {
-        QSharedPointer<MangaSourceBase>(new MangaDex(networkManager)),
-        QSharedPointer<MangaSourceBase>(new Mangakakalot(networkManager)),
-        QSharedPointer<MangaSourceBase>(new MangaTown(networkManager)),
-        QSharedPointer<MangaSourceBase>(new MangaHere(networkManager)),
-        QSharedPointer<MangaSourceBase>(new Comick(networkManager)),
-        QSharedPointer<MangaSourceBase>(new MangaPlus(networkManager))};
-    if (sourcesDir.isEmpty())
-        return sources;
-
-    for (const auto &script : SourceRegistry::loadDirectory(networkManager, sourcesDir, errors))
-    {
-        auto same = std::find_if(sources.begin(), sources.end(),
-                                 [&script](const auto &source) { return source->name == script->name; });
-        if (same != sources.end())
-            *same = script;
-        else
-            sources.append(script);
-    }
-    return sources;
+    return SourceRegistry::loadDirectory(networkManager, sourcesDir, errors);
 }
 
 static int usage()
@@ -59,13 +34,12 @@ static int usage()
            "  listflow <source>               list updates (and a cancelled one) through the core like the gui\n"
            "  jobs <port>                     the download jobs, against testserver.py\n"
            "  storage <port>                  the storage of the app, against testserver.py\n"
-           "  scripts <port>                  the scripts of sources (Lua), against testserver.py (with --sources)\n"
+           "  scripts <port>                  the scripts of sources (Lua), against testserver.py\n"
            "  index <dir> [<base dir>]        checks the index of a directory of sources (index.yaml), with a\n"
            "                                  base (e.g. the published sources) that changed entries are newer\n"
            "--record writes the responses of the sites into the directory, --replay answers the requests from\n"
-           "there. The cache is a temporary directory unless --cache is given. The sources are the C++ ones\n"
-           "(the reference), --sources adds the scripts of a directory of sources (sources/, they replace\n"
-           "the C++ ones of the same name).\n";
+           "there. The cache is a temporary directory unless --cache is given. The sources are the ones of\n"
+           "sources/ of the repository unless --sources names another directory of sources.\n";
     return 2;
 }
 
@@ -132,7 +106,7 @@ int main(int argc, char **argv)
     QApplication app(argc, argv);
 
     QStringList args = app.arguments().mid(1);
-    QString cacheDir, fixturesDir, sourcesDir;
+    QString cacheDir, fixturesDir, sourcesDir = HARNESS_SOURCES_DIR;
     auto mode = Fixtures::Mode::Live;
     while (args.size() >= 2 && args[0].startsWith("--"))
     {

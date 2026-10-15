@@ -5,7 +5,7 @@
   artist: 
   status: Ongoing
   year: 
-  genres: Action Comedy Fantasy Supernatural Seinen Sci-fi
+  genres: Action, Comedy, Fantasy, Supernatural, Seinen, Sci-fi
   summary: Follows the life of an average hero who manages to win all battles with only one punch. This ability...
   coverUrl: https://fmcdn.mangahere.com/store/manga/11912/cover.jpg?token=e8947edaf269c7344337b422190eb36d0e592d52&ttl=1792011600&v=1790567127
   chapters: 419
@@ -47,7 +47,7 @@
   artist: 
   status: Ongoing
   year: 
-  genres: Action Fantasy Seinen Ecchi Mature
+  genres: Action, Fantasy, Seinen, Ecchi, Mature
   summary: A young priestess has formed her first adventuring party, but almost immediately they find themselve...
   coverUrl: https://fmcdn.mangahere.com/store/manga/22705/cover.jpg?token=8c2320954c49e683fb7b88b4f76872fffccfce10&ttl=1792011600&v=1788005743
   chapters: 118
@@ -89,7 +89,7 @@
   artist: 
   status: Ongoing
   year: 
-  genres: Action Adventure Comedy Fantasy Romance Drama Seinen Harem Mature
+  genres: Action, Adventure, Comedy, Fantasy, Romance, Drama, Seinen, Harem, Mature
   summary: One day at school, Youta sees someone strange entering his school. Out of nowhere this being appears...
   coverUrl: https://fmcdn.mangahere.com/store/manga/26739/cover.jpg?token=f5f42df912ca8c9fbcfdf54039953a1648715ce1&ttl=1792011600&v=1783970731
   chapters: 328

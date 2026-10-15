@@ -11,4 +11,4 @@
   39937: 90 Days For The Delicacy | https://www.mangahere.cc/manga/90_days_for_the_delicacy/ | rank 39937
   39938: 99 Captain | https://www.mangahere.cc/manga/99_captain/ | rank 39938
   39939: 9 Dan Girl | https://www.mangahere.cc/manga/9_dan_girl/ | rank 39939
-  hash: 1b615e88f636a643
+  hash: e76d01b8a9769344

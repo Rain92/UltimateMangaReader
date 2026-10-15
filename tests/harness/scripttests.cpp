@@ -534,7 +534,7 @@ int scriptTests(const QString &server, const QString &sourcesDir)
 
     if (sourcesDir.isEmpty())
     {
-        check("the definitions need --sources (for common.lua)", false);
+        check("the definitions need a directory of sources (for common.lua)", false);
         return failures;
     }
     {
@@ -948,15 +948,11 @@ assert(common.title(" A\tB ") == "A B", "title without html")
         check("versions are compared number by number",
               version("1.10") > version("1.9") && version("2.0") > version("1.10") && version("1.0") == version("1.0"));
 
-        QStringList errors, referenceNames;
-        auto sources = harnessSources(&nm, path, &errors);
-        for (const auto &reference : harnessSources(&nm, {}))
-            referenceNames.append(reference->name);
-        SourceRegistry registry(&settings, sources);
-        check("a script replaces the C++ source of its name, in its place",
-              dynamic_cast<LuaSource *>(registry.source("MangaTown").get()) != nullptr &&
-                  registry.names().indexOf("MangaTown") == referenceNames.indexOf("MangaTown"));
-        check("the other scripts are added in the order of the index", registry.names().mid(registry.names().size() - 2) == QStringList({"Other", "Uses"}));
+        QStringList errors;
+        SourceRegistry registry(&settings, SourceRegistry::loadDirectory(&nm, path, &errors));
+        check("the sources are the ones of the directory, in the order of the index",
+              registry.names() == QStringList({"MangaTown", "Other", "Uses"}) &&
+                  dynamic_cast<LuaSource *>(registry.source("MangaTown").get()) != nullptr);
         check("the ones that can't be loaded or are for another version of the app are left out",
               errors.size() == 1 && !registry.names().contains("Broken") && !registry.names().contains("Future"));
         check("the logo of a source is its png", registry.source("Other")->iconPath == path + "/other.png");

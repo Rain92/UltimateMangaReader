@@ -567,7 +567,7 @@ static int textUpper(lua_State *L)
     return 1;
 }
 
-// like MangaSourceBase::htmlToPlainText()
+// the text of html, like a QTextDocument shows it (entities decoded, tags gone, paragraphs on lines)
 static QString htmlToPlainText(const QString &html)
 {
     // never destroyed: that would be after the application, which it needs
@@ -583,7 +583,7 @@ static int htmlText(lua_State *L)
     return 1;
 }
 
-// like MangaSourceBase::genresFromHtml()
+// html.genres(html): the genres in the text of html, separated by spaces (not by commas or slashes)
 static int htmlGenres(lua_State *L)
 {
     luaL_checkstring(L, 1);

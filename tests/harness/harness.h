@@ -12,8 +12,8 @@ struct MangaList;
 // the output that is compared (the log of the app goes to stderr)
 extern QTextStream out;
 
-// The C++ sources (the reference, they aren't in the app), with the scripts of the directory of sources (if any)
-// instead of the ones of the same name. The scripts that can't be loaded go to errors.
+// The sources of the directory of sources (see SourceRegistry::loadDirectory()), the ones that can't be loaded go to
+// errors.
 QList<QSharedPointer<MangaSourceBase>> harnessSources(NetworkManager *networkManager, const QString &sourcesDir,
                                                       QStringList *errors = nullptr);
 

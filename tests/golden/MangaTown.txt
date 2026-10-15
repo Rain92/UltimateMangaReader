@@ -5,7 +5,7 @@
   artist: Mad Snail
   status: Ongoing
   year: 
-  genres: Action Adventure Comedy Drama Fantasy Harem Romance
+  genres: Action, Adventure, Comedy, Drama, Fantasy, Harem, Romance
   summary: In his past life, although too weak to protect his home when it counted, out of grave determination ...
   coverUrl: https://fmcdn.mangahere.com/store/manga/18607/ocover.jpg?token=4eea2cf9634a1e0332844cbe0d4a07501f8596a8&ttl=1792011600&v=1639127944
   chapters: 979
@@ -41,7 +41,7 @@
   artist: ISAYAMA Hajime
   status: Completed
   year: 
-  genres: Action Drama Fantasy Horror Mature Mystery Supernatural Tragedy
+  genres: Action, Drama, Fantasy, Horror, Mature, Mystery, Supernatural, Tragedy
   summary: Several hundred years ago, humans were nearly exterminated by giants. Giants are typically several s...
   coverUrl: https://fmcdn.mangahere.com/store/manga/8886/ocover.jpg?token=1dd760ee21527b7b7bb5c497d94aa9d6eaf0c3c0&ttl=1792011600&v=1558497565
   chapters: 145
@@ -83,7 +83,7 @@
   artist: AYA Megumu
   status: Ongoing
   year: 
-  genres: Adventure Fantasy Harem
+  genres: Adventure, Fantasy, Harem
   summary: 29-year-old programmer Suzuki Ichirou finds himself transported into a fantasy RPG. Within the game,...
   coverUrl: https://fmcdn.mangahere.com/store/manga/18443/ocover.jpg?token=ee231043015991c619b4caf69877ad6d3c5cdedd&ttl=1792011600&v=1646961357
   chapters: 157

@@ -1,8 +1,5 @@
 #pragma once
 
-#include <QRegularExpression>
-#include <QTextDocument>
-
 #include "downloadqueue.h"
 #include "imagelink.h"
 #include "mangachaptercollection.h"
@@ -95,19 +92,4 @@ protected:
 
     // The downloads of the source, with its headers (before the request's own ones).
     QSharedPointer<DownloadBufferJob> download(DownloadRequest request);
-    QSharedPointer<DownloadBufferJob> download(const QString &url, int timeout = 6000,
-                                               int maxRetries = DownloadRequest().maxRetries);
-    Task<NetworkManager::ImageSizes> probeImageSizes(QStringList urls, int timeout);
-    // for a DownloadQueue
-    std::function<HttpHeaders(const QString &)> requestHeadersFunction() const;
-
-    QString htmlToPlainText(const QString &str);
-
-    // The first group of the first match of rx in text, empty without a match (or for an empty pattern).
-    static QString capture(const QRegularExpression &rx, const QString &text);
-    // Genres from the text of a page, separated by spaces.
-    QString genresFromHtml(const QString &html);
-
-private:
-    QTextDocument htmlConverter;
 };

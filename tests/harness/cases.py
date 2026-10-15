@@ -2,8 +2,8 @@
 
     python3 -I cases.py <Comick|MangaDex|MangaPlus> <fixtures dir> <picks file>
 
-The C++ source gives the golden output with them, the script of the source has to give the same
-(<Source>-cases-lua). The data is made up, only its form is the one of the sites.
+Their golden output was written by the C++ sources that the scripts replaced (tests/run.sh record <Source>-cases
+writes it again). The data is made up, only its form is the one of the sites.
 """
 import hashlib
 import json

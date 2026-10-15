@@ -1,6 +1,6 @@
 # The core of the app: everything but the widgets, main.cpp and the device of the platform (device_*.cpp).
-# Shared by the app and the test harness (tests/harness). The sources are scripts (sources/); the C++ sources in
-# src/mangasources are only built into the harness, as the reference for the scripts.
+# Shared by the app and the test harness (tests/harness). The sources are scripts (sources/), run by
+# src/mangasources/luasource.*.
 
 INCLUDEPATH += $$PWD $$PWD/mangasources $$PWD/scripting $$PWD/..
 

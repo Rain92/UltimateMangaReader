@@ -14,25 +14,6 @@
 
 #include "staticsettings.h"
 
-QList<QRegularExpressionMatch> getAllRxMatches(const QRegularExpression& rx, const QString& text, int spos,
-                                               int epos)
-{
-    QList<QRegularExpressionMatch> rxlist;
-
-    QRegularExpressionMatchIterator rxit = rx.globalMatch(text, spos);
-
-    while (rxit.hasNext())
-    {
-        auto rxmatch = rxit.next();
-        if (epos >= 0 && rxmatch.capturedStart() >= epos)
-            break;
-
-        rxlist.append(rxmatch);
-    }
-
-    return rxlist;
-}
-
 QString urlHash(const QString& url, int length)
 {
     return QCryptographicHash::hash(url.toUtf8(), QCryptographicHash::Sha1).toHex().left(length);
@@ -228,15 +209,4 @@ void decryptXorInplace(QByteArray& data, const QByteArray& key)
             p = 0;
     }
 #endif
-}
-
-QByteArray hexstr2array(const QString& str)
-{
-    QByteArray key;
-    for (int i = 0; i < str.length(); i += 2)
-    {
-        auto sub = str.mid(i, 2);
-        key.append(sub.toUInt(nullptr, 16));
-    }
-    return key;
 }

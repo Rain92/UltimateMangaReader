@@ -357,38 +357,3 @@ void NetworkManager::ensureCertificates()
 
     QSslConfiguration::setDefaultConfiguration(sslConfig);
 }
-
-Task<NetworkManager::ImageSizes> NetworkManager::probeImageSizes(
-    QStringList urls, int timeout, std::function<HttpHeaders(const QString &)> headersFor)
-{
-    // a few KB hold the size of any WebP, PNG and of JPEGs without large metadata
-    const int headerBytes = 4096;
-
-    QList<QSharedPointer<DownloadBufferJob>> jobs;
-    for (const auto &url : std::as_const(urls))
-    {
-        DownloadRequest request;
-        request.url = url;
-        request.headers = headersFor ? headersFor(fixUrl(url)) : HttpHeaders();
-        request.headers.append({"Range", "bytes=0-" + QByteArray::number(headerBytes - 1)});
-        request.timeout = timeout;
-        request.maxRetries = 0;
-        // servers that ignore the range send everything, the start is enough
-        request.maxBytes = headerBytes;
-        jobs.append(download(request));
-    }
-
-    ImageSizes result;
-    for (int i = 0; i < jobs.size(); i++)
-    {
-        QSize size;
-        if (!co_await jobs[i] || !readImageSize(jobs[i]->buffer, size))
-            size = QSize();
-        result.sizes.append(size);
-        if (jobs[i]->error.code == Error::Timeout)
-            result.timedOut.append(i);
-    }
-
-    emit activity();
-    co_return result;
-}

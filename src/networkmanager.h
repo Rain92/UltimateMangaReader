@@ -101,17 +101,6 @@ public:
     // A download into the file is running (or waiting for a retry).
     bool isDownloading(const QString &localPath) const;
 
-    struct ImageSizes
-    {
-        // by the index of the url, invalid for the images that couldn't be loaded or read
-        QList<QSize> sizes;
-        // the indices of the urls that didn't answer in time (the other failures are the servers')
-        QList<int> timedOut;
-    };
-    // Reads the sizes of the images from the start of their files, in parallel, for at most timeout ms.
-    // headersFor: the headers of the requests.
-    Task<ImageSizes> probeImageSizes(QStringList urls, int timeout,
-                                     std::function<HttpHeaders(const QString &)> headersFor);
 
     // written on the WiFi thread
     std::atomic<bool> connected;

@@ -1,5 +1,5 @@
-// The time of what reading asks of a source, to compare sources (e.g. a script and the built-in source of the same
-// site). Meant for --replay: the responses come without waiting, so the times are those of the app.
+// The time of what reading asks of a source, to compare sources (e.g. two versions of a script, see --sources).
+// Meant for --replay: the responses come without waiting, so the times are those of the app.
 #include <QDir>
 #include <QElapsedTimer>
 #include <QFile>
