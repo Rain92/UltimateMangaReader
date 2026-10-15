@@ -5,8 +5,9 @@ logo (`<id>.png`). `common.lua` is shared: it runs the definitions and has helpe
 lists the sources and the libraries with their versions; the app compares it with the index of the repository to
 find updates (see "The index" below).
 
-After a change, count up the minor version of the source in the index, then check the index (all sources load)
-and compare with the C++ source (the reference, see `tests/README.md`):
+After a change, count up the minor version of the source in the index, then check the index (all sources load,
+and the entries that differ from the ones on `master` have newer versions there) and compare with the C++ source
+(the reference, see `tests/README.md`):
 
     tests/run.sh index MangaTown-lua
 

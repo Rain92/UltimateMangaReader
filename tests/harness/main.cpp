@@ -60,7 +60,8 @@ static int usage()
            "  jobs <port>                     the download jobs, against testserver.py\n"
            "  storage <port>                  the storage of the app, against testserver.py\n"
            "  scripts <port>                  the scripts of sources (Lua), against testserver.py (with --sources)\n"
-           "  index <dir>                     checks the index of a directory of sources (index.yaml)\n"
+           "  index <dir> [<base dir>]        checks the index of a directory of sources (index.yaml), with a\n"
+           "                                  base (e.g. the published sources) that changed entries are newer\n"
            "--record writes the responses of the sites into the directory, --replay answers the requests from\n"
            "there. The cache is a temporary directory unless --cache is given. The sources are the C++ ones\n"
            "(the reference), --sources adds the scripts of a directory of sources (sources/, they replace\n"
@@ -175,10 +176,10 @@ int main(int argc, char **argv)
     {
         failures = listFlowTests(arg(0));
     }
-    else if (command == "index" && args.size() == 1)
+    else if (command == "index" && (args.size() == 1 || args.size() == 2))
     {
         NetworkManager nm;
-        failures = checkIndex(&nm, QDir(arg(0)).absolutePath());
+        failures = checkIndex(&nm, QDir(arg(0)).absolutePath(), args.size() == 2 ? QDir(arg(1)).absolutePath() : "");
     }
     else if (command == "jobs" || command == "storage" || command == "scripts")
     {

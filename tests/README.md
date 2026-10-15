@@ -7,7 +7,7 @@ A headless harness (`harness/`) that runs the core of the app on the desktop:
 - **jobs:** the contract of the download jobs and of the coroutines that wait for them (`src/task.h`), against a local test server (`harness/testserver.py`).
 - **storage:** the cache layout, mangas and chapters by URL, the reading progress, the favorites, the sources (enabled, current, the list model of the dialogs), the manga lists and their updates, and the repository (page images, joined updates, failed updates), against the same server and a fake source.
 - **scripts:** the Lua engine (the sandbox, the limits on memory and on running without waiting, errors), its libraries (regular expressions with UTF-8 positions, text, html, json, protobuf), the sources of scripts (http, sleep, the conversions of what they return, the state of a list update for a retry, loading, the index and the registry) and the definitions (`common.lua`: every section against a small site of the test server, and the checks when a definition is loaded), against the same server.
-- **index:** `../sources/index.yaml` lists all files of `../sources/`, and its sources load with the names it has for them.
+- **index:** `../sources/index.yaml` lists all files of `../sources/`, and its sources load with the names it has for them. An entry whose files differ from the ones on `master` (the published sources, `SOURCES_BASE=<git ref>` for another base) must have a newer version than there.
 
 ```
 tests/run.sh                    # all tests
@@ -44,12 +44,12 @@ harness [--cache <dir>] [--record <dir> | --replay <dir>] [--sources <dir>] <com
   flow <source> <title> <url>      # reading, favorites and a chapter download through the core
   listflow <source>                # list updates and a cancelled one through the core
   jobs <port> | storage <port> | scripts <port>   # scripts needs --sources (for common.lua)
-  index <dir>                      # checks the index of a directory of sources
+  index <dir> [<base dir>]         # checks the index of a directory of sources
 ```
 
 Without `--record` or `--replay` the harness asks the sites. The sources are the C++ ones; `--sources` adds the sources of a directory of sources (`../UltimateMangaReader-Qt/sources`), every command then uses them instead of the C++ sources of the same names (e.g. `--sources ../UltimateMangaReader-Qt/sources flow MangaTown ...`).
 
-`index` checks `index.yaml` of a directory of sources: it lists all files of the directory, the files it lists are there, and every source loads with the name the index has for it. It can't tell whether a version was counted up after a change.
+`index` checks `index.yaml` of a directory of sources: it lists all files of the directory, the files it lists are there, and every source loads with the name the index has for it. With a base directory (e.g. the published sources) it also checks that every entry whose files differ from the ones there has a newer version than there: the app only installs an entry with a newer version.
 
 The harness also builds for the Kobo (`qmake harness.pro CONFIG+=kobo CONFIG+=release`), to time the replays there. It needs the offscreen platform plugin (`QT_QPA_PLATFORM_PLUGIN_PATH`) and the recorded responses next to it.
 

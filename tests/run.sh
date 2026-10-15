@@ -7,8 +7,9 @@
 #                                 (Comick-cases-lua), jobs, storage, scripts,
 #                                 index (sources/index.yaml lists the sources, they load)
 #   tests/run.sh record [NAME...] records the responses of the sites again and the golden output with them
-# QMAKE (default qmake6) and BUILD_DIR (default ../build-UltimateMangaReader-tests next to the repository)
-# can be set in the environment.
+# QMAKE (default qmake6), BUILD_DIR (default ../build-UltimateMangaReader-tests next to the repository) and
+# SOURCES_BASE (the git ref whose sources/ the index test compares the versions with, default master) can be set in
+# the environment.
 set -u
 
 TESTS=$(cd "$(dirname "$0")" && pwd)
@@ -112,7 +113,16 @@ for name in "${names[@]}"; do
             ;;
         index)
             [ $record = 1 ] && continue
-            ./harness index "$SOURCES_DIR" > "output/$name.txt" 2> "output/$name.log"
+            # the versions against the sources of SOURCES_BASE (default master, the published ones): an entry that
+            # changed since then needs a newer version (if the base has sources/)
+            base=$BUILD/tmp/sources-base
+            rm -rf "$base" && mkdir -p "$base"
+            base_ref=${SOURCES_BASE:-master}
+            base_args=()
+            if git -C "$TESTS" rev-parse -q --verify "$base_ref:sources/index.yaml" > /dev/null; then
+                git -C "$TESTS/.." archive "$base_ref" sources | tar -x -C "$base" && base_args=("$base/sources")
+            fi
+            ./harness index "$SOURCES_DIR" "${base_args[@]}" > "output/$name.txt" 2> "output/$name.log"
             [ $? = 0 ] && report "$name" ok || report "$name" "FAILED, see $BUILD/output/$name.txt"
             ;;
         *-cases | *-cases-lua)
