@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QImage>
+#include <QTimer>
 
 #include "downloadqueue.h"
 #include "enums.h"
@@ -18,6 +19,7 @@ class MangaController : public QObject
 
 public:
     MangaController(NetworkManager *networkManager, MangaRepository *repository, QObject *parent = nullptr);
+    ~MangaController() override;
 
     QSharedPointer<MangaInfo> currentManga;
     MangaIndexTraverser currentIndex;
@@ -60,6 +62,8 @@ private:
     bool preloading;
     bool preloadAgain;
     bool turning;
+    // the reading progress is written a moment after the last page turn
+    QTimer progressTimer;
 
     // Pages that are missing on the server would be requested again (with retries) on every page turn and
     // hold up the preloads behind them: they are skipped for a while. Opening them still tries.

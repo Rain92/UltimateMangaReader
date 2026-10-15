@@ -17,7 +17,13 @@ public:
     // The progress of the manga, the start if there is none.
     ReadingProgress(const QString& sourceName, const QString& mangaUrl);
 
+    // Writes it now (a write that serializeLater() kept for the manga is dropped).
     void serialize(const QString& sourceName, const QString& mangaUrl);
+    // Keeps it for flushPending(), deserialize() gets it meanwhile. For the page turns: the write is synced to the
+    // disk, which takes a few ms on the device, the page would show up only after it. (On the gui thread.)
+    void serializeLater(const QString& sourceName, const QString& mangaUrl);
+    // Writes the ones that serializeLater() kept.
+    static void flushPending();
 
     bool deserialize(const QString& sourceName, const QString& mangaUrl);
 

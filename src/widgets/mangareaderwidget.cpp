@@ -171,6 +171,8 @@ bool MangaReaderWidget::gestureEvent(QGestureEvent *event)
         }
         else
         {
+            if (perfLoggingEnabled())
+                qDebug() << "[perf] tap";
             auto tabSide = pos.x() < this->width() / 2 ? Left : Right;
 
             emit advancPageClicked(conditionalReverse(Forward, settings->tabAdvance != tabSide));

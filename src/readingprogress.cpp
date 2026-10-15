@@ -17,22 +17,55 @@ ReadingProgress::ReadingProgress(const QString &sourceName, const QString &manga
     deserialize(sourceName, mangaUrl);
 }
 
-void ReadingProgress::serialize(const QString &sourceName, const QString &mangaUrl)
+// the progress that serializeLater() kept, by the directory of the manga
+static QHash<QString, ReadingProgress> &pending()
 {
-    QDir().mkpath(CONF.mangainfodir(sourceName, mangaUrl));
-    QSaveFile file(CONF.mangainfodir(sourceName, mangaUrl) + "progress.dat");
+    static QHash<QString, ReadingProgress> progress;
+    return progress;
+}
+
+static void write(const QString &dir, const ReadingProgress &progress)
+{
+    QDir().mkpath(dir);
+    QSaveFile file(dir + "progress.dat");
     if (!file.open(QIODevice::WriteOnly))
         return;
 
     QDataStream out(&file);
     writeCacheFileHeader(out, CacheFile::ReadingProgress);
-    out << *this;
+    out << progress;
     if (out.status() != QDataStream::Ok || !file.commit())
-        qDebug() << "Couldn't save the reading progress of" << mangaUrl;
+        qDebug() << "Couldn't save the reading progress in" << dir;
+}
+
+void ReadingProgress::serialize(const QString &sourceName, const QString &mangaUrl)
+{
+    auto dir = CONF.mangainfodir(sourceName, mangaUrl);
+    pending().remove(dir);
+    write(dir, *this);
+}
+
+void ReadingProgress::serializeLater(const QString &sourceName, const QString &mangaUrl)
+{
+    pending().insert(CONF.mangainfodir(sourceName, mangaUrl), *this);
+}
+
+void ReadingProgress::flushPending()
+{
+    auto progress = std::exchange(pending(), {});
+    for (auto it = progress.cbegin(); it != progress.cend(); ++it)
+        write(it.key(), it.value());
 }
 
 bool ReadingProgress::deserialize(const QString &sourceName, const QString &mangaUrl)
 {
+    auto kept = pending().constFind(CONF.mangainfodir(sourceName, mangaUrl));
+    if (kept != pending().cend())
+    {
+        *this = kept.value();
+        return true;
+    }
+
     QFile file(CONF.mangainfodir(sourceName, mangaUrl) + "progress.dat");
 
     if (!file.open(QIODevice::ReadOnly))

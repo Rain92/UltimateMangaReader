@@ -13,15 +13,25 @@ MangaController::MangaController(NetworkManager *networkManager, MangaRepository
       preloading(false),
       preloadAgain(false),
       turning(false),
+      progressTimer(),
       clock(),
       failedDownloads()
 {
     clock.start();
 
+    progressTimer.setSingleShot(true);
+    progressTimer.setInterval(1000);
+    QObject::connect(&progressTimer, &QTimer::timeout, this, [] { ReadingProgress::flushPending(); });
+
     QObject::connect(&preloadQueue, &DownloadQueue::singleDownloadCompleted, this,
                      &MangaController::completedImagePreload);
     QObject::connect(&preloadQueue, &DownloadQueue::singleDownloadFailed, this,
                      [this](const QString &, const QString &path) { failedDownloads.insert(path, clock.elapsed()); });
+}
+
+MangaController::~MangaController()
+{
+    ReadingProgress::flushPending();
 }
 
 bool MangaController::setCurrentManga(QSharedPointer<MangaInfo> mangaInfo)
@@ -103,13 +113,18 @@ void MangaController::setCurrentIndex(const MangaIndex &index)
 
 void MangaController::currentIndexChangedInternal(bool preload)
 {
+    PerfTimer timer("turn");
+
     const auto &chapter = currentIndex.currentChapter();
     emit currentIndexChanged({currentIndex, chapter.chapterUrl, static_cast<int>(currentManga->chapters.count()),
                               static_cast<int>(chapter.pages.count())});
+    timer.lap("index");
 
     updateCurrentImage();
+    timer.lap("image");
 
     serializeProgress();
+    timer.lap("progress");
 
     if (preload)
         QTimer::singleShot(50, this, &MangaController::preloadNeighbours);
@@ -338,7 +353,8 @@ void MangaController::serializeProgress()
     const auto &chapter = currentIndex.currentChapter();
     ReadingProgress progress(currentIndex, chapter.chapterUrl, currentManga->chapters.count(),
                              chapter.pages.count());
-    progress.serialize(currentManga->sourceName, currentManga->url);
+    progress.serializeLater(currentManga->sourceName, currentManga->url);
+    progressTimer.start();
 }
 
 void MangaController::deserializeProgress()

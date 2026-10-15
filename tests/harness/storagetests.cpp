@@ -402,6 +402,28 @@ int storageTests(const QString &server)
         check(p.index.chapter == 0 && p.chapterUrl == B, "reader saved the progress");
     }
 
+    // --- the progress of a page turn is written a moment later, it is read from memory until then
+    {
+        auto onDisk = [&]
+        {
+            QFile f(CONF.mangainfodir("Fake", url) + "progress.dat");
+            return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
+        };
+        ReadingProgress before("Fake", url);
+        ReadingProgress(MangaIndex(1, 0), B, 3, 2).serialize("Fake", url);
+        auto written = onDisk();
+        ReadingProgress(MangaIndex(1, 5), B, 3, 9).serializeLater("Fake", url);
+        check(onDisk() == written && ReadingProgress("Fake", url).index.page == 5,
+              "a progress kept for later is read before it is written");
+        ReadingProgress::flushPending();
+        check(onDisk() != written && ReadingProgress("Fake", url).index.page == 5, "flushPending() writes it");
+        ReadingProgress(MangaIndex(1, 6), B, 3, 9).serializeLater("Fake", url);
+        ReadingProgress(MangaIndex(1, 7), B, 3, 9).serialize("Fake", url);
+        ReadingProgress::flushPending();
+        check(ReadingProgress("Fake", url).index.page == 7, "a write drops the progress kept for later");
+        before.serialize("Fake", url);
+    }
+
     // --- favorites by url
     {
         FavoritesManager favorites(&sources, &repository, &nm);

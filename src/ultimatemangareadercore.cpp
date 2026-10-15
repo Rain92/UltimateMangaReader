@@ -64,6 +64,10 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
     autoSuspendTimer.setSingleShot(true);
     connect(&autoSuspendTimer, &QTimer::timeout, this, [this]() { suspendManager->suspend(); });
 
+    // the reading progress that is still to be written (MangaController writes it a moment after a page turn)
+    connect(suspendManager, &SuspendManager::suspending, this, [] { ReadingProgress::flushPending(); });
+    connect(qApp, &QCoreApplication::aboutToQuit, this, [] { ReadingProgress::flushPending(); });
+
     // standby
     standbyManager->setWakeDeadline([this]() { return msUntilAutoSuspend(); });
     connect(standbyManager, &StandbyManager::resumed, this, &UltimateMangaReaderCore::resumedFromStandby);
