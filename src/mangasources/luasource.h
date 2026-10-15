@@ -19,8 +19,9 @@
 //   knownTitle(url) (the title of the url in the last list, nil if it wasn't there)}. Returns {titles, urls,
 //   absoluteUrls (else relative to baseUrl), popularity (a number per manga, the higher the more popular, e.g. its
 //   views) or ranks (from 1), else the order of the list} and a message if something is missing.
-// - fetchMangaInfo(url, known): known = the chapters the app has, {{title, url}}. Returns {author, artist,
-//   releaseYear, genres, status, summary, cover, coverFallbacks, chapters = {{title, url}} (oldest first)}.
+// - fetchMangaInfo(url, known): known = the chapters the app has, {{title, url, pagesLoaded}}. Returns {author,
+//   artist, releaseYear, genres, status, summary, cover, coverFallbacks, chapters = {{title, url}} (oldest
+//   first)}.
 // - fetchPageList(chapterUrl): the pages, urls or images {url, headers = {name = value}, xorKey, appendUrl,
 //   expires}.
 // - resolveImage(page), optional: the image of a page of the page list (when the page list has pages of the
@@ -28,12 +29,15 @@
 //
 // Besides lualibs.h the scripts have:
 // - http.get(url [, options]): waits for the download and returns {url (the final one), status, body}, fails
-//   with the error of the download. options: timeout (ms, for all attempts), transferTimeout, retries, headers
-//   ({name = value}), head (only the headers), maxBytes.
+//   with the error of the download. options: timeout (ms, for all attempts), transferTimeout, retries,
+//   retryDelay, maxRetryDelay (ms, the pause before a retry doubles from one to the other), retryStatuses (the
+//   statuses that are retried besides 408, 429 and 5xx), headers ({name = value}), head (only the headers),
+//   maxBytes.
 // - http.start(url [, options]): a request that runs meanwhile, request:wait([ms]) returns what http.get() does
 //   (the same response again when it's called again), with ms nil if the response isn't there after ms.
-//   request:failed(), request:restart() (before the response). http.parallel: how many downloads should run at
-//   the same time.
+//   request:failed(), request:done() (the response or the error is there), request:restart() (before the
+//   response). http.waitAny(requests [, ms]): the index of one of the requests that is finished, after waiting
+//   for one (nil after ms). http.parallel: how many downloads should run at the same time.
 // - sleep(ms), log(...), clock() (milliseconds of a monotonic clock, e.g. for the time that attempts may take)
 // - source: {id, name, baseUrl, definition (the YAML as tables)}
 class LuaSource : public MangaSourceBase

@@ -143,14 +143,51 @@ int captureMangas(MangaRepository &repository, MangaSourceBase *source, const QS
         for (int c = 0; c < n; c++)
         {
             hash.addData(("\n" + info.chapters[c].chapterTitle + "\t" + info.chapters[c].chapterUrl).toUtf8());
-            if (c < 3 || c >= n - 3)
+            // HARNESS_ALL_CHAPTERS: all of them, e.g. to find a difference
+            if (c < 3 || c >= n - 3 || !qEnvironmentVariableIsEmpty("HARNESS_ALL_CHAPTERS"))
                 out << "  ch " << c << ": " << info.chapters[c].chapterTitle << " | "
                     << info.chapters[c].chapterUrl << "\n";
         }
         out << "  hash: " << hash.result().toHex().left(16) << "\n";
-        if (n > 0)
+
+        // HARNESS_REFETCH: the info once more with these chapters as the known ones (their pages loaded, every
+        // third under another url), like the update of a favorite
+        if (!qEnvironmentVariableIsEmpty("HARNESS_REFETCH"))
+        {
+            auto known = info.chapters;
+            for (int c = 0; c < known.size(); c++)
+            {
+                known[c].pagesLoaded = true;
+                if (c % 3 == 2)
+                    known[c].chapterUrl += "-old";
+            }
+            auto again = source->fetchMangaInfo(url, known).wait();
+            if (!again)
+                out << "  refetch: ERROR " << again.error().message << "\n";
+            else
+            {
+                QCryptographicHash refetchHash(QCryptographicHash::Sha1);
+                const auto &chapters = again->chapters;
+                for (const auto &chapter : chapters)
+                    refetchHash.addData(("\n" + chapter.chapterTitle + "\t" + chapter.chapterUrl).toUtf8());
+                out << "  refetch: " << chapters.size() << " chapters, hash "
+                    << refetchHash.result().toHex().left(16) << "\n";
+                for (int c = 0, shown = 0; c < chapters.size() && shown < 10; c++)
+                    if (c >= n || chapters[c].chapterTitle != info.chapters[c].chapterTitle ||
+                        chapters[c].chapterUrl != info.chapters[c].chapterUrl)
+                    {
+                        out << "  refetch ch " << c << ": " << chapters[c].chapterTitle << " | "
+                            << chapters[c].chapterUrl << "\n";
+                        shown++;
+                    }
+            }
+        }
+
+        // HARNESS_NO_PAGES: only the infos and the chapters, e.g. to compare the chapters of many mangas
+        bool pages = qEnvironmentVariableIsEmpty("HARNESS_NO_PAGES");
+        if (pages && n > 0)
             failures += capturePages(repository, source, url, info.chapters, 0, true);
-        if (n > 1)
+        if (pages && n > 1)
             failures += capturePages(repository, source, url, info.chapters, n - 1, false);
         out.flush();
     }

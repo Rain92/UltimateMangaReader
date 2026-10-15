@@ -1,0 +1,7 @@
+# Comick: comick.art, the unofficial mirror that continues the comick database (same slugs and api; comick.io, now
+# comick.dev, hosts no chapter images since september 2025), all of it in comick.lua. Nearly all pages and covers
+# are webp, the image cdn blocks requests without a Referer.
+name: Comick
+baseUrl: https://comick.art
+headers:
+  comicknew.pictures: {Referer: 'https://comick.art/'}

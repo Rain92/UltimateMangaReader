@@ -1,6 +1,7 @@
 #include "luaengine.h"
 
 #include <QDebug>
+#include <clocale>
 #ifdef __GLIBC__
 #include <malloc.h>
 #endif
@@ -39,6 +40,10 @@ Result<> LuaEngine::protect(lua_State *L, int nargs, const std::function<void(lu
 
 LuaEngine::LuaEngine(LuaLimits limits) : limits(limits)
 {
+    // Lua writes and reads numbers with the C library, which follows LC_NUMERIC: Qt sets it from the system (a
+    // German one writes 2.5 as "2,5"). Qt's own functions don't use it, so it's set back like Qt advises.
+    setlocale(LC_NUMERIC, "C");
+
     L = lua_newstate(allocate, this);
     // copied into the threads
     *static_cast<LuaEngine **>(lua_getextraspace(L)) = this;
@@ -170,8 +175,13 @@ Task<Result<int>> LuaEngine::resume(lua_State *thread, int nargs)
         lua_pop(thread, nresults);
         nargs = 0;
         auto wait = waits.take(thread);
-        if (wait.job)
-            co_await waitFor(wait.job, wait.pause);
+        if (!wait.jobs.isEmpty())
+        {
+            QList<DownloadJobBase *> jobs;
+            for (const auto &job : std::as_const(wait.jobs))
+                jobs.append(job.get());
+            co_await anyFinished(jobs, wait.pause);
+        }
         else
             co_await delay(wait.pause);
     }

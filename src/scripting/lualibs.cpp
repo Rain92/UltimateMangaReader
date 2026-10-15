@@ -495,6 +495,18 @@ static int textSimplify(lua_State *L)
     return 1;
 }
 
+static int textLower(lua_State *L)
+{
+    push(L, toQString(L, 1).toLower());
+    return 1;
+}
+
+static int textUpper(lua_State *L)
+{
+    push(L, toQString(L, 1).toUpper());
+    return 1;
+}
+
 // like MangaSourceBase::htmlToPlainText()
 static QString htmlToPlainText(const QString &html)
 {
@@ -621,7 +633,9 @@ void openLibraries(lua_State *L)
 {
     openRe(L);
 
-    static const luaL_Reg textFunctions[] = {{"trim", textTrim}, {"simplify", textSimplify}, {nullptr, nullptr}};
+    static const luaL_Reg textFunctions[] = {{"trim", textTrim},   {"simplify", textSimplify},
+                                             {"lower", textLower}, {"upper", textUpper},
+                                             {nullptr, nullptr}};
     luaL_newlib(L, textFunctions);
     lua_setglobal(L, "text");
 
@@ -638,6 +652,7 @@ void openLibraries(lua_State *L)
     static const luaL_Reg imageFunctions[] = {{"size", imageSize}, {nullptr, nullptr}};
     luaL_newlib(L, imageFunctions);
     lua_setglobal(L, "image");
+
 
     lua_register(L, "raise", raiseError);
 }

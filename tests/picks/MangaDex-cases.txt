@@ -1,0 +1,5 @@
+# MangaDex: made up cases (tests/harness/cases.py)
+anthology	https://api.mangadex.org/manga/00000000-0000-4000-8000-000000000001
+flagged	https://api.mangadex.org/manga/00000000-0000-4000-8000-000000000002
+parts	https://api.mangadex.org/manga/00000000-0000-4000-8000-000000000003
+paged	https://api.mangadex.org/manga/00000000-0000-4000-8000-000000000004

@@ -1,5 +1,6 @@
 // The scripts of sources: the Lua engine, its libraries and LuaSource, against tests/harness/testserver.py.
 #include <QCoreApplication>
+#include <clocale>
 #include <QDir>
 #include <QElapsedTimer>
 #include <QTemporaryDir>
@@ -41,6 +42,10 @@ static Result<QString> callText(LuaEngine &engine, const QByteArray &function)
 }
 
 static const char *engineCode = R"lua(
+function numbers()
+    return tostring(2.5) .. " " .. ("%.2f"):format(0.25) .. " " .. tostring(tonumber("1.5") * 2)
+end
+
 function sandbox()
     local present = {}
     for _, name in ipairs({"io", "os", "require", "package", "debug", "dofile", "loadfile", "load", "loadstring",
@@ -159,6 +164,19 @@ function fetchPageList(test)
         local second = request:wait()
         local restarted = pcall(request.restart, request)
         return {tostring(first == second), tostring(request:failed()), tostring(restarted), second.body}
+    elseif test == "waitany" then
+        local slow, fast = http.start(base .. "/delay/1"), http.start(base .. "/final")
+        local first = http.waitAny({slow, fast})
+        local done = {tostring(first), tostring(slow:done()), tostring(fast:done())}
+        done[4] = tostring(http.waitAny({slow}, 100))
+        done[5] = tostring(http.waitAny({slow}))
+        return done
+    elseif test == "retrystatuses" then
+        local ok, err = pcall(http.get, base .. "/flaky400/plain")
+        local response = http.get(base .. "/flaky400/retried", {retryStatuses = {400}, retryDelay = 50})
+        return {tostring(ok), tostring(err.status), response.body}
+    elseif test == "case" then
+        return {text.lower("ÄÖ Ab"), text.upper("äö aB")}
     elseif test == "httperror" then
         http.get(base .. "/status/404")
     elseif test == "caught" then
@@ -182,7 +200,7 @@ function fetchPageList(test)
 end
 
 function fetchMangaInfo(url, known)
-    return {author = url, chapters = {{title = "new", url = "/new"}, known[1]}}
+    return {author = url, artist = tostring(known[1].pagesLoaded), chapters = {{title = "new", url = "/new"}, known[1]}}
 end
 
 function resolveImage(page)
@@ -238,10 +256,15 @@ int scriptTests(const QString &server, const QString &sourcesDir)
     // --- the engine and the libraries
 
     {
+        // (a system locale with a decimal comma, if there is one)
+        setlocale(LC_NUMERIC, "de_DE.UTF-8");
         auto engine = engineWith(engineCode);
         check("the engine runs code", engine != nullptr);
         if (!engine)
             return failures + 1;
+        auto numbers = callText(*engine, "numbers");
+        check("numbers are written with a dot, whatever the locale", numbers && *numbers == "2.5 0.25 3.0");
+        show(numbers);
 
         auto sandbox = callText(*engine, "sandbox");
         check("no files, os, loading of code or collector control", sandbox && sandbox->isEmpty());
@@ -342,6 +365,11 @@ int scriptTests(const QString &server, const QString &sourcesDir)
         check("http.start runs requests at the same time", urls(parallel) == "late|late" && timer.elapsed() < 1800);
     }
     check("a request keeps its response", urls(pages("again")) == "true|false|false|final");
+    check("http.waitAny waits for the first of the requests (nil after its time), request:done()",
+          urls(pages("waitany")) == "2|false|true|nil|1");
+    check("only the retryStatuses (and the usual ones) are retried", urls(pages("retrystatuses")) ==
+                                                                        "false|400|ok after 400");
+    check("text.lower, text.upper", urls(pages("case")) == "äö ab|ÄÖ AB");
     {
         auto error = pages("httperror");
         check("a failed download fails the script with its error",
@@ -383,8 +411,10 @@ int scriptTests(const QString &server, const QString &sourcesDir)
     {
         MangaChapterCollection known;
         known.append(MangaChapter("known", "/known"));
+        known[0].pagesLoaded = true;
         auto info = source->fetchMangaInfo("/manga", known).wait();
         check("fetchMangaInfo() gets the chapters the app has", info && info->author == "/manga" &&
+                                                                    info->artist == "true" &&
                                                                     info->chapters.size() == 2 &&
                                                                     info->chapters[1].chapterTitle == "known");
     }

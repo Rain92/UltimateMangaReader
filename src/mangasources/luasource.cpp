@@ -31,10 +31,13 @@ static int collect(lua_State *L)
 // --- http
 
 // The download until its response was taken, then the response (the user value), so the buffer goes now and not
-// when the collector gets to the request.
+// when the collector gets to the request. The one of http.get() keeps no response: the request has a finalizer,
+// which keeps it (and its user value) for another cycle of the collector, and the emergency collection near the
+// memory limit runs no finalizers (a large body could fail the script).
 struct Request
 {
     QSharedPointer<DownloadBufferJob> job;
+    bool keepResponse = true;
 };
 static const char *requestType = "umr.Request";
 
@@ -59,9 +62,21 @@ static DownloadRequest requestFromArgs(lua_State *L)
     integerField(L, 2, "timeout", request.timeout);
     integerField(L, 2, "transferTimeout", request.transferTimeout);
     integerField(L, 2, "retries", request.maxRetries);
+    integerField(L, 2, "retryDelay", request.retryDelay);
+    integerField(L, 2, "maxRetryDelay", request.maxRetryDelay);
     int maxBytes = 0;
     if (integerField(L, 2, "maxBytes", maxBytes))
         request.maxBytes = maxBytes;
+    if (rawField(L, 2, "retryStatuses") == LUA_TTABLE)
+    {
+        for (lua_Integer i = 1; lua_rawgeti(L, -1, i) == LUA_TNUMBER; i++)
+        {
+            request.retryStatuses.append(int(lua_tointeger(L, -1)));
+            lua_pop(L, 1);
+        }
+        lua_pop(L, 1);
+    }
+    lua_pop(L, 1);
     request.headOnly = rawField(L, 2, "head") == LUA_TBOOLEAN && lua_toboolean(L, -1);
     lua_pop(L, 1);
 
@@ -100,8 +115,11 @@ static int pushResponse(lua_State *L, int index)
     lua_pushlstring(L, job->buffer.constData(), size_t(job->buffer.size()));
     lua_setfield(L, -2, "body");
 
-    lua_pushvalue(L, -1);
-    lua_setiuservalue(L, index, 1);
+    if (request->keepResponse)
+    {
+        lua_pushvalue(L, -1);
+        lua_setiuservalue(L, index, 1);
+    }
     request->job.reset();
     return 1;
 }
@@ -120,13 +138,62 @@ static int waitFor(lua_State *L, int index, int maxWait = 0)
 {
     auto request = static_cast<Request *>(lua_touserdata(L, index));
     if (request->job && !request->job->isFinished())
-        LuaEngine::wait(L, {request->job, maxWait});
+        LuaEngine::wait(L, {{request->job}, maxWait});
     else if (LuaEngine::shouldYield(L))
         // e.g. the pages of a list update that were downloaded meanwhile, the GUI goes on between them
-        LuaEngine::wait(L, {nullptr, 0});
+        LuaEngine::wait(L, {{}, 0});
     else
         return pushResponse(L, index);
     return lua_yieldk(L, 0, index, requestWaited);
+}
+
+// The index of the first request of the list (at 1) that is finished, 0 if none is. running: gets the others.
+static lua_Integer finishedRequest(lua_State *L, QList<QSharedPointer<DownloadJobBase>> *running)
+{
+    for (lua_Integer i = 1; lua_rawgeti(L, 1, i) != LUA_TNIL; i++)
+    {
+        auto request = static_cast<Request *>(luaL_testudata(L, -1, requestType));
+        lua_pop(L, 1);
+        if (!request)
+            luaL_argerror(L, 1, "a list of requests expected");
+        if (!request->job || request->job->isFinished())
+            return i;
+        if (running)
+            running->append(request->job);
+    }
+    lua_pop(L, 1);
+    return 0;
+}
+
+static int anyWaited(lua_State *L, int, lua_KContext)
+{
+    auto i = finishedRequest(L, nullptr);
+    if (i > 0)
+        lua_pushinteger(L, i);
+    else
+        lua_pushnil(L);
+    return 1;
+}
+
+// http.waitAny(requests [, ms]): the index of one of the requests that has its response (or failed), after
+// waiting for one (for at most ms if it's > 0, then nil)
+static int httpWaitAny(lua_State *L)
+{
+    luaL_checktype(L, 1, LUA_TTABLE);
+    int maxWait = int(luaL_optinteger(L, 2, 0));
+    lua_settop(L, 1);
+    QList<QSharedPointer<DownloadJobBase>> running;
+    auto i = finishedRequest(L, &running);
+    if (i == 0 && running.isEmpty())
+        return luaL_argerror(L, 1, "no requests");
+    if (i > 0 && !LuaEngine::shouldYield(L))
+    {
+        lua_pushinteger(L, i);
+        return 1;
+    }
+    // (one that is finished goes on after the GUI)
+    LuaEngine::wait(L, {i > 0 ? QList<QSharedPointer<DownloadJobBase>>() : running, i > 0 ? 0 : maxWait});
+    return lua_yieldk(L, 0, 0, anyWaited);
 }
 
 static int httpStart(lua_State *L)
@@ -141,6 +208,7 @@ static int httpStart(lua_State *L)
 static int httpGet(lua_State *L)
 {
     httpStart(L);
+    static_cast<Request *>(lua_touserdata(L, -1))->keepResponse = false;
     return waitFor(L, lua_gettop(L));
 }
 
@@ -159,6 +227,13 @@ static int requestFailed(lua_State *L)
     return 1;
 }
 
+static int requestDone(lua_State *L)
+{
+    auto request = static_cast<Request *>(luaL_checkudata(L, 1, requestType));
+    lua_pushboolean(L, !request->job || request->job->isFinished());
+    return 1;
+}
+
 static int requestRestart(lua_State *L)
 {
     auto request = static_cast<Request *>(luaL_checkudata(L, 1, requestType));
@@ -172,7 +247,7 @@ static int requestRestart(lua_State *L)
 
 static int sleepFor(lua_State *L)
 {
-    LuaEngine::wait(L, {nullptr, int(luaL_checkinteger(L, 1))});
+    LuaEngine::wait(L, {{}, int(luaL_checkinteger(L, 1))});
     return lua_yield(L, 0);
 }
 
@@ -224,7 +299,7 @@ static int updateProgress(lua_State *L)
     // e.g. a long loop over the mangas, the GUI goes on meanwhile
     if (lua_isyieldable(L) && LuaEngine::shouldYield(L))
     {
-        LuaEngine::wait(L, {nullptr, 0});
+        LuaEngine::wait(L, {{}, 0});
         return lua_yield(L, 0);
     }
     return 0;
@@ -473,7 +548,8 @@ Result<QSharedPointer<LuaSource>> LuaSource::load(NetworkManager *networkManager
         lua_pushcfunction(L, collect<Request>);
         lua_setfield(L, -2, "__gc");
         static const luaL_Reg requestMethods[] = {
-            {"wait", requestWait}, {"failed", requestFailed}, {"restart", requestRestart}, {nullptr, nullptr}};
+            {"wait", requestWait}, {"failed", requestFailed}, {"done", requestDone},
+            {"restart", requestRestart}, {nullptr, nullptr}};
         luaL_newlib(L, requestMethods);
         lua_setfield(L, -2, "__index");
         lua_pop(L, 1);
@@ -483,7 +559,7 @@ Result<QSharedPointer<LuaSource>> LuaSource::load(NetworkManager *networkManager
         lua_setfield(L, -2, "__gc");
         lua_pop(L, 1);
 
-        static const luaL_Reg httpFunctions[] = {{"get", httpGet}, {"start", httpStart}, {nullptr, nullptr}};
+        static const luaL_Reg httpFunctions[] = {{"get", httpGet}, {"start", httpStart}, {"waitAny", httpWaitAny}, {nullptr, nullptr}};
         luaL_newlib(L, httpFunctions);
         lua_pushinteger(L, CONF.parallelDownloadsHigh);
         lua_setfield(L, -2, "parallel");
@@ -644,11 +720,13 @@ Task<Result<MangaDetails>> LuaSource::fetchMangaInfo(QString mangaUrl, MangaChap
         lua_Integer i = 0;
         for (const auto &chapter : std::as_const(known))
         {
-            lua_createtable(L, 0, 2);
+            lua_createtable(L, 0, 3);
             push(L, chapter.chapterTitle);
             lua_setfield(L, -2, "title");
             push(L, chapter.chapterUrl);
             lua_setfield(L, -2, "url");
+            lua_pushboolean(L, chapter.pagesLoaded);
+            lua_setfield(L, -2, "pagesLoaded");
             lua_rawseti(L, -2, ++i);
         }
         return 2;

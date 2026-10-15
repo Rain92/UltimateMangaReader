@@ -53,8 +53,9 @@ public:
     // What a host function waits for before its thread goes on, before it yields (lua_yieldk).
     struct Wait
     {
-        QSharedPointer<DownloadJobBase> job;
-        // ms without a job, else the longest wait for the job (0: until it's finished)
+        // the wait ends when one of them finished
+        QList<QSharedPointer<DownloadJobBase>> jobs;
+        // ms without jobs, else the longest wait for them (0: until one finished)
         int pause = 0;
     };
     static void wait(lua_State *thread, Wait wait);

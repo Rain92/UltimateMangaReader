@@ -2,8 +2,9 @@
 # Builds the test harness and runs the tests, see tests/README.md.
 #   tests/run.sh                  all tests
 #   tests/run.sh NAME...          some of them: a source (MangaDex), the update of its list (MangaHere-list),
-#                                 the script of a source in sources/ (MangaTown-lua) or its list update
-#                                 (MangaHere-list-lua), jobs, storage, scripts,
+#                                 made up cases of a source (Comick-cases), the script of a source in sources/
+#                                 (MangaTown-lua) or its list update (MangaHere-list-lua) or its cases
+#                                 (Comick-cases-lua), jobs, storage, scripts,
 #                                 index (sources/index.yaml lists the sources, they load)
 #   tests/run.sh record [NAME...] records the responses of the sites again and the golden output with them
 # QMAKE (default qmake6) and BUILD_DIR (default ../build-UltimateMangaReader-tests next to the repository)
@@ -20,8 +21,11 @@ SOURCES="Comick MangaDex MangaHere Mangakakalot MangaPlus MangaTown"
 # the list updates of the other sources take too many requests (MangaDex ~700 pages, MangaTown ~800 pages,
 # Comick ~200 MB of sitemaps)
 LISTS="MangaHere-list Mangakakalot-list MangaPlus-list"
+# made up responses of cases that the sites rarely have (tests/harness/cases.py)
+CASES="Comick-cases MangaDex-cases"
 # the scripts of sources in sources/, against the responses and the golden output of the C++ sources
-SCRIPTS="MangaTown-lua MangaHere-lua MangaHere-list-lua Mangakakalot-lua Mangakakalot-list-lua"
+SCRIPTS="MangaTown-lua MangaHere-lua MangaHere-list-lua Mangakakalot-lua Mangakakalot-list-lua MangaDex-lua
+         MangaDex-cases-lua Comick-lua Comick-cases-lua"
 
 record=0
 if [ "${1:-}" = record ]; then
@@ -30,7 +34,7 @@ if [ "${1:-}" = record ]; then
 fi
 names=("$@")
 if [ ${#names[@]} -eq 0 ]; then
-    names=($SOURCES $LISTS)
+    names=($SOURCES $LISTS $CASES)
     [ $record = 0 ] && names+=($SCRIPTS jobs storage scripts index)
 fi
 
@@ -87,7 +91,7 @@ source_test() {
         report "$name" "no golden output, see $BUILD/output/$name.txt"
     elif ! diff -u "$golden" "output/$name.txt" > "output/$name.diff"; then
         report "$name" "DIFFERS, see $BUILD/output/$name.diff"
-    elif [ $status != 0 ]; then
+    elif [ $status != 0 ] && [ "${errors_expected:-0}" = 0 ]; then
         report "$name" "FAILED (exit $status), see $BUILD/output/$name.log"
     else
         report "$name" ok
@@ -107,6 +111,32 @@ for name in "${names[@]}"; do
             [ $record = 1 ] && continue
             ./harness index "$SOURCES_DIR" > "output/$name.txt" 2> "output/$name.log"
             [ $? = 0 ] && report "$name" ok || report "$name" "FAILED, see $BUILD/output/$name.txt"
+            ;;
+        *-cases | *-cases-lua)
+            # made up responses (tests/harness/cases.py) of what the sites rarely have: recording writes the
+            # golden output of the C++ source with them, the script has to give the same
+            base=${name%-lua}
+            source=${base%-cases}
+            if [ $record = 1 ]; then
+                [ "$name" = "$base" ] || continue
+                python3 -I "$TESTS/harness/cases.py" "$source" "$TESTS/fixtures/$base" "$TESTS/picks/$base.txt" ||
+                    { report "$name" "cases.py FAILED"; continue; }
+                record=0
+                HARNESS_NO_PAGES=1 HARNESS_REFETCH=1 ./harness --replay "$TESTS/fixtures/$base" capture "$source" \
+                    "$TESTS/picks/$base.txt" > "$TESTS/golden/$base.txt" 2> "output/$name.log"
+                status=$?
+                record=1
+                # (some cases fail on purpose)
+                [ $status -lt 100 ] && report "$name" ok || report "$name" "recorded with errors (exit $status)"
+                continue
+            fi
+            # (made again, tests/fixtures/ isn't in the repository)
+            python3 -I "$TESTS/harness/cases.py" "$source" "$TESTS/fixtures/$base" "$TESTS/picks/$base.txt" ||
+                { report "$name" "cases.py FAILED"; continue; }
+            args=()
+            [ "$name" != "$base" ] && args=(--sources "$SOURCES_DIR")
+            errors_expected=1 HARNESS_NO_PAGES=1 HARNESS_REFETCH=1 source_test "$name" "${args[@]}" capture "$source" \
+                "$TESTS/picks/$base.txt"
             ;;
         *-list)
             source_test "$name" list "${name%-list}"

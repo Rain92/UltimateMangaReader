@@ -17,3 +17,11 @@ sources:
     name: MangaHere
     version: 1.0
     files: [mangahere.yaml, mangahere.lua, mangahere.png]
+  - id: mangadex
+    name: MangaDex
+    version: 1.0
+    files: [mangadex.yaml, mangadex.lua, mangadex.png]
+  - id: comick
+    name: Comick
+    version: 1.0
+    files: [comick.yaml, comick.lua, comick.png]

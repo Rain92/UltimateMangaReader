@@ -1,0 +1,121 @@
+=== case-restarted | https://comick.art/comic/case-restarted
+  title: case-restarted
+  url: https://comick.art/comic/case-restarted
+  author: A, B
+  artist: C
+  status: Completed
+  year: 2020
+  genres: Shounen, Action
+  summary: The story.
+  coverUrl: https://cdn.example/cover.webp
+  chapters: 11
+  ch 0: Vol. 1 Ch. 0: Prologue | case-restarted/r7-chapter-0-en
+  ch 1: Vol. 1 Ch. 1 | case-restarted/r1-chapter-1-en
+  ch 2: Vol. 1 Ch. 2 | case-restarted/r2-chapter-2-en
+  ch 8: Vol. 3 | case-restarted/r8-chapter-0-en
+  ch 9: Vol. 4 | case-restarted/r15-chapter-None-en
+  ch 10: Ch. 0.5 | case-restarted/r12-chapter-0.5-en
+  hash: 53abffaab124c12b
+  refetch: 11 chapters, hash eb040e7c1c6ec124
+  refetch ch 2: Vol. 1 Ch. 2 | case-restarted/r2-chapter-2-en-old
+  refetch ch 5: Vol. 2 Ch. 2 | case-restarted/r5-chapter-2-en-old
+  refetch ch 8: Vol. 3 | case-restarted/r8-chapter-0-en-old
+=== case-volumes | https://comick.art/comic/case-volumes
+  title: case-volumes
+  url: https://comick.art/comic/case-volumes
+  author: 
+  artist: 
+  status: 
+  year: 
+  genres: 
+  summary: Old volumes.
+  coverUrl: 
+  chapters: 5
+  ch 0: Special | case-volumes/v4-chapter-0-en
+  ch 1: Vol. 1 | case-volumes/v1-chapter-0-en
+  ch 2: Vol. 2 | case-volumes/v2-chapter-0-en
+  ch 3: Vol. 3 | case-volumes/v5-chapter-0-en
+  ch 4: Vol. 10 | case-volumes/v6-chapter-0-en
+  hash: 883c4e53f5685f58
+  refetch: 5 chapters, hash e70880526798d306
+  refetch ch 2: Vol. 2 | case-volumes/v2-chapter-0-en-old
+=== case-few | https://comick.art/comic/case-few
+  title: case-few
+  url: https://comick.art/comic/case-few
+  author: 
+  artist: 
+  status: Ongoing
+  year: 
+  genres: 
+  summary: 
+  coverUrl: 
+  chapters: 3
+  ch 0: Vol. 1 | case-few/f4-chapter-0-en
+  ch 1: Vol. 2 | case-few/f5-chapter-0-en
+  ch 2: Vol. 3 | case-few/f6-chapter-0-en
+  hash: d7b7d9f15b2f6ced
+  refetch: 3 chapters, hash fca625cdedb09c9b
+  refetch ch 2: Vol. 3 | case-few/f6-chapter-0-en-old
+=== case-insert | https://comick.art/comic/case-insert
+  title: case-insert
+  url: https://comick.art/comic/case-insert
+  author: 
+  artist: 
+  status: Hiatus
+  year: 
+  genres: 
+  summary: 
+  coverUrl: 
+  chapters: 12
+  ch 0: Vol. 1 | case-insert/iv1-chapter-0-en
+  ch 1: Ch. 1 | case-insert/i1-chapter-1-en
+  ch 2: Ch. 2 | case-insert/i2-chapter-2-en
+  ch 9: Ch. 13 | case-insert/i7-chapter-13-en
+  ch 10: Ch. 14 | case-insert/i8-chapter-14-en
+  ch 11: Ch. 15 | case-insert/i9-chapter-15-en
+  hash: 08d4d3da1a6eb798
+  refetch: 12 chapters, hash 6be2f8bffd81f71f
+  refetch ch 2: Ch. 2 | case-insert/i2-chapter-2-en-old
+  refetch ch 5: Ch. 10 | case-insert/i4-chapter-10-en-old
+  refetch ch 8: Vol. 4 | case-insert/iv4-chapter-0-en-old
+  refetch ch 11: Ch. 15 | case-insert/i9-chapter-15-en-old
+=== case-fallback | https://comick.art/comic/case-fallback
+  title: case-fallback
+  url: https://comick.art/comic/case-fallback
+  author: 
+  artist: 
+  status: 
+  year: 
+  genres: 
+  summary: 
+  coverUrl: 
+  chapters: 3
+  ch 0: Ch. 1 | case-fallback/b1-chapter-1-en
+  ch 1: Ch. 2 | case-fallback/b2-chapter-2-en
+  ch 2: Ch. 3 | case-fallback/b3-chapter-3-en
+  hash: f8bf64f76127a0e9
+  refetch: ERROR Download error 404: Error transferring https://comick.art/api/comics/case-fallback/b1-chapter-1-en - server replied with status code 404
+=== case-error | https://comick.art/comic/case-error
+  info: ERROR Download error 404: Error transferring https://comick.art/api/comics/case-error/e1-chapter-1-en - server replied with status code 404
+=== case-formats | https://comick.art/comic/case-formats
+  title: case-formats
+  url: https://comick.art/comic/case-formats
+  author: 
+  artist: 
+  status: Cancelled
+  year: 1999
+  genres: Seinen
+  summary: 
+  coverUrl: 
+  chapters: 9
+  ch 0: Oneshot | case-formats/n7-chapter-0-en
+  ch 1: Extra | case-formats/n9-chapter-none-en
+  ch 2: Ch. 1 | case-formats/n1-chapter-1-en
+  ch 6: Ch. 9 | case-formats/n8-chapter-9-en
+  ch 7: Ch. 12abc | case-formats/n4-chapter-12abc-en
+  ch 8: Ch. 31.2.5 | case-formats/n3-chapter-31.2.5-en
+  hash: 69682690df6994f9
+  refetch: 9 chapters, hash 71eec277228e1a54
+  refetch ch 2: Ch. 1 | case-formats/n1-chapter-1-en-old
+  refetch ch 5: Ch. 8 | case-formats/n6-chapter-8-en-old
+  refetch ch 8: Ch. 31.2.5 | case-formats/n3-chapter-31.2.5-en-old

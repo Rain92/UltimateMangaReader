@@ -10,7 +10,7 @@
 // - re: regular expressions (QRegularExpression, Perl syntax). Positions are byte positions in the UTF-8 text,
 //   like the ones of Lua's string functions. The searches take an optional init (where they start) and limit (the
 //   text ends before it, the matches lie before it).
-// - text: trim, simplify (whitespace like QString).
+// - text: trim, simplify (whitespace like QString), lower, upper (all of Unicode).
 // - html: text (the plain text of html), genres.
 // - json: decode (into tables; null is json.null).
 // - image: size (the width and height of an image from the start of its file, JPEG, PNG or WebP).
