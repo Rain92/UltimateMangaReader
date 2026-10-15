@@ -1,5 +1,6 @@
 #include "luasource.h"
 
+#include <QDateTime>
 #include <QDir>
 #include <QPointer>
 #include <algorithm>
@@ -249,6 +250,12 @@ static int sleepFor(lua_State *L)
 {
     LuaEngine::wait(L, {{}, int(luaL_checkinteger(L, 1))});
     return lua_yield(L, 0);
+}
+
+static int wallClock(lua_State *L)
+{
+    lua_pushinteger(L, QDateTime::currentSecsSinceEpoch());
+    return 1;
 }
 
 static int clockMs(lua_State *L)
@@ -567,6 +574,7 @@ Result<QSharedPointer<LuaSource>> LuaSource::load(NetworkManager *networkManager
 
         lua_register(L, "sleep", sleepFor);
         lua_register(L, "clock", clockMs);
+        lua_register(L, "time", wallClock);
         lua_register(L, "log", logMessage);
 
         lua_createtable(L, 0, 4);

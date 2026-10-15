@@ -38,7 +38,8 @@
 //   request:failed(), request:done() (the response or the error is there), request:restart() (before the
 //   response). http.waitAny(requests [, ms]): the index of one of the requests that is finished, after waiting
 //   for one (nil after ms). http.parallel: how many downloads should run at the same time.
-// - sleep(ms), log(...), clock() (milliseconds of a monotonic clock, e.g. for the time that attempts may take)
+// - sleep(ms), log(...), clock() (milliseconds of a monotonic clock, e.g. for the time that attempts may take),
+//   time() (seconds since the epoch, by the clock of the device)
 // - source: {id, name, baseUrl, definition (the YAML as tables)}
 class LuaSource : public MangaSourceBase
 {

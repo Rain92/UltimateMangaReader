@@ -1,6 +1,6 @@
 """The responses of cases that the sites rarely have, as fixtures for the harness (tests/run.sh <Source>-cases).
 
-    python3 -I cases.py <Comick|MangaDex> <fixtures dir> <picks file>
+    python3 -I cases.py <Comick|MangaDex|MangaPlus> <fixtures dir> <picks file>
 
 The C++ source gives the golden output with them, the script of the source has to give the same
 (<Source>-cases-lua). The data is made up, only its form is the one of the sites.
@@ -9,7 +9,9 @@ import hashlib
 import json
 import os
 import shutil
+import struct
 import sys
+import zlib
 
 
 class Fixtures:
@@ -217,10 +219,145 @@ def mangadex(f):
     return picks
 
 
+# --- MangaPlus (protobuf)
+
+MANGAPLUS = 'https://jumpg-webapi.tokyo-cdn.com/api'
+ASSETS = 'https://jumpg-assets.tokyo-cdn.com/secure/title'
+# a time far ahead and one long ago
+LATER, PAST = 4102444800, 946684800
+
+
+def varint(n):
+    n &= (1 << 64) - 1
+    out = bytearray()
+    while True:
+        byte, n = n & 0x7f, n >> 7
+        out.append(byte | (0x80 if n else 0))
+        if not n:
+            return bytes(out)
+
+
+def proto(*fields):
+    """fields: (number, value), value an int, a str, bytes (a message) or None (left out)."""
+    data = b''
+    for number, value in fields:
+        if value is None:
+            continue
+        if isinstance(value, int):
+            data += varint(number << 3) + varint(value)
+        else:
+            value = value.encode() if isinstance(value, str) else value
+            data += varint(number << 3 | 2) + varint(len(value)) + value
+    return data
+
+
+def success(*fields):
+    return proto((1, proto(*fields)))
+
+
+def popup(subject, body):
+    return proto((2, proto((2, proto((1, subject), (2, body))))))
+
+
+def mp_chapter(cid, name, subtitle=None):
+    return proto((1, 1), (2, cid), (3, name), (4, subtitle), (6, 1600000000), (7, 1700000000))
+
+
+def png(width, height):
+    rows = b''.join(b'\0' + bytes((x * 40 + y * 70) % 256 for x in range(width)) for y in range(height))
+
+    def chunk(kind, data):
+        return struct.pack('>I', len(data)) + kind + data + struct.pack('>I', zlib.crc32(kind + data))
+    return (b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', width, height, 8, 0, 0, 0, 0)) +
+            chunk(b'IDAT', zlib.compress(rows)) + chunk(b'IEND', b''))
+
+
+def mangaplus(f):
+    picks = []
+
+    def case(name, tid, body):
+        url = f'{MANGAPLUS}/title_detailV3?title_id={tid}&clang=eng'
+        f.add(url, body, content_type='application/octet-stream')
+        picks.append((name, url))
+
+    def detail(tid, name, author, groups, portrait=None, image=None, overview=None, viewing=None, info=None,
+               tags=(), schedule=None):
+        fields = [(1, proto((1, tid), (2, name), (3, author), (4, portrait))), (2, image), (3, overview),
+                  (7, viewing), (8, info)]
+        fields += [(28, proto(*[(n, c) for n, chapters in group for c in chapters])) for group in groups]
+        fields += [(31, proto((1, tag), (2, tag.lower()))) for tag in tags]
+        fields += [(32, proto((1, schedule)) if schedule is not None else None)]
+        return success((8, proto(*fields)))
+
+    def viewer(cid, pages, token=None):
+        url = f'{MANGAPLUS}/manga_viewer_v3?chapter_id={cid}&split=yes&img_quality=super_high&clang=eng'
+        return url, success((10, proto(*[(1, page) for page in pages], (2, cid), (19, token))))
+
+    def page(tid, cid, n, expires=LATER, key='0a0b0c'):
+        url = f'{ASSETS}/{tid}/chapter/{cid}/manga_page/super_high/{n}.jpg?hash=h{n}'
+        if expires is not None:
+            url += f'&expires={expires}'
+        return proto((1, proto((1, url), (2, 2), (3, 3), (5, key))))
+
+    # the chapter names and subtitles, ids that are 0 or twice, expired chapters (without subtitle), the ones of a
+    # subscription; authors with slashes, empty tags, the cover of the detail, a summary without "latest 0 chapters"
+    case('chapters', 1001, detail(
+        1001, ' Chapters ', ' Writer / Painter /', [
+            [(2, [mp_chapter(11, '#001', 'Chapter 1: Start'), mp_chapter(12, '#002', 'Prologue'),
+                  mp_chapter(0, '#000', 'No id'), mp_chapter(13, 'ex', 'Extra story'), mp_chapter(14, '#004'),
+                  mp_chapter(15, ' #011 ', ' Eleven '), mp_chapter(16, '#003', 'Chapter 3.5'),
+                  mp_chapter(17, '#000', 'Chapter 0')]),
+             (3, [mp_chapter(18, '#005', 'Chapter 5')]),
+             (4, [mp_chapter(19, '#010', 'Chapter 100'), mp_chapter(12, '#002', 'Prologue again'),
+                  mp_chapter(20, '#007', ''), mp_chapter(21, 'One-shot', 'Chapter 21x')])],
+            [(2, [mp_chapter(22, '#008', 'Chapter 8')])]],
+        image='https://jumpg-assets.tokyo-cdn.com/title.jpg', overview=' An overview. ',
+        viewing='Read the latest 0 chapters for free.', tags=('Action', '  ', 'Drama')))
+
+    # only chapters of a subscription, on hiatus (by the text of the detail)
+    case('subscription', 1002, detail(
+        1002, 'Subscription', 'Writer', [[(3, [mp_chapter(31, '#001', 'Chapter 1'), mp_chapter(32, '#002', 'Two')])]],
+        portrait='https://jumpg-assets.tokyo-cdn.com/portrait.jpg', overview='Overview.',
+        info='This series is on HIATUS.', viewing='Free for a while.'))
+
+    # the statuses: a one-shot tag before the schedule, completed by the text, one chapter (an award title)
+    case('oneshot-tag', 1003, detail(1003, 'Tagged', 'A', [[(2, [mp_chapter(41, '#001', 'A')]),
+                                                             (4, [mp_chapter(42, '#002', 'B')])]],
+                                     tags=('ONE-SHOT',), schedule=3))
+    case('completed-text', 1004, detail(1004, 'Text', 'A', [[(2, [mp_chapter(51, '#001', 'A')]),
+                                                              (4, [mp_chapter(52, '#002', 'B')])]],
+                                        info='Completed in 2020', schedule=7))
+    case('award', 1005, detail(1005, 'Award', 'A', [[(2, [mp_chapter(61, 'One-shot', 'Bronze Award: Award')])]]))
+    case('schedules', 1006, detail(1006, 'Schedules', 'A', [[(2, [mp_chapter(71, '#001', 'A')]),
+                                                              (4, [mp_chapter(72, '#002', 'B')])]], schedule=10))
+
+    # the pages: a usable one, an expired one of another chapter whose page list doesn't have it (anymore), an
+    # expired one of the chapter (its page list again, the image of it is expired too), a banner; the last chapter
+    # answers with a popup
+    case('pages', 1007, detail(1007, 'Pages', 'A', [[(2, [mp_chapter(81, '#001', 'A')]),
+                                                      (4, [mp_chapter(82, '#002', 'B')])]], schedule=8))
+    image = png(2, 3)
+    key = bytes.fromhex('0a0b0c')
+    f.add(f'{ASSETS}/1007/chapter/81/manga_page/super_high/1.jpg?hash=h1&expires={LATER}',
+          bytes(b ^ key[i % len(key)] for i, b in enumerate(image)), content_type='image/jpeg')
+    f.add(*viewer(81, [page(1007, 81, 1), page(1007, 83, 2, PAST), proto((2, proto((1, 'banner')))),
+                       page(1007, 81, 3, PAST, key='0a1')], token='token81'), content_type='application/octet-stream')
+    f.add(*viewer(83, [page(1007, 83, 1, None)]), content_type='application/octet-stream')
+    url, _ = viewer(82, [])
+    f.add(url, popup('Chapter unavailable', 'Read it in the app.'), content_type='application/octet-stream')
+
+    # the errors: a popup with a subject only, an empty popup, broken data, a detail without its title
+    case('popup', 1008, popup('Title not found', ''))
+    case('empty-popup', 1009, popup('', ' '))
+    case('broken', 1010, b'\x0a\x05ab')
+    case('no-title', 1011, success((8, proto((3, 'Only an overview')))))
+    return picks
+
+
 def main():
     source, directory, picks_file = sys.argv[1:4]
     f = Fixtures()
-    picks = {'Comick': comick, 'MangaDex': mangadex}[source](f)
+    picks = {'Comick': comick, 'MangaDex': mangadex, 'MangaPlus': mangaplus}[source](f)
     f.write(directory)
     with open(picks_file, 'w') as out:
         out.write(f'# {source}: made up cases (tests/harness/cases.py)\n')

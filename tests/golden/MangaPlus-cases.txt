@@ -1,0 +1,146 @@
+=== chapters | https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=1001&clang=eng
+  title: chapters
+  url: https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=1001&clang=eng
+  author: Writer, Painter
+  artist: Writer, Painter
+  status: 
+  year: 
+  genres: Action, Drama
+  summary: An overview.
+  coverUrl: https://jumpg-assets.tokyo-cdn.com/title.jpg
+  chapters: 10
+  ch 0: Chapter 1: Start | api/manga_viewer_v3?chapter_id=11&split=yes&img_quality=super_high&clang=eng
+  ch 1: #002 - Prologue | api/manga_viewer_v3?chapter_id=12&split=yes&img_quality=super_high&clang=eng
+  ch 2: Extra story | api/manga_viewer_v3?chapter_id=13&split=yes&img_quality=super_high&clang=eng
+  ch 7: #007 | api/manga_viewer_v3?chapter_id=20&split=yes&img_quality=super_high&clang=eng
+  ch 8: Chapter 21x | api/manga_viewer_v3?chapter_id=21&split=yes&img_quality=super_high&clang=eng
+  ch 9: Chapter 8 | api/manga_viewer_v3?chapter_id=22&split=yes&img_quality=super_high&clang=eng
+  hash: ed390947c58d454b
+  refetch: 10 chapters, hash 2b88ab62e96dbf98
+  chapter 0: Chapter 1: Start | api/manga_viewer_v3?chapter_id=11&split=yes&img_quality=super_high&clang=eng
+    pages: ERROR Download error: Not in the fixtures: https://jumpg-webapi.tokyo-cdn.com/api/manga_viewer_v3?chapter_id=11&split=yes&img_quality=super_high&clang=eng
+  chapter 9: Chapter 8 | api/manga_viewer_v3?chapter_id=22&split=yes&img_quality=super_high&clang=eng
+    pages: ERROR Download error: Not in the fixtures: https://jumpg-webapi.tokyo-cdn.com/api/manga_viewer_v3?chapter_id=22&split=yes&img_quality=super_high&clang=eng
+=== subscription | https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=1002&clang=eng
+  title: subscription
+  url: https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=1002&clang=eng
+  author: Writer
+  artist: Writer
+  status: Hiatus
+  year: 
+  genres: 
+  summary: Overview.\n\nThis series is on HIATUS.\n\nFree for a while.\n\nThe chapters of this title are only r...
+  coverUrl: https://jumpg-assets.tokyo-cdn.com/portrait.jpg
+  chapters: 0
+  hash: efde42ac96e85750
+  refetch: 0 chapters, hash da39a3ee5e6b4b0d
+=== oneshot-tag | https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=1003&clang=eng
+  title: oneshot-tag
+  url: https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=1003&clang=eng
+  author: A
+  artist: A
+  status: One-shot
+  year: 
+  genres: ONE-SHOT
+  summary: 
+  coverUrl: 
+  chapters: 2
+  ch 0: #001 - A | api/manga_viewer_v3?chapter_id=41&split=yes&img_quality=super_high&clang=eng
+  ch 1: #002 - B | api/manga_viewer_v3?chapter_id=42&split=yes&img_quality=super_high&clang=eng
+  hash: 6ab0d01513d108a3
+  refetch: 2 chapters, hash 6ab0d01513d108a3
+  chapter 0: #001 - A | api/manga_viewer_v3?chapter_id=41&split=yes&img_quality=super_high&clang=eng
+    pages: ERROR Download error: Not in the fixtures: https://jumpg-webapi.tokyo-cdn.com/api/manga_viewer_v3?chapter_id=41&split=yes&img_quality=super_high&clang=eng
+  chapter 1: #002 - B | api/manga_viewer_v3?chapter_id=42&split=yes&img_quality=super_high&clang=eng
+    pages: ERROR Download error: Not in the fixtures: https://jumpg-webapi.tokyo-cdn.com/api/manga_viewer_v3?chapter_id=42&split=yes&img_quality=super_high&clang=eng
+=== completed-text | https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=1004&clang=eng
+  title: completed-text
+  url: https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=1004&clang=eng
+  author: A
+  artist: A
+  status: Completed
+  year: 
+  genres: 
+  summary: Completed in 2020
+  coverUrl: 
+  chapters: 2
+  ch 0: #001 - A | api/manga_viewer_v3?chapter_id=51&split=yes&img_quality=super_high&clang=eng
+  ch 1: #002 - B | api/manga_viewer_v3?chapter_id=52&split=yes&img_quality=super_high&clang=eng
+  hash: 1e2b780a42b7d06a
+  refetch: 2 chapters, hash 91c637cfc4f579ac
+  chapter 0: #001 - A | api/manga_viewer_v3?chapter_id=51&split=yes&img_quality=super_high&clang=eng
+    pages: ERROR Download error: Not in the fixtures: https://jumpg-webapi.tokyo-cdn.com/api/manga_viewer_v3?chapter_id=51&split=yes&img_quality=super_high&clang=eng
+  chapter 1: #002 - B | api/manga_viewer_v3?chapter_id=52&split=yes&img_quality=super_high&clang=eng
+    pages: ERROR Download error: Not in the fixtures: https://jumpg-webapi.tokyo-cdn.com/api/manga_viewer_v3?chapter_id=52&split=yes&img_quality=super_high&clang=eng
+=== award | https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=1005&clang=eng
+  title: award
+  url: https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=1005&clang=eng
+  author: A
+  artist: A
+  status: One-shot
+  year: 
+  genres: 
+  summary: 
+  coverUrl: 
+  chapters: 1
+  ch 0: Bronze Award: Award | api/manga_viewer_v3?chapter_id=61&split=yes&img_quality=super_high&clang=eng
+  hash: bc7a566ddcd6826b
+  refetch: 1 chapters, hash bc7a566ddcd6826b
+  chapter 0: Bronze Award: Award | api/manga_viewer_v3?chapter_id=61&split=yes&img_quality=super_high&clang=eng
+    pages: ERROR Download error: Not in the fixtures: https://jumpg-webapi.tokyo-cdn.com/api/manga_viewer_v3?chapter_id=61&split=yes&img_quality=super_high&clang=eng
+=== schedules | https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=1006&clang=eng
+  title: schedules
+  url: https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=1006&clang=eng
+  author: A
+  artist: A
+  status: Hiatus
+  year: 
+  genres: 
+  summary: 
+  coverUrl: 
+  chapters: 2
+  ch 0: #001 - A | api/manga_viewer_v3?chapter_id=71&split=yes&img_quality=super_high&clang=eng
+  ch 1: #002 - B | api/manga_viewer_v3?chapter_id=72&split=yes&img_quality=super_high&clang=eng
+  hash: 99053775475f6e14
+  refetch: 2 chapters, hash 99053775475f6e14
+  chapter 0: #001 - A | api/manga_viewer_v3?chapter_id=71&split=yes&img_quality=super_high&clang=eng
+    pages: ERROR Download error: Not in the fixtures: https://jumpg-webapi.tokyo-cdn.com/api/manga_viewer_v3?chapter_id=71&split=yes&img_quality=super_high&clang=eng
+  chapter 1: #002 - B | api/manga_viewer_v3?chapter_id=72&split=yes&img_quality=super_high&clang=eng
+    pages: ERROR Download error: Not in the fixtures: https://jumpg-webapi.tokyo-cdn.com/api/manga_viewer_v3?chapter_id=72&split=yes&img_quality=super_high&clang=eng
+=== pages | https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=1007&clang=eng
+  title: pages
+  url: https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=1007&clang=eng
+  author: A
+  artist: A
+  status: Completed
+  year: 
+  genres: 
+  summary: 
+  coverUrl: 
+  chapters: 2
+  ch 0: #001 - A | api/manga_viewer_v3?chapter_id=81&split=yes&img_quality=super_high&clang=eng
+  ch 1: #002 - B | api/manga_viewer_v3?chapter_id=82&split=yes&img_quality=super_high&clang=eng
+  hash: 7e503b34756820e6
+  refetch: 2 chapters, hash 7e503b34756820e6
+  chapter 0: #001 - A | api/manga_viewer_v3?chapter_id=81&split=yes&img_quality=super_high&clang=eng
+    pages: 3
+    page 0: https://jumpg-assets.tokyo-cdn.com/secure/title/1007/chapter/81/manga_page/super_high/1.jpg?hash=h1&expires=4102444800#vwt=token81|xor:0a0b0c
+      imageUrl: https://jumpg-assets.tokyo-cdn.com/secure/title/1007/chapter/81/manga_page/super_high/1.jpg?hash=h1&expires=4102444800#vwt=token81|xor:0a0b0c
+      headers: Origin: https://mangaplus.shueisha.co.jp | Referer: https://mangaplus.shueisha.co.jp/ | Plus-Vw-Token: <token>
+      image: ok 1248x1872
+      pixels: d4aa008c45636fac
+    page 1: https://jumpg-assets.tokyo-cdn.com/secure/title/1007/chapter/83/manga_page/super_high/2.jpg?hash=h2&expires=946684800#vwt=token81|xor:0a0b0c
+      imageUrl: ERROR Couldn't refresh the expired page url.
+    page 2: https://jumpg-assets.tokyo-cdn.com/secure/title/1007/chapter/81/manga_page/super_high/3.jpg?hash=h3&expires=946684800#vwt=token81|xor:0a01
+      imageUrl: https://jumpg-assets.tokyo-cdn.com/secure/title/1007/chapter/81/manga_page/super_high/3.jpg?hash=h3&expires=946684800#vwt=token81|xor:0a01
+      headers: Origin: https://mangaplus.shueisha.co.jp | Referer: https://mangaplus.shueisha.co.jp/ | Plus-Vw-Token: <token>
+  chapter 1: #002 - B | api/manga_viewer_v3?chapter_id=82&split=yes&img_quality=super_high&clang=eng
+    pages: ERROR Chapter unavailable: Read it in the app.
+=== popup | https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=1008&clang=eng
+  info: ERROR Title not found
+=== empty-popup | https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=1009&clang=eng
+  info: ERROR Couldn't parse MangaPlus response.
+=== broken | https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=1010&clang=eng
+  info: ERROR Couldn't parse MangaPlus response.
+=== no-title | https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=1011&clang=eng
+  info: ERROR Couldn't parse manga info.

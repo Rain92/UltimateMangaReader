@@ -618,6 +618,95 @@ static int jsonDecode(lua_State *L)
     return 1;
 }
 
+// --- proto
+
+static bool readVarint(const unsigned char *data, size_t &pos, size_t end, quint64 &value)
+{
+    value = 0;
+    for (int shift = 0; shift < 64 && pos < end; shift += 7)
+    {
+        unsigned char byte = data[pos++];
+        value |= quint64(byte & 0x7f) << shift;
+        if (byte < 0x80)
+            return true;
+    }
+    return false;
+}
+
+// Appends the value on top of the stack to the list of the field number of the message at index.
+static void appendField(lua_State *L, int message, lua_Integer number)
+{
+    if (lua_rawgeti(L, message, number) == LUA_TNIL)
+    {
+        lua_pop(L, 1);
+        lua_newtable(L);
+        lua_pushvalue(L, -1);
+        lua_rawseti(L, message, number);
+    }
+    lua_insert(L, -2);
+    lua_rawseti(L, -2, lua_Integer(lua_rawlen(L, -2)) + 1);
+    lua_pop(L, 1);
+}
+
+// proto.decode(data): the fields of a protobuf message, {[number] = {values}} in their order: integers (varint,
+// and the bits of fixed32 and fixed64) and strings (length-delimited: texts, bytes or messages to decode).
+// Invalid or truncated data is an empty message.
+static int protoDecode(lua_State *L)
+{
+    size_t end = 0;
+    auto data = reinterpret_cast<const unsigned char *>(luaL_checklstring(L, 1, &end));
+    lua_newtable(L);
+    int message = lua_gettop(L);
+    luaL_checkstack(L, 4, "proto");
+
+    size_t pos = 0;
+    bool valid = true;
+    while (pos < end && valid)
+    {
+        valid = false;
+        quint64 tag = 0;
+        if (!readVarint(data, pos, end, tag) || (tag >> 3) == 0 || (tag >> 3) > 0x1fffffff)
+            break;
+        auto number = lua_Integer(tag >> 3);
+        int wireType = int(tag & 7);
+
+        quint64 value = 0;
+        if (wireType == 0)
+        {
+            if (!readVarint(data, pos, end, value))
+                break;
+            lua_pushinteger(L, lua_Integer(value));
+        }
+        else if (wireType == 2)
+        {
+            if (!readVarint(data, pos, end, value) || value > end - pos)
+                break;
+            lua_pushlstring(L, reinterpret_cast<const char *>(data + pos), size_t(value));
+            pos += size_t(value);
+        }
+        else if (wireType == 1 || wireType == 5)
+        {
+            size_t size = wireType == 1 ? 8 : 4;
+            if (end - pos < size)
+                break;
+            for (size_t i = 0; i < size; i++)
+                value |= quint64(data[pos + i]) << (8 * i);
+            pos += size;
+            lua_pushinteger(L, lua_Integer(value));
+        }
+        else
+        {
+            break;
+        }
+        appendField(L, message, number);
+        valid = true;
+    }
+
+    if (!valid)
+        lua_newtable(L);
+    return 1;
+}
+
 // --- raise
 
 static int raiseError(lua_State *L)
@@ -653,6 +742,9 @@ void openLibraries(lua_State *L)
     luaL_newlib(L, imageFunctions);
     lua_setglobal(L, "image");
 
+    static const luaL_Reg protoFunctions[] = {{"decode", protoDecode}, {nullptr, nullptr}};
+    luaL_newlib(L, protoFunctions);
+    lua_setglobal(L, "proto");
 
     lua_register(L, "raise", raiseError);
 }

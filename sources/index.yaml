@@ -25,3 +25,7 @@ sources:
     name: Comick
     version: 1.0
     files: [comick.yaml, comick.lua, comick.png]
+  - id: mangaplus
+    name: MangaPlus
+    version: 1.0
+    files: [mangaplus.yaml, mangaplus.lua, mangaplus.png]

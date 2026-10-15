@@ -22,10 +22,13 @@ SOURCES="Comick MangaDex MangaHere Mangakakalot MangaPlus MangaTown"
 # Comick ~200 MB of sitemaps)
 LISTS="MangaHere-list Mangakakalot-list MangaPlus-list"
 # made up responses of cases that the sites rarely have (tests/harness/cases.py)
-CASES="Comick-cases MangaDex-cases"
+CASES="Comick-cases MangaDex-cases MangaPlus-cases"
+# the cases of these sources are about their pages too
+CASES_WITH_PAGES="MangaPlus"
 # the scripts of sources in sources/, against the responses and the golden output of the C++ sources
 SCRIPTS="MangaTown-lua MangaHere-lua MangaHere-list-lua Mangakakalot-lua Mangakakalot-list-lua MangaDex-lua
-         MangaDex-cases-lua Comick-lua Comick-cases-lua"
+         MangaDex-cases-lua Comick-lua Comick-cases-lua MangaPlus-lua MangaPlus-list-lua
+         MangaPlus-cases-lua"
 
 record=0
 if [ "${1:-}" = record ]; then
@@ -117,13 +120,15 @@ for name in "${names[@]}"; do
             # golden output of the C++ source with them, the script has to give the same
             base=${name%-lua}
             source=${base%-cases}
+            no_pages=1
+            [[ " $CASES_WITH_PAGES " = *" $source "* ]] && no_pages=
             if [ $record = 1 ]; then
                 [ "$name" = "$base" ] || continue
                 python3 -I "$TESTS/harness/cases.py" "$source" "$TESTS/fixtures/$base" "$TESTS/picks/$base.txt" ||
                     { report "$name" "cases.py FAILED"; continue; }
                 record=0
-                HARNESS_NO_PAGES=1 HARNESS_REFETCH=1 ./harness --replay "$TESTS/fixtures/$base" capture "$source" \
-                    "$TESTS/picks/$base.txt" > "$TESTS/golden/$base.txt" 2> "output/$name.log"
+                HARNESS_NO_PAGES=$no_pages HARNESS_REFETCH=1 ./harness --replay "$TESTS/fixtures/$base" capture \
+                    "$source" "$TESTS/picks/$base.txt" > "$TESTS/golden/$base.txt" 2> "output/$name.log"
                 status=$?
                 record=1
                 # (some cases fail on purpose)
@@ -135,8 +140,8 @@ for name in "${names[@]}"; do
                 { report "$name" "cases.py FAILED"; continue; }
             args=()
             [ "$name" != "$base" ] && args=(--sources "$SOURCES_DIR")
-            errors_expected=1 HARNESS_NO_PAGES=1 HARNESS_REFETCH=1 source_test "$name" "${args[@]}" capture "$source" \
-                "$TESTS/picks/$base.txt"
+            errors_expected=1 HARNESS_NO_PAGES=$no_pages HARNESS_REFETCH=1 source_test "$name" "${args[@]}" capture \
+                "$source" "$TESTS/picks/$base.txt"
             ;;
         *-list)
             source_test "$name" list "${name%-list}"

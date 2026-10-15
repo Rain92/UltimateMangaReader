@@ -1,6 +1,7 @@
 // The scripts of sources: the Lua engine, its libraries and LuaSource, against tests/harness/testserver.py.
 #include <QCoreApplication>
 #include <clocale>
+#include <QDateTime>
 #include <QDir>
 #include <QElapsedTimer>
 #include <QTemporaryDir>
@@ -112,6 +113,19 @@ function libraries()
     return table.concat(failed, ",")
 end
 
+function protobuf()
+    -- 1: 150, 2: "testing" and "ab", 3: fixed32 1, 4: {1: 5}, 5: fixed64 2, 6: -1 (int32, ten bytes)
+    local m = proto.decode("\x08\x96\x01\x12\x07testing\x12\x02ab\x1d\x01\0\0\0\x22\x02\x08\x05" ..
+                           "\x29\x02\0\0\0\0\0\0\0\x30" .. string.rep("\xff", 9) .. "\x01")
+    local function empty(data)
+        return next(proto.decode(data)) == nil and "empty" or "fields"
+    end
+    -- truncated, wire type 3, field 0, a truncated varint, nothing
+    return table.concat({m[1][1], table.concat(m[2], ","), m[3][1], proto.decode(m[4][1])[1][1], m[5][1], m[6][1],
+                         math.type(m[1][1]), empty("\x08\x01\x12\x07ab"), empty("\x0b"), empty("\x00\x01"),
+                         empty("\x08\x80"), empty("")}, "|")
+end
+
 function jsonErrors()
     local ok1, e1 = pcall(json.decode, "{")
     local ok2, e2 = pcall(json.decode, string.rep("[", 300) .. string.rep("]", 300))
@@ -177,6 +191,8 @@ function fetchPageList(test)
         return {tostring(ok), tostring(err.status), response.body}
     elseif test == "case" then
         return {text.lower("ÄÖ Ab"), text.upper("äö aB")}
+    elseif test == "time" then
+        return {math.type(time()), tostring(time())}
     elseif test == "httperror" then
         http.get(base .. "/status/404")
     elseif test == "caught" then
@@ -284,6 +300,11 @@ int scriptTests(const QString &server, const QString &sourcesDir)
         check("text, html and json", libraries && libraries->isEmpty());
         show(libraries);
 
+        auto protobuf = callText(*engine, "protobuf");
+        check("proto.decode: the fields by their numbers, invalid or truncated data is an empty message",
+              protobuf && *protobuf == "150|testing,ab|1|5|2|-1|integer|empty|empty|empty|empty|empty");
+        show(protobuf);
+
         auto jsonErrors = callText(*engine, "jsonErrors");
         check("invalid and too deep json fail with parse errors",
               jsonErrors && *jsonErrors == "false|parse|false|parse|The json is nested too deeply.");
@@ -370,6 +391,12 @@ int scriptTests(const QString &server, const QString &sourcesDir)
     check("only the retryStatuses (and the usual ones) are retried", urls(pages("retrystatuses")) ==
                                                                         "false|400|ok after 400");
     check("text.lower, text.upper", urls(pages("case")) == "äö ab|ÄÖ AB");
+    {
+        auto time = urls(pages("time")).split('|');
+        check("time() is the time of the device in seconds",
+              time.size() == 2 && time[0] == "integer" &&
+                  qAbs(time[1].toLongLong() - QDateTime::currentSecsSinceEpoch()) <= 2);
+    }
     {
         auto error = pages("httperror");
         check("a failed download fails the script with its error",
