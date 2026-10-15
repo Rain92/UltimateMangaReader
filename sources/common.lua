@@ -351,7 +351,7 @@ local function compileSection(value, shape, path, isItems)
 end
 
 -- the app reads these
-local topLevel = {name = true, baseUrl = true, headers = true, cookies = true}
+local topLevel = {name = true, baseUrl = true, headers = true, cookies = true, images = true}
 for key, value in pairs(source.definition or {}) do
     if schema[key] then
         def[key] = compileSection(value, schema[key], key)

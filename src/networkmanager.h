@@ -78,7 +78,8 @@ public:
     QSharedPointer<DownloadFileJob> downloadAsFile(DownloadRequest request, const QString &localPath);
     // Downloads a page and saves it processed for the screen, with the headers of image. A download into the
     // same file that is running already is reused.
-    QSharedPointer<DownloadFileJob> downloadAsScaledImage(const ImageLink &image, const QString &localPath);
+    QSharedPointer<DownloadFileJob> downloadAsScaledImage(const ImageLink &image, const QString &localPath,
+                                                          const ImageRetries &retries = {});
 
     void setDownloadSettings(const QSize &size, Settings *settings);
 

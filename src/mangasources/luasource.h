@@ -7,7 +7,8 @@
 
 // A source whose work Lua scripts do. Its files are in a directory of sources (see sources/README.md):
 // - <id>.yaml: its definition, {name, baseUrl, headers = {domain: {name: value}} for the requests to the domain and
-//   its subdomains, cookies = {domain: {name: value}}, ...}. The app reads these, the scripts all of it.
+//   its subdomains, cookies = {domain: {name: value}}, images = {retries, retryDelay, maxRetryDelay} for the
+//   downloads of its images (see ImageRetries), ...}. The app reads these, the scripts all of it.
 // - the libraries of the directory (e.g. common.lua, which runs the rest of the definition), then <id>.lua if
 //   there is one. After them prepare() is called if it's there (e.g. to check the definition), a failure fails the
 //   load.

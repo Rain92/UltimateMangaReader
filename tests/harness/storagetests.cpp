@@ -339,6 +339,17 @@ int storageTests(const QString &server)
         job->await(5000);
         check(job->hasFailed() && info->chapters[0].pages[0].image.isEmpty(),
               "a page image that couldn't be downloaded is forgotten");
+
+        // the retries of the source (e.g. longer for a CDN that answers 429 while it loads an image)
+        fake->imageRetries = {5, 50, 100};
+        auto retried = repository.downloadImage("Fake", ImageLink::fromUrl(server + "/status/503"),
+                                                info->directory() + "test/retried.jpg");
+        retried->await(5000);
+        auto descriptor = repository.imageDownload("Fake", broken, info->directory() + "test/other.jpg");
+        check(retried->hasFailed() && retried->request.maxRetries == 5 && retried->request.retryDelay == 50 &&
+                  retried->request.maxRetryDelay == 100 && descriptor.retries.maxRetries == 5,
+              "the image downloads have the retries of their source");
+        fake->imageRetries = {};
     }
 
     // --- updates of the info

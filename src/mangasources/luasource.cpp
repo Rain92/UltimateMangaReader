@@ -513,6 +513,32 @@ static Result<QList<std::pair<QString, HttpHeader>>> domainValues(const QVariant
     return values;
 }
 
+// images: {retries, retryDelay, maxRetryDelay}, each optional
+static Result<ImageRetries> readImageRetries(const QVariantMap &definition, const QString &file)
+{
+    ImageRetries retries;
+    if (!definition.contains("images"))
+        return retries;
+    if (definition["images"].typeId() != QMetaType::QVariantMap)
+        return Err(Error::Parse, QString("%1: images: a mapping is expected.").arg(file));
+    auto images = definition["images"].toMap();
+    for (auto it = images.cbegin(); it != images.cend(); ++it)
+    {
+        int *value = it.key() == "retries"         ? &retries.maxRetries
+                     : it.key() == "retryDelay"    ? &retries.retryDelay
+                     : it.key() == "maxRetryDelay" ? &retries.maxRetryDelay
+                                                   : nullptr;
+        if (!value)
+            return Err(Error::Parse, QString("%1: images.%2: unknown key").arg(file, it.key()));
+        auto type = it.value().typeId();
+        bool ok = false;
+        *value = it.value().toInt(&ok);
+        if ((type != QMetaType::Int && type != QMetaType::LongLong) || !ok || *value < 0)
+            return Err(Error::Parse, QString("%1: images.%2: a number (0 or more) is expected").arg(file, it.key()));
+    }
+    return retries;
+}
+
 Result<QSharedPointer<LuaSource>> LuaSource::load(NetworkManager *networkManager, const QString &directory,
                                                   const QString &id, const QStringList &libraries, LuaLimits limits)
 {
@@ -547,6 +573,10 @@ Result<QSharedPointer<LuaSource>> LuaSource::load(NetworkManager *networkManager
         return Err(cookies.error());
     for (const auto &[domain, cookie] : *cookies)
         networkManager->addCookie("." + domain, cookie.name, cookie.value);
+    auto images = readImageRetries(definition, definitionName);
+    if (!images)
+        return Err(images.error());
+    source->imageRetries = *images;
 
     auto opened = LuaEngine::protect(source->engine->state(), 0, [&source, &definition](lua_State *L) {
         lua::openLibraries(L);

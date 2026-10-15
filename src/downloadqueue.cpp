@@ -76,7 +76,7 @@ void DownloadQueue::startSingle()
         job = networkManager->download(request);
     }
     else  // if (type == DownloadTypeScaledImage)
-        job = networkManager->downloadAsScaledImage(descriptor.image, descriptor.path);
+        job = networkManager->downloadAsScaledImage(descriptor.image, descriptor.path, descriptor.retries);
 
     // a job that is done already (e.g. the same file was downloaded before) still signals, that may have
     // happened before the connections

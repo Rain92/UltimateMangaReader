@@ -245,7 +245,8 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsFile(DownloadRequest r
 }
 
 QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const ImageLink &image,
-                                                                      const QString &localPath)
+                                                                      const QString &localPath,
+                                                                      const ImageRetries &retries)
 {
     if (auto job = runningFileDownload(localPath))
         return job;
@@ -261,9 +262,12 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const Imag
 
     qDebug() << "Downloading as image:" << urlf;
 
-    auto sjob = new DownloadScaledImageJob(networkManager, imageProcessor,
-                                           DownloadFileJob::defaultRequest(urlf, image.headers), localPath,
-                                           imageRescaleSize, settings, ed, appendUrl);
+    auto request = DownloadFileJob::defaultRequest(urlf, image.headers);
+    request.maxRetries = retries.maxRetries;
+    request.retryDelay = retries.retryDelay;
+    request.maxRetryDelay = retries.maxRetryDelay;
+    auto sjob = new DownloadScaledImageJob(networkManager, imageProcessor, request, localPath, imageRescaleSize,
+                                           settings, ed, appendUrl);
     auto job = startFileDownload(sjob);
 
     // the processed page goes to the reader's cache, the job is kept until it finished (even if the caller

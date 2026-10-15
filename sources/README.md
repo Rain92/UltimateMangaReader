@@ -23,6 +23,9 @@ headers:                                # for the requests to the domains and th
   mangahere.org: {Referer: 'https://www.mangatown.com/'}
 cookies:                                # for the domains and their subdomains
   mangahere.cc: {isAdult: '1'}
+images: {retries: 6, retryDelay: 1000}  # the downloads of the images (pages): attempts after errors that may go
+                                        # away (429, 5xx, ...), the pause before one (ms, doubles up to
+                                        # maxRetryDelay); default 2, 1000, 4000
 
 list: ...                               # the list of all mangas
 info: ...                               # the info of a manga and its chapters

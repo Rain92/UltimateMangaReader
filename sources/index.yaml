@@ -3,7 +3,7 @@
 # the one of the app (LuaSource::majorVersion).
 libraries:
   - id: common
-    version: 1.4
+    version: 1.5
 sources:
   - id: mangakakalot
     name: Mangakakalot
@@ -23,7 +23,7 @@ sources:
     files: [mangadex.yaml, mangadex.lua, mangadex.png]
   - id: comick
     name: Comick
-    version: 1.0
+    version: 1.1
     files: [comick.yaml, comick.lua, comick.png]
   - id: mangaplus
     name: MangaPlus

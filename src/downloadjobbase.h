@@ -33,6 +33,15 @@ struct DownloadRequest
     QList<int> retryStatuses;
 };
 
+// How the downloads of a source's images are retried (see DownloadRequest; the defaults are the ones of
+// DownloadFileJob::defaultRequest()), e.g. longer for a CDN that answers 429 while it loads an image into its cache.
+struct ImageRetries
+{
+    int maxRetries = 2;
+    int retryDelay = 1000;
+    int maxRetryDelay = 4000;
+};
+
 // A download. Every run (start() or restart()) finishes once, after its retries, with completed() or
 // downloadError(). Both are emitted from the event loop, never from within a call to the job, and only when the
 // job's network requests are done. The response (url, httpStatus, responseHeaders, error and the data of the

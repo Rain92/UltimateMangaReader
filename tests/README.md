@@ -68,4 +68,4 @@ cd ../build-UltimateMangaReader-tests
 ./harness listflow MangaPlus
 ```
 
-Comick's CDN answers 429 until an image is in its cache, so a chapter download there can lose a page or two.
+Comick's CDN answers 429 for a few seconds until an image is in its cache: its images are retried for up to 31 s (`images` in `sources/comick.yaml`), a chapter download that still loses one says so.

@@ -410,7 +410,9 @@ int scriptTests(const QString &server, const QString &sourcesDir)
     Settings settings;
     nm.setDownloadSettings(QSize(1404, 1872), &settings);
     QTemporaryDir dir;
-    auto definition = QString("name: Script\nbaseUrl: %1\nheaders:\n  127.0.0.1: {X-Rule: ruled}\n").arg(server);
+    auto definition = QString("name: Script\nbaseUrl: %1\nheaders:\n  127.0.0.1: {X-Rule: ruled}\n"
+                              "images: {retries: 5, maxRetryDelay: 9000}\n")
+                          .arg(server);
     writeSource(dir.path(), "script", definition.toUtf8(), sourceCode);
 
     auto loaded = LuaSource::load(&nm, dir.path(), "script", {}, {96 * 1024 * 1024, 300});
@@ -423,6 +425,9 @@ int scriptTests(const QString &server, const QString &sourcesDir)
     auto source = *loaded;
     check("the definition names the source", source->name == "Script" && source->baseUrl == server &&
                                                  source->id == "script" && source->iconPath.isEmpty());
+    check("the definition has the retries of the images", source->imageRetries.maxRetries == 5 &&
+                                                              source->imageRetries.retryDelay == 1000 &&
+                                                              source->imageRetries.maxRetryDelay == 9000);
 
     auto pages = [&](const QString &test) { return source->fetchPageList(test).wait(); };
     auto urls = [](const Result<QList<ImageLink>> &result)
@@ -747,6 +752,11 @@ assert(common.title(" A\tB ") == "A B", "title without html")
         check("a value of the wrong kind", message == "invalid.yaml: pages.timeout: a number is expected");
         message = invalid("pages:\n  count: 'x'\n");
         check("a missing key", message == "invalid.yaml: pages.page: missing (the url of a page, with {n})");
+        message = invalid("images: {retries: '5'}\n");
+        check("retries of the images that aren't numbers",
+              message == "invalid.yaml: images.retries: a number (0 or more) is expected");
+        message = invalid("images: {retry: 5}\n");
+        check("an unknown key of the images", message == "invalid.yaml: images.retry: unknown key");
     }
 
     // --- updates of the sources (SourceUpdater, with a repository of files)

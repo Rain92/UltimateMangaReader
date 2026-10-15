@@ -5,3 +5,6 @@ name: Comick
 baseUrl: https://comick.art
 headers:
   comicknew.pictures: {Referer: 'https://comick.art/'}
+# The cdn answers 429 for a few seconds while it pulls an image into its cache (the origin is throttled for all
+# users): an image download waits for it, 1 + 2 + 4 + 8 + 8 + 8 s at most.
+images: {retries: 6, retryDelay: 1000, maxRetryDelay: 8000}
