@@ -17,37 +17,15 @@ local prefetchPages = 3
 
 -- --- the json
 
--- the string (or number) object[key] as a text, "" without one
-local function str(object, key)
-    local value = type(object) == "table" and object[key]
-    if type(value) == "string" then
-        return value
-    elseif math.type(value) == "integer" then
-        return tostring(value)
-    elseif type(value) == "number" then
-        return ("%.6g"):format(value)
-    end
-    return ""
-end
+local str, list, toNumber = common.str, common.list, common.number
 
--- the names of the list object[key] joined by ", "
+-- the names of the list object[key]
 local function joinNames(object, key)
-    local names, seen = {}, {}
-    for _, entry in ipairs(type(object[key]) == "table" and object[key] or {}) do
-        local name = text.trim(str(entry, "name"))
-        if name ~= "" and not seen[name] then
-            seen[name] = true
-            names[#names + 1] = name
-        end
+    local names = {}
+    for _, entry in ipairs(list(object, key)) do
+        names[#names + 1] = str(entry, "name")
     end
-    return table.concat(names, ", ")
-end
-
-local decimalrx = re.compile([=[^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$]=])
-
--- the number of a text like QString::toDouble(), nil if it isn't one
-local function toNumber(s)
-    return decimalrx:find(s) and tonumber(s) or nil
+    return common.join(names)
 end
 
 -- e.g. "31.2.5" is sorted as 31.2
@@ -130,47 +108,11 @@ local function makeChapter(slug, upload, byVolume)
     return {title = name, url = chapterPath(slug, upload)}
 end
 
--- a map by numbers (or pairs of numbers) that is gone through in their order, like a QMap
-local function newMap()
-    return {values = {}, keys = {}}
-end
-
-local function mapKey(a, b)
-    return b == nil and a or ("%.17g|%.17g"):format(a, b)
-end
-
-local function mapGet(map, a, b)
-    return map.values[mapKey(a, b)]
-end
-
-local function mapSet(map, value, a, b)
-    local key = mapKey(a, b)
-    if map.values[key] == nil then
-        map.keys[#map.keys + 1] = {a, b or 0, key}
-    end
-    map.values[key] = value
-end
-
--- the values in the order of their keys
-local function mapValues(map)
-    table.sort(map.keys, function(x, y)
-        if x[1] ~= y[1] then
-            return x[1] < y[1]
-        end
-        return x[2] < y[2]
-    end)
-    local values = {}
-    for i, key in ipairs(map.keys) do
-        values[i] = map.values[key[3]]
-    end
-    return values
-end
-
 -- keeps one upload per key: the one of the current chapters, else the first one
-local function chooseUpload(chosen, upload, currentHids, a, b)
-    local other = mapGet(chosen, a, b)
+local function chooseUpload(chosen, upload, currentHids, key)
+    local other = chosen.get(key)
     if not other or currentHids[upload.hid] and not currentHids[other.hid] then
-        mapSet(chosen, upload, a, b)
+        chosen.set(key, upload)
     end
 end
 
@@ -204,10 +146,10 @@ end
 -- through all volumes, the ones beyond the chapters in the volumes follow (and prologues or oneshots that are in
 -- no volume).
 local function chaptersByVolume(slug, uploads, currentHids)
-    local inVolumes, withoutVolume, numberedVolumes, volumeNumbers = newMap(), newMap(), {}, {}
+    local inVolumes, withoutVolume, numberedVolumes, volumeNumbers = common.sortedMap(), common.sortedMap(), {}, {}
     for _, upload in ipairs(uploads) do
         if upload.hasVolume then
-            chooseUpload(inVolumes, upload, currentHids, upload.volume, upload.number)
+            chooseUpload(inVolumes, upload, currentHids, {upload.volume, upload.number})
             volumeNumbers[upload.number] = true
             if upload.number > 0 then
                 numberedVolumes[upload.volume] = true
@@ -218,7 +160,7 @@ local function chaptersByVolume(slug, uploads, currentHids)
     end
 
     local chapters, volumeChapters = {}, 0
-    for _, upload in ipairs(mapValues(inVolumes)) do
+    for _, upload in ipairs(inVolumes.values()) do
         if upload.number >= 1 and upload.number == math.floor(upload.number) then
             volumeChapters = volumeChapters + 1
         end
@@ -226,7 +168,7 @@ local function chaptersByVolume(slug, uploads, currentHids)
         local wholeVolume = upload.isVolume and not numberedVolumes[upload.volume]
         chapters[#chapters + 1] = makeChapter(slug, upload, not wholeVolume)
     end
-    for _, upload in ipairs(mapValues(withoutVolume)) do
+    for _, upload in ipairs(withoutVolume.values()) do
         if upload.number > volumeChapters or upload.number < 1 and not volumeNumbers[upload.number] then
             chapters[#chapters + 1] = makeChapter(slug, upload, true)
         end
@@ -280,11 +222,7 @@ local function anchorUpload(uploads, currentHids)
             end
             if current == 1 then
                 chapters[chosen] = (chapters[chosen] or 0) + 1
-                local count = 0
-                for _ in pairs(chapGroups) do
-                    count = count + 1
-                end
-                if count > 1 then
+                if common.count(chapGroups) > 1 then
                     for group in pairs(chapGroups) do
                         balance[group] = (balance[group] or 0) + (group == chosen and 1 or -1)
                     end
@@ -367,9 +305,8 @@ end
 
 -- appends the uploads of a page of the chapter list, returns the number of pages
 local function fetchUploads(url, uploads)
-    local response = http.get(url)
-    local ok, doc = pcall(json.decode, response.body)
-    if not ok or type(doc) ~= "table" or type(doc.data) ~= "table" then
+    local doc = common.json(http.get(url).body)
+    if not doc or type(doc.data) ~= "table" then
         raise("parse", "Couldn't parse chapter list.")
     end
     parseUploads(doc.data, uploads)
@@ -410,28 +347,12 @@ local function fetchChapters(slug, current)
     local entries = {}
     local anchor = anchorUpload(uploads, currentHids)
     local ok, response = pcall(http.get, apiUrl .. "/comics/" .. chapterPath(slug, anchor), {timeout = 8000})
-    local loaded = ok
+    local doc = ok and common.json(response.body)
+    local loaded = doc and type(doc.chapterList) == "table"
     if loaded then
-        local decoded, doc = pcall(json.decode, response.body)
-        loaded = decoded and type(doc) == "table" and type(doc.chapterList) == "table"
-        if loaded then
-            parseUploads(doc.chapterList, entries)
-        end
-    end
-
-    if loaded then
+        parseUploads(doc.chapterList, entries)
         -- the list comes newest first (of an upload that is there twice, the first one counts)
-        local newestFirst, hids = {}, {}
-        for _, entry in ipairs(entries) do
-            if not hids[entry.hid] then
-                hids[entry.hid] = true
-                newestFirst[#newestFirst + 1] = entry
-            end
-        end
-        entries = {}
-        for i = #newestFirst, 1, -1 do
-            entries[#entries + 1] = newestFirst[i]
-        end
+        entries = common.reverse(common.unique(entries, function(entry) return entry.hid end))
     elseif lastPage == 1 and #current == 0 then
         -- All uploads are known already. An update keeps its current list instead, the choice of the uploads can
         -- differ from the chapter endpoint.
@@ -443,18 +364,9 @@ local function fetchChapters(slug, current)
         raise("parse", "Couldn't parse chapter list.")
     end
 
-    -- stable
-    for i, entry in ipairs(entries) do
-        entry.position = i
-    end
-    table.sort(entries, function(a, b)
-        if a.number ~= b.number then
-            return a.number < b.number
-        end
-        return a.position < b.position
-    end)
+    common.stableSort(entries, function(a, b) return a.number < b.number end)
 
-    local volumes = newMap()
+    local volumes = common.sortedMap()
     collectVolumes(uploads, currentHids, volumes)
 
     -- the volumes of the numbered chapters, other uploads of a chapter often have one
@@ -489,9 +401,9 @@ local function fetchChapters(slug, current)
     -- uploaded as volumes get all of them from the pages of the chapter list (sorted by chapter, so the volumes
     -- come first). So do the series whose few chapters can't cover the volumes, e.g. only the start of the first
     -- volume.
-    local volumeList = mapValues(volumes)
-    if #volumeList > 0 and (not numbered or #volumeList > 1 and not anyChapterVolume and
-                                maxNumber < 4 * volumes.keys[#volumes.keys][1]) then
+    local volumeKeys = volumes.keys()
+    if #volumeKeys > 0 and (not numbered or #volumeKeys > 1 and not anyChapterVolume and
+                                maxNumber < 4 * volumeKeys[#volumeKeys]) then
         for page = 2, math.min(lastPage, maxListPages) do
             local fetched, err = pcall(fetchUploads, listUrl .. "&page=" .. page, uploads)
             if not fetched then
@@ -508,12 +420,12 @@ local function fetchChapters(slug, current)
                 -- e.g. oneshots
                 if not entry.isVolume then
                     chapters[#chapters + 1] = makeChapter(slug, entry)
-                elseif not mapGet(volumes, entry.volume) then
-                    mapSet(volumes, entry, entry.volume)
+                elseif not volumes.get(entry.volume) then
+                    volumes.set(entry.volume, entry)
                 end
             end
         end
-        for _, volume in ipairs(mapValues(volumes)) do
+        for _, volume in ipairs(volumes.values()) do
             chapters[#chapters + 1] = makeChapter(slug, volume)
         end
         return chapters
@@ -534,8 +446,8 @@ local function fetchChapters(slug, current)
     -- the volumes whose chapters are missing (e.g. only the first volume is translated chapter by chapter) go
     -- before the chapters of the following volumes
     if numbered and allVolumesKnown then
-        for _, key in ipairs(volumes.keys) do
-            local volume, upload = key[1], volumes.values[key[3]]
+        for _, volume in ipairs(volumes.keys()) do
+            local upload = volumes.get(volume)
             if not listedVolumes[volume] and not volumeCovered(entries, volume) then
                 local pos = 1
                 while pos <= #result and not (result[pos].number > 0 and result[pos].knownVolume > volume) do
@@ -557,11 +469,8 @@ function fetchMangaInfo(url, known)
     local first = body:find('id="comic-data"', 1, true)
     first = first and body:find(">", first, true)
     local last = first and body:find("</script>", first, true)
-    if not last then
-        raise("parse", "Couldn't parse manga infos.")
-    end
-    local ok, doc = pcall(json.decode, body:sub(first + 1, last - 1))
-    if not ok or type(doc) ~= "table" then
+    local doc = last and common.json(body:sub(first + 1, last - 1))
+    if not doc then
         raise("parse", "Couldn't parse manga infos.")
     end
 
@@ -579,9 +488,9 @@ function fetchMangaInfo(url, known)
     local genres = {}
     local demographic = text.trim(str(doc, "demographic_name"))
     if demographic ~= "" then
-        genres[1] = text.upper(demographic:sub(1, 1)) .. demographic:sub(2)
+        genres[1] = common.capitalize(demographic)
     end
-    for _, entry in ipairs(type(doc.md_comic_md_genres) == "table" and doc.md_comic_md_genres or {}) do
+    for _, entry in ipairs(list(doc, "md_comic_md_genres")) do
         local genre = type(entry) == "table" and entry.md_genres
         local name = str(genre, "name")
         if str(genre, "group") == "Genre" and name ~= "" then
@@ -679,8 +588,8 @@ local function fetchSearch(order, pages, state, update, progressFrom, progressTo
             return false
         end
 
-        local decoded, doc = pcall(json.decode, response.body)
-        if not decoded or type(doc) ~= "table" or type(doc.data) ~= "table" then
+        local doc = common.json(response.body)
+        if not doc or type(doc.data) ~= "table" then
             return false
         end
         for _, r in ipairs(doc.data) do
@@ -722,10 +631,7 @@ local function fetchSitemaps(state, update)
     end
     table.sort(numbers)
 
-    local done = 0
-    for _ in pairs(state.sitemapsDone) do
-        done = done + 1
-    end
+    local done = common.count(state.sitemapsDone)
     for _, number in ipairs(numbers) do
         if not state.sitemapsDone[number] then
             local body = http.get(urls[number], {timeout = 30000}).body
@@ -813,14 +719,13 @@ local function startCacheWarmUp(imageUrl, timeout)
 end
 
 function fetchPageList(chapterUrl)
-    local response = http.get(apiUrl .. "/comics/" .. chapterUrl, {timeout = 8000})
-    local ok, doc = pcall(json.decode, response.body)
-    if not ok or type(doc) ~= "table" or type(doc.chapter) ~= "table" then
+    local doc = common.json(http.get(apiUrl .. "/comics/" .. chapterUrl, {timeout = 8000}).body)
+    if not doc or type(doc.chapter) ~= "table" then
         raise("parse", "Couldn't parse page list.")
     end
 
     local urls = {}
-    for _, image in ipairs(type(doc.chapter.images) == "table" and doc.chapter.images or {}) do
+    for _, image in ipairs(list(doc.chapter, "images")) do
         local imageUrl = str(image, "url")
         if imageUrl ~= "" then
             urls[#urls + 1] = imageUrl
@@ -860,11 +765,7 @@ function resolveImage(page)
     pcall(warmUp.wait, warmUp, 5000)
 
     -- the warm-ups of skipped pages
-    local count = 0
-    for _ in pairs(pageWarmUps) do
-        count = count + 1
-    end
-    if count > 32 then
+    if common.count(pageWarmUps) > 32 then
         for url, request in pairs(pageWarmUps) do
             if request:done() then
                 pageWarmUps[url] = nil

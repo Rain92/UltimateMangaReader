@@ -16,44 +16,7 @@ local headers = {["SESSION-TOKEN"] = ("%08x-%04x-4%03x-%04x-%06x%06x"):format(ma
 
 -- --- the messages
 
-local function has(message, number)
-    return message[number] ~= nil
-end
-
--- the first value of the field that is a number (0 without one)
-local function int(message, number)
-    for _, value in ipairs(message[number] or {}) do
-        if math.type(value) == "integer" then
-            return value
-        end
-    end
-    return 0
-end
-
--- the first value of the field that is a string ("" without one)
-local function bytes(message, number)
-    for _, value in ipairs(message[number] or {}) do
-        if type(value) == "string" then
-            return value
-        end
-    end
-    return ""
-end
-
-local function decoded(message, number)
-    return proto.decode(bytes(message, number))
-end
-
--- all the messages of the field
-local function messages(message, number)
-    local list = {}
-    for _, value in ipairs(message[number] or {}) do
-        if type(value) == "string" then
-            list[#list + 1] = proto.decode(value)
-        end
-    end
-    return list
-end
+local int, bytes, message, messages = proto.int, proto.bytes, proto.message, proto.messages
 
 --    message Response {
 --      SuccessResult success = 1;
@@ -61,10 +24,10 @@ end
 --    }
 local function successOf(body)
     local response = proto.decode(body)
-    if has(response, 1) then
-        return decoded(response, 1)
+    if response[1] then
+        return message(response, 1)
     end
-    local popup = decoded(decoded(response, 2), 2)
+    local popup = message(message(response, 2), 2)
     local subject, text_ = text.trim(bytes(popup, 1)), text.trim(bytes(popup, 2))
     if subject == "" and text_ == "" then
         raise("parse", "Couldn't parse MangaPlus response.")
@@ -95,7 +58,7 @@ function fetchMangaList(update)
     update.progress(40)
 
     local ids, titles = {}, {}
-    for _, group in ipairs(messages(decoded(successOf(response.body), 25), 1)) do
+    for _, group in ipairs(messages(message(successOf(response.body), 25), 1)) do
         for _, title in ipairs(messages(group, 2)) do
             local id, name = int(title, 1), text.trim(bytes(title, 2))
             if int(title, 7) == 0 and id ~= 0 and name ~= "" and not titles[id] then
@@ -122,11 +85,11 @@ function fetchMangaList(update)
         progress = progress + 25
         update.progress(progress)
         if not ok then
-            local message = type(ranking) == "table" and ranking.message or tostring(ranking)
-            log("couldn't load the ranking", kind, message)
-            rankingError = "Couldn't load the ranking: " .. message
+            local reason = type(ranking) == "table" and ranking.message or tostring(ranking)
+            log("couldn't load the ranking", kind, reason)
+            rankingError = "Couldn't load the ranking: " .. reason
         else
-            for _, group in ipairs(messages(decoded(ranking, 37), 3)) do
+            for _, group in ipairs(messages(message(ranking, 37), 3)) do
                 for _, title in ipairs(messages(group, 2)) do
                     local id = int(title, 1)
                     if titles[id] and not added[id] then
@@ -168,7 +131,7 @@ end
 
 local function titleStatus(detail, genres, chapterCount)
     -- TitleLabels.releaseSchedule: 1-6 regular releases, 7 other, 8 completed, 9 one-shot, 10 hiatus
-    local schedule = int(decoded(detail, 32), 1)
+    local schedule = int(message(detail, 32), 1)
     local oneShot = false
     for _, genre in ipairs(genres) do
         oneShot = oneShot or text.lower(genre) == "one-shot"
@@ -219,30 +182,24 @@ end
 --    }
 function fetchMangaInfo(url)
     -- the api server is far away (~300 ms rtt), a new connection often takes longer than 2 s
-    local detail = decoded(get(url, 6000), 8)
-    local title = decoded(detail, 1)
-    if not has(title, 1) then
+    local detail = message(get(url, 6000), 8)
+    local title = message(detail, 1)
+    if not title[1] then
         raise("parse", "Couldn't parse manga info.")
     end
 
     local info, authors = {}, {}
     for author in bytes(title, 3):gmatch("[^/]+") do
-        author = text.trim(author)
-        if author ~= "" then
-            authors[#authors + 1] = author
-        end
+        authors[#authors + 1] = author
     end
-    info.author = table.concat(authors, ", ")
+    info.author = common.join(authors)
     info.artist = info.author
 
     local genres = {}
     for _, tag in ipairs(messages(detail, 31)) do
-        local genre = text.trim(bytes(tag, 1))
-        if genre ~= "" then
-            genres[#genres + 1] = genre
-        end
+        genres[#genres + 1] = text.trim(bytes(tag, 1))
     end
-    info.genres = table.concat(genres, ", ")
+    info.genres = common.join(genres)
 
     local summary = {}
     for _, field in ipairs({3, 8, 7}) do
@@ -281,7 +238,7 @@ function fetchMangaInfo(url)
     for _, chapter in ipairs(chapters) do
         local id = int(chapter, 2)
         -- the expired chapters have no subtitle
-        if id ~= 0 and has(chapter, 4) and not seen[id] then
+        if id ~= 0 and chapter[4] and not seen[id] then
             seen[id] = true
             info.chapters[#info.chapters + 1] = {title = chapterTitle(bytes(chapter, 3), bytes(chapter, 4)),
                                                  url = common.fill(pagesUrl, {id = id})}
@@ -339,7 +296,7 @@ end
 function fetchPageList(chapterUrl)
     -- the chapter urls are relative to the api
     local url = chapterUrl:find("^http") and chapterUrl or api .. chapterUrl
-    local viewer = decoded(get(url, 7000), 10)
+    local viewer = message(get(url, 7000), 10)
 
     local token = bytes(viewer, 19)
     if token ~= "" then
@@ -348,7 +305,7 @@ function fetchPageList(chapterUrl)
 
     local images = {}
     for _, page in ipairs(messages(viewer, 1)) do
-        local mangaPage = decoded(page, 1)
+        local mangaPage = message(page, 1)
         local imageUrl = bytes(mangaPage, 1)
         if imageUrl ~= "" then
             local image = {url = imageUrl, xorKey = hexBytes(bytes(mangaPage, 5)), headers = {}}

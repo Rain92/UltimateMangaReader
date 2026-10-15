@@ -629,9 +629,79 @@ assert(unpacked == "var pix='//a.b/c.jpg';x 01 3", "unpackJs: " .. tostring(unpa
 assert(common.unpackJs("var a = 1") == nil, "unpackJs of a script that isn't packed")
 assert(common.title("A  <B> &amp; C ") == "A <B> & C", "title: " .. common.title("A  <B> &amp; C "))
 assert(common.title(" A\tB ") == "A B", "title without html")
+
+assert(common.json('{"a": [1, 2]}').a[2] == 2 and common.json("[]") and not common.json("1") and
+       not common.json("{"), "json")
+local values = {a = "x", b = 2, c = 1.5, d = true}
+local strs = common.str(values, "a") .. common.str(values, "b") .. common.str(values, "c") ..
+             common.str(values, "d") .. common.str(nil, "a")
+assert(strs == "x21.5", "str: " .. strs)
+assert(#common.list({a = {1, 2}}, "a") == 2 and #common.list({a = "x"}, "a") == 0 and #common.list(nil, "a") == 0,
+       "list")
+assert(common.number("-1.5e1") == -15 and common.number("1.") == 1 and not common.number(" 1") and
+       not common.number("0x10"), "number")
+assert(common.capitalize("élan vital") == "Élan vital" and common.capitalize("") == "", "capitalize")
+assert(common.join({" b ", "a", "", "b"}) == "b, a", "join")
+assert(table.concat(common.unique({3, 1, 3, 2, 1}), ",") == "3,1,2", "unique")
+assert(table.concat(common.unique({"a1", "b1", "a2"}, function(s) return s:sub(1, 1) end), ",") == "a1,b1",
+       "unique by key")
+assert(table.concat(common.reverse({1, 2, 3}), ",") == "3,2,1" and #common.reverse({}) == 0, "reverse")
+local items = {{2, "a"}, {1, "b"}, {2, "c"}, {1, "d"}, {0, "e"}}
+common.stableSort(items, function(a, b) return a[1] < b[1] end)
+local order = ""
+for _, item in ipairs(items) do
+    order = order .. item[2]
+end
+assert(order == "ebdac", "stableSort: " .. order)
+assert(common.count({a = 1, b = 2, 3}) == 3 and common.count({}) == 0, "count")
+local map = common.sortedMap()
+map.set({2, 1}, "c")
+map.set({1, 10}, "b")
+map.set({1, 2}, "a")
+map.set({2, 1}, "C")
+assert(table.concat(map.values()) == "abC" and map.get({1, 10}) == "b" and map.get({3, 1}) == nil and
+       #map.keys() == 3 and map.keys()[1][2] == 2, "sortedMap by pairs")
+local numbers = common.sortedMap()
+numbers.set(10, "c")
+numbers.set(2.5, "b")
+numbers.set(2.0, "a")
+numbers.set(2, "A")
+assert(table.concat(numbers.values()) == "Abc" and numbers.keys()[3] == 10, "sortedMap by numbers")
+
+-- 1: 150, 2: "ab", 3: {1: 5}, 3: {1: 6}
+local message = proto.decode("\8\150\1\18\2ab\26\2\8\5\26\2\8\6")
+assert(proto.int(message, 1) == 150 and proto.int(message, 2) == 0 and proto.int(message, 9) == 0, "proto.int")
+assert(proto.bytes(message, 2) == "ab" and proto.bytes(message, 1) == "", "proto.bytes")
+assert(proto.int(proto.message(message, 3), 1) == 5 and next(proto.message(message, 9)) == nil, "proto.message")
+local messages = proto.messages(message, 3)
+assert(#messages == 2 and proto.int(messages[2], 1) == 6 and #proto.messages(message, 9) == 0, "proto.messages")
+
+-- common.downloadAll against the server (base: its url), as the url of a manga: the bodies by url, the calls of the
+-- handler, the requests, then the error of a request that fails for good
+function fetchMangaInfo(base)
+    local update = {cancelled = function() return false end}
+    local urls = {base .. "/flaky400/downloadAll", base .. "/final", base .. "/delay/0.2"}
+    local bodies, calls, options = {}, 0, {retries = 2, minInterval = 10}
+    common.downloadAll(urls, update, function(i, response)
+        calls = calls + 1
+        if i == 2 and not bodies[2] then
+            bodies[2] = "again"
+            return false, "once more"
+        end
+        bodies[i] = response.body
+        return true
+    end, options)
+    local ok, err = pcall(common.downloadAll, {base .. "/status/404"}, update, function() return true end,
+                          {retries = 1})
+    local result = {table.concat(bodies, ","), calls, options.count, tostring(ok), err.code, err.status}
+    local _, parse = pcall(common.downloadAll, {base .. "/final"}, update, function() return false, "no" end, {})
+    result[#result + 1] = parse.code .. " " .. parse.message
+    return {author = table.concat(result, "|"), chapters = {}}
+end
 )lua");
         auto helpers = LuaSource::load(&nm, path, "helpers", {"common.lua"});
-        check("the helpers: unpackJs (escapes, words that aren't numbers or keywords), title, image.size",
+        check("the helpers: unpackJs (escapes, words that aren't numbers or keywords), title, image.size, json, "
+              "lists, sorted maps, the fields of protobuf messages",
               helpers.has_value());
         if (!helpers)
             out << "  " << helpers.error().message << "\n";
@@ -653,6 +723,11 @@ assert(common.title(" A\tB ") == "A B", "title without html")
             check("the sizes of images from the starts of their files (none for a missing one)",
                   urls(sizes) == "https://sizes/1x1,2x3,none");
             out << "  " << (sizes ? urls(sizes) : sizes.error().message) << "\n";
+            auto downloads = (*helpers)->fetchMangaInfo(server, {}).wait();
+            auto downloaded = downloads ? downloads->author : downloads.error().message;
+            check("downloadAll: failed requests and the ones the handler wants again are retried, then the error",
+                  downloaded == "ok after 400,final,late|4|5|false|http|404|parse no");
+            out << "  " << downloaded << "\n";
         }
 
         auto loadedSite = LuaSource::load(&nm, path, "site", {"common.lua"});

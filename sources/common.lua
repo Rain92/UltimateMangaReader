@@ -69,20 +69,13 @@ local linkrx = re.compile([[<a[^>]*>([^<]*)</a>]])
 -- The names in html: the texts of its links (each once) joined by ", ", without links its text. remove: a regex
 -- for what isn't a name (removed from each of them, e.g. placeholders).
 function common.names(fragment, remove)
-    local names, seen, links = {}, {}, 0
+    local names = {}
     for name in linkrx:gmatch(fragment) do
-        links = links + 1
         name = common.text(name)
-        if remove then
-            name = text.trim(remove:replace(name, ""))
-        end
-        if name ~= "" and not seen[name] then
-            seen[name] = true
-            names[#names + 1] = name
-        end
+        names[#names + 1] = remove and remove:replace(name, "") or name
     end
-    if links > 0 then
-        return table.concat(names, ", ")
+    if #names > 0 then
+        return common.join(names)
     end
     local name = common.text(fragment)
     return remove and text.trim(remove:replace(name, "")) or name
@@ -151,19 +144,6 @@ function common.unpackJs(packed)
     end))
 end
 
--- The response of a request (http.start), waited for in steps to notice a cancel of the list update.
-function common.waitFor(request, update)
-    while true do
-        local response = request:wait(500)
-        if update.cancelled() then
-            raise("cancelled", "Download cancelled")
-        end
-        if response then
-            return response
-        end
-    end
-end
-
 -- The sizes of the images ({width, height}, false if unknown) from the starts of their files, loaded at the same
 -- time for at most timeout ms, and the indices of the ones that didn't answer in time.
 function common.imageSizes(urls, timeout)
@@ -185,6 +165,294 @@ function common.imageSizes(urls, timeout)
         sizes[i] = width and {width, height} or false
     end
     return sizes, timedOut
+end
+
+-- Downloads the urls, at most options.parallel (2) at the same time, and calls handler(i, response) with the
+-- response of urls[i] (in the order they come). A request that fails, or whose handler returns false (and a
+-- message), is tried again up to options.retries times (without it: never, but http retries as usual), from its
+-- second retry on after a pause (1 s, doubling up to 15 s). Then its error is raised. The requests start
+-- options.interval ms apart: it grows by half with a retry after a pause and shrinks by a third with a success,
+-- between options.minInterval (0) and options.maxInterval (4000). options keeps it, the start of the last request
+-- (last) and the number of requests (count) for the next call. options.timeout: of a request (30000 ms). A cancel
+-- of the update is noticed within 250 ms.
+function common.downloadAll(urls, update, handler, options)
+    local maxParallel, maxRetries = options.parallel or 2, options.retries or 0
+    local minInterval, maxInterval = options.minInterval or 0, options.maxInterval or 4000
+    local requestOptions = {timeout = options.timeout or 30000, retries = options.retries and 0 or nil}
+    options.interval, options.count = options.interval or 0, options.count or 0
+    -- all waits are split into short steps, so a cancel is noticed right away
+    local step = 250
+
+    local start = clock()
+    local pending, retries, retryAt, running = {}, {}, {}, {}
+    for i = 1, #urls do
+        pending[i], retries[i], retryAt[i] = i, 0, 0
+    end
+
+    while #pending > 0 or #running > 0 do
+        if update.cancelled() then
+            raise("cancelled", "Download cancelled")
+        end
+
+        -- the finished ones, in whatever order they finished
+        local done
+        for k, r in ipairs(running) do
+            if r.request:done() then
+                done = k
+                break
+            end
+        end
+        local next
+        for k, i in ipairs(pending) do
+            if retryAt[i] <= clock() - start then
+                next = k
+                break
+            end
+        end
+
+        if done then
+            local r = table.remove(running, done)
+            local ok, response = pcall(r.request.wait, r.request)
+            local handled, message
+            if ok then
+                handled, message = handler(r.i, response)
+            end
+            if handled then
+                options.interval = options.interval * 2 // 3
+            else
+                message = ok and (message or "Couldn't parse " .. urls[r.i]) or response.message
+                if retries[r.i] >= maxRetries then
+                    if ok then
+                        raise("parse", message)
+                    end
+                    error(response, 0)
+                end
+                retries[r.i] = retries[r.i] + 1
+                log("retrying", urls[r.i], message)
+                if retries[r.i] > 1 then
+                    options.interval = options.interval * 3 // 2
+                    retryAt[r.i] = clock() - start + math.min(1000 << (retries[r.i] - 1), 15000)
+                end
+                table.insert(pending, 1, r.i)
+            end
+        elseif #running < maxParallel and next then
+            options.interval = math.max(minInterval, math.min(options.interval, maxInterval))
+            if options.last and clock() - options.last < options.interval then
+                sleep(math.max(0, math.min(options.interval - (clock() - options.last), step)))
+            else
+                local i = table.remove(pending, next)
+                options.last = clock()
+                options.count = options.count + 1
+                running[#running + 1] = {i = i, request = http.start(urls[i], requestOptions)}
+            end
+        elseif #running == 0 then
+            -- only failed requests that wait for their retry are left
+            local nextRetry = math.huge
+            for _, i in ipairs(pending) do
+                nextRetry = math.min(nextRetry, retryAt[i])
+            end
+            sleep(math.max(0, math.min(nextRetry - (clock() - start), step)))
+        else
+            local requests = {}
+            for k, r in ipairs(running) do
+                requests[k] = r.request
+            end
+            http.waitAny(requests, step)
+        end
+    end
+end
+
+-- --- helpers for data (json, protobuf, lists)
+
+-- The table of a json text (an object or an array), nil if it isn't one.
+function common.json(s)
+    local ok, value = pcall(json.decode, s)
+    return ok and type(value) == "table" and value or nil
+end
+
+-- The string or number object[key] as a text, "" without one (also if object isn't a table).
+function common.str(object, key)
+    local value = type(object) == "table" and object[key]
+    if type(value) == "string" then
+        return value
+    elseif math.type(value) == "integer" then
+        return tostring(value)
+    elseif type(value) == "number" then
+        return ("%.6g"):format(value)
+    end
+    return ""
+end
+
+-- The table object[key] (e.g. a list to go through), an empty one without one (also if object isn't a table).
+function common.list(object, key)
+    local value = type(object) == "table" and object[key]
+    return type(value) == "table" and value or {}
+end
+
+local decimalrx = re.compile([=[^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$]=])
+
+-- The number of a text like "12", "-1.5" or "2e3" (like QString::toDouble()), nil if it isn't one.
+function common.number(s)
+    return decimalrx:find(s) and tonumber(s) or nil
+end
+
+-- s with its first letter in upper case.
+function common.capitalize(s)
+    local first = s:match("^[^\128-\191][\128-\191]*") or ""
+    return text.upper(first) .. s:sub(#first + 1)
+end
+
+-- The names trimmed, each once and without empty ones, joined by ", ".
+function common.join(names)
+    local list, seen = {}, {}
+    for _, name in ipairs(names) do
+        name = text.trim(name)
+        if name ~= "" and not seen[name] then
+            seen[name] = true
+            list[#list + 1] = name
+        end
+    end
+    return table.concat(list, ", ")
+end
+
+-- The items of the list each once: the first one with each key(item) (without key: each item once).
+function common.unique(list, key)
+    local result, seen = {}, {}
+    for _, item in ipairs(list) do
+        local k = key and key(item) or item
+        if not seen[k] then
+            seen[k] = true
+            result[#result + 1] = item
+        end
+    end
+    return result
+end
+
+-- The list reversed (in place), e.g. a list that comes newest first.
+function common.reverse(list)
+    local n = #list
+    for i = 1, n // 2 do
+        list[i], list[n + 1 - i] = list[n + 1 - i], list[i]
+    end
+    return list
+end
+
+-- Sorts the list by less(a, b) like table.sort, but the items that are equal keep their order.
+function common.stableSort(list, less)
+    local position = {}
+    for i, item in ipairs(list) do
+        position[item] = i
+    end
+    table.sort(list, function(a, b)
+        if less(a, b) then
+            return true
+        elseif less(b, a) then
+            return false
+        end
+        return position[a] < position[b]
+    end)
+    return list
+end
+
+-- The number of keys of the table.
+function common.count(t)
+    local n = 0
+    for _ in pairs(t) do
+        n = n + 1
+    end
+    return n
+end
+
+-- A map by numbers or by lists of numbers (e.g. {volume, chapter}) that has its keys in their order, like a QMap:
+-- map.get(key), map.set(key, value), map.keys() (sorted), map.values() (in the order of their keys).
+function common.sortedMap()
+    local map, keys, values, sorted = {}, {}, {}, true
+    local function id(key)
+        if type(key) ~= "table" then
+            return key
+        end
+        local parts = {}
+        for i, part in ipairs(key) do
+            parts[i] = ("%.17g"):format(part)
+        end
+        return table.concat(parts, "|")
+    end
+    local function less(a, b)
+        if type(a) ~= "table" then
+            return a < b
+        end
+        for i = 1, #a do
+            if a[i] ~= b[i] then
+                return a[i] < b[i]
+            end
+        end
+        return false
+    end
+
+    function map.get(key)
+        return values[id(key)]
+    end
+    function map.set(key, value)
+        local k = id(key)
+        if values[k] == nil then
+            keys[#keys + 1], sorted = key, false
+        end
+        values[k] = value
+    end
+    function map.keys()
+        if not sorted then
+            table.sort(keys, less)
+            sorted = true
+        end
+        return keys
+    end
+    function map.values()
+        local list = {}
+        for i, key in ipairs(map.keys()) do
+            list[i] = values[id(key)]
+        end
+        return list
+    end
+    return map
+end
+
+-- The fields of a protobuf message (proto.decode) by their numbers. A field can be there several times (a repeated
+-- one), these take the first value of the type they want.
+
+-- The first number of the field, 0 without one.
+function proto.int(message, number)
+    for _, value in ipairs(message[number] or {}) do
+        if math.type(value) == "integer" then
+            return value
+        end
+    end
+    return 0
+end
+
+-- The first string (text or bytes) of the field, "" without one.
+function proto.bytes(message, number)
+    for _, value in ipairs(message[number] or {}) do
+        if type(value) == "string" then
+            return value
+        end
+    end
+    return ""
+end
+
+-- The message of the field, an empty one without one.
+function proto.message(message, number)
+    return proto.decode(proto.bytes(message, number))
+end
+
+-- All the messages of the (repeated) field.
+function proto.messages(message, number)
+    local list = {}
+    for _, value in ipairs(message[number] or {}) do
+        if type(value) == "string" then
+            list[#list + 1] = proto.decode(value)
+        end
+    end
+    return list
 end
 
 -- --- the definition: checked and its patterns compiled when the source is loaded
@@ -765,10 +1033,7 @@ function common.fetchMangaInfo(url)
             end
         end
         if spec.chapters.order == "newestFirst" then
-            local n = #chapters
-            for i = 1, n // 2 do
-                chapters[i], chapters[n + 1 - i] = chapters[n + 1 - i], chapters[i]
-            end
+            common.reverse(chapters)
         end
         info.chapters = chapters
     end

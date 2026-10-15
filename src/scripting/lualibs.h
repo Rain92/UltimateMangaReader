@@ -14,7 +14,8 @@
 // - html: text (the plain text of html), genres.
 // - json: decode (into tables; null is json.null).
 // - image: size (the width and height of an image from the start of its file, JPEG, PNG or WebP).
-// - proto: decode (the fields of a protobuf message by their numbers, see protoDecode()).
+// - proto: decode (the fields of a protobuf message by their numbers, see protoDecode()); common.lua adds the
+//   accessors of the fields (proto.int, proto.bytes, proto.message, proto.messages).
 // - raise(code, message [, status]): fails with an error of the app (code: "failed", "network", "timeout",
 //   "cancelled", "http", "parse", "notfound", "storage").
 namespace lua

@@ -95,26 +95,18 @@ function fetchMangaList(update)
             missing[#missing + 1] = url
         end
     end
-    local requests, done = {}, #sitemaps - #missing
-    local function request(k)
-        if missing[k] then
-            requests[k] = http.start(missing[k], {timeout = 60000})
-        end
-    end
-    request(1)
-    request(2)
-    for k, url in ipairs(missing) do
-        local response = common.waitFor(requests[k], update)
-        request(k + 2)
+    local done = #sitemaps - #missing
+    common.downloadAll(missing, update, function(k, response)
         local found = {}
         for slug in slugrx:gmatch(response.body) do
             found[#found + 1] = slug
         end
-        state.sitemapSlugs[url] = found
+        state.sitemapSlugs[missing[k]] = found
         done = done + 1
         update.progress(10 + 85 * done // #sitemaps)
-        log("sitemap", url, "matches:", #found)
-    end
+        log("sitemap", missing[k], "matches:", #found)
+        return true
+    end, {timeout = 60000})
     -- (the progress lets the GUI go on in the long loops)
     for _, url in ipairs(sitemaps) do
         for _, slug in ipairs(state.sitemapSlugs[url]) do
@@ -167,10 +159,9 @@ end
 local function chapters(slug, request)
     local list, known, offset = {}, {}, 0
     for _ = 1, 10 do
-        local data = json.decode((request or chapterPage(slug, offset)):wait().body)
+        local data = common.json((request or chapterPage(slug, offset)):wait().body)
         request = nil
-        local items = type(data) == "table" and data.success == true and type(data.data) == "table" and
-                      data.data.chapters
+        local items = data and data.success == true and type(data.data) == "table" and data.data.chapters
         if type(items) ~= "table" then
             raise("parse", "Couldn't load the chapter list.")
         end
@@ -193,11 +184,7 @@ local function chapters(slug, request)
             break
         end
     end
-    local n = #list
-    for i = 1, n // 2 do
-        list[i], list[n + 1 - i] = list[n + 1 - i], list[i]
-    end
-    return list
+    return common.reverse(list)
 end
 
 function fetchMangaInfo(url)

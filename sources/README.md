@@ -134,12 +134,23 @@ known)`, `fetchPageList(chapterUrl)`, `resolveImage(page)`. What they get and re
 `src/scripting/lualibs.h`. A script can also call the ones of the definition (`common.fetchMangaInfo(url)`, ...)
 and change what they return.
 
-Helpers in `common.lua`: `common.text(html)`, `common.title(text)`, `common.url(base, url)`,
-`common.names(html, remove)`, `common.fill(template, values)`, `common.find(patterns, page, init, limit)`,
-`common.unpackJs(script)` (the script of a packed `eval(function(p,a,c,k,e,d){...})`), `common.imageSizes(urls,
-timeout)` (from the starts of the files), `common.waitFor(request, update)` (a request of a list update, which
-fails when the update is cancelled). `common.fetchMangaInfo(url)` also returns the page (`url`, `body`), for a
-script that wants more of it.
+Helpers in `common.lua`:
+
+- html and urls: `common.text(html)`, `common.title(text)`, `common.url(base, url)`, `common.names(html, remove)`,
+  `common.fill(template, values)`, `common.find(patterns, page, init, limit)`, `common.unpackJs(script)` (the
+  script of a packed `eval(function(p,a,c,k,e,d){...})`)
+- downloads: `common.downloadAll(urls, update, handler, options)` (at most a few at a time, paced and retried, for
+  list updates), `common.imageSizes(urls, timeout)` (from the starts of the files)
+- json: `common.json(text)` (the table, nil if it isn't json), `common.str(object, key)` (a string or number as
+  a text, else ""), `common.list(object, key)` (a table, else an empty one)
+- values and lists: `common.number(text)`, `common.capitalize(text)`, `common.join(names)` (trimmed, each once,
+  joined by ", "), `common.unique(list, key)`, `common.reverse(list)`, `common.stableSort(list, less)`,
+  `common.count(table)`, `common.sortedMap()` (by numbers or lists of numbers, like a QMap)
+- protobuf (`proto.decode`): `proto.int(message, n)`, `proto.bytes(message, n)` (the first value of field n
+  that is one), `proto.message(message, n)`, `proto.messages(message, n)`
+
+`common.fetchMangaInfo(url)` also returns the page (`url`, `body`), for a script that wants more of it. What the
+helpers take and return is described in `common.lua`.
 
 Keep the scripts short: what more than one source needs belongs into `common.lua` (or, for work on large data,
 into the app as a library function).

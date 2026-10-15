@@ -10,11 +10,7 @@ local uuidrx = re.compile([=[[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-
 
 -- --- the json
 
--- the string object[key], "" if it isn't one
-local function str(object, key)
-    local value = type(object) == "table" and object[key]
-    return type(value) == "string" and value or ""
-end
+local str, list, toNumber = common.str, common.list, common.number
 
 -- the first non-empty text of a {lang = text} map (the json's order is lost: the lowest language then, the maps
 -- rarely have more than one)
@@ -48,23 +44,17 @@ local function mangaTitle(attributes)
         return title
     end
     local fallback = ""
-    if type(attributes.altTitles) == "table" then
-        for _, alt in ipairs(attributes.altTitles) do
-            title = text.trim(str(alt, "en"))
-            if title ~= "" then
-                return title
-            end
-            if fallback == "" then
-                fallback = firstString(alt)
-            end
+    for _, alt in ipairs(list(attributes, "altTitles")) do
+        title = text.trim(str(alt, "en"))
+        if title ~= "" then
+            return title
+        end
+        if fallback == "" then
+            fallback = firstString(alt)
         end
     end
     title = titles ~= nil and firstString(titles) or ""
     return title ~= "" and title or fallback
-end
-
-local function capitalize(s)
-    return s:sub(1, 1):upper() .. s:sub(2)
 end
 
 -- the descriptions are markdown, the result is html
@@ -99,89 +89,7 @@ end
 -- e.g. when the edge rejects most requests for a while. The edge throttles sustained crawls that way: after a
 -- minute or so 30-40% get rejected and about one page per second gets through, no matter how many requests run at
 -- once (measured 2026-10). More only adds rejected requests.
-local api = {interval = 0, count = 0}
-
--- Downloads the urls, handler(i, response) takes the response of urls[i], false to retry it.
-local function downloadThrottled(urls, update, handler)
-    local maxParallel, minInterval, maxInterval = 2, 350, 4000
-    local timeout, maxRetries = 20000, 12
-    -- all waits are split into short steps, so a cancel is noticed right away
-    local step = 250
-
-    local start = clock()
-    local pending, retries, retryAt, running = {}, {}, {}, {}
-    for i = 1, #urls do
-        pending[i], retries[i], retryAt[i] = i, 0, 0
-    end
-
-    while #pending > 0 or #running > 0 do
-        if update.cancelled() then
-            raise("cancelled", "Download cancelled")
-        end
-
-        -- the finished ones, in whatever order they finished
-        local done
-        for k, r in ipairs(running) do
-            if r.request:done() then
-                done = k
-                break
-            end
-        end
-        local next
-        for k, i in ipairs(pending) do
-            if retryAt[i] <= clock() - start then
-                next = k
-                break
-            end
-        end
-
-        if done then
-            local r = table.remove(running, done)
-            local ok, response = pcall(r.request.wait, r.request)
-            if ok and handler(r.i, response) then
-                api.interval = api.interval * 2 // 3
-            else
-                local message = ok and "Couldn't parse manga list." or response.message
-                if retries[r.i] >= maxRetries then
-                    if ok then
-                        raise("parse", message)
-                    end
-                    error(response, 0)
-                end
-                retries[r.i] = retries[r.i] + 1
-                log("retrying", urls[r.i], message)
-                if retries[r.i] > 1 then
-                    api.interval = api.interval * 3 // 2
-                    retryAt[r.i] = clock() - start + math.min(1000 << (retries[r.i] - 1), 15000)
-                end
-                table.insert(pending, 1, r.i)
-            end
-        elseif #running < maxParallel and next then
-            api.interval = math.max(minInterval, math.min(api.interval, maxInterval))
-            if api.last and clock() - api.last < api.interval then
-                sleep(math.max(0, math.min(api.interval - (clock() - api.last), step)))
-            else
-                local i = table.remove(pending, next)
-                api.last = clock()
-                api.count = api.count + 1
-                running[#running + 1] = {i = i, request = http.start(urls[i], {timeout = timeout, retries = 0})}
-            end
-        elseif #running == 0 then
-            -- only failed requests that wait for their retry are left
-            local nextRetry = math.huge
-            for _, i in ipairs(pending) do
-                nextRetry = math.min(nextRetry, retryAt[i])
-            end
-            sleep(math.max(0, math.min(nextRetry - (clock() - start), step)))
-        else
-            local requests = {}
-            for k, r in ipairs(running) do
-                requests[k] = r.request
-            end
-            http.waitAny(requests, step)
-        end
-    end
-end
+local listDownloads = {parallel = 2, minInterval = 350, maxInterval = 4000, timeout = 20000, retries = 12}
 
 -- The mangas of the query (its {offset}), at most maxResults, go into the state. The pages that a failed attempt
 -- got are kept.
@@ -191,9 +99,9 @@ local function crawlWindow(query, maxResults, state, update)
 
     local function handler(k, response)
         local page = requestedPages[k]
-        local ok, data = pcall(json.decode, response.body)
-        if not ok or str(data, "result") ~= "ok" or type(data.data) ~= "table" then
-            return false
+        local data = common.json(response.body)
+        if str(data, "result") ~= "ok" or type(data.data) ~= "table" then
+            return false, "Couldn't parse manga list."
         end
         if page == 0 and math.type(data.total) == "integer" then
             state.total = data.total
@@ -226,7 +134,7 @@ local function crawlWindow(query, maxResults, state, update)
 
     if not state.pages[0] then
         requestedPages = {0}
-        downloadThrottled({common.fill(query, {offset = 0})}, update, handler)
+        common.downloadAll({common.fill(query, {offset = 0})}, update, handler, listDownloads)
     end
 
     local numPages = (math.min(state.total, maxResults) + limit - 1) // limit
@@ -238,7 +146,7 @@ local function crawlWindow(query, maxResults, state, update)
             urls[#urls + 1] = common.fill(query, {offset = page * limit})
         end
     end
-    downloadThrottled(urls, update, handler)
+    common.downloadAll(urls, update, handler, listDownloads)
 
     local pages = {}
     for page in pairs(state.pages) do
@@ -273,7 +181,7 @@ function fetchMangaList(update)
     update.progress(update.lastProgress)
 
     local start = clock()
-    api.count, api.interval = 0, 0
+    listDownloads.count, listDownloads.interval = 0, 0
     -- offset + limit must not exceed 10000
     local windowSize, numPopular = 10000, 2000
 
@@ -307,7 +215,7 @@ function fetchMangaList(update)
         state.window = state.window + 1
     end
 
-    log("mangas:", #state.mangas.urls, "requests:", api.count, "time:", clock() - start)
+    log("mangas:", #state.mangas.urls, "requests:", listDownloads.count, "time:", clock() - start)
     update.progress(100)
     return {titles = state.mangas.titles, urls = state.mangas.urls}
 end
@@ -315,12 +223,6 @@ end
 -- --- the info and the chapters
 
 local numberrx = re.compile([=[^(\d{1,15})(?:\.(\d{0,15}))?$]=])
-local decimalrx = re.compile([=[^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$]=])
-
--- the number of a text like QString::toDouble(), nil if it isn't one
-local function toNumber(s)
-    return decimalrx:find(s) and tonumber(s) or nil
-end
 
 -- "014.5" -> 14 and "5", "3.0" -> 3; ranges and text are unnumbered
 local function parseNumber(chapter)
@@ -454,11 +356,11 @@ local function chapterList(chapters, resetOnNewVolume)
             selected[chapter.key] = chapter
         end
     end
-    local list = {}
+    local sorted = {}
     for i, key in ipairs(keys) do
-        list[i] = selected[key]
+        sorted[i] = selected[key]
     end
-    table.sort(list, function(a, b)
+    table.sort(sorted, function(a, b)
         if a.volumeKey ~= b.volumeKey then
             return a.volumeKey < b.volumeKey
         elseif a.wholeKey ~= b.wholeKey then
@@ -473,10 +375,10 @@ local function chapterList(chapters, resetOnNewVolume)
         return a.serverIndex < b.serverIndex
     end)
 
-    for i, chapter in ipairs(list) do
-        list[i] = {title = chapter.title, url = chapter.id}
+    for i, chapter in ipairs(sorted) do
+        sorted[i] = {title = chapter.title, url = chapter.id}
     end
-    return list
+    return sorted
 end
 
 -- the chapters of the feed of the manga, oldest first
@@ -497,8 +399,8 @@ local function fetchChapters(mangaId, resetOnNewVolume, loaded)
         if not ok then
             raise(response.code, "Couldn't load chapter list: " .. response.message, response.status)
         end
-        local decoded, data = pcall(json.decode, response.body)
-        if not decoded or str(data, "result") ~= "ok" or type(data.data) ~= "table" then
+        local data = common.json(response.body)
+        if str(data, "result") ~= "ok" or type(data.data) ~= "table" then
             raise("parse", "Couldn't parse chapter list.")
         end
         total = math.type(data.total) == "integer" and data.total or 0
@@ -536,15 +438,15 @@ function fetchMangaInfo(url, known)
     -- the chapter list is loaded right after with its own timeouts, this allows for slow wifi as well
     local response = http.get(requestUrl, {timeout = 6000})
 
-    local ok, doc = pcall(json.decode, response.body)
-    local data = ok and str(doc, "result") == "ok" and doc.data
+    local doc = common.json(response.body)
+    local data = str(doc, "result") == "ok" and doc.data
     mangaId = str(data, "id")
     if mangaId == "" or type(data.attributes) ~= "table" then
         raise("parse", "Couldn't parse manga infos.")
     end
     local attributes = data.attributes
 
-    local info = {status = capitalize(str(attributes, "status"))}
+    local info = {status = common.capitalize(str(attributes, "status"))}
     if math.type(attributes.year) == "integer" then
         info.releaseYear = tostring(attributes.year)
     end
@@ -552,9 +454,9 @@ function fetchMangaInfo(url, known)
     local genres, themes = {}, {}
     local demographic = str(attributes, "publicationDemographic")
     if demographic ~= "" then
-        genres[1] = capitalize(demographic)
+        genres[1] = common.capitalize(demographic)
     end
-    for _, tag in ipairs(type(attributes.tags) == "table" and attributes.tags or {}) do
+    for _, tag in ipairs(list(attributes, "tags")) do
         local tagAttributes = type(tag) == "table" and tag.attributes
         if type(tagAttributes) == "table" then
             local name = tagAttributes.name ~= nil and localized(tagAttributes.name, "en") or ""
@@ -573,16 +475,12 @@ function fetchMangaInfo(url, known)
     end
 
     local names = {author = {}, artist = {}}
-    for _, relation in ipairs(type(data.relationships) == "table" and data.relationships or {}) do
+    for _, relation in ipairs(list(data, "relationships")) do
         local kind = str(relation, "type")
         -- (the ones without attributes are skipped, the ones with null aren't)
         local values = type(relation) == "table" and relation.attributes
         if values ~= nil and values ~= false and names[kind] then
-            local name, list = text.trim(str(values, "name")), names[kind]
-            if name ~= "" and not list[name] then
-                list[name] = true
-                list[#list + 1] = name
-            end
+            names[kind][#names[kind] + 1] = str(values, "name")
         elseif values ~= nil and values ~= false and kind == "cover_art" then
             local fileName = str(values, "fileName")
             if fileName ~= "" then
@@ -590,8 +488,8 @@ function fetchMangaInfo(url, known)
             end
         end
     end
-    info.author = table.concat(names.author, ", ")
-    info.artist = table.concat(names.artist, ", ")
+    info.author = common.join(names.author)
+    info.artist = common.join(names.artist)
 
     local loaded = {}
     for _, chapter in ipairs(known) do
@@ -640,8 +538,8 @@ function fetchPageList(chapterUrl)
         error(response, 0)
     end
 
-    local decoded, doc = pcall(json.decode, response.body)
-    local chapter = decoded and str(doc, "result") == "ok" and doc.chapter
+    local doc = common.json(response.body)
+    local chapter = str(doc, "result") == "ok" and doc.chapter
     -- the data-saver pages are jpgs of at most 1080 px width: plenty for e-ink screens, a fraction of the size of
     -- the originals and much faster to decode on the device. They are loaded from the origin server, which the api
     -- returns as baseUrl as well: the page urls are stored and loaded much later, a MangaDex@Home baseUrl is only
