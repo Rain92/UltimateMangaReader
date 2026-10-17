@@ -12,5 +12,5 @@ void activateScroller(QAbstractScrollArea* pArea);
 qreal windowPixelRatio();
 void setWindowPixelRatio(qreal ratio);
 
-// The logo of the source from the resources, else one with its initials (e.g. a source that was added).
-QIcon sourceLogo(const QString &name, int size);
+// The logo of the source from its image file, else one with its initials.
+QIcon sourceLogo(const QString &name, const QString &iconPath, int size);

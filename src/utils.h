@@ -7,9 +7,6 @@
 
 #include "enums.h"
 
-QList<QRegularExpressionMatch> getAllRxMatches(const QRegularExpression& rx, const QString& text,
-                                               int spos = 0, int epos = -1);
-
 // A hex hash of url, as a file name.
 QString urlHash(const QString& url, int length);
 
@@ -65,5 +62,3 @@ void setIdleThreadPriority(bool idle);
 
 // Xors data with the key repeated (an empty key leaves the data as it is).
 void decryptXorInplace(QByteArray& data, const QByteArray& key);
-
-QByteArray hexstr2array(const QString& str);

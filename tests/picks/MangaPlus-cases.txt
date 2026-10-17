@@ -1,0 +1,12 @@
+# MangaPlus: made up cases (tests/harness/cases.py)
+chapters	https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=1001&clang=eng
+subscription	https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=1002&clang=eng
+oneshot-tag	https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=1003&clang=eng
+completed-text	https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=1004&clang=eng
+award	https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=1005&clang=eng
+schedules	https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=1006&clang=eng
+pages	https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=1007&clang=eng
+popup	https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=1008&clang=eng
+empty-popup	https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=1009&clang=eng
+broken	https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=1010&clang=eng
+no-title	https://jumpg-webapi.tokyo-cdn.com/api/title_detailV3?title_id=1011&clang=eng

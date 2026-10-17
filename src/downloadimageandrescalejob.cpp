@@ -16,6 +16,7 @@ DownloadScaledImageJob::DownloadScaledImageJob(QNetworkAccessManager *networkMan
       appendRetries(0),
       pageData()
 {
+    QObject::connect(imageProcessor, &ImageProcessor::processed, this, &DownloadScaledImageJob::processingDone);
     QObject::connect(imageProcessor, &ImageProcessor::finished, this,
                      &DownloadScaledImageJob::processingFinished);
 }
@@ -124,6 +125,15 @@ void DownloadScaledImageJob::process(const QByteArray &appendData)
     processingId = imageProcessor->process(request);
 }
 
+void DownloadScaledImageJob::processingDone(quint64 id, const QImage &image)
+{
+    if (id != processingId || isFinished() || image.isNull())
+        return;
+
+    resultImage.reset(new QImage(image));
+    emit imageReady();
+}
+
 void DownloadScaledImageJob::processingFinished(quint64 id, const QImage &image)
 {
     if (id != processingId || isFinished())
@@ -131,7 +141,8 @@ void DownloadScaledImageJob::processingFinished(quint64 id, const QImage &image)
 
     if (!image.isNull())
     {
-        resultImage.reset(new QImage(image));
+        if (!resultImage)
+            resultImage.reset(new QImage(image));
         finishCompleted();
     }
     else

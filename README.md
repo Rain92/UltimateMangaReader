@@ -18,11 +18,14 @@ A feature-rich online manga streamer and reader for Kobo E-Ink devices, based on
 
 
 ## Install on Kobo devices
-First you will need to install a launcher application. I recomend [KFMon](https://github.com/NiLuJe/kfmon), the latest release along with install instructions can be found [here](https://www.mobileread.com/forums/showthread.php?t=274231).
+First you will need to install [NickelMenu](https://github.com/pgaskin/NickelMenu), which adds entries for launching applications to the Kobo's menus. The latest release along with install instructions can be found [here](https://pgaskin.net/NickelMenu/).
 
-For the application itself just download the latest release [here](https://github.com/Rain92/UltimateMangaReader/releases) and extract the archive into the root directiory of your Kobo device.
+For the application itself just download the latest release [here](https://github.com/Rain92/UltimateMangaReader/releases) and extract the archive into the root directory of your Kobo device. It brings a NickelMenu entry, *Ultimate Manga Reader* in the main menu.
 
 ## Build
+The manga sources are a submodule ([UMR-MangaSources](https://github.com/Rain92/UMR-MangaSources)), so clone with `git clone --recursive`, or run `git submodule update --init` in a clone.
+The app loads its sources from `sources/` next to its binary, so copy or link them there to run a build.
+
 Requirements:
 * Qt 6.6 or newer (developed with Qt 6.12) with the modules widgets, network, svg and concurrent, and OpenSSL
 * libjpeg-turbo 3.0+ (the TurboJPEG 3 API), libpng and libwebp
@@ -41,16 +44,16 @@ Qt Creator works as well, just open `UltimateMangaReader.pro`.
 Building for Kobo devices requires:
 * the Kobo cross compiler toolchain (GCC 14, glibc 2.15) from [koxtoolchain](https://github.com/koreader/koxtoolchain)
 * a cross compiled Qt 6 and the libraries above, installed into the toolchain's sysroot
-* the source of the [Kobo platform plugin](https://github.com/Rain92/qt5-kobo-platform-plugin), which also has to be built and deployed with Qt
+* the source of the [Kobo platform plugin](https://github.com/Rain92/qt6-kobo-platform-plugin), which also has to be built and deployed with Qt
 
 [kobo-qt-setup-scripts](https://github.com/Rain92/kobo-qt-setup-scripts) sets all of this up (toolchain, libraries, Qt 6 and deploying it to the device).
 
 Then build with the cross compiled Qt's qmake and `CONFIG+=kobo`.
-The platform plugin's source is expected next to this repository (`../qt5-kobo-platform-plugin`), another location can be set with `KOBO_PLATFORM_PLUGIN_PATH`:
+The platform plugin's source is expected next to this repository (`../qt6-kobo-platform-plugin`), another location can be set with `KOBO_PLATFORM_PLUGIN_PATH`:
 
 ```shell
 mkdir build-kobo && cd build-kobo
 ~/kobo/qt-bin/qt-6.12.0-kobo/bin/qmake ../UltimateMangaReader.pro CONFIG+=kobo CONFIG+=release \
-    KOBO_PLATFORM_PLUGIN_PATH=/path/to/qt5-kobo-platform-plugin
+    KOBO_PLATFORM_PLUGIN_PATH=/path/to/qt6-kobo-platform-plugin
 make -j$(nproc)
 ```

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QSharedPointer>
+#include <QStringList>
 #include <QTextStream>
 
 class MangaRepository;
@@ -10,6 +11,11 @@ struct MangaList;
 
 // the output that is compared (the log of the app goes to stderr)
 extern QTextStream out;
+
+// The sources of the directory of sources (see SourceRegistry::loadDirectory()), the ones that can't be loaded go to
+// errors.
+QList<QSharedPointer<MangaSourceBase>> harnessSources(NetworkManager *networkManager, const QString &sourcesDir,
+                                                      QStringList *errors = nullptr);
 
 // What the source makes of the mangas in the picks file (title<TAB>url per line): the info, the chapters, the
 // page lists, image links and the first image. Returns the number of failures.
@@ -23,3 +29,15 @@ int flowTests(const QString &source, const QString &title, const QString &url);
 // Updates the manga list, cancels an update and updates it again, through the core like the gui.
 int listFlowTests(const QString &source);
 int storageTests(const QString &server);
+// The time of what reading asks of the source for the mangas of the picks file (info, page lists, resolved pages,
+// images): the median of rounds, of imageRounds for the images.
+int benchReading(MangaRepository &repository, MangaSourceBase *source, const QString &picksFile, int rounds,
+                 int imageRounds);
+// The Lua engine, its libraries and the sources of scripts, against tests/harness/testserver.py. sourcesDir: the
+// directory of sources (sources/) for its libraries.
+int scriptTests(const QString &server, const QString &sourcesDir);
+// Checks the index of the directory of sources (index.yaml): it lists all files of the directory, the files it lists
+// are there, the entries are for the major version of the app, and its sources load with the names it has for them.
+// The index of the directory of sources; with a base directory (e.g. the published sources), also that the entries
+// that changed since then have newer versions.
+int checkIndex(NetworkManager *networkManager, const QString &directory, const QString &baseDirectory = {});

@@ -5,7 +5,10 @@
 UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
     : QObject(parent),
       networkManager(new NetworkManager(this)),
-      sources(new SourceRegistry(&settings, SourceRegistry::builtInSources(networkManager), this)),
+      sourceUpdater(new SourceUpdater(networkManager, CONF.sourcesDir, CONF.installedSourcesDir, this)),
+      sources(new SourceRegistry(&settings,
+                                 SourceRegistry::loadDirectory(networkManager, sourceUpdater->installBundled()),
+                                 this)),
       repository(new MangaRepository(networkManager, sources, this)),
       mangaLists(),
       mangaController(new MangaController(networkManager, repository, this)),
@@ -16,6 +19,7 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
       standbyManager(new StandbyManager(&settings, suspendManager, networkManager,
                                         mangaChapterDownloadManager, this)),
       mangaListUpdater(new MangaListUpdater(sources, &mangaLists, &settings, standbyManager, this)),
+      cpuBoost(new CpuBoost(this)),
       timer(),
       clockAlignTimer(),
       autoSuspendTimer(),
@@ -60,6 +64,10 @@ UltimateMangaReaderCore::UltimateMangaReaderCore(QObject* parent)
 
     autoSuspendTimer.setSingleShot(true);
     connect(&autoSuspendTimer, &QTimer::timeout, this, [this]() { suspendManager->suspend(); });
+
+    // the reading progress that is still to be written (MangaController writes it a moment after a page turn)
+    connect(suspendManager, &SuspendManager::suspending, this, [] { ReadingProgress::flushPending(); });
+    connect(qApp, &QCoreApplication::aboutToQuit, this, [] { ReadingProgress::flushPending(); });
 
     // standby
     standbyManager->setWakeDeadline([this]() { return msUntilAutoSuspend(); });
@@ -180,7 +188,7 @@ void UltimateMangaReaderCore::setupDirectories()
         qDebug() << "Dropping the cache of layout version" << layoutVersion;
         QDir cache(CONF.cacheDir);
         for (const auto &dir : cache.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::Hidden))
-            if (dir.fileName() != "mangalists")
+            if (dir.fileName() != "mangalists" && dir.fileName() != "sources")
                 removeDir(dir.absoluteFilePath());
 
         QSaveFile file(versionFile.fileName());
@@ -194,6 +202,27 @@ void UltimateMangaReaderCore::setupDirectories()
 
     if (!QDir(CONF.screensaverDir).exists())
         QDir().mkpath(CONF.screensaverDir);
+}
+
+Task<Result<>> UltimateMangaReaderCore::updateSources(SourceUpdater::Changes changes, bool keepFavorites)
+{
+    auto installed = co_await sourceUpdater->install(changes);
+    if (!installed)
+        co_return Err(installed.error());
+    sources->setSources(*installed);
+
+    for (const auto &name : std::as_const(changes.removed))
+    {
+        if (keepFavorites && favoritesManager->countOf(name) > 0)
+            continue;
+        favoritesManager->removeFavoritesOf(name);
+        mangaLists.remove(name);
+        // not one of the directories of the app (a source named like it)
+        auto dir = CONF.mangasourcedir(name);
+        if (QDir(dir) != QDir(CONF.mangaListDir) && QDir(dir) != QDir(CONF.installedSourcesDir))
+            removeDir(dir);
+    }
+    co_return {};
 }
 
 void UltimateMangaReaderCore::clearDownloadCache(ClearDownloadCacheLevel level)

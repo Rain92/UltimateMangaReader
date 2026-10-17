@@ -15,8 +15,14 @@ class SourceRegistry : public QObject
 public:
     SourceRegistry(Settings *settings, QList<QSharedPointer<MangaSourceBase>> sources,
                    QObject *parent = nullptr);
-    // The sources that are built into the app.
-    static QList<QSharedPointer<MangaSourceBase>> builtInSources(NetworkManager *networkManager);
+    // The sources of a directory of sources (its index, see SourceIndex and LuaSource), in the order of the index.
+    // The ones that can't be loaded (or need a newer app) are left out, logged and their errors added to errors.
+    static QList<QSharedPointer<MangaSourceBase>> loadDirectory(NetworkManager *networkManager,
+                                                                const QString &directory,
+                                                                QStringList *errors = nullptr);
+
+    // Replaces all sources (e.g. after an update of the scripts).
+    void setSources(QList<QSharedPointer<MangaSourceBase>> sources);
 
     // All of them, in the order they are shown.
     QStringList names() const;

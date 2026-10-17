@@ -63,16 +63,16 @@ QSize calcRescaleSize(QSize imgSize, QSize screenSize, bool rot90, bool manhwaMo
     return rescaleSize;
 }
 
-QImage processImageQt(const QByteArray &array, const QString &filepath, QSize screenSize,
-                      DoublePageMode doublePageMode, bool trim, bool manhwaMode)
+QImage processImageQt(const QByteArray &array, QSize screenSize, DoublePageMode doublePageMode, bool trim,
+                      bool manhwaMode)
 {
 
     QImage img;
     if (!img.loadFromData(array))
         return QImage();
 
-    // Qt's decoders only decode here; rotating, trimming, rescaling and saving go through the native
-    // pipeline, which is much faster than QImage::scaled() (that one works in 32 bit) and keeps the
-    // result in Format_Grayscale8 so it can be blitted and dithered on the fast path.
-    return processDecodedImage(img, filepath, screenSize, doublePageMode, trim, manhwaMode);
+    // Qt's decoders only decode here; rotating, trimming and rescaling go through the native pipeline,
+    // which is much faster than QImage::scaled() (that one works in 32 bit) and keeps the result in
+    // Format_Grayscale8 so it can be blitted and dithered on the fast path.
+    return processDecodedImage(img, screenSize, doublePageMode, trim, manhwaMode);
 }

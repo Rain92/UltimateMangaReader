@@ -136,14 +136,58 @@ int captureMangas(MangaRepository &repository, MangaSourceBase *source, const QS
             << "\n  genres: " << info.genres << "\n  summary: " << shorten(info.summary)
             << "\n  coverUrl: " << info.coverUrl << "\n  chapters: " << info.chapters.size() << "\n";
 
+        // all of the summary and the chapters
+        QCryptographicHash hash(QCryptographicHash::Sha1);
+        hash.addData(info.summary.toUtf8());
         int n = info.chapters.size();
         for (int c = 0; c < n; c++)
-            if (c < 3 || c >= n - 3)
+        {
+            hash.addData(("\n" + info.chapters[c].chapterTitle + "\t" + info.chapters[c].chapterUrl).toUtf8());
+            // HARNESS_ALL_CHAPTERS: all of them, e.g. to find a difference
+            if (c < 3 || c >= n - 3 || !qEnvironmentVariableIsEmpty("HARNESS_ALL_CHAPTERS"))
                 out << "  ch " << c << ": " << info.chapters[c].chapterTitle << " | "
                     << info.chapters[c].chapterUrl << "\n";
-        if (n > 0)
+        }
+        out << "  hash: " << hash.result().toHex().left(16) << "\n";
+
+        // HARNESS_REFETCH: the info once more with these chapters as the known ones (their pages loaded, every
+        // third under another url), like the update of a favorite
+        if (!qEnvironmentVariableIsEmpty("HARNESS_REFETCH"))
+        {
+            auto known = info.chapters;
+            for (int c = 0; c < known.size(); c++)
+            {
+                known[c].pagesLoaded = true;
+                if (c % 3 == 2)
+                    known[c].chapterUrl += "-old";
+            }
+            auto again = source->fetchMangaInfo(url, known).wait();
+            if (!again)
+                out << "  refetch: ERROR " << again.error().message << "\n";
+            else
+            {
+                QCryptographicHash refetchHash(QCryptographicHash::Sha1);
+                const auto &chapters = again->chapters;
+                for (const auto &chapter : chapters)
+                    refetchHash.addData(("\n" + chapter.chapterTitle + "\t" + chapter.chapterUrl).toUtf8());
+                out << "  refetch: " << chapters.size() << " chapters, hash "
+                    << refetchHash.result().toHex().left(16) << "\n";
+                for (int c = 0, shown = 0; c < chapters.size() && shown < 10; c++)
+                    if (c >= n || chapters[c].chapterTitle != info.chapters[c].chapterTitle ||
+                        chapters[c].chapterUrl != info.chapters[c].chapterUrl)
+                    {
+                        out << "  refetch ch " << c << ": " << chapters[c].chapterTitle << " | "
+                            << chapters[c].chapterUrl << "\n";
+                        shown++;
+                    }
+            }
+        }
+
+        // HARNESS_NO_PAGES: only the infos and the chapters, e.g. to compare the chapters of many mangas
+        bool pages = qEnvironmentVariableIsEmpty("HARNESS_NO_PAGES");
+        if (pages && n > 0)
             failures += capturePages(repository, source, url, info.chapters, 0, true);
-        if (n > 1)
+        if (pages && n > 1)
             failures += capturePages(repository, source, url, info.chapters, n - 1, false);
         out.flush();
     }
@@ -164,14 +208,22 @@ int captureList(MangaSourceBase *source, MangaList *result)
     out << "=== list " << source->name << "\n  update: " << status << "\n  entries: " << list.size
         << ", absolute urls " << list.absoluteUrls << "\n";
 
+    // all entries, e.g. to compare two updates. The urls are absolute (the ones the app uses), sources that keep
+    // them relative to different base urls compare equal.
+    QFile dump(qEnvironmentVariable("HARNESS_LIST_DUMP"));
+    if (!dump.fileName().isEmpty() && !dump.open(QIODevice::WriteOnly))
+        qWarning() << "Couldn't write" << dump.fileName();
+
     QCryptographicHash hash(QCryptographicHash::Sha1);
     for (int i = 0; i < list.titles.size(); i++)
     {
-        QString entry = list.titles[i] + "\t" + list.urls.value(i) + "\t" +
-                        QString::number(list.popularityRanks.value(i)) + "\n";
+        auto url = list.absoluteUrls ? list.urls.value(i) : source->baseUrl + list.urls.value(i);
+        QString entry = list.titles[i] + "\t" + url + "\t" + QString::number(list.popularityRanks.value(i)) + "\n";
         hash.addData(entry.toUtf8());
+        if (dump.isOpen())
+            dump.write(entry.toUtf8());
         if (i < 5 || i >= list.titles.size() - 5)
-            out << "  " << i << ": " << list.titles[i] << " | " << list.urls.value(i) << " | rank "
+            out << "  " << i << ": " << list.titles[i] << " | " << url << " | rank "
                 << list.popularityRanks.value(i) << "\n";
     }
     out << "  hash: " << hash.result().toHex().left(16) << "\n";

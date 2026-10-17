@@ -1,0 +1,76 @@
+=== anthology | https://api.mangadex.org/manga/00000000-0000-4000-8000-000000000001
+  title: anthology
+  url: https://api.mangadex.org/manga/00000000-0000-4000-8000-000000000001
+  author: Writer
+  artist: Painter
+  status: Completed
+  year: 2001
+  genres: Josei, Romance, Nur japanisch, School Life
+  summary: Bold and italic and underlined, a link and bbcode.\n\nSecond part.
+  coverUrl: https://uploads.mangadex.org/covers/00000000-0000-4000-8000-000000000001/cover.jpg.512.jpg
+  chapters: 9
+  ch 0: Vol. 1 Ch. 1 Story 1.1 | c0000000-0000-4000-8000-000000000011
+  ch 1: Vol. 1 Ch. 2 Story 1.2 | c0000000-0000-4000-8000-000000000012
+  ch 2: Vol. 1 Ch. 3 Story 1.3 | c0000000-0000-4000-8000-000000000013
+  ch 6: Vol. 3 Ch. 1 Story 3.1 | c0000000-0000-4000-8000-000000000031
+  ch 7: Vol. 3 Ch. 2 Story 3.2 | c0000000-0000-4000-8000-000000000032
+  ch 8: Vol. 3 Ch. 3 Story 3.3 | c0000000-0000-4000-8000-000000000033
+  hash: 06aba3e02baa1968
+  refetch: 9 chapters, hash c1dee5ab991236f4
+=== flagged | https://api.mangadex.org/manga/00000000-0000-4000-8000-000000000002
+  title: flagged
+  url: https://api.mangadex.org/manga/00000000-0000-4000-8000-000000000002
+  author: 
+  artist: 
+  status: Ongoing
+  year: 
+  genres: 
+  summary: 
+  coverUrl: 
+  chapters: 6
+  ch 0: Vol. 1 Ch. 1 | c0000000-0000-4000-8000-000000000101
+  ch 1: Vol. 1 Ch. 2 | c0000000-0000-4000-8000-000000000102
+  ch 2: Vol. 1.5 Ch. 1 | c0000000-0000-4000-8000-000000000103
+  ch 3: Ch. 1 | c0000000-0000-4000-8000-000000000104
+  ch 4: Ch. 2 | c0000000-0000-4000-8000-000000000105
+  ch 5: Bonus | c0000000-0000-4000-8000-000000000106
+  hash: 0944f9869fe8eea4
+  refetch: 6 chapters, hash 0944f9869fe8eea4
+=== parts | https://api.mangadex.org/manga/00000000-0000-4000-8000-000000000003
+  title: parts
+  url: https://api.mangadex.org/manga/00000000-0000-4000-8000-000000000003
+  author: 
+  artist: 
+  status: Hiatus
+  year: 
+  genres: 
+  summary: 
+  coverUrl: 
+  chapters: 17
+  ch 0: Ch. 3.0 | c0000000-0000-4000-8000-000000000207
+  ch 1: Ch. 7 Again | c0000000-0000-4000-8000-000000000215
+  ch 2: Ch. 8 | c0000000-0000-4000-8000-000000000216
+  ch 14: Ch. 24.75 | c0000000-0000-4000-8000-000000000206
+  ch 15: Ch. 42.08 | c0000000-0000-4000-8000-000000000218
+  ch 16: Ch. 42.8 | c0000000-0000-4000-8000-000000000217
+  hash: 3ac9eed731e816b9
+  refetch: 17 chapters, hash 3ac9eed731e816b9
+=== paged | https://api.mangadex.org/manga/00000000-0000-4000-8000-000000000004
+  title: paged
+  url: https://api.mangadex.org/manga/00000000-0000-4000-8000-000000000004
+  author: 
+  artist: 
+  status: Completed
+  year: 
+  genres: 
+  summary: 
+  coverUrl: 
+  chapters: 600
+  ch 0: Ch. 1 Chapter 1 | c0000000-0000-4000-8000-000000001001
+  ch 1: Ch. 2 Chapter 2 | c0000000-0000-4000-8000-000000001002
+  ch 2: Ch. 3 Chapter 3 | c0000000-0000-4000-8000-000000001003
+  ch 597: Ch. 598 Chapter 598 | c0000000-0000-4000-8000-000000001598
+  ch 598: Ch. 599 Chapter 599 | c0000000-0000-4000-8000-000000001599
+  ch 599: Ch. 600 Chapter 600 | c0000000-0000-4000-8000-000000001600
+  hash: 7b5a88f9c627f575
+  refetch: 600 chapters, hash 7b5a88f9c627f575

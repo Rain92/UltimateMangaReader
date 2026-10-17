@@ -15,6 +15,7 @@
   ch 27: Chapter 21: Gyaru and The Night View | https://www.mangakakalove.com/manga/the-gyaru-priestess-is-so-done-with-casting-resurrection/chapter-21
   ch 28: Chapter 22 | https://www.mangakakalove.com/manga/the-gyaru-priestess-is-so-done-with-casting-resurrection/chapter-22
   ch 29: Chapter 22.5: Extra 6 | The Potion Addict and The Airship | https://www.mangakakalove.com/manga/the-gyaru-priestess-is-so-done-with-casting-resurrection/chapter-22.5
+  hash: 4ebb1cab28de5319
   chapter 0: Chapter 0 | https://www.mangakakalove.com/manga/the-gyaru-priestess-is-so-done-with-casting-resurrection/chapter-0
     pages: 22
     page 0: https://img-r1.2xstorage.com/the-gyaru-priestess-is-so-done-with-casting-resurrection/0/0.webp
@@ -56,6 +57,7 @@
   ch 7: Chapter 8 | https://www.mangakakalove.com/manga/black-but-pure-white/chapter-8
   ch 8: Chapter 9 | https://www.mangakakalove.com/manga/black-but-pure-white/chapter-9
   ch 9: Chapter 10 | https://www.mangakakalove.com/manga/black-but-pure-white/chapter-10
+  hash: 050f7a901c880f99
   chapter 0: Chapter 1 | https://www.mangakakalove.com/manga/black-but-pure-white/chapter-1
     pages: 123
     page 0: https://img-r1.2xstorage.com/black-but-pure-white/1/0.webp
@@ -97,6 +99,7 @@
   ch 96: Chapter 96 | https://www.mangakakalove.com/manga/sekitou-elergy/chapter-96
   ch 97: Chapter 97 | https://www.mangakakalove.com/manga/sekitou-elergy/chapter-97
   ch 98: Chapter 98: End of Year and New Year | https://www.mangakakalove.com/manga/sekitou-elergy/chapter-98
+  hash: 42534d6a52a48316
   chapter 0: Chapter 0 | https://www.mangakakalove.com/manga/sekitou-elergy/chapter-0
     pages: 29
     page 0: https://img-r1.2xstorage.com/sekitou-elergy/0/0.webp
@@ -138,6 +141,7 @@
   ch 428: Chapter 233 | https://www.mangakakalove.com/manga/onepunch-man/chapter-233
   ch 429: Chapter 234 | https://www.mangakakalove.com/manga/onepunch-man/chapter-234
   ch 430: Chapter 235 | https://www.mangakakalove.com/manga/onepunch-man/chapter-235
+  hash: 2ff7a781948362e7
   chapter 0: Chapter 1 | https://www.mangakakalove.com/manga/onepunch-man/chapter-1
     pages: 15
     page 0: https://img-r1.2xstorage.com/onepunch-man/1/0.webp

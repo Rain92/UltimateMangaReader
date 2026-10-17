@@ -37,8 +37,8 @@ public:
     // while it works, else resolved by the source.
     Task<Result<ImageLink>> pageImage(QSharedPointer<MangaInfo> info, int chapter, int page);
 
-    // The download of an image to path (a page of a manga, see MangaInfo::pagePath()), with the headers of the
-    // source.
+    // The download of an image to path (a page of a manga, see MangaInfo::pagePath()), with the headers and the
+    // retries of the source.
     FileDownloadDescriptor imageDownload(const QString &sourceName, const ImageLink &image,
                                          const QString &path) const;
     QSharedPointer<DownloadFileJob> downloadImage(const QString &sourceName, const ImageLink &image,

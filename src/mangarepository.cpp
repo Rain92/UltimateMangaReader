@@ -277,14 +277,15 @@ FileDownloadDescriptor MangaRepository::imageDownload(const QString &sourceName,
 {
     ImageLink request = image;
     request.headers = requestHeaders(sourceName, image.url) + image.headers;
-    return FileDownloadDescriptor(request, path);
+    auto source = sources->source(sourceName);
+    return FileDownloadDescriptor(request, path, source ? source->imageRetries : ImageRetries());
 }
 
 QSharedPointer<DownloadFileJob> MangaRepository::downloadImage(const QString &sourceName, const ImageLink &image,
                                                                const QString &path)
 {
     auto download = imageDownload(sourceName, image, path);
-    return networkManager->downloadAsScaledImage(download.image, download.path);
+    return networkManager->downloadAsScaledImage(download.image, download.path, download.retries);
 }
 
 void MangaRepository::forgetImage(const QString &url)

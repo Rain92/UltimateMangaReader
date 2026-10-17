@@ -1,0 +1,8 @@
+# Comick: made up cases (tests/harness/cases.py)
+case-restarted	https://comick.art/comic/case-restarted
+case-volumes	https://comick.art/comic/case-volumes
+case-few	https://comick.art/comic/case-few
+case-insert	https://comick.art/comic/case-insert
+case-fallback	https://comick.art/comic/case-fallback
+case-error	https://comick.art/comic/case-error
+case-formats	https://comick.art/comic/case-formats

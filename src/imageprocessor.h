@@ -35,13 +35,12 @@ struct ImageProcessingRequest
     EncryptionDescriptor encryption;
 };
 
-// Turns a downloaded page into the screen sized grayscale image and saves it: decrypt, decode, rotate,
-// trim, rescale, encode.
+// Turns a downloaded page into the screen sized grayscale image: decrypt, decode, rotate, trim, rescale.
 QImage processDownloadedImage(const ImageProcessingRequest &request);
 
 // Runs processDownloadedImage() on its own (low priority) thread, one request at a time, so the gui
-// thread stays responsive while pages are preloaded. Results are reported with finished(), queued to
-// the gui thread.
+// thread stays responsive while pages are preloaded, and saves the page (to request.filepath). Results are
+// reported with processed() and finished(), queued to the gui thread.
 class ImageProcessor : public QObject
 {
     Q_OBJECT
@@ -57,6 +56,9 @@ public:
     bool isBusy() const;
 
 signals:
+    // The page is processed (a null image if that failed), it is saved next.
+    void processed(quint64 id, const QImage &image);
+    // The page is saved, a null image if it couldn't be processed or saved.
     void finished(quint64 id, const QImage &image);
 
 private:

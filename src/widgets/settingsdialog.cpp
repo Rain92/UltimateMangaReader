@@ -35,6 +35,7 @@ void SettingsDialog::adjustUI()
 {
     ui->labelTitle->setStyleSheet("font-size: 15pt");
     ui->pushButtonOk->setFixedHeight(SIZES.buttonSize);
+    ui->pushButtonSourcesRepository->setFixedHeight(SIZES.buttonSize);
     activateScroller(ui->scrollArea);
 }
 
@@ -68,6 +69,11 @@ void SettingsDialog::resetUI()
     ui->comboBoxHWButton->setCurrentIndex(settings->buttonAdvance);
 
     ui->comboBoxMangaOrder->setCurrentIndex(settings->mangaOrder);
+
+    // a url has no spaces where it could wrap
+    auto repository = settings->sourcesRepositoryUrl().replace("/", "/\u200B");
+    ui->labelSourcesRepository->setText(settings->sourcesRepository.isEmpty() ? repository + " (default)"
+                                                                               : repository);
 
     internalChange = false;
 }
@@ -107,4 +113,10 @@ void SettingsDialog::updateSettings()
 void SettingsDialog::on_pushButtonOk_clicked()
 {
     close();
+}
+
+void SettingsDialog::on_pushButtonSourcesRepository_clicked()
+{
+    close();
+    emit sourcesRepositoryEditRequested();
 }

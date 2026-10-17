@@ -245,7 +245,8 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsFile(DownloadRequest r
 }
 
 QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const ImageLink &image,
-                                                                      const QString &localPath)
+                                                                      const QString &localPath,
+                                                                      const ImageRetries &retries)
 {
     if (auto job = runningFileDownload(localPath))
         return job;
@@ -261,21 +262,20 @@ QSharedPointer<DownloadFileJob> NetworkManager::downloadAsScaledImage(const Imag
 
     qDebug() << "Downloading as image:" << urlf;
 
-    auto sjob = new DownloadScaledImageJob(networkManager, imageProcessor,
-                                           DownloadFileJob::defaultRequest(urlf, image.headers), localPath,
-                                           imageRescaleSize, settings, ed, appendUrl);
+    auto request = DownloadFileJob::defaultRequest(urlf, image.headers);
+    request.maxRetries = retries.maxRetries;
+    request.retryDelay = retries.retryDelay;
+    request.maxRetryDelay = retries.maxRetryDelay;
+    auto sjob = new DownloadScaledImageJob(networkManager, imageProcessor, request, localPath, imageRescaleSize,
+                                           settings, ed, appendUrl);
     auto job = startFileDownload(sjob);
 
-    // the processed page goes to the reader's cache, the job is kept until it finished (even if the caller
-    // drops it)
+    // the processed page goes to the reader's cache (before it is saved: the reader can show it meanwhile), the
+    // job is kept until it finished (even if the caller drops it)
     auto keepAlive = QSharedPointer<QSharedPointer<DownloadFileJob>>::create(job);
-    connect(sjob, &DownloadJobBase::completed, this,
-            [keepAlive, sjob, this]()
-            {
-                keepAlive->clear();
-                if (sjob->resultImage)
-                    emit downloadedImage(sjob->filepath, sjob->resultImage);
-            });
+    connect(sjob, &DownloadScaledImageJob::imageReady, this,
+            [sjob, this]() { emit downloadedImage(sjob->filepath, sjob->resultImage); });
+    connect(sjob, &DownloadJobBase::completed, this, [keepAlive]() { keepAlive->clear(); });
     connect(sjob, &DownloadJobBase::downloadError, this,
             [keepAlive, url = image.url, this]()
             {
@@ -352,39 +352,4 @@ void NetworkManager::ensureCertificates()
         qDebug() << "Couldn't load SSL certificates";
 
     QSslConfiguration::setDefaultConfiguration(sslConfig);
-}
-
-Task<NetworkManager::ImageSizes> NetworkManager::probeImageSizes(
-    QStringList urls, int timeout, std::function<HttpHeaders(const QString &)> headersFor)
-{
-    // a few KB hold the size of any WebP, PNG and of JPEGs without large metadata
-    const int headerBytes = 4096;
-
-    QList<QSharedPointer<DownloadBufferJob>> jobs;
-    for (const auto &url : std::as_const(urls))
-    {
-        DownloadRequest request;
-        request.url = url;
-        request.headers = headersFor ? headersFor(fixUrl(url)) : HttpHeaders();
-        request.headers.append({"Range", "bytes=0-" + QByteArray::number(headerBytes - 1)});
-        request.timeout = timeout;
-        request.maxRetries = 0;
-        // servers that ignore the range send everything, the start is enough
-        request.maxBytes = headerBytes;
-        jobs.append(download(request));
-    }
-
-    ImageSizes result;
-    for (int i = 0; i < jobs.size(); i++)
-    {
-        QSize size;
-        if (!co_await jobs[i] || !readImageSize(jobs[i]->buffer, size))
-            size = QSize();
-        result.sizes.append(size);
-        if (jobs[i]->error.code == Error::Timeout)
-            result.timedOut.append(i);
-    }
-
-    emit activity();
-    co_return result;
 }

@@ -12,9 +12,13 @@ enum DownloadType
 // See MangaRepository::imageDownload().
 struct FileDownloadDescriptor
 {
-    FileDownloadDescriptor(const ImageLink &image, const QString &path) : image(image), path(path) {}
+    FileDownloadDescriptor(const ImageLink &image, const QString &path, const ImageRetries &retries = {})
+        : image(image), path(path), retries(retries)
+    {
+    }
     ImageLink image;
     QString path;
+    ImageRetries retries;
 };
 
 // Runs downloads, a few at a time.

@@ -21,6 +21,10 @@ public:
     // the processed page, when it was downloaded (not when the file was there already)
     QSharedPointer<QImage> resultImage;
 
+signals:
+    // The page is processed (resultImage), it is being saved: completed() follows when it's done.
+    void imageReady();
+
 protected:
     void resetState() override;
     QString prepareTarget() override;
@@ -44,5 +48,6 @@ private:
     void downloadAppendix();
     void appendixFinished();
     void process(const QByteArray &appendData);
+    void processingDone(quint64 id, const QImage &image);
     void processingFinished(quint64 id, const QImage &image);
 };

@@ -1,7 +1,7 @@
 #pragma once
 
 const auto aboutString =
-    "Version 2.12.0"
+    "Version 3.0"
     "\n"
     "Build date: " __DATE__
     "\n\n"

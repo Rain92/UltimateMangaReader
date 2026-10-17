@@ -10,5 +10,5 @@ int calcRotationInfo(QSize imgSize, QSize screenSize, DoublePageMode doublePageM
 
 QImage rescaleImageQt(const QImage &img, QSize rescaleSize, bool rot90);
 
-QImage processImageQt(const QByteArray &array, const QString &filepath, QSize screenSize,
-                      DoublePageMode doublePageMode, bool trim, bool manhwaMode);
+QImage processImageQt(const QByteArray &array, QSize screenSize, DoublePageMode doublePageMode, bool trim,
+                      bool manhwaMode);

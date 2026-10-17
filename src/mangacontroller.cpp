@@ -2,6 +2,7 @@
 
 #include <QScopedValueRollback>
 
+#include "downloadimageandrescalejob.h"
 #include "perftimer.h"
 
 MangaController::MangaController(NetworkManager *networkManager, MangaRepository *repository, QObject *parent)
@@ -13,15 +14,25 @@ MangaController::MangaController(NetworkManager *networkManager, MangaRepository
       preloading(false),
       preloadAgain(false),
       turning(false),
+      progressTimer(),
       clock(),
       failedDownloads()
 {
     clock.start();
 
+    progressTimer.setSingleShot(true);
+    progressTimer.setInterval(1000);
+    QObject::connect(&progressTimer, &QTimer::timeout, this, [] { ReadingProgress::flushPending(); });
+
     QObject::connect(&preloadQueue, &DownloadQueue::singleDownloadCompleted, this,
                      &MangaController::completedImagePreload);
     QObject::connect(&preloadQueue, &DownloadQueue::singleDownloadFailed, this,
                      [this](const QString &, const QString &path) { failedDownloads.insert(path, clock.elapsed()); });
+}
+
+MangaController::~MangaController()
+{
+    ReadingProgress::flushPending();
 }
 
 bool MangaController::setCurrentManga(QSharedPointer<MangaInfo> mangaInfo)
@@ -103,13 +114,18 @@ void MangaController::setCurrentIndex(const MangaIndex &index)
 
 void MangaController::currentIndexChangedInternal(bool preload)
 {
+    PerfTimer timer("turn");
+
     const auto &chapter = currentIndex.currentChapter();
     emit currentIndexChanged({currentIndex, chapter.chapterUrl, static_cast<int>(currentManga->chapters.count()),
                               static_cast<int>(chapter.pages.count())});
+    timer.lap("index");
 
     updateCurrentImage();
+    timer.lap("image");
 
     serializeProgress();
+    timer.lap("progress");
 
     if (preload)
         QTimer::singleShot(50, this, &MangaController::preloadNeighbours);
@@ -149,8 +165,10 @@ void MangaController::updateCurrentImage()
 
     // a running preload of the page is reused
     auto job = repository->downloadImage(manga->sourceName, image.value(), path);
+    auto scaledJob = qobject_cast<DownloadScaledImageJob *>(job.get());
 
-    if (job->isCompleted)
+    // a processed page is in the reader's cache while it is saved
+    if (job->isCompleted || (scaledJob && scaledJob->resultImage))
     {
         emit currentImageChanged(job->filepath);
         return;
@@ -163,21 +181,27 @@ void MangaController::updateCurrentImage()
         return;
     }
 
-    // The page is shown when it's done, the previous one stays until then. Waiting for it with a timeout
-    // showed the error page whenever downloading and processing took longer (the download went on
-    // regardless). The network manager keeps the job alive until it finished, the connections end with it.
+    // The page is shown when it's processed (it's saved meanwhile), the previous one stays until then. Waiting
+    // for it with a timeout showed the error page whenever downloading and processing took longer (the download
+    // went on regardless). The network manager keeps the job alive until it finished, the connections end with
+    // it.
     DownloadFileJob *pageJob = job.get();
-    QObject::connect(pageJob, &DownloadJobBase::completed, this,
-                     [this, pageJob, isCurrent]()
-                     {
-                         if (isCurrent())
-                             emit currentImageChanged(pageJob->filepath);
-                     });
+    auto shown = std::make_shared<bool>(false);
+    auto show = [this, pageJob, isCurrent, shown]()
+    {
+        if (!*shown && isCurrent())
+            emit currentImageChanged(pageJob->filepath);
+        *shown = true;
+    };
+    if (scaledJob)
+        QObject::connect(scaledJob, &DownloadScaledImageJob::imageReady, this, show);
+    QObject::connect(pageJob, &DownloadJobBase::completed, this, show);
     QObject::connect(pageJob, &DownloadJobBase::downloadError, this,
-                     [this, pageJob, isCurrent]()
+                     [this, pageJob, isCurrent, shown]()
                      {
                          failedDownloads.insert(pageJob->filepath, clock.elapsed());
-                         if (isCurrent())
+                         // the page couldn't be saved, it stays until the next page turn
+                         if (!*shown && isCurrent())
                          {
                              emit currentImageChanged("error");
                              emit error(pageJob->error.message);
@@ -338,7 +362,8 @@ void MangaController::serializeProgress()
     const auto &chapter = currentIndex.currentChapter();
     ReadingProgress progress(currentIndex, chapter.chapterUrl, currentManga->chapters.count(),
                              chapter.pages.count());
-    progress.serialize(currentManga->sourceName, currentManga->url);
+    progress.serializeLater(currentManga->sourceName, currentManga->url);
+    progressTimer.start();
 }
 
 void MangaController::deserializeProgress()

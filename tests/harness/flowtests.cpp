@@ -29,6 +29,8 @@ int flowTests(const QString& sourceName, const QString& title, const QString& ur
     };
 
     UltimateMangaReaderCore core;
+
+    core.sources->setSources(harnessSources(core.networkManager, CONF.sourcesDir));
     core.networkManager->setDownloadSettings(QSize(1404, 1872), &core.settings);
     core.networkManager->connected = true;
 
@@ -149,6 +151,8 @@ int listFlowTests(const QString& sourceName)
     };
 
     UltimateMangaReaderCore core;
+
+    core.sources->setSources(harnessSources(core.networkManager, CONF.sourcesDir));
     core.networkManager->setDownloadSettings(QSize(1404, 1872), &core.settings);
     core.networkManager->connected = true;
     if (!core.sources->source(sourceName))

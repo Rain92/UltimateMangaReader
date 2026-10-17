@@ -1,8 +1,5 @@
 #pragma once
 
-#include <QRegularExpression>
-#include <QTextDocument>
-
 #include "downloadqueue.h"
 #include "imagelink.h"
 #include "mangachaptercollection.h"
@@ -64,6 +61,10 @@ public:
     QString name;
     // the urls of a manga list without absolute urls are relative to it
     QString baseUrl;
+    // its logo, an image file (empty: none)
+    QString iconPath;
+    // how the downloads of its images (the pages) are retried
+    ImageRetries imageRetries;
 
     // All mangas of the source. current: the list of the last update (e.g. for the titles an update doesn't
     // get again). The token takes the progress (0 to 100) and says when the update is cancelled (it fails with
@@ -91,19 +92,4 @@ protected:
 
     // The downloads of the source, with its headers (before the request's own ones).
     QSharedPointer<DownloadBufferJob> download(DownloadRequest request);
-    QSharedPointer<DownloadBufferJob> download(const QString &url, int timeout = 6000,
-                                               int maxRetries = DownloadRequest().maxRetries);
-    Task<NetworkManager::ImageSizes> probeImageSizes(QStringList urls, int timeout);
-    // for a DownloadQueue
-    std::function<HttpHeaders(const QString &)> requestHeadersFunction() const;
-
-    QString htmlToPlainText(const QString &str);
-
-    // The first group of the first match of rx in text, empty without a match (or for an empty pattern).
-    static QString capture(const QRegularExpression &rx, const QString &text);
-    // Genres from the text of a page, separated by spaces.
-    QString genresFromHtml(const QString &html);
-
-private:
-    QTextDocument htmlConverter;
 };

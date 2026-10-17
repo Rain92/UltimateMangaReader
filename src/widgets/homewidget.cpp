@@ -69,7 +69,10 @@ void HomeWidget::updateSourcesList()
 
     for (const auto &name : sources->enabledNames())
     {
-        auto item = new QStandardItem(sourceLogo(name, SIZES.mangasourceIconSize), name);
+        auto source = sources->source(name);
+        auto item = new QStandardItem(sourceLogo(name, source ? source->iconPath : QString(),
+                                                 SIZES.mangasourceIconSize),
+                                      name);
         item->setData(name);
         item->setSizeHint(QSize(SIZES.mangasourceItemWidth, SIZES.mangasourceItemHeight));
         model->appendRow(item);

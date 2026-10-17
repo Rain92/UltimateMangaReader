@@ -47,7 +47,9 @@ public:
     Task<Result<MangaDetails>> fetchMangaInfo(QString, MangaChapterCollection) override
     {
         infoCalls++;
-        auto job = download(server + infoPath);
+        DownloadRequest request;
+        request.url = server + infoPath;
+        auto job = download(request);
         if (!co_await job)
             co_return Err(job->error);
         if (!nextError.message.isEmpty())
@@ -130,6 +132,7 @@ int storageTests(const QString &server)
 
     {
         UltimateMangaReaderCore core;
+        core.sources->setSources(harnessSources(core.networkManager, CONF.sourcesDir));
         check(!QFile::exists(cache + "MangaTown/Old-Title"), "old manga directory dropped");
         check(QFile::exists(cache + "mangalists/MangaTown_mangalist.dat"), "manga lists kept");
         check(readFile(cache + "cacheversion").trimmed() == QByteArray::number(CONF.cacheLayoutVersion),
@@ -174,13 +177,15 @@ int storageTests(const QString &server)
         SourceListModel selection(core.sources, SourceListModel::SelectSources);
         int resets = 0;
         QObject::connect(&selection, &QAbstractItemModel::modelReset, [&]() { resets++; });
+        // (the order of the index)
+        int town = int(core.sources->names().indexOf("MangaTown"));
         check(all.rowCount() == 6 && !all.isChecked("MangaTown") && all.checkedNames().size() == 5 &&
-                  all.index(2).data(Qt::CheckStateRole).toInt() == Qt::Unchecked &&
-                  all.index(2).data().toString() == "MangaTown",
+                  all.index(town).data(Qt::CheckStateRole).toInt() == Qt::Unchecked &&
+                  all.index(town).data().toString() == "MangaTown",
               "all sources, checked are the enabled ones");
         check(selection.rowCount() == 5 && selection.checkedNames() == core.sources->enabledNames(),
               "the enabled sources, all selected");
-        all.setData(all.index(2), Qt::Checked, Qt::CheckStateRole);
+        all.setData(all.index(town), Qt::Checked, Qt::CheckStateRole);
         check(core.sources->isEnabled("MangaTown") && changes == 2 && resets == 1 && selection.rowCount() == 6 &&
                   selection.isChecked("MangaTown"),
               "a check enables the source, the other list follows");
@@ -201,6 +206,7 @@ int storageTests(const QString &server)
     touch(cache + "MangaTown/0123456789abcdef/keep");
     {
         UltimateMangaReaderCore core;
+        core.sources->setSources(harnessSources(core.networkManager, CONF.sourcesDir));
         check(QFile::exists(cache + "MangaTown/0123456789abcdef/keep"), "cache of the current layout kept");
         check(core.settings.standbyWhenIdle, "settings round trip");
     }
@@ -337,6 +343,17 @@ int storageTests(const QString &server)
         job->await(5000);
         check(job->hasFailed() && info->chapters[0].pages[0].image.isEmpty(),
               "a page image that couldn't be downloaded is forgotten");
+
+        // the retries of the source (e.g. longer for a CDN that answers 429 while it loads an image)
+        fake->imageRetries = {5, 50, 100};
+        auto retried = repository.downloadImage("Fake", ImageLink::fromUrl(server + "/status/503"),
+                                                info->directory() + "test/retried.jpg");
+        retried->await(5000);
+        auto descriptor = repository.imageDownload("Fake", broken, info->directory() + "test/other.jpg");
+        check(retried->hasFailed() && retried->request.maxRetries == 5 && retried->request.retryDelay == 50 &&
+                  retried->request.maxRetryDelay == 100 && descriptor.retries.maxRetries == 5,
+              "the image downloads have the retries of their source");
+        fake->imageRetries = {};
     }
 
     // --- updates of the info
@@ -383,6 +400,28 @@ int storageTests(const QString &server)
               "reader moved with its chapter");
         ReadingProgress p("Fake", url);
         check(p.index.chapter == 0 && p.chapterUrl == B, "reader saved the progress");
+    }
+
+    // --- the progress of a page turn is written a moment later, it is read from memory until then
+    {
+        auto onDisk = [&]
+        {
+            QFile f(CONF.mangainfodir("Fake", url) + "progress.dat");
+            return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
+        };
+        ReadingProgress before("Fake", url);
+        ReadingProgress(MangaIndex(1, 0), B, 3, 2).serialize("Fake", url);
+        auto written = onDisk();
+        ReadingProgress(MangaIndex(1, 5), B, 3, 9).serializeLater("Fake", url);
+        check(onDisk() == written && ReadingProgress("Fake", url).index.page == 5,
+              "a progress kept for later is read before it is written");
+        ReadingProgress::flushPending();
+        check(onDisk() != written && ReadingProgress("Fake", url).index.page == 5, "flushPending() writes it");
+        ReadingProgress(MangaIndex(1, 6), B, 3, 9).serializeLater("Fake", url);
+        ReadingProgress(MangaIndex(1, 7), B, 3, 9).serialize("Fake", url);
+        ReadingProgress::flushPending();
+        check(ReadingProgress("Fake", url).index.page == 7, "a write drops the progress kept for later");
+        before.serialize("Fake", url);
     }
 
     // --- favorites by url
@@ -506,6 +545,25 @@ int storageTests(const QString &server)
     headersJob->await();
     check(headersJob->text().contains("X-Test: abc") && headersJob->text().contains("Referer: https://fake.example/"),
           "image request has the link headers and the source headers");
+
+    {
+        auto path = info->directory() + "test/ready.jpg";
+        QStringList events;
+        auto job = repository.downloadImage("Fake", ImageLink::fromUrl(server + "/image/100x153"), path);
+        auto handedOut = QObject::connect(&nm, &NetworkManager::downloadedImage,
+                                          [&](const QString &p, QSharedPointer<QImage> img)
+                                          {
+                                              if (p == path)
+                                                  events << QString("image %1 %2")
+                                                                .arg(img && !img->isNull())
+                                                                .arg(job->isCompleted);
+                                          });
+        QObject::connect(job.get(), &DownloadJobBase::completed,
+                         [&]() { events << QString("completed %1").arg(QFile::exists(path)); });
+        job->await(10000);
+        QObject::disconnect(handedOut);
+        check(events == QStringList{"image 1 0", "completed 1"}, "the processed page is handed out before it is saved");
+    }
 
     out << (failures == 0 ? "all ok" : QString::number(failures) + " FAILED") << "\n";
     // --- manga list updates

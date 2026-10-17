@@ -9,6 +9,7 @@
 #include <cstring>
 
 #include "imagerotate.h"
+#include "perftimer.h"
 #include "thirdparty/simdimageresize.h"
 
 #include <webp/decode.h>
@@ -247,6 +248,7 @@ bool saveQImageAsJpeg(const QImage &image, const QString &path, int quality)
     if (image.format() != QImage::Format_Grayscale8)
         return false;
 
+    PerfTimer timer("saveJpeg");
     TjHandle handle(TJINIT_COMPRESS);
     if (!handle)
         return false;
@@ -263,6 +265,7 @@ bool saveQImageAsJpeg(const QImage &image, const QString &path, int quality)
         return false;
 
     auto bufferGuard = qScopeGuard([&] { tj3Free(jpegBuf); });
+    timer.lap("encode");
 
     // the reader takes an existing file for a finished page, it mustn't see one that is still written
     QSaveFile file(path);
@@ -273,8 +276,11 @@ bool saveQImageAsJpeg(const QImage &image, const QString &path, int quality)
         file.cancelWriting();
         return false;
     }
+    timer.lap("write");
 
-    return file.commit();
+    bool committed = file.commit();
+    timer.lap("commit");
+    return committed;
 }
 
 GreyscaleImage::GreyscaleImage() : buffer(), width(0), height(0) {}

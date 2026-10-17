@@ -78,7 +78,8 @@ public:
     QSharedPointer<DownloadFileJob> downloadAsFile(DownloadRequest request, const QString &localPath);
     // Downloads a page and saves it processed for the screen, with the headers of image. A download into the
     // same file that is running already is reused.
-    QSharedPointer<DownloadFileJob> downloadAsScaledImage(const ImageLink &image, const QString &localPath);
+    QSharedPointer<DownloadFileJob> downloadAsScaledImage(const ImageLink &image, const QString &localPath,
+                                                          const ImageRetries &retries = {});
 
     void setDownloadSettings(const QSize &size, Settings *settings);
 
@@ -100,17 +101,6 @@ public:
     // A download into the file is running (or waiting for a retry).
     bool isDownloading(const QString &localPath) const;
 
-    struct ImageSizes
-    {
-        // by the index of the url, invalid for the images that couldn't be loaded or read
-        QList<QSize> sizes;
-        // the indices of the urls that didn't answer in time (the other failures are the servers')
-        QList<int> timedOut;
-    };
-    // Reads the sizes of the images from the start of their files, in parallel, for at most timeout ms.
-    // headersFor: the headers of the requests.
-    Task<ImageSizes> probeImageSizes(QStringList urls, int timeout,
-                                     std::function<HttpHeaders(const QString &)> headersFor);
 
     // written on the WiFi thread
     std::atomic<bool> connected;

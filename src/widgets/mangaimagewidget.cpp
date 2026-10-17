@@ -13,6 +13,9 @@ MangaImageWidget::MangaImageWidget(QWidget *parent)
       showError(false),
       errorImage(new QImage(":/images/icons/file-error.png"))
 {
+    // paintEvent() paints every pixel: Qt doesn't fill the (white) background of the widget and of its parents under
+    // it before, which were two more passes over the screen at every page turn
+    setAttribute(Qt::WA_OpaquePaintEvent);
 }
 
 void MangaImageWidget::setImage(QSharedPointer<QImage> img)
@@ -107,6 +110,14 @@ void MangaImageWidget::paintEvent(QPaintEvent *)
     int y = tall ? -qRound(vOffset * pixelRatio) : (device.height() - size.height()) / 2;
 
     painter.setWorldTransform(QTransform::fromScale(1.0 / pixelRatio, 1.0 / pixelRatio));
+
+    // the rest around the page (all of it under an image with transparency, e.g. the error image)
+    const QRect page(QPoint(x, y), size);
+    const QRegion around = img->hasAlphaChannel() ? QRegion(QRect(QPoint(0, 0), device))
+                                                  : QRegion(QRect(QPoint(0, 0), device)) - page;
+    for (const QRect &rect : around)
+        painter.fillRect(rect, Qt::white);
+
     if (size == img->size())
     {
         painter.drawImage(QPoint(x, y), *img);

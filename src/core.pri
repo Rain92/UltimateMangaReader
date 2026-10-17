@@ -1,11 +1,16 @@
 # The core of the app: everything but the widgets, main.cpp and the device of the platform (device_*.cpp).
-# Shared by the app and the test harness (tests/harness).
+# Shared by the app and the test harness (tests/harness). The sources are scripts (sources/), run by
+# src/mangasources/luasource.*.
 
-INCLUDEPATH += $$PWD $$PWD/mangasources $$PWD/..
+INCLUDEPATH += $$PWD $$PWD/mangasources $$PWD/scripting $$PWD/..
+
+include($$PWD/../thirdparty/lua/lua.pri)
+include($$PWD/../thirdparty/libyaml/libyaml.pri)
 
 HEADERS += \
     $$PWD/aboutinfo.h \
     $$PWD/cachefile.h \
+    $$PWD/cpuboost.h \
     $$PWD/device.h \
     $$PWD/downloadbufferjob.h \
     $$PWD/downloadfilejob.h \
@@ -33,23 +38,22 @@ HEADERS += \
     $$PWD/mangaliststore.h \
     $$PWD/mangalistupdater.h \
     $$PWD/mangarepository.h \
-    $$PWD/mangasources/comick.h \
     $$PWD/mangasources/json.h \
-    $$PWD/mangasources/mangadex.h \
-    $$PWD/mangasources/mangahere.h \
-    $$PWD/mangasources/mangakakalot.h \
-    $$PWD/mangasources/mangaplus.h \
+    $$PWD/mangasources/luasource.h \
     $$PWD/mangasources/mangasourcebase.h \
-    $$PWD/mangasources/mangatown.h \
     $$PWD/mangasources/updateprogresstoken.h \
     $$PWD/networkmanager.h \
     $$PWD/perftimer.h \
     $$PWD/readingprogress.h \
+    $$PWD/scripting/luaengine.h \
+    $$PWD/scripting/lualibs.h \
     $$PWD/result.h \
     $$PWD/settings.h \
     $$PWD/sizes.h \
+    $$PWD/sourceindex.h \
     $$PWD/sourcelistmodel.h \
     $$PWD/sourceregistry.h \
+    $$PWD/sourceupdater.h \
     $$PWD/stacktrace.h \
     $$PWD/standbymanager.h \
     $$PWD/staticsettings.h \
@@ -58,11 +62,13 @@ HEADERS += \
     $$PWD/trimrect.h \
     $$PWD/ultimatemangareadercore.h \
     $$PWD/utils.h \
+    $$PWD/yamlreader.h \
     $$PWD/../thirdparty/rapidjson.h \
     $$PWD/../thirdparty/simdimageresize.h \
 
 SOURCES += \
     $$PWD/cachefile.cpp \
+    $$PWD/cpuboost.cpp \
     $$PWD/downloadbufferjob.cpp \
     $$PWD/downloadfilejob.cpp \
     $$PWD/downloadimageandrescalejob.cpp \
@@ -86,25 +92,25 @@ SOURCES += \
     $$PWD/mangaliststore.cpp \
     $$PWD/mangalistupdater.cpp \
     $$PWD/mangarepository.cpp \
-    $$PWD/mangasources/comick.cpp \
-    $$PWD/mangasources/mangadex.cpp \
-    $$PWD/mangasources/mangahere.cpp \
-    $$PWD/mangasources/mangakakalot.cpp \
-    $$PWD/mangasources/mangaplus.cpp \
+    $$PWD/mangasources/luasource.cpp \
     $$PWD/mangasources/mangasourcebase.cpp \
-    $$PWD/mangasources/mangatown.cpp \
     $$PWD/mangasources/updateprogresstoken.cpp \
     $$PWD/networkmanager.cpp \
     $$PWD/readingprogress.cpp \
+    $$PWD/scripting/luaengine.cpp \
+    $$PWD/scripting/lualibs.cpp \
     $$PWD/settings.cpp \
+    $$PWD/sourceindex.cpp \
     $$PWD/sourcelistmodel.cpp \
     $$PWD/sourceregistry.cpp \
+    $$PWD/sourceupdater.cpp \
     $$PWD/stacktrace.cpp \
     $$PWD/standbymanager.cpp \
     $$PWD/suspendmanager.cpp \
     $$PWD/trimrect.cpp \
     $$PWD/ultimatemangareadercore.cpp \
     $$PWD/utils.cpp \
+    $$PWD/yamlreader.cpp \
     $$PWD/../thirdparty/simdimageresize.cpp \
 
 QT += core gui network concurrent

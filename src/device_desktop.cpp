@@ -17,6 +17,8 @@ public:
     void setFrontlight(int, int) override {}
     void frontlightOff() override {}
 
+    void setCpuBoost(bool) override {}
+
     int batteryLevel() const override { return 100; }
     bool isCharging() const override { return false; }
 
