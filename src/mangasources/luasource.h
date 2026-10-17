@@ -47,7 +47,7 @@ class LuaSource : public MangaSourceBase
 public:
     // The major version of the sources that this app runs (see SourceIndex::Version): it goes up with a change of
     // the interface above that breaks the sources.
-    static const int majorVersion = 1;
+    static const int majorVersion = 3;
 
     // The source <id> of the directory, with the libraries (files of the directory, run before its script).
     static Result<QSharedPointer<LuaSource>> load(NetworkManager *networkManager, const QString &directory,

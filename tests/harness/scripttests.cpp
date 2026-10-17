@@ -869,6 +869,14 @@ end
         auto functions =
             QByteArray("function fetchMangaList() end function fetchMangaInfo() end function fetchPageList() end");
         auto nameOf = [](const QString &id) { return id.left(1).toUpper() + id.mid(1); };
+        // a version (or a text with versions) of this app's major version: M.1 is
+        // <LuaSource::majorVersion>.1, M+1.0 and M-1.5 are of the next and the previous major version
+        auto v = [](QString text)
+        {
+            return text.replace("M+1.", QString("%1.").arg(LuaSource::majorVersion + 1))
+                .replace("M-1.", QString("%1.").arg(LuaSource::majorVersion - 1))
+                .replace("M.", QString("%1.").arg(LuaSource::majorVersion));
+        };
         // the sources (id, version, script) with common.lua (of the version of the first one) and their index
         auto writeSet = [&](const QString &dir, const QList<std::tuple<QString, QString, QByteArray>> &sources)
         {
@@ -876,12 +884,13 @@ end
             QFile::remove(dir + "/common.lua");
             QFile::copy(sourcesDir + "/common.lua", dir + "/common.lua");
             SourceIndex index;
-            auto major = SourceIndex::Version::parse(std::get<1>(sources.first()))->major;
+            auto major = SourceIndex::Version::parse(v(std::get<1>(sources.first())))->major;
             index.libraries.append({"common", {}, {major, 0}, {"common.lua"}});
             for (const auto &[id, version, script] : sources)
             {
                 writeSource(dir, id, QString("name: %1\nbaseUrl: x\n").arg(nameOf(id)).toUtf8(), script);
-                index.sources.append({id, nameOf(id), *SourceIndex::Version::parse(version), {id + ".yaml", id + ".lua"}});
+                index.sources.append(
+                    {id, nameOf(id), *SourceIndex::Version::parse(v(version)), {id + ".yaml", id + ".lua"}});
             }
             writeFile(dir + "/index.yaml", index.toYaml());
         };
@@ -898,15 +907,15 @@ end
             return file.open(QIODevice::ReadOnly) ? QString::fromUtf8(file.readAll()) : QString();
         };
 
-        writeSet(bundled, {{"alpha", "1.0", functions + " -- v1"}, {"gamma", "1.0", functions}});
+        writeSet(bundled, {{"alpha", "M.0", functions + " -- v1"}, {"gamma", "M.0", functions}});
         SourceUpdater updater(&nm, bundled, installed);
         auto repoUrl = QUrl::fromLocalFile(repo).toString();
         auto dir = updater.installBundled();
         check("the bundled sources are installed the first time",
-              dir == installed && installedVersions(installed) == "alpha 1.0, gamma 1.0" &&
+              dir == installed && installedVersions(installed) == v("alpha M.0, gamma M.0") &&
                   QFile::exists(installed + "/bundled.yaml"));
 
-        writeSet(repo, {{"alpha", "1.1", functions + " -- v2"}, {"beta", "1.0", functions}});
+        writeSet(repo, {{"alpha", "M.1", functions + " -- v2"}, {"beta", "M.0", functions}});
         auto changes = updater.check(repoUrl).wait();
         check("the changes of the repository",
               changes && changes->updated == QStringList{"Alpha"} && changes->added == QStringList{"Beta"} &&
@@ -920,55 +929,62 @@ end
         for (const auto &updatedSource : updated.value_or(QList<QSharedPointer<MangaSourceBase>>()))
             names.append(updatedSource->name);
         check("an update is installed and its sources loaded",
-              updated && names == QStringList({"Alpha", "Beta"}) && installedVersions(installed) == "alpha 1.1, beta 1.0" &&
-                  readText(installed + "/alpha.lua").endsWith("v2") && !QFile::exists(installed + "/gamma.yaml"));
+              updated && names == QStringList({"Alpha", "Beta"}) &&
+                  installedVersions(installed) == v("alpha M.1, beta M.0") &&
+                  readText(installed + "/alpha.lua").endsWith("v2") &&
+                  !QFile::exists(installed + "/gamma.yaml"));
         if (!updated)
             out << "  " << updated.error().message << "\n";
         auto again = updater.check(repoUrl + "/index.yaml").wait();
         check("then there are no changes (also with the url of the index)", again && again->isEmpty());
 
-        writeSet(repo, {{"alpha", "1.1", functions + " -- v2"}, {"beta", "1.1", "function ("}});
+        writeSet(repo, {{"alpha", "M.1", functions + " -- v2"}, {"beta", "M.1", "function ("}});
         auto broken = updater.install(updater.check(repoUrl).wait().value_or(SourceUpdater::Changes())).wait();
         check("an update whose sources don't load isn't installed",
               !broken && broken.error().message.contains("beta.lua:1:") &&
-                  installedVersions(installed) == "alpha 1.1, beta 1.0");
-        writeSet(repo, {{"alpha", "1.1", functions + " -- changed"}, {"beta", "1.10", functions + " -- v2"}});
+                  installedVersions(installed) == v("alpha M.1, beta M.0"));
+        writeSet(repo, {{"alpha", "M.1", functions + " -- changed"}, {"beta", "M.10", functions + " -- v2"}});
         auto newer = updater.install(updater.check(repoUrl).wait().value_or(SourceUpdater::Changes())).wait();
         check("only the entries with a newer version are downloaded",
-              newer && installedVersions(installed) == "alpha 1.1, beta 1.10" &&
+              newer && installedVersions(installed) == v("alpha M.1, beta M.10") &&
                   readText(installed + "/alpha.lua").endsWith("v2") &&
                   readText(installed + "/beta.lua").endsWith("v2"));
 
-        writeSet(bundled, {{"alpha", "1.2", functions + " -- v3"}, {"beta", "1.9", functions}, {"gamma", "1.0", functions},
-                           {"delta", "1.0", functions}});
+        writeSet(bundled, {{"alpha", "M.2", functions + " -- v3"},
+                           {"beta", "M.9", functions},
+                           {"gamma", "M.0", functions},
+                           {"delta", "M.0", functions}});
         updater.installBundled();
         check("an update of the app brings its newer and new sources, not the removed ones",
-              installedVersions(installed) == "alpha 1.2, beta 1.10, delta 1.0" &&
+              installedVersions(installed) == v("alpha M.2, beta M.10, delta M.0") &&
                   readText(installed + "/alpha.lua").endsWith("v3"));
         out << "  " << installedVersions(installed) << "\n";
 
-        writeSet(repo, {{"alpha", "2.0", functions + " -- v4"}, {"beta", "2.0", functions}, {"delta", "1.0", functions}});
+        writeSet(repo, {{"alpha", "M+1.0", functions + " -- v4"},
+                        {"beta", "M+1.0", functions},
+                        {"delta", "M.0", functions}});
         auto otherMajor = updater.check(repoUrl).wait();
         check("the repository's sources of another major version aren't installed, and they aren't removed",
               otherMajor && otherMajor->isEmpty());
 
-        // an update of the app to a new major version: from 0.x to this app's 1.x
+        // an update of the app to a new major version: from M-1.x to this app's M.x
         auto oldInstalled = base + "/old/sources", newBundled = base + "/newbundled";
-        writeSet(oldInstalled, {{"alpha", "0.5", functions + " -- v0"}, {"beta", "0.3", functions}});
-        writeSet(newBundled, {{"alpha", "1.0", functions + " -- v1"}});
+        writeSet(oldInstalled, {{"alpha", "M-1.5", functions + " -- v0"}, {"beta", "M-1.3", functions}});
+        writeSet(newBundled, {{"alpha", "M.0", functions + " -- v1"}});
         SourceUpdater newApp(&nm, newBundled, oldInstalled);
         newApp.installBundled();
         QStringList errors, loaded;
         for (const auto &source : SourceRegistry::loadDirectory(&nm, oldInstalled, &errors))
             loaded.append(source->name);
         check("a new major version of the app brings its sources, also older ones",
-              installedVersions(oldInstalled) == "alpha 1.0, beta 0.3" && readText(oldInstalled + "/alpha.lua").endsWith("v1"));
+              installedVersions(oldInstalled) == v("alpha M.0, beta M-1.3") &&
+                  readText(oldInstalled + "/alpha.lua").endsWith("v1"));
         check("the sources of the old major version stay, but aren't loaded",
               loaded == QStringList{"Alpha"} && errors.isEmpty());
-        writeSet(repo, {{"alpha", "0.6", functions}, {"beta", "0.4", functions}});
+        writeSet(repo, {{"alpha", "M-1.6", functions}, {"beta", "M-1.4", functions}});
         auto oldRepository = newApp.check(repoUrl).wait();
         check("a repository of the old major version brings no updates", oldRepository && oldRepository->isEmpty());
-        writeSet(repo, {{"alpha", "1.0", functions + " -- v1"}, {"beta", "1.0", functions}});
+        writeSet(repo, {{"alpha", "M.0", functions + " -- v1"}, {"beta", "M.0", functions}});
         auto newRepository = newApp.check(repoUrl).wait();
         check("then its sources of the new major version update the old ones",
               newRepository && newRepository->updated == QStringList{"Beta"} && newRepository->downloads == QStringList{"beta"});

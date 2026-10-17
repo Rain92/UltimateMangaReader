@@ -9,7 +9,7 @@
 // scripts, with their versions and files.
 struct SourceIndex
 {
-    // major.minor (e.g. 1.0): the major version is the one of the app that runs it (LuaSource::majorVersion), the
+    // major.minor (e.g. 3.0): the major version is the one of the app that runs it (LuaSource::majorVersion), the
     // minor version goes up with every change of the files.
     struct Version
     {

@@ -165,23 +165,23 @@ script that runs for 10 s without waiting is stopped (on a Kobo, scripts run abo
 ```yaml
 libraries:                              # run before the scripts, in this order
   - id: common                          # the file is <id>.lua
-    version: 1.0
+    version: 3.0
 sources:                                # in the order the app shows them
   - id: mangatown                       # the base name of its files
     name: MangaTown                     # the name of its definition (shown in the update prompt)
-    version: 1.3
+    version: 3.3
     files: [mangatown.yaml, mangatown.lua, mangatown.png]
 ```
 
-The `version` is `major.minor`, compared number by number (1.10 is newer than 1.9):
+The `version` is `major.minor`, compared number by number (3.10 is newer than 3.9):
 
 - The **minor** version goes up with every change of the files. The app installs an entry when the repository has
   a newer version of it, with all of its files, so without a new version the apps keep the old files.
 - The **major** version is the one of the app that runs the entry (`LuaSource::majorVersion`). An app only runs and
   installs the entries of its major version: the repository's entries of another major version are left alone (not
   installed, and not removed). So a breaking change of the app counts its major version up, and its bundled sources
-  go to 2.0: until the repository has the 2.x versions, the new app gets no updates, and once it has them, the older
-  apps keep the 1.x versions they have. A new app replaces the installed sources of an older major version with its
+  go to 4.0: until the repository has the 4.x versions, the new app gets no updates, and once it has them, the older
+  apps keep the 3.x versions they have. A new app replaces the installed sources of an older major version with its
   bundled ones; the ones it doesn't bundle wait (not shown) for their update in the repository.
 
 A source that the repository doesn't have anymore is removed from the app (after asking).
