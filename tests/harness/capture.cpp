@@ -4,6 +4,7 @@
 #include <QImage>
 
 #include "harness.h"
+#include "mangaliststore.h"
 #include "mangarepository.h"
 #include "mangasourcebase.h"
 
@@ -227,6 +228,25 @@ int captureList(MangaSourceBase *source, MangaList *result)
                 << list.popularityRanks.value(i) << "\n";
     }
     out << "  hash: " << hash.result().toHex().left(16) << "\n";
+
+    // HARNESS_LIST_SAVE: the list into the cache (mangalists/<source>_mangalist.dat, see --cache) like the app saves
+    // an update, e.g. for the lists of a release
+    if (!qEnvironmentVariableIsEmpty("HARNESS_LIST_SAVE") && update.status != MangaListUpdate::Failed)
+    {
+        MangaListStore store;
+        auto &saved = store.list(source->name);
+        saved = list;
+        saved.filter();
+        saved.sortBy(store.order());
+        MangaListStore check;
+        if (!store.save(source->name) || !check.reload(source->name))
+        {
+            out << "  saved: FAILED\n";
+            return 1;
+        }
+        out << "  saved: " << check.list(source->name).size << " entries\n";
+    }
+
     if (result)
         *result = list;
     return update.status == MangaListUpdate::Complete ? 0 : 1;

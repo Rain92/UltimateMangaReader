@@ -23,7 +23,7 @@ The source tests don't ask the sites. The harness answers every request of the a
 
 `tests/run.sh record` asks the sites again. It replaces the recorded responses and writes the golden output from them. Only record with code that is known to work. The golden output then changes because the sites changed, and the diff of `golden/` shows how. (`record <source>-cases` writes the golden output of the cases with the sources as they are.)
 
-To compare a change of a source with what it did before on many mangas, record a capture with the old one and replay it with the new one: `HARNESS_LIST_DUMP=<file>` writes all entries of a list update, `HARNESS_ALL_CHAPTERS=1` makes `capture` print all chapters, `HARNESS_REFETCH=1` loads each info a second time with the chapters as the known ones (like the update of a favorite), and `HARNESS_NO_PAGES=1` loads only the infos and chapters.
+To compare a change of a source with what it did before on many mangas, record a capture with the old one and replay it with the new one: `HARNESS_LIST_DUMP=<file>` writes all entries of a list update, `HARNESS_LIST_SAVE=1` saves it into the cache like the app (`--cache <dir>`: `<dir>/mangalists/<source>_mangalist.dat`, e.g. the lists of a release), `HARNESS_ALL_CHAPTERS=1` makes `capture` print all chapters, `HARNESS_REFETCH=1` loads each info a second time with the chapters as the known ones (like the update of a favorite), and `HARNESS_NO_PAGES=1` loads only the infos and chapters.
 
 A change in behaviour that is intended updates the golden output in the same commit:
 
