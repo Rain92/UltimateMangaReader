@@ -18,9 +18,9 @@ A feature-rich online manga streamer and reader for Kobo E-Ink devices, based on
 
 
 ## Install on Kobo devices
-First you will need to install a launcher application. I recomend [KFMon](https://github.com/NiLuJe/kfmon), the latest release along with install instructions can be found [here](https://www.mobileread.com/forums/showthread.php?t=274231).
+First you will need to install [NickelMenu](https://github.com/pgaskin/NickelMenu), which adds entries for launching applications to the Kobo's menus. The latest release along with install instructions can be found [here](https://pgaskin.net/NickelMenu/).
 
-For the application itself just download the latest release [here](https://github.com/Rain92/UltimateMangaReader/releases) and extract the archive into the root directiory of your Kobo device.
+For the application itself just download the latest release [here](https://github.com/Rain92/UltimateMangaReader/releases) and extract the archive into the root directory of your Kobo device. It brings a NickelMenu entry, *Ultimate Manga Reader* in the main menu.
 
 ## Build
 The manga sources are a submodule ([UMR-MangaSources](https://github.com/Rain92/UMR-MangaSources)), so clone with `git clone --recursive`, or run `git submodule update --init` in a clone.
