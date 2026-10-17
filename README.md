@@ -30,11 +30,11 @@ Requirements:
 * Qt 6.6 or newer (developed with Qt 6.12) with the modules widgets, network, svg and concurrent, and OpenSSL
 * libjpeg-turbo 3.0+ (the TurboJPEG 3 API), libpng and libwebp
 
-On the desktop the libraries are found with pkg-config:
+On the desktop the libraries are found with pkg-config. The builds go into `build/` of the repository, into the folders Qt Creator uses:
 
 ```shell
-mkdir build && cd build
-qmake ../UltimateMangaReader.pro
+mkdir -p build/Desktop_Qt6_Release && cd build/Desktop_Qt6_Release
+qmake ../../UltimateMangaReader.pro
 make -j$(nproc)
 ```
 
@@ -52,8 +52,8 @@ Then build with the cross compiled Qt's qmake and `CONFIG+=kobo`.
 The platform plugin's source is expected next to this repository (`../qt6-kobo-platform-plugin`), another location can be set with `KOBO_PLATFORM_PLUGIN_PATH`:
 
 ```shell
-mkdir build-kobo && cd build-kobo
-~/kobo/qt-bin/qt-6.12.0-kobo/bin/qmake ../UltimateMangaReader.pro CONFIG+=kobo CONFIG+=release \
+mkdir -p build/Kobo_Qt6_Release && cd build/Kobo_Qt6_Release
+~/kobo/qt-bin/qt-6.12.0-kobo/bin/qmake ../../UltimateMangaReader.pro CONFIG+=kobo CONFIG+=release \
     KOBO_PLATFORM_PLUGIN_PATH=/path/to/qt6-kobo-platform-plugin
 make -j$(nproc)
 ```

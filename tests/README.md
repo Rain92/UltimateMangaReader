@@ -15,7 +15,7 @@ tests/run.sh MangaDex storage   # some of them
 tests/run.sh record MangaDex    # record the responses of MangaDex again
 ```
 
-`run.sh` builds the harness in `../build-UltimateMangaReader-tests` (next to the repository). It uses `qmake6`; set `QMAKE` to use another one. The output, logs and diffs end up in `output/` there.
+`run.sh` builds the harness in `build/tests` of the repository. It uses `qmake6`; set `QMAKE` to use another one. The output, logs and diffs end up in `output/` there.
 
 ## Recorded responses
 
@@ -28,7 +28,7 @@ To compare a change of a source with what it did before on many mangas, record a
 A change in behaviour that is intended updates the golden output in the same commit:
 
 ```
-cp ../build-UltimateMangaReader-tests/output/<test>.txt tests/golden/
+cp build/tests/output/<test>.txt tests/golden/
 ```
 
 The recorded responses are not committed (`.gitignore`), because they contain the pages and images of the sites. They only exist where they were recorded. Without them, `run.sh` tells you to record them.
@@ -57,13 +57,13 @@ The harness also builds for the Kobo (`qmake harness.pro CONFIG+=kobo CONFIG+=re
 `bench` times what reading asks of a source, for the mangas of a picks file: opening a manga (its info), opening a chapter (its page list), resolving a page and downloading and processing its image. It prints the median of each. With `--replay` the responses come without waiting, so the times are those of the app alone, e.g. to compare two versions of a source (`--sources`):
 
 ```
-./harness --replay ../UltimateMangaReader-Qt/tests/fixtures/MangaTown bench MangaTown ../UltimateMangaReader-Qt/tests/picks/MangaTown.txt
+./harness --replay ../../tests/fixtures/MangaTown bench MangaTown ../../tests/picks/MangaTown.txt
 ```
 
 `flow` and `listflow` drive `UltimateMangaReaderCore` the way the GUI does. They only run against the sites and check each step, with no golden output. Run them after changes to the core, for example with the first line of a picks file:
 
 ```
-cd ../build-UltimateMangaReader-tests
+cd build/tests
 ./harness flow MangaTown "Tales of Demons and Gods" https://www.mangatown.com/manga/tales_of_demons_and_gods/
 ./harness listflow MangaPlus
 ```

@@ -6,7 +6,7 @@
 #                                 scripts, index (sources/index.yaml lists the sources, they load, the changed
 #                                 ones have newer versions)
 #   tests/run.sh record [NAME...] records the responses of the sites again and the golden output with them
-# QMAKE (default qmake6), BUILD_DIR (default ../build-UltimateMangaReader-tests next to the repository) and
+# QMAKE (default qmake6), BUILD_DIR (default build/tests of the repository) and
 # SOURCES_BASE (the git ref of the repository of the sources, the submodule sources/, whose sources the index test
 # compares the versions with, default origin/master) can be set in the environment.
 set -u
@@ -17,7 +17,7 @@ if [ ! -f "$SOURCES_DIR/index.yaml" ]; then
     echo "sources/ is empty, it's a submodule: git submodule update --init"
     exit 2
 fi
-BUILD=${BUILD_DIR:-$(dirname "$(dirname "$TESTS")")/build-UltimateMangaReader-tests}
+BUILD=${BUILD_DIR:-$(dirname "$TESTS")/build/tests}
 QMAKE=${QMAKE:-qmake6}
 PORT=${TEST_SERVER_PORT:-8780}
 
