@@ -7,7 +7,7 @@ A headless harness (`harness/`) that runs the core of the app on the desktop:
 - **jobs:** the contract of the download jobs and of the coroutines that wait for them (`src/task.h`), against a local test server (`harness/testserver.py`).
 - **storage:** the cache layout, mangas and chapters by URL, the reading progress, the favorites, the sources (enabled, current, the list model of the dialogs), the manga lists and their updates, and the repository (page images, joined updates, failed updates), against the same server and a fake source.
 - **scripts:** the Lua engine (the sandbox, the limits on memory and on running without waiting, errors), its libraries (regular expressions with UTF-8 positions, text, html, json, protobuf), the sources of scripts (http, sleep, the conversions of what they return, the state of a list update for a retry, loading, the index and the registry) and the definitions (`common.lua`: every section against a small site of the test server, and the checks when a definition is loaded), against the same server.
-- **index:** `../sources/index.yaml` lists all files of `../sources/`, and its sources load with the names it has for them. An entry whose files differ from the ones on `master` (the published sources, `SOURCES_BASE=<git ref>` for another base) must have a newer version than there.
+- **index:** `../sources/index.yaml` lists all files of `../sources/`, and its sources load with the names it has for them. An entry whose files differ from the published ones (`origin/master` of the repository of the sources, the submodule `../sources/`; `SOURCES_BASE=<git ref>` for another ref of it) must have a newer version than there.
 
 ```
 tests/run.sh                    # all tests

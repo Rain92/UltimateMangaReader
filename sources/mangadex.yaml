@@ -1,5 +1,0 @@
-# MangaDex: its api (json), all of it in mangadex.lua. The api wants a user agent that isn't a browser's.
-name: MangaDex
-baseUrl: https://api.mangadex.org
-headers:
-  mangadex.org: {User-Agent: 'UltimateMangaReader (github.com/Rain92/UltimateMangaReader)'}

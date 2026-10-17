@@ -80,6 +80,6 @@ private:
         sourcesDir = QCoreApplication::applicationDirPath() + "/sources/";
         mangaListDir = cacheDir + "mangalists/";
         installedSourcesDir = cacheDir + "sources/";
-        defaultSourcesRepository = "https://raw.githubusercontent.com/Rain92/UltimateMangaReader/master/sources/";
+        defaultSourcesRepository = "https://raw.githubusercontent.com/Rain92/UMR-MangaSources/master/";
     };
 };

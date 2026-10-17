@@ -1,6 +1,0 @@
-# MANGA Plus: its api (protobuf), all of it in mangaplus.lua. The api and the images want the site as Origin and
-# Referer.
-name: MangaPlus
-baseUrl: https://jumpg-webapi.tokyo-cdn.com
-headers:
-  tokyo-cdn.com: {Origin: 'https://mangaplus.shueisha.co.jp', Referer: 'https://mangaplus.shueisha.co.jp/'}

@@ -7,12 +7,16 @@
 #                                 ones have newer versions)
 #   tests/run.sh record [NAME...] records the responses of the sites again and the golden output with them
 # QMAKE (default qmake6), BUILD_DIR (default ../build-UltimateMangaReader-tests next to the repository) and
-# SOURCES_BASE (the git ref whose sources/ the index test compares the versions with, default master) can be set in
-# the environment.
+# SOURCES_BASE (the git ref of the repository of the sources, the submodule sources/, whose sources the index test
+# compares the versions with, default origin/master) can be set in the environment.
 set -u
 
 TESTS=$(cd "$(dirname "$0")" && pwd)
 SOURCES_DIR=$(dirname "$TESTS")/sources
+if [ ! -f "$SOURCES_DIR/index.yaml" ]; then
+    echo "sources/ is empty, it's a submodule: git submodule update --init"
+    exit 2
+fi
 BUILD=${BUILD_DIR:-$(dirname "$(dirname "$TESTS")")/build-UltimateMangaReader-tests}
 QMAKE=${QMAKE:-qmake6}
 PORT=${TEST_SERVER_PORT:-8780}
@@ -106,14 +110,15 @@ for name in "${names[@]}"; do
             ;;
         index)
             [ $record = 1 ] && continue
-            # the versions against the sources of SOURCES_BASE (default master, the published ones): an entry that
-            # changed since then needs a newer version (if the base has sources/)
+            # the versions against the sources of SOURCES_BASE (default origin/master of the repository of the
+            # sources, the published ones): an entry that changed since then needs a newer version (if the base is
+            # there)
             base=$BUILD/tmp/sources-base
             rm -rf "$base" && mkdir -p "$base"
-            base_ref=${SOURCES_BASE:-master}
+            base_ref=${SOURCES_BASE:-origin/master}
             base_args=()
-            if git -C "$TESTS" rev-parse -q --verify "$base_ref:sources/index.yaml" > /dev/null; then
-                git -C "$TESTS/.." archive "$base_ref" sources | tar -x -C "$base" && base_args=("$base/sources")
+            if git -C "$SOURCES_DIR" rev-parse -q --verify "$base_ref:index.yaml" > /dev/null; then
+                git -C "$SOURCES_DIR" archive "$base_ref" | tar -x -C "$base" && base_args=("$base")
             fi
             ./harness index "$SOURCES_DIR" "${base_args[@]}" > "output/$name.txt" 2> "output/$name.log"
             [ $? = 0 ] && report "$name" ok || report "$name" "FAILED, see $BUILD/output/$name.txt"

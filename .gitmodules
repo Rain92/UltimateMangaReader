@@ -1,0 +1,3 @@
+[submodule "sources"]
+	path = sources
+	url = https://github.com/Rain92/UMR-MangaSources.git

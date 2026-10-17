@@ -23,6 +23,9 @@ First you will need to install a launcher application. I recomend [KFMon](https:
 For the application itself just download the latest release [here](https://github.com/Rain92/UltimateMangaReader/releases) and extract the archive into the root directiory of your Kobo device.
 
 ## Build
+The manga sources are a submodule ([UMR-MangaSources](https://github.com/Rain92/UMR-MangaSources)), so clone with `git clone --recursive`, or run `git submodule update --init` in a clone.
+The app loads its sources from `sources/` next to its binary, so copy or link them there to run a build.
+
 Requirements:
 * Qt 6.6 or newer (developed with Qt 6.12) with the modules widgets, network, svg and concurrent, and OpenSSL
 * libjpeg-turbo 3.0+ (the TurboJPEG 3 API), libpng and libwebp
