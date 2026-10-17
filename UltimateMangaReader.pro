@@ -1,8 +1,8 @@
 
 kobo {
     # the platform plugin's source (koboplatformfunctions.h), by default next to the app's,
-    # e.g. qmake KOBO_PLATFORM_PLUGIN_PATH=/path/to/qt5-kobo-platform-plugin
-    isEmpty(KOBO_PLATFORM_PLUGIN_PATH): KOBO_PLATFORM_PLUGIN_PATH = $$PWD/../qt5-kobo-platform-plugin
+    # e.g. qmake KOBO_PLATFORM_PLUGIN_PATH=/path/to/qt6-kobo-platform-plugin
+    isEmpty(KOBO_PLATFORM_PLUGIN_PATH): KOBO_PLATFORM_PLUGIN_PATH = $$PWD/../qt6-kobo-platform-plugin
 
     INCLUDEPATH += $$KOBO_PLATFORM_PLUGIN_PATH/src
 

@@ -44,16 +44,16 @@ Qt Creator works as well, just open `UltimateMangaReader.pro`.
 Building for Kobo devices requires:
 * the Kobo cross compiler toolchain (GCC 14, glibc 2.15) from [koxtoolchain](https://github.com/koreader/koxtoolchain)
 * a cross compiled Qt 6 and the libraries above, installed into the toolchain's sysroot
-* the source of the [Kobo platform plugin](https://github.com/Rain92/qt5-kobo-platform-plugin), which also has to be built and deployed with Qt
+* the source of the [Kobo platform plugin](https://github.com/Rain92/qt6-kobo-platform-plugin), which also has to be built and deployed with Qt
 
 [kobo-qt-setup-scripts](https://github.com/Rain92/kobo-qt-setup-scripts) sets all of this up (toolchain, libraries, Qt 6 and deploying it to the device).
 
 Then build with the cross compiled Qt's qmake and `CONFIG+=kobo`.
-The platform plugin's source is expected next to this repository (`../qt5-kobo-platform-plugin`), another location can be set with `KOBO_PLATFORM_PLUGIN_PATH`:
+The platform plugin's source is expected next to this repository (`../qt6-kobo-platform-plugin`), another location can be set with `KOBO_PLATFORM_PLUGIN_PATH`:
 
 ```shell
 mkdir build-kobo && cd build-kobo
 ~/kobo/qt-bin/qt-6.12.0-kobo/bin/qmake ../UltimateMangaReader.pro CONFIG+=kobo CONFIG+=release \
-    KOBO_PLATFORM_PLUGIN_PATH=/path/to/qt5-kobo-platform-plugin
+    KOBO_PLATFORM_PLUGIN_PATH=/path/to/qt6-kobo-platform-plugin
 make -j$(nproc)
 ```
